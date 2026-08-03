@@ -1,6 +1,6 @@
 import app from './app';
-import logger from './logger/logger';
-import { config } from './config/env';
+import logger from './core/logger/logger';
+import { config } from './core/config/env';
 
 const server = app.listen(config.port, () => {
   logger.info('Application started', {

@@ -1,7 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import routes from './routes';
 import { errorHandler } from './middleware/error.middleware';
-import logger from './logger/logger';
+import logger from './core/logger/logger';
 
 const app: Application = express();
 

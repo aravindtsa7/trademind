@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import healthRoutes from './health.route';
+import healthRoutes from '../modules/health';
 import { notFoundHandler } from '../middleware/not-found.middleware';
 
 const router = Router();
