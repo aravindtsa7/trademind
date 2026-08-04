@@ -3,6 +3,47 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Instrument {
+  id               String   @id @default(uuid())
+  instrumentKey    String   @unique
+  exchange         String
+  segment          String
+  underlyingSymbol String
+  tradingSymbol    String
+  instrumentType   String
+  expiry           DateTime
+  strikePrice      Decimal
+  lotSize          Int
+  tickSize         Decimal
+  weekly           Boolean  @default(false)
+  isin             String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([underlyingSymbol])
+  @@index([expiry])
+  @@index([instrumentType])
+  @@index([strikePrice])
+  @@index([underlyingSymbol, expiry])
+  @@index([underlyingSymbol, instrumentType])
+}
+
+model InstrumentSyncLog {
+  id           String    @id @default(uuid())
+  startedAt    DateTime
+  completedAt  DateTime?
+  durationMs   Int?
+  downloaded   Int       @default(0)
+  filtered     Int       @default(0)
+  inserted     Int       @default(0)
+  updated      Int       @default(0)
+  inactivated  Int       @default(0)
+  status       String
+  errorMessage String?
+  createdAt    DateTime  @default(now())
 }
