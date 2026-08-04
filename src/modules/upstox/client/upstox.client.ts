@@ -14,16 +14,8 @@ export default class UpstoxClient {
     this.clientSecret = process.env.UPSTOX_CLIENT_SECRET?.trim();
     this.redirectUri = process.env.UPSTOX_REDIRECT_URI?.trim();
 
-    console.log("=== UPSTOX CONFIG DEBUG ===");
-  console.log({
-    clientId: process.env.UPSTOX_CLIENT_ID,
-    clientSecret: process.env.UPSTOX_CLIENT_SECRET ? "***SET***" : undefined,
-    redirectUri: process.env.UPSTOX_REDIRECT_URI,
-  });
-  console.log("===========================");
-
-    this.authUrl = process.env.UPSTOX_AUTH_URL?.trim() ?? 'https://auth.upstox.com/oauth2/authorize';
-    this.tokenUrl = process.env.UPSTOX_TOKEN_URL?.trim() ?? 'https://api.upstox.com/oauth2/token';
+    this.authUrl = process.env.UPSTOX_AUTH_URL?.trim() ?? "https://api.upstox.com/v2/login/authorization/dialog";
+    this.tokenUrl = process.env.UPSTOX_TOKEN_URL?.trim() ?? "https://api.upstox.com/v2/login/authorization/token";
     this.profileUrl = process.env.UPSTOX_PROFILE_URL?.trim() ?? 'https://api.upstox.com/profile';
 
     this.axios = axios.create({ timeout: 10_000 });

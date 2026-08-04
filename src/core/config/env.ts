@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const port = Number(process.env.PORT ?? 4000);
+const port = Number(process.env.PORT ?? 3000);
 const environment = process.env.NODE_ENV?.trim() ?? 'development';
 const databaseUrl = process.env.DATABASE_URL?.trim() ?? 'file:./dev.db';
 const redisUrl = process.env.REDIS_URL?.trim() ?? 'redis://localhost:6379';
