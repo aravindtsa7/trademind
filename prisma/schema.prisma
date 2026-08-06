@@ -47,3 +47,47 @@ model InstrumentSyncLog {
   errorMessage String?
   createdAt    DateTime  @default(now())
 }
+
+model HistoricalCandle {
+  id             String   @id @default(uuid())
+  instrumentKey  String
+  timeframe      String
+  candleTime     DateTime
+  open           Decimal
+  high           Decimal
+  low            Decimal
+  close          Decimal
+  volume         BigInt
+  openInterest   BigInt?
+  source         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([instrumentKey, timeframe, candleTime])
+  @@index([instrumentKey])
+  @@index([timeframe])
+  @@index([candleTime])
+  @@index([instrumentKey, timeframe])
+  @@index([instrumentKey, timeframe, candleTime])
+}
+
+model HistoricalCandleSyncLog {
+  id            String    @id @default(uuid())
+  instrumentKey String
+  timeframe     String
+  startedAt     DateTime
+  completedAt   DateTime?
+  downloaded    Int       @default(0)
+  inserted      Int       @default(0)
+  updated       Int       @default(0)
+  durationMs    Int?
+  status        String
+  errorMessage  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([instrumentKey])
+  @@index([timeframe])
+  @@index([status])
+  @@index([startedAt])
+}
