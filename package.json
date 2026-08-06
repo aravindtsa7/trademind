@@ -10,7 +10,8 @@
     "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write .",
     "prisma:validate": "prisma validate",
-    "test:market-data": "tsx src/tests/test-market-data.ts"
+    "test:market-data": "tsx src/tests/test-market-data.ts",
+    "test:historical-candles": "tsx src/tests/test-historical-candles.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
