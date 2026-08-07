@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "prisma:validate": "prisma validate",
     "test:market-data": "tsx src/tests/test-market-data.ts",
-    "test:historical-candles": "tsx src/tests/test-historical-candles.ts"
+    "test:historical-candles": "tsx src/tests/test-historical-candles.ts",
+    "test:indicator-engine": "tsx src/tests/test-indicator-engine.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
