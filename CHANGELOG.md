@@ -99,3 +99,22 @@ Completed Upstox OAuth Authentication.
 - Signal Engine
 - Paper Trading Engine
 - AI Learning & Optimization
+
+## v0.5.0 - Indicator Engine
+
+### Added
+
+- Indicator Core architecture
+- Session-aware timeframe aggregation
+- SMA
+- EMA
+- RSI
+- VWAP
+- ATR
+- MACD
+- Bollinger Bands
+- ADX
+- SuperTrend
+- Indicator Engine
+- Comprehensive unit tests
+- Real MySQL integration test using NIFTY historical candles
