@@ -72,6 +72,8 @@ export default class HistoricalCandleSyncService {
       const existingTimes = new Set(existingCandles.map((candle) => candle.candleTime.getTime()));
 
       if (missingRanges.length > 0) {
+        const downloadedCandles = new Map<number, UpstoxHistoricalCandleDto>();
+
         for (const missingRange of missingRanges) {
           logger.info('Synchronizing missing historical candle range', {
             syncLogId,
@@ -81,35 +83,45 @@ export default class HistoricalCandleSyncService {
             toDate: missingRange.toDate,
           });
 
-          const candles = await this.client.fetchOneMinuteCandles(
-            instrumentKey,
-            missingRange.toDate,
-            missingRange.fromDate
-          );
-          this.validateDownloadedCandles(candles);
-          downloaded += candles.length;
+          for (const chunk of this.splitIntoMonthlyChunks(missingRange)) {
+            logger.info('Synchronizing historical candle request chunk', {
+              syncLogId,
+              instrumentKey,
+              timeframe: oneMinuteTimeframe,
+              fromDate: chunk.fromDate,
+              toDate: chunk.toDate,
+            });
 
-          const uniqueCandles = new Map<number, UpstoxHistoricalCandleDto>();
-          candles.forEach((candle) => {
-            if (candle.candleTime >= missingRange.from && candle.candleTime <= missingRange.to) {
-              uniqueCandles.set(candle.candleTime.getTime(), candle);
-            }
-          });
+            const candles = await this.client.fetchOneMinuteCandles(
+              instrumentKey,
+              chunk.toDate,
+              chunk.fromDate
+            );
+            this.validateDownloadedCandles(candles);
+            downloaded += candles.length;
 
-          const entities = Array.from(uniqueCandles.values()).map((candle) =>
-            this.toEntity(instrumentKey, candle)
-          );
-          const upserts = entities.map((entity) => this.toUpsertInput(entity));
-
-          inserted += entities.filter((entity) => !existingTimes.has(entity.candleTime.getTime())).length;
-          updated += entities.length - entities.filter(
-            (entity) => !existingTimes.has(entity.candleTime.getTime())
-          ).length;
-
-          if (upserts.length > 0) {
-            await this.repository.bulkUpsert(upserts);
-            entities.forEach((entity) => existingTimes.add(entity.candleTime.getTime()));
+            candles.forEach((candle) => {
+              if (candle.candleTime >= chunk.from && candle.candleTime <= chunk.to) {
+                downloadedCandles.set(candle.candleTime.getTime(), candle);
+              }
+            });
           }
+        }
+
+        const entities = Array.from(downloadedCandles.values()).map((candle) =>
+          this.toEntity(instrumentKey, candle)
+        );
+        const upserts = entities.map((entity) => this.toUpsertInput(entity));
+        const insertedEntities = entities.filter(
+          (entity) => !existingTimes.has(entity.candleTime.getTime())
+        );
+
+        inserted += insertedEntities.length;
+        updated += entities.length - insertedEntities.length;
+
+        if (upserts.length > 0) {
+          await this.repository.bulkUpsert(upserts);
+          entities.forEach((entity) => existingTimes.add(entity.candleTime.getTime()));
         }
 
         logger.info('Historical candles synchronized', {
@@ -230,6 +242,34 @@ export default class HistoricalCandleSyncService {
     }
 
     return missingRanges;
+  }
+
+  private splitIntoMonthlyChunks(range: HistoricalCandleRange): HistoricalCandleRange[] {
+    const chunks: HistoricalCandleRange[] = [];
+    let chunkFromDate = range.fromDate;
+
+    while (chunkFromDate <= range.toDate) {
+      const monthEndDate = this.getMarketMonthEndDate(chunkFromDate);
+      const chunkToDate = monthEndDate < range.toDate ? monthEndDate : range.toDate;
+
+      chunks.push(this.createRequestedRange(chunkFromDate, chunkToDate));
+      chunkFromDate = this.shiftMarketDate(chunkToDate, 1);
+    }
+
+    return chunks;
+  }
+
+  private getMarketMonthEndDate(date: string): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!match) {
+      throw new Error('Historical candle sync dates must use YYYY-MM-DD format.');
+    }
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+    return `${match[1]}-${match[2]}-${String(lastDay).padStart(2, '0')}`;
   }
 
   private validateDownloadedCandles(candles: UpstoxHistoricalCandleDto[]): void {

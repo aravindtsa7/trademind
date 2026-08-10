@@ -1,0 +1,48 @@
+import { MarketDataSubscription, MarketDataSubscriptionMode } from '../../market-data/managers/subscription.manager';
+import { OptionContract, OptionContractSelectionResult } from '../../options/types';
+import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
+import { PaperOrder } from '../types/paper-trading.types';
+
+export interface PaperTradingSignalInput {
+  signalTimestamp: Date;
+  signalType: StrategySignal;
+  underlying: string;
+  spotPrice: number;
+}
+
+export interface PaperTradingExitPolicyInput {
+  targetPercent: number;
+  stopLossPercent: number;
+  maximumHoldingMinutes: number;
+}
+
+export interface PaperEntryPremiumProvider {
+  getObservedPremium(instrumentKey: string): Promise<number>;
+}
+
+/** Structural boundary satisfied by the existing SubscriptionManager. */
+export interface PaperMarketDataSubscriptionGateway {
+  subscribe(instrumentKey: string, mode?: MarketDataSubscriptionMode): Promise<void>;
+  getSubscriptions(): MarketDataSubscription[];
+}
+
+export interface PaperTradingOrchestrationRequest {
+  signal: PaperTradingSignalInput;
+  contracts: readonly OptionContract[];
+  exitPolicy: PaperTradingExitPolicyInput;
+  /** Optional direct premium; otherwise the injected provider is used. */
+  observedEntryPremium?: number;
+}
+
+export interface PaperTradingSubscriptionResult {
+  instrumentKey: string;
+  requested: boolean;
+}
+
+export interface PaperTradingOrchestrationResult {
+  order: PaperOrder;
+  selectedContract: OptionContract;
+  selection: OptionContractSelectionResult;
+  subscription: PaperTradingSubscriptionResult;
+  observedEntryPremium: number;
+}

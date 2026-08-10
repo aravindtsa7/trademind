@@ -49,7 +49,14 @@ export default class UpstoxHistoricalClient {
         instrumentKey,
         fromDate,
         toDate,
+        url,
         durationMs: Date.now() - startedAt,
+        ...(axios.isAxiosError(error)
+          ? {
+              httpStatus: error.response?.status,
+              responseData: error.response?.data,
+            }
+          : {}),
         error,
       });
       throw error;
