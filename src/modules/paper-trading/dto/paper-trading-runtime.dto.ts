@@ -21,6 +21,7 @@ export interface PaperTradingRuntimeStatus {
   stopExits: number;
   timeExits: number;
   activeOrderCount: number;
+  warmupReady: boolean;
 }
 
 export interface PaperTradingRuntimeStopResult {
@@ -30,6 +31,7 @@ export interface PaperTradingRuntimeStopResult {
 
 export interface PaperTradingRuntimeStrategyAdapter {
   processCompletedCandle(input: LivePaperCompletedCandleInput): Promise<LivePaperStrategyResult>;
+  isWarmupReady?(): boolean;
 }
 
 export interface PaperTradingRuntimeMarketDataAdapter {

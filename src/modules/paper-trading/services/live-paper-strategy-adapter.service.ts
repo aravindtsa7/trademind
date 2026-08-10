@@ -26,12 +26,49 @@ const frozenExitPolicy = { targetPercent: 30, stopLossPercent: 20, maximumHoldin
 export default class LivePaperStrategyAdapterService {
   private readonly history: Candle[] = [];
   private readonly processedTimestamps = new Set<number>();
+  private readonly seededHistoricalTimestamps = new Set<number>();
 
   constructor(
     private readonly orchestrator: LivePaperOrchestrator,
     private readonly indicatorEngine: LivePaperIndicatorEngine = new IndicatorEngineService(),
     private readonly emaCrossStrategy: LivePaperEmaCrossStrategy = new EmaCrossStrategy({ fastPeriod, slowPeriod })
   ) {}
+
+  /**
+   * Adds completed historical candles without evaluating signals or invoking
+   * orchestration. This method is intentionally available only before live
+   * candle processing begins.
+   */
+  seedHistoricalCandles(candles: readonly Candle[]): void {
+    if (!Array.isArray(candles) || candles.length === 0) {
+      throw new Error('Historical warm-up requires at least one completed candle.');
+    }
+    if (this.history.length > 0 || this.processedTimestamps.size > 0) {
+      throw new Error('Historical warm-up must complete before live candle processing begins.');
+    }
+
+    let previousTimestamp: number | undefined;
+    candles.forEach((candle) => {
+      this.validateCandle(candle);
+      const timestamp = candle.timestamp.getTime();
+      if (previousTimestamp !== undefined && timestamp <= previousTimestamp) {
+        throw new Error(timestamp === previousTimestamp
+          ? 'Historical warm-up candles must not contain duplicate timestamps.'
+          : 'Historical warm-up candles must be in chronological order.');
+      }
+      previousTimestamp = timestamp;
+    });
+
+    candles.forEach((candle) => {
+      const timestamp = candle.timestamp.getTime();
+      this.history.push(cloneCandle(candle));
+      this.seededHistoricalTimestamps.add(timestamp);
+    });
+  }
+
+  isWarmupReady(): boolean {
+    return this.history.length >= minimumHistory;
+  }
 
   async processCompletedCandle(input: LivePaperCompletedCandleInput): Promise<LivePaperStrategyResult> {
     this.validateInput(input);
@@ -40,6 +77,9 @@ export default class LivePaperStrategyAdapterService {
 
     if (!input.completed) {
       return this.noTradeResult(candle, false, false, ['Ignoring incomplete 5-minute candle.']);
+    }
+    if (this.seededHistoricalTimestamps.has(timestamp)) {
+      return this.noTradeResult(candle, false, false, ['Ignoring live candle that overlaps seeded historical candle history.']);
     }
     if (this.processedTimestamps.has(timestamp)) {
       return this.noTradeResult(candle, false, false, ['Ignoring duplicate completed candle timestamp.']);
@@ -125,10 +165,14 @@ export default class LivePaperStrategyAdapterService {
   private validateInput(input: LivePaperCompletedCandleInput): void {
     if (!input || typeof input !== 'object' || !input.candle) throw new Error('Completed candle input is required.');
     const candle = input.candle;
+    this.validateCandle(candle);
+    if (!Array.isArray(input.contracts)) throw new Error('Option contracts must be an array.');
+  }
+
+  private validateCandle(candle: Candle): void {
     if (!(candle.timestamp instanceof Date) || Number.isNaN(candle.timestamp.getTime())) throw new Error('Candle timestamp must be valid.');
     ['open', 'high', 'low', 'close', 'volume'].forEach((field) => { if (!Number.isFinite(candle[field as keyof Candle] as number)) throw new Error(`Candle ${field} must be finite.`); });
     if (candle.close <= 0) throw new Error('Candle close must be positive.');
-    if (!Array.isArray(input.contracts)) throw new Error('Option contracts must be an array.');
   }
 }
 

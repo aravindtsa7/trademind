@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { EventEmitter } from 'events';
 import eventBus from '../core/events';
+import HistoricalCandleRepository from '../modules/historical-candles/repositories/historical-candle.repository';
 import InstrumentRepository from '../modules/instruments/repositories/instrument.repository';
 import { Candle } from '../modules/indicators/types';
 import MarketDataWebSocketClient from '../modules/market-data/client/websocket.client';
@@ -18,6 +19,7 @@ import PaperRuntimeCandleAdapterService, { PaperRuntimeCandleContractsProvider }
 import PaperTradingOrchestratorService from '../modules/paper-trading/services/paper-trading-orchestrator.service';
 import PaperTradingRuntimeService from '../modules/paper-trading/services/paper-trading-runtime.service';
 import LivePaperStrategyAdapterService from '../modules/paper-trading/services/live-paper-strategy-adapter.service';
+import PaperStrategyWarmupService from '../modules/paper-trading/services/paper-strategy-warmup.service';
 import { LivePaperCompletedCandleInput, LivePaperStrategyResult } from '../modules/paper-trading/dto/live-paper-strategy.dto';
 import { PaperTradingRuntimeState } from '../modules/paper-trading/dto/paper-trading-runtime.dto';
 
@@ -179,12 +181,20 @@ async function run(): Promise<void> {
     }
   );
   const strategyAdapter = new LivePaperStrategyAdapterService(orchestration);
+  const warmupResult = await new PaperStrategyWarmupService(
+    new HistoricalCandleRepository(),
+    strategyAdapter
+  ).warmUp();
+  console.log(`[paper.strategy.warmup] 1m=${warmupResult.oneMinuteCandlesLoaded} 5m=${warmupResult.fiveMinuteCandlesProduced} ${formatIst(warmupResult.firstFiveMinuteTimestamp)} -> ${formatIst(warmupResult.lastFiveMinuteTimestamp)} ready=${warmupResult.warmupReady}`);
   const strategyResults = new Map<number, LivePaperStrategyResult>();
   const instrumentedStrategyAdapter = {
     async processCompletedCandle(input: LivePaperCompletedCandleInput): Promise<LivePaperStrategyResult> {
       const result = await strategyAdapter.processCompletedCandle(input);
       strategyResults.set(result.candleTimestamp.getTime(), result);
       return result;
+    },
+    isWarmupReady(): boolean {
+      return strategyAdapter.isWarmupReady();
     },
   };
   const runtime = new PaperTradingRuntimeService(instrumentedStrategyAdapter, paperMarketDataAdapter, orderManager, eventBus);
@@ -246,7 +256,7 @@ async function run(): Promise<void> {
 
   const printStatus = (): void => {
     const status = runtime.getStatus();
-    console.log(`[paper.runtime.status] state=${status.state} candles=${status.completedCandlesProcessed} noTrade=${status.noTradeEvaluations} filtered=${status.filteredSignals} orders=${status.paperOrdersCreated} active=${status.activeOrderCount} target=${status.targetExits} stop=${status.stopExits} time=${status.timeExits}`);
+    console.log(`[paper.runtime.status] state=${status.state} warmup=${status.warmupReady} candles=${status.completedCandlesProcessed} noTrade=${status.noTradeEvaluations} filtered=${status.filteredSignals} orders=${status.paperOrdersCreated} active=${status.activeOrderCount} target=${status.targetExits} stop=${status.stopExits} time=${status.timeExits}`);
   };
   const statusTimer = setInterval(printStatus, runtimeStatusIntervalMs);
   statusTimer.unref();

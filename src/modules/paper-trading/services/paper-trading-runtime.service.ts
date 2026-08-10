@@ -92,6 +92,7 @@ export default class PaperTradingRuntimeService {
       stoppedAt: this.stoppedAt ? new Date(this.stoppedAt.getTime()) : null,
       ...this.counters,
       activeOrderCount: this.orderManager.getActiveOrders().length,
+      warmupReady: this.strategyAdapter.isWarmupReady?.() ?? false,
     };
   }
 
