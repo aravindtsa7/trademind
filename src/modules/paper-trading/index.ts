@@ -5,9 +5,11 @@ export { default as PaperTradingOrchestratorService } from './services/paper-tra
 export { default as LivePaperStrategyAdapterService } from './services/live-paper-strategy-adapter.service';
 export { default as PaperTradingRuntimeService } from './services/paper-trading-runtime.service';
 export { default as PaperRuntimeCandleAdapterService } from './services/paper-runtime-candle-adapter.service';
+export { default as PaperStrategyWarmupService } from './services/paper-strategy-warmup.service';
 export * from './interfaces/paper-order.interface';
 export * from './dto/paper-order.dto';
 export * from './dto/paper-trading-orchestrator.dto';
 export * from './dto/live-paper-strategy.dto';
 export * from './dto/paper-trading-runtime.dto';
+export * from './dto/paper-strategy-warmup.dto';
 export * from './types/paper-trading.types';

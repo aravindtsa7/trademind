@@ -118,3 +118,34 @@ test('does not mutate caller candles or contracts', async () => {
   const result = await context.adapter.processCompletedCandle(input); result.candleTimestamp.setTime(0);
   assert.deepEqual(input, original); assert.equal(optionContracts[0].tradingSymbol, original.contracts[0].tradingSymbol);
 });
+
+test('seeds historical candles without evaluating or orchestrating, then evaluates the first newer live candle', async () => {
+  const context = adapter(StrategySignal.BUY_CE, 60);
+  const firstTimestamp = new Date('2026-08-10T03:45:00.000Z');
+  const historical = Array.from({ length: 36 }, (_, index) => candle(new Date(firstTimestamp.getTime() + index * 5 * 60_000)));
+  const original = structuredClone(historical);
+
+  context.adapter.seedHistoricalCandles(historical);
+  assert.equal(context.adapter.isWarmupReady(), true);
+  assert.equal(context.orchestrator.calls.length, 0);
+  assert.deepEqual(historical, original);
+
+  const result = await context.adapter.processCompletedCandle({
+    candle: candle(new Date(firstTimestamp.getTime() + 36 * 5 * 60_000)), completed: true, contracts: optionContracts,
+  });
+  assert.equal(result.processed, true);
+  assert.equal(result.finalSignal, StrategySignal.BUY_CE);
+  assert.equal(context.orchestrator.calls.length, 1);
+});
+
+test('rejects duplicate warm-up timestamps and ignores a live candle overlapping seeded history', async () => {
+  const context = adapter(StrategySignal.BUY_CE, 60);
+  const timestamp = new Date('2026-08-10T03:45:00.000Z');
+  assert.throws(() => context.adapter.seedHistoricalCandles([candle(timestamp), candle(timestamp)]), /duplicate timestamps/);
+
+  context.adapter.seedHistoricalCandles(Array.from({ length: 36 }, (_, index) => candle(new Date(timestamp.getTime() + index * 5 * 60_000))));
+  const overlap = await context.adapter.processCompletedCandle({ candle: candle(timestamp), completed: true, contracts: optionContracts });
+  assert.equal(overlap.processed, false);
+  assert.match(overlap.reasons[0], /overlaps seeded historical/);
+  assert.equal(context.orchestrator.calls.length, 0);
+});
