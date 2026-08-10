@@ -93,23 +93,89 @@ function createService(candles: StoredCandle[]): {
   return { service, repository, client };
 }
 
-test('synchronizes the entire requested range when the database is empty', async () => {
+test('uses one chunk for a single-day missing range', async () => {
   const { service, client } = createService([]);
 
-  await service.sync(instrumentKey, '2026-07-10', '2026-08-05');
+  await service.sync(instrumentKey, '2026-07-10', '2026-07-10');
 
   assert.deepEqual(client.calls, [
-    { instrumentKey, fromDate: '2026-07-10', toDate: '2026-08-05' },
+    { instrumentKey, fromDate: '2026-07-10', toDate: '2026-07-10' },
   ]);
 });
 
-test('backfills the missing leading range when only the last requested day exists', async () => {
-  const { service, client } = createService([createStoredCandle('2026-08-05')]);
+test('uses one chunk for a missing range fully inside one month', async () => {
+  const { service, client } = createService([]);
 
-  await service.sync(instrumentKey, '2026-07-10', '2026-08-05');
+  await service.sync(instrumentKey, '2026-07-10', '2026-07-31');
 
   assert.deepEqual(client.calls, [
-    { instrumentKey, fromDate: '2026-07-10', toDate: '2026-08-04' },
+    { instrumentKey, fromDate: '2026-07-10', toDate: '2026-07-31' },
+  ]);
+});
+
+test('splits a March 1 through July 9 range into five calendar-month chunks', async () => {
+  const { service, client } = createService([]);
+
+  await service.sync(instrumentKey, '2026-03-01', '2026-07-09');
+
+  assert.deepEqual(client.calls, [
+    { instrumentKey, fromDate: '2026-03-01', toDate: '2026-03-31' },
+    { instrumentKey, fromDate: '2026-04-01', toDate: '2026-04-30' },
+    { instrumentKey, fromDate: '2026-05-01', toDate: '2026-05-31' },
+    { instrumentKey, fromDate: '2026-06-01', toDate: '2026-06-30' },
+    { instrumentKey, fromDate: '2026-07-01', toDate: '2026-07-09' },
+  ]);
+});
+
+test('handles partial first and last months without overlapping chunk boundaries', async () => {
+  const { service, client } = createService([]);
+
+  await service.sync(instrumentKey, '2026-03-15', '2026-04-10');
+
+  assert.deepEqual(client.calls, [
+    { instrumentKey, fromDate: '2026-03-15', toDate: '2026-03-31' },
+    { instrumentKey, fromDate: '2026-04-01', toDate: '2026-04-10' },
+  ]);
+});
+
+test('does not duplicate boundary dates between adjacent monthly chunks', async () => {
+  const { service, client } = createService([]);
+
+  await service.sync(instrumentKey, '2026-01-31', '2026-03-01');
+
+  assert.deepEqual(client.calls, [
+    { instrumentKey, fromDate: '2026-01-31', toDate: '2026-01-31' },
+    { instrumentKey, fromDate: '2026-02-01', toDate: '2026-02-28' },
+    { instrumentKey, fromDate: '2026-03-01', toDate: '2026-03-01' },
+  ]);
+  assert.equal(client.calls[0].toDate, '2026-01-31');
+  assert.equal(client.calls[1].fromDate, '2026-02-01');
+  assert.equal(client.calls[1].toDate, '2026-02-28');
+  assert.equal(client.calls[2].fromDate, '2026-03-01');
+});
+
+test('splits ranges correctly across the December to January year boundary', async () => {
+  const { service, client } = createService([]);
+
+  await service.sync(instrumentKey, '2025-12-15', '2026-01-10');
+
+  assert.deepEqual(client.calls, [
+    { instrumentKey, fromDate: '2025-12-15', toDate: '2025-12-31' },
+    { instrumentKey, fromDate: '2026-01-01', toDate: '2026-01-10' },
+  ]);
+});
+
+test('chunks a leading backfill range before the existing coverage', async () => {
+  const { service, client } = createService([createStoredCandle('2026-07-09')]);
+
+  await service.sync(instrumentKey, '2026-03-01', '2026-07-09');
+
+  assert.deepEqual(client.calls, [
+    { instrumentKey, fromDate: '2026-03-01', toDate: '2026-03-31' },
+    { instrumentKey, fromDate: '2026-04-01', toDate: '2026-04-30' },
+    { instrumentKey, fromDate: '2026-05-01', toDate: '2026-05-31' },
+    { instrumentKey, fromDate: '2026-06-01', toDate: '2026-06-30' },
+    { instrumentKey, fromDate: '2026-07-01', toDate: '2026-07-08' },
   ]);
 });
 
@@ -137,6 +203,18 @@ test('synchronizes only the newer trailing range for forward incremental coverag
   ]);
 });
 
+test('chunks a trailing incremental range after the existing coverage', async () => {
+  const { service, client } = createService([createStoredCandle('2026-07-10')]);
+
+  await service.sync(instrumentKey, '2026-07-10', '2026-09-10');
+
+  assert.deepEqual(client.calls, [
+    { instrumentKey, fromDate: '2026-07-11', toDate: '2026-07-31' },
+    { instrumentKey, fromDate: '2026-08-01', toDate: '2026-08-31' },
+    { instrumentKey, fromDate: '2026-09-01', toDate: '2026-09-10' },
+  ]);
+});
+
 test('synchronizes both leading and trailing ranges around existing middle coverage', async () => {
   const { service, client } = createService([
     createStoredCandle('2026-07-20'),
@@ -147,7 +225,8 @@ test('synchronizes both leading and trailing ranges around existing middle cover
 
   assert.deepEqual(client.calls, [
     { instrumentKey, fromDate: '2026-07-10', toDate: '2026-07-19' },
-    { instrumentKey, fromDate: '2026-07-26', toDate: '2026-08-05' },
+    { instrumentKey, fromDate: '2026-07-26', toDate: '2026-07-31' },
+    { instrumentKey, fromDate: '2026-08-01', toDate: '2026-08-05' },
   ]);
 });
 

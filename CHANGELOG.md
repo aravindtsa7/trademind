@@ -118,3 +118,37 @@ Completed Upstox OAuth Authentication.
 - Indicator Engine
 - Comprehensive unit tests
 - Real MySQL integration test using NIFTY historical candles
+
+## [v0.6.1] - 2026-08-07
+
+### Added
+
+- Performance Analyzer
+- Strategy Analyzer
+- Parameter Analyzer
+- Market Regime Analyzer
+- Regime-aware Strategy Analyzer
+- Research Runner
+- Research Report Generator
+- Real NIFTY research integration testing
+
+### Research Validation
+
+Evaluated EMA Cross and EMA Trend Confirmation using:
+
+- 19 complete NIFTY sessions
+- 1,425 five-minute candles
+
+EMA Cross:
+- 21 signals
+- 61.11% 60-minute directional accuracy
+- Average 60-minute directional move: +8.82 points
+- Average MFE: 38.48
+- Average MAE: 28.52
+
+EMA Trend Confirmation:
+- 15 signals
+- 50.00% 60-minute directional accuracy
+- Average 60-minute directional move: +5.24 points
+- Average MFE: 35.74
+- Average MAE: 33.44

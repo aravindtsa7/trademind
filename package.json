@@ -12,7 +12,8 @@
     "prisma:validate": "prisma validate",
     "test:market-data": "tsx src/tests/test-market-data.ts",
     "test:historical-candles": "tsx src/tests/test-historical-candles.ts",
-    "test:indicator-engine": "tsx src/tests/test-indicator-engine.ts"
+    "test:indicator-engine": "tsx src/tests/test-indicator-engine.ts",
+    "test:live-paper-trading": "tsx src/tests/test-live-paper-trading.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",

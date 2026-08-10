@@ -1,0 +1,100 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
+import { CreatePaperOrderDto } from '../dto/paper-order.dto';
+import { PaperOrderStatus, PaperPremiumUpdate } from '../types/paper-trading.types';
+import PaperOrderManagerService from './paper-order-manager.service';
+import PaperPositionMonitorService from './paper-position-monitor.service';
+
+const entryTime = new Date('2026-08-10T04:00:00.000Z');
+
+function orderInput(instrumentKey = 'NSE_FO|first'): CreatePaperOrderDto {
+  return {
+    signalTimestamp: new Date(entryTime.getTime()),
+    signalType: StrategySignal.BUY_CE,
+    contract: { instrumentKey, tradingSymbol: `NIFTY ${instrumentKey}`, optionType: 'CE', strikePrice: 24_500, expiry: new Date('2026-08-13T00:00:00.000Z'), lotSize: 75, quantity: 75 },
+    entry: { entryTimestamp: new Date(entryTime.getTime()), observedEntryPremium: 100, simulatedEntryPremium: 100 },
+    exitConfiguration: { targetPercent: 30, stopLossPercent: 20, maximumHoldingMinutes: 60 },
+  };
+}
+
+function update(instrumentKey: string, premium: number, minutes = 1): PaperPremiumUpdate {
+  return { instrumentKey, premium, timestamp: new Date(entryTime.getTime() + minutes * 60_000) };
+}
+
+function open(manager: PaperOrderManagerService, instrumentKey = 'NSE_FO|first') {
+  const order = manager.create(orderInput(instrumentKey));
+  return manager.markOpen(order.id);
+}
+
+test('returns NONE when premium is between target and stop', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const results = new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 100));
+  assert.equal(results[0].action, 'NONE');
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.OPEN);
+});
+
+test('closes matching open order on target', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const result = new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 130));
+  assert.equal(result[0].action, PaperOrderStatus.TARGET_EXIT);
+  assert.equal(manager.getById(order.id)?.exit?.simulatedExitPremium, 130);
+});
+
+test('closes matching open order on stop', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const result = new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 80));
+  assert.equal(result[0].action, PaperOrderStatus.STOP_EXIT);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.STOP_EXIT);
+});
+
+test('closes matching open order on time limit', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const result = new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 100, 60));
+  assert.equal(result[0].action, PaperOrderStatus.TIME_EXIT);
+});
+
+test('uses target precedence over time exit', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const result = new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 130, 60));
+  assert.equal(result[0].action, PaperOrderStatus.TARGET_EXIT);
+});
+
+test('uses stop precedence over time exit', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const result = new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 80, 60));
+  assert.equal(result[0].action, PaperOrderStatus.STOP_EXIT);
+});
+
+test('ignores orders for a different instrument', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const result = new PaperPositionMonitorService(manager).monitor(update('NSE_FO|other', 130));
+  assert.deepEqual(result, []);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.OPEN);
+});
+
+test('ignores pending orders', () => {
+  const manager = new PaperOrderManagerService(); const order = manager.create(orderInput()); const result = new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 130));
+  assert.deepEqual(result, []);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.PENDING);
+});
+
+test('ignores already closed orders', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); manager.close(order.id, { exitReason: PaperOrderStatus.TARGET_EXIT, exitTimestamp: update(order.contract.instrumentKey, 130).timestamp, observedExitPremium: 130, simulatedExitPremium: 130 });
+  assert.deepEqual(new PaperPositionMonitorService(manager).monitor(update(order.contract.instrumentKey, 140)), []);
+});
+
+test('processes multiple open orders for the same instrument', () => {
+  const manager = new PaperOrderManagerService(); const first = open(manager); const second = open(manager); const results = new PaperPositionMonitorService(manager).monitor(update(first.contract.instrumentKey, 130));
+  assert.equal(results.length, 2);
+  assert.ok(results.every((result) => result.action === PaperOrderStatus.TARGET_EXIT));
+  assert.equal(manager.getById(second.id)?.status, PaperOrderStatus.TARGET_EXIT);
+});
+
+test('processes only the matching instrument among multiple instruments', () => {
+  const manager = new PaperOrderManagerService(); const first = open(manager, 'NSE_FO|first'); const second = open(manager, 'NSE_FO|second'); const results = new PaperPositionMonitorService(manager).monitor(update(first.contract.instrumentKey, 130));
+  assert.equal(results.length, 1);
+  assert.equal(manager.getById(first.id)?.status, PaperOrderStatus.TARGET_EXIT);
+  assert.equal(manager.getById(second.id)?.status, PaperOrderStatus.OPEN);
+});
+
+test('does not mutate the caller premium update', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const liveUpdate = update(order.contract.instrumentKey, 100); const original = structuredClone(liveUpdate);
+  const result = new PaperPositionMonitorService(manager).monitor(liveUpdate);
+  assert.deepEqual(liveUpdate, original);
+  result[0].timestamp.setTime(0);
+  assert.notEqual(manager.getById(order.id)?.entry.entryTimestamp.getTime(), 0);
+});
