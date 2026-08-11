@@ -91,3 +91,26 @@ model HistoricalCandleSyncLog {
   @@index([status])
   @@index([startedAt])
 }
+
+model HistoricalOptionCandle {
+  id            String   @id @default(uuid())
+  instrumentKey String
+  tradingSymbol String?
+  optionType    String?
+  strikePrice   Decimal?
+  expiry        DateTime?
+  timeframe     String
+  candleTime    DateTime
+  open          Decimal
+  high          Decimal
+  low           Decimal
+  close         Decimal
+  volume        BigInt
+  openInterest  BigInt?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([instrumentKey, timeframe, candleTime])
+  @@index([instrumentKey, timeframe])
+  @@index([candleTime])
+}
