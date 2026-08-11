@@ -122,3 +122,17 @@ test('non-local preload fills only the missing sessions and reuses already compl
   assert.equal((await service.getOptionSession({ instrumentKey: 'COMPLETE', tradingDate: '2026-07-15' })).length, 375);
   assert.equal((await service.getOptionSession({ instrumentKey: 'MISSING', tradingDate: '2026-07-16' })).length, 375);
 });
+
+test('non-local preload attempts every required missing session before reporting fill failures', async () => {
+  const attempted: string[] = [];
+  const repository = { findByInstrumentDateSessions: async () => [], findRange: async () => [] } as unknown as HistoricalOptionCandleRepository;
+  const cache = {
+    getStats: () => ({ hits: 0, misses: attempted.length, stored: 0 }),
+    getCandles: async (instrumentKey: string, tradingDate: string) => { attempted.push(`${instrumentKey}|${tradingDate}`); if (instrumentKey === 'FAIL') throw new Error('authoritative response was invalid'); return candles(instrumentKey, tradingDate); },
+  } as unknown as HistoricalOptionCandleCacheService;
+  const service = new HistoricalOptionResearchPreloaderService(underlying(), repository, cache, false);
+
+  await assert.rejects(() => service.preloadOptionSessions([{ instrumentKey: 'FAIL', tradingDate: '2026-07-15' }, { instrumentKey: 'SUCCESS', tradingDate: '2026-07-16' }]), /Historical option cache fill failed for 1 required session/);
+  assert.deepEqual(attempted.sort(), ['FAIL|2026-07-15', 'SUCCESS|2026-07-16']);
+  assert.equal((await service.getOptionSession({ instrumentKey: 'SUCCESS', tradingDate: '2026-07-16' })).length, 375);
+});
