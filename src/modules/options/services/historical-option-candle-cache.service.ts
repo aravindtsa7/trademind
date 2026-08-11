@@ -50,7 +50,7 @@ export default class HistoricalOptionCandleCacheService {
         return this.toDtos(cached);
       }
       this.stats.misses += 1;
-      const downloaded = await this.client.fetchCandles(instrumentKey, tradingDate, tradingDate);
+      const downloaded = await this.fetchWithRetry(instrumentKey, tradingDate);
       downloadedCandleCount = downloaded.length;
       if (downloaded.length === 0) throw new Error(`Upstox returned no option candles for ${instrumentKey} on ${tradingDate}.`);
       const validation = this.validateDownloadedSession(downloaded, tradingDate);
@@ -82,6 +82,8 @@ export default class HistoricalOptionCandleCacheService {
     this.sessionResults.push({ instrumentKey, tradingDate, status: excludedCandleTimes.length === 0 ? 'downloaded' : 'normalized', downloadedCandleCount, storedCandleCount: stored.length, excludedCandleCount: excludedCandleTimes.length || undefined, extraCandleTimes: excludedCandleTimes.length === 0 ? undefined : excludedCandleTimes.map((candleTime) => candleTime.toISOString()) });
     return this.toDtos(persisted);
   }
+
+  private async fetchWithRetry(instrumentKey: string, tradingDate: string): Promise<ExpiredOptionCandleDto[]> { let failure: unknown; for (let attempt = 1; attempt <= 3; attempt += 1) { try { return await this.client.fetchCandles(instrumentKey, tradingDate, tradingDate); } catch (error) { failure = error; if (attempt < 3) await new Promise<void>((resolve) => setTimeout(resolve, attempt * 500)); } } throw failure; }
 
   private dayBounds(tradingDate: string): { from: Date; to: Date } { const from = new Date(`${tradingDate}T00:00:00+05:30`); const to = new Date(`${tradingDate}T23:59:59.999+05:30`); return { from, to }; }
   private isComplete(candles: readonly Date[], tradingDate: string): boolean {

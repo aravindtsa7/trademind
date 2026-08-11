@@ -1,9 +1,13 @@
 import { EmaResult } from '../../indicators/indicators/ema.indicator';
 import { RsiResult } from '../../indicators/indicators/rsi.indicator';
+import { AdxResult } from '../../indicators/indicators/adx.indicator';
 import IndicatorEngineService from '../../indicators/services/indicator-engine.service';
 import { Candle, IndicatorType } from '../../indicators/types';
 import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
 import EmaCrossStrategy from '../../strategies/strategies/ema-cross.strategy';
+import AdaptiveMarketRegimeService from '../../adaptive-intraday/services/adaptive-market-regime.service';
+import { AdaptivePrimaryMarketRegime } from '../../adaptive-intraday/types/adaptive-market-regime.types';
+import V2TrendDownEntryEvaluatorService from '../../adaptive-intraday/services/v2-trend-down-entry-evaluator.service';
 import {
   LivePaperCompletedCandleInput,
   LivePaperEmaCrossStrategy,
@@ -18,6 +22,7 @@ const rsiPeriod = 14;
 const minimumHistory = slowPeriod + 1;
 const frozenUnderlying = 'NIFTY 50';
 const frozenExitPolicy = { targetPercent: 30, stopLossPercent: 20, maximumHoldingMinutes: 60 };
+const v2ExitPolicy = { targetPercent: Number(process.env.V2_TARGET_PERCENT ?? 5), stopLossPercent: Number(process.env.V2_STOP_PERCENT ?? 5), maximumHoldingMinutes: Number(process.env.V2_MAX_HOLD_MINUTES ?? 15) };
 
 /**
  * Consumes completed NIFTY five-minute candles for the frozen EMA15/EMA35 +
@@ -27,6 +32,9 @@ export default class LivePaperStrategyAdapterService {
   private readonly history: Candle[] = [];
   private readonly processedTimestamps = new Set<number>();
   private readonly seededHistoricalTimestamps = new Set<number>();
+  private readonly v2 = process.env.TRADING_STRATEGY_VERSION === 'V2';
+  private readonly v2Evaluator = new V2TrendDownEntryEvaluatorService();
+  private readonly regimeService = new AdaptiveMarketRegimeService({ trendStrengthThreshold: 20, emaProximityPercent: 0.05, highVolatilityThreshold: 0.10, lowVolatilityThreshold: 0.05 });
 
   constructor(
     private readonly orchestrator: LivePaperOrchestrator,
@@ -99,6 +107,7 @@ export default class LivePaperStrategyAdapterService {
         { type: IndicatorType.EMA, period: fastPeriod },
         { type: IndicatorType.EMA, period: slowPeriod },
         { type: IndicatorType.RSI, period: rsiPeriod },
+        { type: IndicatorType.ADX, period: 14 }, { type: IndicatorType.ATR, period: 14 },
       ],
     });
     const fastEma = this.getEma(indicators, fastPeriod);
@@ -107,6 +116,7 @@ export default class LivePaperStrategyAdapterService {
     const latestRsi = rsi.values.find((entry) => entry.timestamp.getTime() === timestamp)?.value;
     if (latestRsi === undefined) throw new Error('RSI14 has no value for the completed candle timestamp.');
 
+    if (this.v2) return this.processV2(input, indicators, fastEma, slowEma, latestRsi);
     const raw = this.emaCrossStrategy.evaluate({ fastEma, slowEma }) as { signal: StrategySignal; reasons: string[] };
     const timeFilterAllowed = this.isAllowedMarketTime(candle.timestamp);
     let finalSignal = StrategySignal.NO_TRADE;
@@ -140,6 +150,14 @@ export default class LivePaperStrategyAdapterService {
     };
   }
 
+  private async processV2(input: LivePaperCompletedCandleInput, indicators: ReturnType<IndicatorEngineService['calculate']>, fastEma: EmaResult, slowEma: EmaResult, rsi14: number): Promise<LivePaperStrategyResult> {
+    const candle = input.candle; const key = candle.timestamp.getTime(); const completedAt = new Date(key + 5 * 60_000); const adx = this.getAdx(indicators).values.find((value) => value.timestamp.getTime() === key); const atr = this.getScalar(indicators, IndicatorType.ATR, 14).values.find((value) => value.timestamp.getTime() === key)?.value; const ema15 = latestEma(fastEma); const ema35 = latestEma(slowEma);
+    const regime = adx && atr !== undefined ? this.regimeService.classify({ timestamp: candle.timestamp, close: candle.close, ema15, ema35, rsi14, adx14: adx.adx, atr14: atr }).primaryRegime : undefined;
+    const decision = this.v2Evaluator.evaluate({ completedCandleTimestamp: completedAt, regime, close: candle.close, high: candle.high, ema35, rsi14 }); const reasons = [`V2 ${decision.reason}: completedAt=${completedAt.toISOString()} regime=${regime ?? 'NOT_READY'} close=${candle.close} ema35=${ema35} proximity=${decision.proximityPercent ?? 'N/A'} rsi14=${rsi14} cooldownEligible=${decision.cooldownEligible}.`];
+    if (!decision.entry) return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.NO_TRADE, timeFilterAllowed: true, finalSignal: StrategySignal.NO_TRADE, reasons, processed: true };
+    const orchestration = await this.orchestrator.createFromSignal({ signal: { signalTimestamp: completedAt, signalType: StrategySignal.BUY_PE, underlying: frozenUnderlying, spotPrice: candle.close }, contracts: input.contracts, exitPolicy: { ...v2ExitPolicy } }); reasons.push(`Paper order ${orchestration.order.id} opened for V2 BUY_PE.`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, orchestration, reasons, processed: true };
+  }
+
   private getEma(indicators: ReturnType<IndicatorEngineService['calculate']>, period: number): EmaResult {
     const found = indicators.indicators.find((entry) => entry.config.type === IndicatorType.EMA && 'period' in entry.config && entry.config.period === period)?.result;
     if (!found || !('period' in found) || !('values' in found) || found.period !== period) throw new Error(`EMA${period} indicator result is missing.`);
@@ -151,6 +169,8 @@ export default class LivePaperStrategyAdapterService {
     if (!found || !('period' in found) || !('values' in found) || found.period !== rsiPeriod) throw new Error('RSI14 indicator result is missing.');
     return found as RsiResult;
   }
+  private getAdx(indicators: ReturnType<IndicatorEngineService['calculate']>): AdxResult { const found = indicators.indicators.find((entry) => entry.config.type === IndicatorType.ADX && 'period' in entry.config && entry.config.period === 14)?.result; if (!found || !('values' in found)) throw new Error('ADX14 indicator result is missing.'); return found as AdxResult; }
+  private getScalar(indicators: ReturnType<IndicatorEngineService['calculate']>, type: IndicatorType, period: number): { values: Array<{ timestamp: Date; value: number }> } { const found = indicators.indicators.find((entry) => entry.config.type === type && 'period' in entry.config && entry.config.period === period)?.result; if (!found || !('values' in found)) throw new Error(`${type}${period} indicator result is missing.`); return found as { values: Array<{ timestamp: Date; value: number }> }; }
 
   private isAllowedMarketTime(timestamp: Date): boolean {
     const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(timestamp).map((part) => [part.type, part.value]));
