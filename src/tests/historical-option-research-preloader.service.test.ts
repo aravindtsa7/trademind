@@ -52,3 +52,73 @@ test('RESEARCH_LOCAL_ONLY reports missing and incomplete exact sessions without 
   const stats = service.getStats();
   assert.equal(upstoxCalls, 0); assert.equal(fallbackCalls, 0); assert.equal(stats.incompleteLocalSessions, 1); assert.equal(stats.missingLocalSessions, 1); assert.equal(stats.completeLocalSessions, 0); assert.equal(stats.bulkPreloadQueryCount, 1);
 });
+
+test('diagnostics deduplicates exact sessions and reports local completeness without touching the option cache', async () => {
+  const complete = stored(candles('COMPLETE', '2026-07-15')); const incomplete = stored(candles('INCOMPLETE', '2026-07-16').slice(0, 12)); let bulkRequests: readonly HistoricalOptionCandleSessionRange[] = [];
+  const repository = { findByInstrumentDateSessions: async (requests: readonly HistoricalOptionCandleSessionRange[]) => { bulkRequests = requests; return [...complete, ...incomplete]; } } as unknown as HistoricalOptionCandleRepository;
+  const cache = { getCandles: async () => { throw new Error('Diagnostics must not access the option cache.'); } } as unknown as HistoricalOptionCandleCacheService;
+  const service = new HistoricalOptionResearchPreloaderService(underlying(), repository, cache, false);
+
+  const inspection = await service.inspectLocalOptionSessions([
+    { instrumentKey: 'COMPLETE', tradingDate: '2026-07-15' },
+    { instrumentKey: 'COMPLETE', tradingDate: '2026-07-15' },
+    { instrumentKey: 'INCOMPLETE', tradingDate: '2026-07-16' },
+    { instrumentKey: 'MISSING', tradingDate: '2026-07-17' },
+  ]);
+
+  assert.deepEqual(bulkRequests, [{ instrumentKey: 'COMPLETE', tradingDate: '2026-07-15' }, { instrumentKey: 'INCOMPLETE', tradingDate: '2026-07-16' }, { instrumentKey: 'MISSING', tradingDate: '2026-07-17' }]);
+  assert.deepEqual(inspection, {
+    uniqueRequiredSessions: 3,
+    completeLocalSessions: 1,
+    incompleteLocalSessions: 1,
+    missingLocalSessions: 1,
+    sessions: [
+      { instrumentKey: 'COMPLETE', tradingDate: '2026-07-15', locallyAvailableCandleCount: 375, complete: true },
+      { instrumentKey: 'INCOMPLETE', tradingDate: '2026-07-16', locallyAvailableCandleCount: 12, complete: false },
+      { instrumentKey: 'MISSING', tradingDate: '2026-07-17', locallyAvailableCandleCount: 0, complete: false },
+    ],
+  });
+});
+
+test('verified cleanup deletes only ten out-of-session rows and leaves the complete 375-minute window intact', async () => {
+  const instrumentKey = 'OVERFULL'; const tradingDate = '2026-08-04'; const base = candles(instrumentKey, tradingDate); const extras = Array.from({ length: 10 }, (_, index) => ({ ...base[374], candleTime: new Date(`${tradingDate}T15:${String(30 + index).padStart(2, '0')}:00+05:30`) })); let rows = stored([...base, ...extras]); let deleted: Date[] = [];
+  const repository = {
+    findByInstrumentDateSessions: async () => rows,
+    findRange: async () => rows,
+    deleteExactCandleTimes: async (_instrument: string, _timeframe: string, candleTimes: readonly Date[]) => { deleted = [...candleTimes]; const timestamps = new Set(candleTimes.map((candleTime) => candleTime.getTime())); const before = rows.length; rows = rows.filter((row) => !timestamps.has(row.candleTime.getTime())); return before - rows.length; },
+  } as unknown as HistoricalOptionCandleRepository;
+  const service = new HistoricalOptionResearchPreloaderService(underlying(), repository, {} as HistoricalOptionCandleCacheService, false);
+
+  const cleaned = await service.removeVerifiedOutOfSessionRows([{ instrumentKey, tradingDate }]);
+
+  assert.equal(cleaned.length, 1); assert.equal(cleaned[0].removedCandleTimes.length, 10); assert.equal(rows.length, 375); assert.equal(deleted.length, 10);
+  assert.ok(rows.every((row) => row.candleTime.getTime() >= new Date(`${tradingDate}T09:15:00+05:30`).getTime() && row.candleTime.getTime() <= new Date(`${tradingDate}T15:29:00+05:30`).getTime()));
+});
+
+test('verified cleanup refuses sessions with a missing expected minute', async () => {
+  const instrumentKey = 'GAPPED'; const tradingDate = '2026-08-04'; const rows = stored([...candles(instrumentKey, tradingDate).slice(1), ...Array.from({ length: 10 }, (_, index) => ({ ...candles(instrumentKey, tradingDate)[374], candleTime: new Date(`${tradingDate}T15:${String(30 + index).padStart(2, '0')}:00+05:30`) }))]); let deletes = 0;
+  const repository = { findByInstrumentDateSessions: async () => rows, deleteExactCandleTimes: async () => { deletes += 1; return 0; } } as unknown as HistoricalOptionCandleRepository;
+  const service = new HistoricalOptionResearchPreloaderService(underlying(), repository, {} as HistoricalOptionCandleCacheService, false);
+
+  await assert.rejects(() => service.removeVerifiedOutOfSessionRows([{ instrumentKey, tradingDate }]), /Refusing out-of-session cleanup/);
+  assert.equal(deletes, 0);
+});
+
+test('non-local preload fills only the missing sessions and reuses already complete sessions', async () => {
+  const completeRows = stored(candles('COMPLETE', '2026-07-15')); const downloadedRows = candles('MISSING', '2026-07-16'); let cacheRequests: Array<{ instrumentKey: string; tradingDate: string }> = [];
+  const repository = {
+    findByInstrumentDateSessions: async () => completeRows,
+    findRange: async () => [],
+  } as unknown as HistoricalOptionCandleRepository;
+  const cache = {
+    getStats: () => ({ hits: 0, misses: cacheRequests.length, stored: cacheRequests.length * 375 }),
+    getCandles: async (instrumentKey: string, tradingDate: string) => { cacheRequests.push({ instrumentKey, tradingDate }); return downloadedRows.map((row) => ({ ...row })); },
+  } as unknown as HistoricalOptionCandleCacheService;
+  const service = new HistoricalOptionResearchPreloaderService(underlying(), repository, cache, false);
+
+  await service.preloadOptionSessions([{ instrumentKey: 'COMPLETE', tradingDate: '2026-07-15' }, { instrumentKey: 'MISSING', tradingDate: '2026-07-16' }]);
+
+  assert.deepEqual(cacheRequests, [{ instrumentKey: 'MISSING', tradingDate: '2026-07-16' }]);
+  assert.equal((await service.getOptionSession({ instrumentKey: 'COMPLETE', tradingDate: '2026-07-15' })).length, 375);
+  assert.equal((await service.getOptionSession({ instrumentKey: 'MISSING', tradingDate: '2026-07-16' })).length, 375);
+});

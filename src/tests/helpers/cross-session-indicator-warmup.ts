@@ -43,6 +43,18 @@ export function prepareCrossSessionIndicatorWarmup(
   });
 }
 
+/**
+ * Restricts the sessions that are research targets after indicator preparation.
+ * Keeping this separate from preparation preserves each target's warm-up from
+ * earlier completed trading sessions.
+ */
+export function filterCrossSessionResearchTargets(
+  sessions: readonly CrossSessionPreparedSession[],
+  endDate: string | undefined,
+): CrossSessionPreparedSession[] {
+  return endDate === undefined ? [...sessions] : sessions.filter((session) => session.date <= endDate);
+}
+
 export function isReadyAt(session: CrossSessionPreparedSession, timestamp: Date): boolean {
   const regimeReady = session.regimePoints.some((point) => point.availableAt.getTime() <= timestamp.getTime() && point.regime !== undefined);
   return regimeReady && ([1, 2, 3, 5] as const).every((minutes) => session.frames[minutes].allCandles.some((candle) => candle.timestamp.getTime() + minutes * 60_000 <= timestamp.getTime() && session.frames[minutes].ema15.has(candle.timestamp.getTime()) && session.frames[minutes].ema35.has(candle.timestamp.getTime()) && session.frames[minutes].rsi14.has(candle.timestamp.getTime())));

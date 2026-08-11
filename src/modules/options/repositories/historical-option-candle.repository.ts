@@ -27,6 +27,11 @@ export default class HistoricalOptionCandleRepository {
     return rows.flat();
   }
 
+  async deleteExactCandleTimes(instrumentKey: string, timeframe: string, candleTimes: readonly Date[]): Promise<number> {
+    if (candleTimes.length === 0) return 0;
+    return this.execute('delete exact candle times', async () => (await prisma.historicalOptionCandle.deleteMany({ where: { instrumentKey, timeframe, candleTime: { in: [...candleTimes] } } })).count);
+  }
+
   async bulkUpsert(inputs: Prisma.HistoricalOptionCandleCreateInput[]): Promise<HistoricalOptionCandle[]> {
     return this.execute('bulk upsert', () => prisma.$transaction(inputs.map((input) => prisma.historicalOptionCandle.upsert({ where: { instrumentKey_timeframe_candleTime: { instrumentKey: input.instrumentKey, timeframe: input.timeframe, candleTime: input.candleTime } }, create: input, update: { tradingSymbol: input.tradingSymbol, optionType: input.optionType, strikePrice: input.strikePrice, expiry: input.expiry, open: input.open, high: input.high, low: input.low, close: input.close, volume: input.volume, openInterest: input.openInterest } }))));
   }

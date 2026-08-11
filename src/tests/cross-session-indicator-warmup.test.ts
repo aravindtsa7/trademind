@@ -4,7 +4,7 @@ import AdaptiveMarketRegimeService from '../modules/adaptive-intraday/services/a
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
 import IndicatorEngineService from '../modules/indicators/services/indicator-engine.service';
 import { Candle } from '../modules/indicators/types';
-import { assertNoFutureWarmup, isCooldownEligible, prepareCrossSessionIndicatorWarmup, sameIstTradingDate } from './helpers/cross-session-indicator-warmup';
+import { assertNoFutureWarmup, filterCrossSessionResearchTargets, isCooldownEligible, prepareCrossSessionIndicatorWarmup, sameIstTradingDate } from './helpers/cross-session-indicator-warmup';
 
 function session(date: string, base: number): Candle[] {
   const start = new Date(`${date}T09:15:00+05:30`).getTime();
@@ -45,6 +45,20 @@ test('calendar gaps use the latest available prior trading session and never war
 
   assert.ok(target.frames[5].allCandles.some((candle) => candle.timestamp.toISOString().startsWith('2026-07-10')));
   assert.ok(target.frames[5].allCandles.filter((candle) => candle.timestamp.getTime() < mondayOpen).every((candle) => candle.timestamp.getTime() < mondayOpen));
+  assert.doesNotThrow(() => assertNoFutureWarmup(target));
+});
+
+test('end-date filtering excludes later targets while retained targets keep prior-session warm-up', () => {
+  const prepared = prepare([
+    ['2026-07-14', session('2026-07-14', 24_000)],
+    ['2026-07-15', session('2026-07-15', 24_100)],
+    ['2026-07-16', session('2026-07-16', 24_200)],
+  ]);
+  const targets = filterCrossSessionResearchTargets(prepared, '2026-07-15');
+  const target = targets[1];
+
+  assert.deepEqual(targets.map((entry) => entry.date), ['2026-07-14', '2026-07-15']);
+  assert.ok(target.frames[5].allCandles.some((candle) => candle.timestamp.toISOString().startsWith('2026-07-14')));
   assert.doesNotThrow(() => assertNoFutureWarmup(target));
 });
 
