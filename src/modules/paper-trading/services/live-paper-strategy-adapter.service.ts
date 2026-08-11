@@ -39,8 +39,9 @@ export default class LivePaperStrategyAdapterService {
   constructor(
     private readonly orchestrator: LivePaperOrchestrator,
     private readonly indicatorEngine: LivePaperIndicatorEngine = new IndicatorEngineService(),
-    private readonly emaCrossStrategy: LivePaperEmaCrossStrategy = new EmaCrossStrategy({ fastPeriod, slowPeriod })
-  ) {}
+    private readonly emaCrossStrategy: LivePaperEmaCrossStrategy = new EmaCrossStrategy({ fastPeriod, slowPeriod }),
+    private readonly isV2PositionOpen: () => boolean = () => false,
+  ) { if (this.v2 && process.env.PAPER_TRADING_ONLY !== 'true') throw new Error('V2 strategy is paper-only and requires PAPER_TRADING_ONLY=true.'); }
 
   /**
    * Adds completed historical candles without evaluating signals or invoking
@@ -155,6 +156,7 @@ export default class LivePaperStrategyAdapterService {
     const regime = adx && atr !== undefined ? this.regimeService.classify({ timestamp: candle.timestamp, close: candle.close, ema15, ema35, rsi14, adx14: adx.adx, atr14: atr }).primaryRegime : undefined;
     const decision = this.v2Evaluator.evaluate({ completedCandleTimestamp: completedAt, regime, close: candle.close, high: candle.high, ema35, rsi14 }); const reasons = [`V2 ${decision.reason}: completedAt=${completedAt.toISOString()} regime=${regime ?? 'NOT_READY'} close=${candle.close} ema35=${ema35} proximity=${decision.proximityPercent ?? 'N/A'} rsi14=${rsi14} cooldownEligible=${decision.cooldownEligible}.`];
     if (!decision.entry) return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.NO_TRADE, timeFilterAllowed: true, finalSignal: StrategySignal.NO_TRADE, reasons, processed: true };
+    if (this.isV2PositionOpen()) { reasons.push('V2_BLOCKED_POSITION_OPEN.'); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.NO_TRADE, timeFilterAllowed: true, finalSignal: StrategySignal.NO_TRADE, reasons, processed: true }; }
     const orchestration = await this.orchestrator.createFromSignal({ signal: { signalTimestamp: completedAt, signalType: StrategySignal.BUY_PE, underlying: frozenUnderlying, spotPrice: candle.close }, contracts: input.contracts, exitPolicy: { ...v2ExitPolicy } }); reasons.push(`Paper order ${orchestration.order.id} opened for V2 BUY_PE.`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, orchestration, reasons, processed: true };
   }
 

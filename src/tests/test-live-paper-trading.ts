@@ -180,7 +180,7 @@ async function run(): Promise<void> {
       },
     }
   );
-  const strategyAdapter = new LivePaperStrategyAdapterService(orchestration);
+  const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0);
   const warmupResult = await new PaperStrategyWarmupService(
     new HistoricalCandleRepository(),
     strategyAdapter
