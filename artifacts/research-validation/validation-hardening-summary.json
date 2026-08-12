@@ -1,0 +1,29 @@
+{
+  "version": "research-validation-hardening-v1",
+  "persistentHoldout": {
+    "implemented": true,
+    "atomicWrite": true,
+    "lockFile": true,
+    "secondAccessDenied": true,
+    "corruptLedgerFailsClosed": true
+  },
+  "matrices": {
+    "V2": "v2-session-result-matrix.json",
+    "V4": "v4-session-result-matrix.json"
+  },
+  "diagnostics": {
+    "V2": [
+      "v2-chronological-validation-report.json",
+      "v2-walk-forward-report.json",
+      "v2-multiple-testing-report.json"
+    ],
+    "V4": [
+      "v4-chronological-validation-report.json",
+      "v4-walk-forward-report.json",
+      "v4-multiple-testing-report.json"
+    ]
+  },
+  "holdoutPolicy": "V2/V4/V5/V6/V7 are LEGACY_CONTAMINATED; no clean OOS claim is made.",
+  "marketDataFetched": 0,
+  "runtimesStarted": 0
+}

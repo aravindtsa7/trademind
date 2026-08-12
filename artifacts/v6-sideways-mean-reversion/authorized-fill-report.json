@@ -1,0 +1,338 @@
+{
+  "authorizedRequests": [
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|40747|07-04-2026",
+      "tradingDate": "2026-04-07"
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|54794|13-04-2026",
+      "tradingDate": "2026-04-13"
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|63424|21-04-2026",
+      "tradingDate": "2026-04-17"
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|72269|28-04-2026",
+      "tradingDate": "2026-04-24"
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|42272|09-06-2026",
+      "tradingDate": "2026-06-08"
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|50607|16-06-2026",
+      "tradingDate": "2026-06-15"
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|65774|04-08-2026",
+      "tradingDate": "2026-07-30"
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|63437|21-04-2026",
+      "tradingDate": "2026-04-16"
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|63457|21-04-2026",
+      "tradingDate": "2026-04-20"
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|72272|28-04-2026",
+      "tradingDate": "2026-04-28"
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|57027|02-06-2026",
+      "tradingDate": "2026-06-02"
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|51384|14-07-2026",
+      "tradingDate": "2026-07-10"
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|57347|21-07-2026",
+      "tradingDate": "2026-07-17"
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|65700|04-08-2026",
+      "tradingDate": "2026-07-29"
+    }
+  ],
+  "remoteFetchesAttempted": 14,
+  "completed": [
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|40747|07-04-2026",
+      "tradingDate": "2026-04-07",
+      "result": {
+        "instrumentKey": "NSE_FO|40747|07-04-2026",
+        "tradingDate": "2026-04-07",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|54794|13-04-2026",
+      "tradingDate": "2026-04-13",
+      "result": {
+        "instrumentKey": "NSE_FO|54794|13-04-2026",
+        "tradingDate": "2026-04-13",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|63424|21-04-2026",
+      "tradingDate": "2026-04-17",
+      "result": {
+        "instrumentKey": "NSE_FO|63424|21-04-2026",
+        "tradingDate": "2026-04-17",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|72269|28-04-2026",
+      "tradingDate": "2026-04-24",
+      "result": {
+        "instrumentKey": "NSE_FO|72269|28-04-2026",
+        "tradingDate": "2026-04-24",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|42272|09-06-2026",
+      "tradingDate": "2026-06-08",
+      "result": {
+        "instrumentKey": "NSE_FO|42272|09-06-2026",
+        "tradingDate": "2026-06-08",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|50607|16-06-2026",
+      "tradingDate": "2026-06-15",
+      "result": {
+        "instrumentKey": "NSE_FO|50607|16-06-2026",
+        "tradingDate": "2026-06-15",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "CE",
+      "instrumentKey": "NSE_FO|65774|04-08-2026",
+      "tradingDate": "2026-07-30",
+      "result": {
+        "instrumentKey": "NSE_FO|65774|04-08-2026",
+        "tradingDate": "2026-07-30",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|63437|21-04-2026",
+      "tradingDate": "2026-04-16",
+      "result": {
+        "instrumentKey": "NSE_FO|63437|21-04-2026",
+        "tradingDate": "2026-04-16",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|63457|21-04-2026",
+      "tradingDate": "2026-04-20",
+      "result": {
+        "instrumentKey": "NSE_FO|63457|21-04-2026",
+        "tradingDate": "2026-04-20",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|72272|28-04-2026",
+      "tradingDate": "2026-04-28",
+      "result": {
+        "instrumentKey": "NSE_FO|72272|28-04-2026",
+        "tradingDate": "2026-04-28",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|57027|02-06-2026",
+      "tradingDate": "2026-06-02",
+      "result": {
+        "instrumentKey": "NSE_FO|57027|02-06-2026",
+        "tradingDate": "2026-06-02",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|51384|14-07-2026",
+      "tradingDate": "2026-07-10",
+      "result": {
+        "instrumentKey": "NSE_FO|51384|14-07-2026",
+        "tradingDate": "2026-07-10",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|57347|21-07-2026",
+      "tradingDate": "2026-07-17",
+      "result": {
+        "instrumentKey": "NSE_FO|57347|21-07-2026",
+        "tradingDate": "2026-07-17",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    },
+    {
+      "direction": "PE",
+      "instrumentKey": "NSE_FO|65700|04-08-2026",
+      "tradingDate": "2026-07-29",
+      "result": {
+        "instrumentKey": "NSE_FO|65700|04-08-2026",
+        "tradingDate": "2026-07-29",
+        "status": "downloaded",
+        "downloadedCandleCount": 375,
+        "storedCandleCount": 375
+      }
+    }
+  ],
+  "finalInspection": {
+    "uniqueRequiredSessions": 14,
+    "completeLocalSessions": 14,
+    "incompleteLocalSessions": 0,
+    "missingLocalSessions": 0,
+    "sessions": [
+      {
+        "instrumentKey": "NSE_FO|40747|07-04-2026",
+        "tradingDate": "2026-04-07",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|54794|13-04-2026",
+        "tradingDate": "2026-04-13",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|63424|21-04-2026",
+        "tradingDate": "2026-04-17",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|72269|28-04-2026",
+        "tradingDate": "2026-04-24",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|42272|09-06-2026",
+        "tradingDate": "2026-06-08",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|50607|16-06-2026",
+        "tradingDate": "2026-06-15",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|65774|04-08-2026",
+        "tradingDate": "2026-07-30",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|63437|21-04-2026",
+        "tradingDate": "2026-04-16",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|63457|21-04-2026",
+        "tradingDate": "2026-04-20",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|72272|28-04-2026",
+        "tradingDate": "2026-04-28",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|57027|02-06-2026",
+        "tradingDate": "2026-06-02",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|51384|14-07-2026",
+        "tradingDate": "2026-07-10",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|57347|21-07-2026",
+        "tradingDate": "2026-07-17",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      },
+      {
+        "instrumentKey": "NSE_FO|65700|04-08-2026",
+        "tradingDate": "2026-07-29",
+        "locallyAvailableCandleCount": 375,
+        "complete": true
+      }
+    ]
+  },
+  "phase2Allowed": true
+}

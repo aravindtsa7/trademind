@@ -98,3 +98,9 @@ test('does not mutate the caller premium update', () => {
   result[0].timestamp.setTime(0);
   assert.notEqual(manager.getById(order.id)?.entry.entryTimestamp.getTime(), 0);
 });
+
+test('V2 EOD uses the existing TIME_EXIT close path exactly once for an open paper position', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const monitor = new PaperPositionMonitorService(manager); const eod = new Date('2026-08-10T10:00:00.000Z');
+  const first = monitor.closeAtSessionEnd(eod, () => 101); const second = monitor.closeAtSessionEnd(eod, () => 101);
+  assert.equal(first[0].action, PaperOrderStatus.TIME_EXIT); assert.equal(first[0].observedPremium, 101); assert.deepEqual(second, []); assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TIME_EXIT);
+});

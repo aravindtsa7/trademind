@@ -1,0 +1,967 @@
+{
+  "targetSessions": 104,
+  "configurations": 2592,
+  "policiesPerConfiguration": 5,
+  "totalPolicyEvaluations": 12960,
+  "CE": {
+    "direction": "CE",
+    "policyCandidates": 5760,
+    "credibleAfter040Cost": 115,
+    "highestFrequency": {
+      "configKey": "V5_SCALPING|2m|CE|0.1|50|0.75|3|EMA_RECLAIM|0",
+      "direction": "CE",
+      "config": {
+        "timeframe": 2,
+        "direction": "CE",
+        "ema20ProximityPercent": 0.1,
+        "rsiThreshold": 50,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 2,
+        "stop": 2,
+        "hold": 3
+      },
+      "resolvedTrades": 125,
+      "tradesPerSession": 1.2,
+      "activeSessionTrades": 2.36,
+      "maxTradesPerDay": 5,
+      "grossAverage": 0.42,
+      "grossMedian": 2,
+      "netAverageAt020": 0.22,
+      "netAverageAt040": 0.02,
+      "netAverageAt060": -0.18,
+      "targetRate": 58.16,
+      "stopRate": 36.73,
+      "timeoutRate": 5.1,
+      "ambiguousRate": 21.6,
+      "ambiguousCount": 27,
+      "unavailableCount": 0,
+      "mfe5": 14.11,
+      "mae5": 7.89,
+      "credibleAt040": true
+    },
+    "highestQuality": {
+      "configKey": "V5_SCALPING|2m|CE|0.1|55|0.75|3|EMA_RECLAIM|5",
+      "direction": "CE",
+      "config": {
+        "timeframe": 2,
+        "direction": "CE",
+        "ema20ProximityPercent": 0.1,
+        "rsiThreshold": 55,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 5
+      },
+      "policy": {
+        "target": 2,
+        "stop": 2,
+        "hold": 5
+      },
+      "resolvedTrades": 78,
+      "tradesPerSession": 0.75,
+      "activeSessionTrades": 1.7,
+      "maxTradesPerDay": 3,
+      "grossAverage": 0.74,
+      "grossMedian": 2,
+      "netAverageAt020": 0.54,
+      "netAverageAt040": 0.34,
+      "netAverageAt060": 0.14,
+      "targetRate": 68.33,
+      "stopRate": 30,
+      "timeoutRate": 1.67,
+      "ambiguousRate": 23.08,
+      "ambiguousCount": 18,
+      "unavailableCount": 0,
+      "mfe5": 16.2,
+      "mae5": 6.38,
+      "credibleAt040": true
+    },
+    "bestBalanced": {
+      "configKey": "V5_SCALPING|2m|CE|0.1|50|0.75|3|EMA_RECLAIM|5",
+      "direction": "CE",
+      "config": {
+        "timeframe": 2,
+        "direction": "CE",
+        "ema20ProximityPercent": 0.1,
+        "rsiThreshold": 50,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 5
+      },
+      "policy": {
+        "target": 2,
+        "stop": 2,
+        "hold": 3
+      },
+      "resolvedTrades": 121,
+      "tradesPerSession": 1.16,
+      "activeSessionTrades": 2.28,
+      "maxTradesPerDay": 5,
+      "grossAverage": 0.46,
+      "grossMedian": 2,
+      "netAverageAt020": 0.26,
+      "netAverageAt040": 0.06,
+      "netAverageAt060": -0.14,
+      "targetRate": 58.95,
+      "stopRate": 35.79,
+      "timeoutRate": 5.26,
+      "ambiguousRate": 21.49,
+      "ambiguousCount": 26,
+      "unavailableCount": 0,
+      "mfe5": 13.34,
+      "mae5": 7.58,
+      "credibleAt040": true
+    },
+    "overlap": {
+      "V2": {
+        "exact": 0,
+        "plusMinus2Minutes": 0,
+        "plusMinus5Minutes": 0
+      },
+      "V4": {
+        "exact": 0,
+        "plusMinus2Minutes": 0,
+        "plusMinus5Minutes": 0
+      },
+      "incrementalTradesPerSessionAfterExactDuplicates": 1.16
+    }
+  },
+  "PE": {
+    "direction": "PE",
+    "policyCandidates": 5760,
+    "credibleAfter040Cost": 8,
+    "highestFrequency": {
+      "configKey": "V5_SCALPING|2m|PE|0.05|45|0.75|3|EMA_RECLAIM|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.05,
+        "rsiThreshold": 45,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 57,
+      "tradesPerSession": 0.55,
+      "activeSessionTrades": 1.84,
+      "maxTradesPerDay": 6,
+      "grossAverage": 0.68,
+      "grossMedian": 4,
+      "netAverageAt020": 0.48,
+      "netAverageAt040": 0.28,
+      "netAverageAt060": 0.08,
+      "targetRate": 51.92,
+      "stopRate": 46.15,
+      "timeoutRate": 1.92,
+      "ambiguousRate": 8.77,
+      "ambiguousCount": 5,
+      "unavailableCount": 0,
+      "mfe5": 11.85,
+      "mae5": 5.64,
+      "credibleAt040": true
+    },
+    "highestQuality": {
+      "configKey": "V5_SCALPING|2m|PE|0.05|45|0.75|3|EMA_RECLAIM|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.05,
+        "rsiThreshold": 45,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 57,
+      "tradesPerSession": 0.55,
+      "activeSessionTrades": 1.84,
+      "maxTradesPerDay": 6,
+      "grossAverage": 0.68,
+      "grossMedian": 4,
+      "netAverageAt020": 0.48,
+      "netAverageAt040": 0.28,
+      "netAverageAt060": 0.08,
+      "targetRate": 51.92,
+      "stopRate": 46.15,
+      "timeoutRate": 1.92,
+      "ambiguousRate": 8.77,
+      "ambiguousCount": 5,
+      "unavailableCount": 0,
+      "mfe5": 11.85,
+      "mae5": 5.64,
+      "credibleAt040": true
+    },
+    "bestBalanced": {
+      "configKey": "V5_SCALPING|2m|PE|0.05|45|0.75|3|EMA_RECLAIM|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.05,
+        "rsiThreshold": 45,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 57,
+      "tradesPerSession": 0.55,
+      "activeSessionTrades": 1.84,
+      "maxTradesPerDay": 6,
+      "grossAverage": 0.68,
+      "grossMedian": 4,
+      "netAverageAt020": 0.48,
+      "netAverageAt040": 0.28,
+      "netAverageAt060": 0.08,
+      "targetRate": 51.92,
+      "stopRate": 46.15,
+      "timeoutRate": 1.92,
+      "ambiguousRate": 8.77,
+      "ambiguousCount": 5,
+      "unavailableCount": 0,
+      "mfe5": 11.85,
+      "mae5": 5.64,
+      "credibleAt040": true
+    },
+    "overlap": {
+      "V2": {
+        "exact": 2,
+        "plusMinus2Minutes": 6,
+        "plusMinus5Minutes": 15
+      },
+      "V4": {
+        "exact": 4,
+        "plusMinus2Minutes": 12,
+        "plusMinus5Minutes": 13
+      },
+      "incrementalTradesPerSessionAfterExactDuplicates": 0.5
+    }
+  },
+  "combined": {
+    "status": "COMBINED",
+    "CE": {
+      "configKey": "V5_SCALPING|2m|CE|0.1|50|0.75|3|EMA_RECLAIM|5",
+      "direction": "CE",
+      "config": {
+        "timeframe": 2,
+        "direction": "CE",
+        "ema20ProximityPercent": 0.1,
+        "rsiThreshold": 50,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 5
+      },
+      "policy": {
+        "target": 2,
+        "stop": 2,
+        "hold": 3
+      },
+      "resolvedTrades": 121,
+      "tradesPerSession": 1.16,
+      "activeSessionTrades": 2.28,
+      "maxTradesPerDay": 5,
+      "grossAverage": 0.46,
+      "grossMedian": 2,
+      "netAverageAt020": 0.26,
+      "netAverageAt040": 0.06,
+      "netAverageAt060": -0.14,
+      "targetRate": 58.95,
+      "stopRate": 35.79,
+      "timeoutRate": 5.26,
+      "ambiguousRate": 21.49,
+      "ambiguousCount": 26,
+      "unavailableCount": 0,
+      "mfe5": 13.34,
+      "mae5": 7.58,
+      "credibleAt040": true
+    },
+    "PE": {
+      "configKey": "V5_SCALPING|2m|PE|0.05|45|0.75|3|EMA_RECLAIM|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.05,
+        "rsiThreshold": 45,
+        "bodyAtrMinimum": 0.75,
+        "pullbackLookbackBars": 3,
+        "confirmation": "EMA_RECLAIM",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 57,
+      "tradesPerSession": 0.55,
+      "activeSessionTrades": 1.84,
+      "maxTradesPerDay": 6,
+      "grossAverage": 0.68,
+      "grossMedian": 4,
+      "netAverageAt020": 0.48,
+      "netAverageAt040": 0.28,
+      "netAverageAt060": 0.08,
+      "targetRate": 51.92,
+      "stopRate": 46.15,
+      "timeoutRate": 1.92,
+      "ambiguousRate": 8.77,
+      "ambiguousCount": 5,
+      "unavailableCount": 0,
+      "mfe5": 11.85,
+      "mae5": 5.64,
+      "credibleAt040": true
+    },
+    "trades": 147,
+    "tradesPerSession": 1.41,
+    "grossAverage": 0.54,
+    "grossMedian": 2,
+    "netAverageAt040": 0.14,
+    "profitableDayPercent": 67.14,
+    "maxLosingTradeStreak": 5,
+    "CEContribution": 95,
+    "PEContribution": 52,
+    "daily": [
+      {
+        "date": "2026-03-04",
+        "grossReturn": 2,
+        "netAt040": 1.2
+      },
+      {
+        "date": "2026-03-09",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-03-10",
+        "grossReturn": 4,
+        "netAt040": 3.2
+      },
+      {
+        "date": "2026-03-11",
+        "grossReturn": -3,
+        "netAt040": -3.4
+      },
+      {
+        "date": "2026-03-13",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-03-16",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-03-18",
+        "grossReturn": 2,
+        "netAt040": 0.8
+      },
+      {
+        "date": "2026-03-19",
+        "grossReturn": -6,
+        "netAt040": -6.8
+      },
+      {
+        "date": "2026-03-23",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-03-25",
+        "grossReturn": 2,
+        "netAt040": 0
+      },
+      {
+        "date": "2026-03-27",
+        "grossReturn": 8,
+        "netAt040": 7.2
+      },
+      {
+        "date": "2026-04-01",
+        "grossReturn": -4,
+        "netAt040": -4.8
+      },
+      {
+        "date": "2026-04-06",
+        "grossReturn": 4,
+        "netAt040": 3.2
+      },
+      {
+        "date": "2026-04-07",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-04-08",
+        "grossReturn": 2,
+        "netAt040": 0.8
+      },
+      {
+        "date": "2026-04-10",
+        "grossReturn": -4,
+        "netAt040": -5.6
+      },
+      {
+        "date": "2026-04-15",
+        "grossReturn": 2.43,
+        "netAt040": 0.83
+      },
+      {
+        "date": "2026-04-16",
+        "grossReturn": 8,
+        "netAt040": 6.8
+      },
+      {
+        "date": "2026-04-17",
+        "grossReturn": -4,
+        "netAt040": -4.8
+      },
+      {
+        "date": "2026-04-21",
+        "grossReturn": -4,
+        "netAt040": -4.8
+      },
+      {
+        "date": "2026-04-22",
+        "grossReturn": -3,
+        "netAt040": -3.4
+      },
+      {
+        "date": "2026-04-24",
+        "grossReturn": -2,
+        "netAt040": -3.2
+      },
+      {
+        "date": "2026-04-27",
+        "grossReturn": 6,
+        "netAt040": 4.8
+      },
+      {
+        "date": "2026-04-28",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-04-29",
+        "grossReturn": 0,
+        "netAt040": -0.8
+      },
+      {
+        "date": "2026-04-30",
+        "grossReturn": 3,
+        "netAt040": 1.8
+      },
+      {
+        "date": "2026-05-04",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-05-06",
+        "grossReturn": -4,
+        "netAt040": -4.8
+      },
+      {
+        "date": "2026-05-07",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-05-08",
+        "grossReturn": -15,
+        "netAt040": -17
+      },
+      {
+        "date": "2026-05-12",
+        "grossReturn": 9,
+        "netAt040": 7.4
+      },
+      {
+        "date": "2026-05-14",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-05-15",
+        "grossReturn": 8,
+        "netAt040": 6.8
+      },
+      {
+        "date": "2026-05-18",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-05-19",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-05-21",
+        "grossReturn": -4,
+        "netAt040": -4.8
+      },
+      {
+        "date": "2026-05-22",
+        "grossReturn": -2,
+        "netAt040": -3.2
+      },
+      {
+        "date": "2026-05-25",
+        "grossReturn": 0,
+        "netAt040": -0.8
+      },
+      {
+        "date": "2026-05-27",
+        "grossReturn": 3.59,
+        "netAt040": 2.79
+      },
+      {
+        "date": "2026-05-29",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-06-01",
+        "grossReturn": -1,
+        "netAt040": -3
+      },
+      {
+        "date": "2026-06-02",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-06-03",
+        "grossReturn": 3,
+        "netAt040": 1.8
+      },
+      {
+        "date": "2026-06-04",
+        "grossReturn": -3,
+        "netAt040": -3.4
+      },
+      {
+        "date": "2026-06-05",
+        "grossReturn": 2,
+        "netAt040": 1.2
+      },
+      {
+        "date": "2026-06-08",
+        "grossReturn": -2,
+        "netAt040": -3.2
+      },
+      {
+        "date": "2026-06-10",
+        "grossReturn": 8,
+        "netAt040": 6.4
+      },
+      {
+        "date": "2026-06-11",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-06-12",
+        "grossReturn": 0.62,
+        "netAt040": -0.18
+      },
+      {
+        "date": "2026-06-17",
+        "grossReturn": 1.57,
+        "netAt040": 0.37
+      },
+      {
+        "date": "2026-06-18",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-06-22",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-06-24",
+        "grossReturn": 4,
+        "netAt040": 3.2
+      },
+      {
+        "date": "2026-06-25",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-06-29",
+        "grossReturn": -2,
+        "netAt040": -3.2
+      },
+      {
+        "date": "2026-07-03",
+        "grossReturn": -2,
+        "netAt040": -3.2
+      },
+      {
+        "date": "2026-07-06",
+        "grossReturn": 2,
+        "netAt040": 0.8
+      },
+      {
+        "date": "2026-07-07",
+        "grossReturn": -2,
+        "netAt040": -2.4
+      },
+      {
+        "date": "2026-07-08",
+        "grossReturn": -3,
+        "netAt040": -3.4
+      },
+      {
+        "date": "2026-07-10",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-07-15",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-07-17",
+        "grossReturn": -2,
+        "netAt040": -3.2
+      },
+      {
+        "date": "2026-07-20",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-07-21",
+        "grossReturn": 1,
+        "netAt040": 0.2
+      },
+      {
+        "date": "2026-07-22",
+        "grossReturn": 4,
+        "netAt040": 3.6
+      },
+      {
+        "date": "2026-07-24",
+        "grossReturn": 2,
+        "netAt040": 1.6
+      },
+      {
+        "date": "2026-07-27",
+        "grossReturn": 4,
+        "netAt040": 3.2
+      },
+      {
+        "date": "2026-07-28",
+        "grossReturn": -2,
+        "netAt040": -2.4
+      },
+      {
+        "date": "2026-07-29",
+        "grossReturn": 2.84,
+        "netAt040": 1.24
+      },
+      {
+        "date": "2026-08-03",
+        "grossReturn": -2,
+        "netAt040": -3.2
+      }
+    ],
+    "robustness": {
+      "monthly": [
+        {
+          "month": "March",
+          "trades": 21,
+          "grossAverage": 1.19,
+          "netAverageAt040": 0.79,
+          "median": 2
+        },
+        {
+          "month": "April",
+          "trades": 36,
+          "grossAverage": 0.29,
+          "netAverageAt040": -0.11,
+          "median": 2
+        },
+        {
+          "month": "May",
+          "trades": 29,
+          "grossAverage": 0.33,
+          "netAverageAt040": -0.07,
+          "median": 2
+        },
+        {
+          "month": "June",
+          "trades": 33,
+          "grossAverage": 0.7,
+          "netAverageAt040": 0.3,
+          "median": 2
+        },
+        {
+          "month": "July",
+          "trades": 25,
+          "grossAverage": 0.51,
+          "netAverageAt040": 0.11,
+          "median": 2
+        },
+        {
+          "month": "Aug 1-4",
+          "trades": 3,
+          "grossAverage": -0.67,
+          "netAverageAt040": -1.07,
+          "median": -2
+        }
+      ],
+      "halves": [
+        {
+          "period": "First half",
+          "trades": 76,
+          "grossAverage": 0.57,
+          "netAverageAt040": 0.17,
+          "median": 2
+        },
+        {
+          "period": "Second half",
+          "trades": 71,
+          "grossAverage": 0.5,
+          "netAverageAt040": 0.1,
+          "median": 2
+        }
+      ],
+      "dailyConsistency": {
+        "activeDays": 70,
+        "profitableDays": 47
+      }
+    }
+  },
+  "frequencyTiers": [
+    {
+      "minimumTradesPerSession": 3,
+      "candidateCount": 7030,
+      "positiveNetAt040Count": 0,
+      "credibleCount": 0,
+      "highestFrequency": {
+        "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+        "direction": "PE",
+        "config": {
+          "timeframe": 2,
+          "direction": "PE",
+          "ema20ProximityPercent": 0.2,
+          "rsiThreshold": 50,
+          "bodyAtrMinimum": 0.25,
+          "pullbackLookbackBars": 3,
+          "confirmation": "TREND_CLOSE",
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "resolvedTrades": 1616,
+        "tradesPerSession": 15.54,
+        "activeSessionTrades": 23.76,
+        "maxTradesPerDay": 73,
+        "grossAverage": -0.07,
+        "grossMedian": -3,
+        "netAverageAt020": -0.27,
+        "netAverageAt040": -0.47,
+        "netAverageAt060": -0.67,
+        "targetRate": 39.45,
+        "stopRate": 55.91,
+        "timeoutRate": 4.64,
+        "ambiguousRate": 11.39,
+        "ambiguousCount": 184,
+        "unavailableCount": 10,
+        "mfe5": 8.9,
+        "mae5": 8.43,
+        "credibleAt040": false
+      },
+      "bestPositiveNetAt040": null
+    },
+    {
+      "minimumTradesPerSession": 5,
+      "candidateCount": 3710,
+      "positiveNetAt040Count": 0,
+      "credibleCount": 0,
+      "highestFrequency": {
+        "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+        "direction": "PE",
+        "config": {
+          "timeframe": 2,
+          "direction": "PE",
+          "ema20ProximityPercent": 0.2,
+          "rsiThreshold": 50,
+          "bodyAtrMinimum": 0.25,
+          "pullbackLookbackBars": 3,
+          "confirmation": "TREND_CLOSE",
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "resolvedTrades": 1616,
+        "tradesPerSession": 15.54,
+        "activeSessionTrades": 23.76,
+        "maxTradesPerDay": 73,
+        "grossAverage": -0.07,
+        "grossMedian": -3,
+        "netAverageAt020": -0.27,
+        "netAverageAt040": -0.47,
+        "netAverageAt060": -0.67,
+        "targetRate": 39.45,
+        "stopRate": 55.91,
+        "timeoutRate": 4.64,
+        "ambiguousRate": 11.39,
+        "ambiguousCount": 184,
+        "unavailableCount": 10,
+        "mfe5": 8.9,
+        "mae5": 8.43,
+        "credibleAt040": false
+      },
+      "bestPositiveNetAt040": null
+    },
+    {
+      "minimumTradesPerSession": 8,
+      "candidateCount": 1150,
+      "positiveNetAt040Count": 0,
+      "credibleCount": 0,
+      "highestFrequency": {
+        "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+        "direction": "PE",
+        "config": {
+          "timeframe": 2,
+          "direction": "PE",
+          "ema20ProximityPercent": 0.2,
+          "rsiThreshold": 50,
+          "bodyAtrMinimum": 0.25,
+          "pullbackLookbackBars": 3,
+          "confirmation": "TREND_CLOSE",
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "resolvedTrades": 1616,
+        "tradesPerSession": 15.54,
+        "activeSessionTrades": 23.76,
+        "maxTradesPerDay": 73,
+        "grossAverage": -0.07,
+        "grossMedian": -3,
+        "netAverageAt020": -0.27,
+        "netAverageAt040": -0.47,
+        "netAverageAt060": -0.67,
+        "targetRate": 39.45,
+        "stopRate": 55.91,
+        "timeoutRate": 4.64,
+        "ambiguousRate": 11.39,
+        "ambiguousCount": 184,
+        "unavailableCount": 10,
+        "mfe5": 8.9,
+        "mae5": 8.43,
+        "credibleAt040": false
+      },
+      "bestPositiveNetAt040": null
+    },
+    {
+      "minimumTradesPerSession": 10,
+      "candidateCount": 470,
+      "positiveNetAt040Count": 0,
+      "credibleCount": 0,
+      "highestFrequency": {
+        "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+        "direction": "PE",
+        "config": {
+          "timeframe": 2,
+          "direction": "PE",
+          "ema20ProximityPercent": 0.2,
+          "rsiThreshold": 50,
+          "bodyAtrMinimum": 0.25,
+          "pullbackLookbackBars": 3,
+          "confirmation": "TREND_CLOSE",
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "resolvedTrades": 1616,
+        "tradesPerSession": 15.54,
+        "activeSessionTrades": 23.76,
+        "maxTradesPerDay": 73,
+        "grossAverage": -0.07,
+        "grossMedian": -3,
+        "netAverageAt020": -0.27,
+        "netAverageAt040": -0.47,
+        "netAverageAt060": -0.67,
+        "targetRate": 39.45,
+        "stopRate": 55.91,
+        "timeoutRate": 4.64,
+        "ambiguousRate": 11.39,
+        "ambiguousCount": 184,
+        "unavailableCount": 10,
+        "mfe5": 8.9,
+        "mae5": 8.43,
+        "credibleAt040": false
+      },
+      "bestPositiveNetAt040": null
+    }
+  ],
+  "preloader": {
+    "underlyingRowsLoaded": 40383,
+    "uniqueOptionContractDateSessions": 420,
+    "optionSessionsLoadedFromMySql": 420,
+    "optionCandlesLoadedFromMySql": 157500,
+    "completeLocalSessions": 420,
+    "incompleteLocalSessions": 0,
+    "missingLocalSessions": 0,
+    "upstoxMissingSessionDownloads": 0,
+    "newlyStoredOptionCandles": 0,
+    "inMemoryLookupHits": 3027,
+    "dbFallbackHits": 0,
+    "bulkPreloadQueryCount": 5,
+    "bulkPreloadDurationMs": 16885,
+    "preloadDurationMs": 18846,
+    "researchDurationMs": 0,
+    "totalDurationMs": 60516
+  },
+  "pathAnalyses": 3027,
+  "unresolvedEntries": 0,
+  "finalVerdict": "WEAK"
+}

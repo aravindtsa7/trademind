@@ -1,0 +1,3292 @@
+{
+  "version": "research-session-result-matrix-v1",
+  "strategyId": "V2_TREND_DOWN_PE",
+  "family": "V2",
+  "configId": "5m|EMA35 proximity 0.20%|RSI_LT_35|cooldown10m",
+  "policy": {
+    "target": 5,
+    "stop": 5,
+    "holdMinutes": 15
+  },
+  "splitManifestVersion": "nifty-104-split-v1",
+  "costScenarios": [
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1
+  ],
+  "sessions": [
+    {
+      "sessionIndex": 0,
+      "date": "2026-03-02",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 1,
+      "date": "2026-03-04",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 2,
+      "date": "2026-03-05",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 3,
+      "date": "2026-03-06",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-03-06 14:50:00 IST",
+          "timestamp": "2026-03-06T09:20:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 4,
+      "date": "2026-03-09",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 5,
+      "date": "2026-03-10",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 6,
+      "date": "2026-03-11",
+      "signalCount": 4,
+      "settledTrades": 4,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": -0.8,
+        "netAt040": -1.6,
+        "netAt060": -2.4,
+        "netAt080": -3.2,
+        "netAt100": -4
+      },
+      "targetCount": 2,
+      "stopCount": 2,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 10,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-03-11 11:10:00 IST",
+          "timestamp": "2026-03-11T05:40:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-03-11 12:35:00 IST",
+          "timestamp": "2026-03-11T07:05:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-03-11 14:20:00 IST",
+          "timestamp": "2026-03-11T08:50:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-03-11 15:00:00 IST",
+          "timestamp": "2026-03-11T09:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 7,
+      "date": "2026-03-12",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 8,
+      "date": "2026-03-13",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 9,
+      "date": "2026-03-16",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 10,
+      "date": "2026-03-17",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 11,
+      "date": "2026-03-18",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 12,
+      "date": "2026-03-19",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-03-19 14:00:00 IST",
+          "timestamp": "2026-03-19T08:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 13,
+      "date": "2026-03-20",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 14,
+      "date": "2026-03-23",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 15,
+      "date": "2026-03-24",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 16,
+      "date": "2026-03-25",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-03-25 15:15:00 IST",
+          "timestamp": "2026-03-25T09:45:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 17,
+      "date": "2026-03-27",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 18,
+      "date": "2026-03-30",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 19,
+      "date": "2026-04-01",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 20,
+      "date": "2026-04-02",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 21,
+      "date": "2026-04-06",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 22,
+      "date": "2026-04-07",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 23,
+      "date": "2026-04-08",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 24,
+      "date": "2026-04-09",
+      "signalCount": 4,
+      "settledTrades": 4,
+      "grossDailyReturn": 10,
+      "netDailyReturnByCost": {
+        "netAt020": 9.2,
+        "netAt040": 8.4,
+        "netAt060": 7.6,
+        "netAt080": 6.8,
+        "netAt100": 6
+      },
+      "targetCount": 3,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-04-09 13:20:00 IST",
+          "timestamp": "2026-04-09T07:50:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-04-09 13:40:00 IST",
+          "timestamp": "2026-04-09T08:10:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-04-09 13:55:00 IST",
+          "timestamp": "2026-04-09T08:25:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-04-09 14:15:00 IST",
+          "timestamp": "2026-04-09T08:45:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 25,
+      "date": "2026-04-10",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 26,
+      "date": "2026-04-13",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 27,
+      "date": "2026-04-15",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 28,
+      "date": "2026-04-16",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 29,
+      "date": "2026-04-17",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 30,
+      "date": "2026-04-20",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 31,
+      "date": "2026-04-21",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 32,
+      "date": "2026-04-22",
+      "signalCount": 1,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 1,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-04-22 15:25:00 IST",
+          "timestamp": "2026-04-22T09:55:00.000Z",
+          "outcome": "UNAVAILABLE",
+          "returnPercent": 0
+        }
+      ]
+    },
+    {
+      "sessionIndex": 33,
+      "date": "2026-04-23",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 34,
+      "date": "2026-04-24",
+      "signalCount": 3,
+      "settledTrades": 3,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.6,
+        "netAt040": -6.2,
+        "netAt060": -6.8,
+        "netAt080": -7.4,
+        "netAt100": -8
+      },
+      "targetCount": 1,
+      "stopCount": 2,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 10,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-04-24 12:25:00 IST",
+          "timestamp": "2026-04-24T06:55:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-04-24 12:45:00 IST",
+          "timestamp": "2026-04-24T07:15:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-04-24 13:35:00 IST",
+          "timestamp": "2026-04-24T08:05:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 35,
+      "date": "2026-04-27",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 36,
+      "date": "2026-04-28",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": -0.4,
+        "netAt040": -0.8,
+        "netAt060": -1.2,
+        "netAt080": -1.6,
+        "netAt100": -2
+      },
+      "targetCount": 1,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-04-28 12:20:00 IST",
+          "timestamp": "2026-04-28T06:50:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-04-28 13:00:00 IST",
+          "timestamp": "2026-04-28T07:30:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 37,
+      "date": "2026-04-29",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": -0.4,
+        "netAt040": -0.8,
+        "netAt060": -1.2,
+        "netAt080": -1.6,
+        "netAt100": -2
+      },
+      "targetCount": 1,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-04-29 14:30:00 IST",
+          "timestamp": "2026-04-29T09:00:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-04-29 15:15:00 IST",
+          "timestamp": "2026-04-29T09:45:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 38,
+      "date": "2026-04-30",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 39,
+      "date": "2026-05-04",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-04 13:25:00 IST",
+          "timestamp": "2026-05-04T07:55:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 40,
+      "date": "2026-05-05",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": 10,
+      "netDailyReturnByCost": {
+        "netAt020": 9.6,
+        "netAt040": 9.2,
+        "netAt060": 8.8,
+        "netAt080": 8.4,
+        "netAt100": 8
+      },
+      "targetCount": 2,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-05 09:25:00 IST",
+          "timestamp": "2026-05-05T03:55:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-05-05 11:45:00 IST",
+          "timestamp": "2026-05-05T06:15:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 41,
+      "date": "2026-05-06",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": 10,
+      "netDailyReturnByCost": {
+        "netAt020": 9.6,
+        "netAt040": 9.2,
+        "netAt060": 8.8,
+        "netAt080": 8.4,
+        "netAt100": 8
+      },
+      "targetCount": 2,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-06 12:45:00 IST",
+          "timestamp": "2026-05-06T07:15:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-05-06 13:00:00 IST",
+          "timestamp": "2026-05-06T07:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 42,
+      "date": "2026-05-07",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 43,
+      "date": "2026-05-08",
+      "signalCount": 3,
+      "settledTrades": 3,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.4,
+        "netAt040": 3.8,
+        "netAt060": 3.2,
+        "netAt080": 2.6,
+        "netAt100": 2
+      },
+      "targetCount": 2,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-08 12:45:00 IST",
+          "timestamp": "2026-05-08T07:15:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-05-08 13:05:00 IST",
+          "timestamp": "2026-05-08T07:35:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-05-08 14:00:00 IST",
+          "timestamp": "2026-05-08T08:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 44,
+      "date": "2026-05-11",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-11 15:00:00 IST",
+          "timestamp": "2026-05-11T09:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 45,
+      "date": "2026-05-12",
+      "signalCount": 3,
+      "settledTrades": 2,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": -0.4,
+        "netAt040": -0.8,
+        "netAt060": -1.2,
+        "netAt080": -1.6,
+        "netAt100": -2
+      },
+      "targetCount": 1,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 1,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-12 13:55:00 IST",
+          "timestamp": "2026-05-12T08:25:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-05-12 14:30:00 IST",
+          "timestamp": "2026-05-12T09:00:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-05-12 14:55:00 IST",
+          "timestamp": "2026-05-12T09:25:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 46,
+      "date": "2026-05-13",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 47,
+      "date": "2026-05-14",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 48,
+      "date": "2026-05-15",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-15 14:50:00 IST",
+          "timestamp": "2026-05-15T09:20:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 49,
+      "date": "2026-05-18",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 50,
+      "date": "2026-05-19",
+      "signalCount": 2,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 2,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-19 14:55:00 IST",
+          "timestamp": "2026-05-19T09:25:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-05-19 15:05:00 IST",
+          "timestamp": "2026-05-19T09:35:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        }
+      ]
+    },
+    {
+      "sessionIndex": 51,
+      "date": "2026-05-20",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 52,
+      "date": "2026-05-21",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-21 12:40:00 IST",
+          "timestamp": "2026-05-21T07:10:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 53,
+      "date": "2026-05-22",
+      "signalCount": 3,
+      "settledTrades": 2,
+      "grossDailyReturn": -10,
+      "netDailyReturnByCost": {
+        "netAt020": -10.4,
+        "netAt040": -10.8,
+        "netAt060": -11.2,
+        "netAt080": -11.6,
+        "netAt100": -12
+      },
+      "targetCount": 0,
+      "stopCount": 2,
+      "timeoutCount": 0,
+      "ambiguousCount": 1,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 10,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-22 14:45:00 IST",
+          "timestamp": "2026-05-22T09:15:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-05-22 14:55:00 IST",
+          "timestamp": "2026-05-22T09:25:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-05-22 15:05:00 IST",
+          "timestamp": "2026-05-22T09:35:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 54,
+      "date": "2026-05-25",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 55,
+      "date": "2026-05-26",
+      "signalCount": 8,
+      "settledTrades": 5,
+      "grossDailyReturn": -15,
+      "netDailyReturnByCost": {
+        "netAt020": -16,
+        "netAt040": -17,
+        "netAt060": -18,
+        "netAt080": -19,
+        "netAt100": -20
+      },
+      "targetCount": 1,
+      "stopCount": 4,
+      "timeoutCount": 0,
+      "ambiguousCount": 3,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 20,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-26 13:05:00 IST",
+          "timestamp": "2026-05-26T07:35:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-05-26 13:15:00 IST",
+          "timestamp": "2026-05-26T07:45:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-05-26 13:25:00 IST",
+          "timestamp": "2026-05-26T07:55:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-05-26 13:40:00 IST",
+          "timestamp": "2026-05-26T08:10:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-05-26 13:50:00 IST",
+          "timestamp": "2026-05-26T08:20:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-05-26 14:00:00 IST",
+          "timestamp": "2026-05-26T08:30:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-05-26 14:25:00 IST",
+          "timestamp": "2026-05-26T08:55:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-05-26 14:35:00 IST",
+          "timestamp": "2026-05-26T09:05:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 56,
+      "date": "2026-05-27",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-27 09:35:00 IST",
+          "timestamp": "2026-05-27T04:05:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 57,
+      "date": "2026-05-29",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": 10,
+      "netDailyReturnByCost": {
+        "netAt020": 9.6,
+        "netAt040": 9.2,
+        "netAt060": 8.8,
+        "netAt080": 8.4,
+        "netAt100": 8
+      },
+      "targetCount": 2,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-05-29 13:05:00 IST",
+          "timestamp": "2026-05-29T07:35:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-05-29 15:05:00 IST",
+          "timestamp": "2026-05-29T09:35:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 58,
+      "date": "2026-06-01",
+      "signalCount": 4,
+      "settledTrades": 4,
+      "grossDailyReturn": 20,
+      "netDailyReturnByCost": {
+        "netAt020": 19.2,
+        "netAt040": 18.4,
+        "netAt060": 17.6,
+        "netAt080": 16.8,
+        "netAt100": 16
+      },
+      "targetCount": 4,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-01 13:10:00 IST",
+          "timestamp": "2026-06-01T07:40:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-06-01 13:50:00 IST",
+          "timestamp": "2026-06-01T08:20:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-06-01 14:50:00 IST",
+          "timestamp": "2026-06-01T09:20:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-06-01 15:20:00 IST",
+          "timestamp": "2026-06-01T09:50:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 59,
+      "date": "2026-06-02",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 60,
+      "date": "2026-06-03",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-03 12:00:00 IST",
+          "timestamp": "2026-06-03T06:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 61,
+      "date": "2026-06-04",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 62,
+      "date": "2026-06-05",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-05 13:25:00 IST",
+          "timestamp": "2026-06-05T07:55:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 63,
+      "date": "2026-06-08",
+      "signalCount": 5,
+      "settledTrades": 5,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4,
+        "netAt040": 3,
+        "netAt060": 2,
+        "netAt080": 1,
+        "netAt100": 0
+      },
+      "targetCount": 3,
+      "stopCount": 2,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 10,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-08 14:00:00 IST",
+          "timestamp": "2026-06-08T08:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-06-08 14:10:00 IST",
+          "timestamp": "2026-06-08T08:40:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-06-08 14:25:00 IST",
+          "timestamp": "2026-06-08T08:55:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-06-08 15:05:00 IST",
+          "timestamp": "2026-06-08T09:35:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-06-08 15:20:00 IST",
+          "timestamp": "2026-06-08T09:50:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 64,
+      "date": "2026-06-09",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 65,
+      "date": "2026-06-10",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-10 14:35:00 IST",
+          "timestamp": "2026-06-10T09:05:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 66,
+      "date": "2026-06-11",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 67,
+      "date": "2026-06-12",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 68,
+      "date": "2026-06-15",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 69,
+      "date": "2026-06-16",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 70,
+      "date": "2026-06-17",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 71,
+      "date": "2026-06-18",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 72,
+      "date": "2026-06-19",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": -10,
+      "netDailyReturnByCost": {
+        "netAt020": -10.4,
+        "netAt040": -10.8,
+        "netAt060": -11.2,
+        "netAt080": -11.6,
+        "netAt100": -12
+      },
+      "targetCount": 0,
+      "stopCount": 2,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 10,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-19 13:05:00 IST",
+          "timestamp": "2026-06-19T07:35:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-06-19 13:20:00 IST",
+          "timestamp": "2026-06-19T07:50:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 73,
+      "date": "2026-06-22",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 74,
+      "date": "2026-06-23",
+      "signalCount": 1,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 1,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-23 15:05:00 IST",
+          "timestamp": "2026-06-23T09:35:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        }
+      ]
+    },
+    {
+      "sessionIndex": 75,
+      "date": "2026-06-24",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 76,
+      "date": "2026-06-25",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": 10,
+      "netDailyReturnByCost": {
+        "netAt020": 9.6,
+        "netAt040": 9.2,
+        "netAt060": 8.8,
+        "netAt080": 8.4,
+        "netAt100": 8
+      },
+      "targetCount": 2,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-25 14:40:00 IST",
+          "timestamp": "2026-06-25T09:10:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-06-25 15:00:00 IST",
+          "timestamp": "2026-06-25T09:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 77,
+      "date": "2026-06-29",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-29 12:15:00 IST",
+          "timestamp": "2026-06-29T06:45:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 78,
+      "date": "2026-06-30",
+      "signalCount": 1,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 1,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-06-30 09:30:00 IST",
+          "timestamp": "2026-06-30T04:00:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        }
+      ]
+    },
+    {
+      "sessionIndex": 79,
+      "date": "2026-07-01",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 80,
+      "date": "2026-07-02",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 81,
+      "date": "2026-07-03",
+      "signalCount": 3,
+      "settledTrades": 3,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.4,
+        "netAt040": 3.8,
+        "netAt060": 3.2,
+        "netAt080": 2.6,
+        "netAt100": 2
+      },
+      "targetCount": 2,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-03 14:25:00 IST",
+          "timestamp": "2026-07-03T08:55:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-07-03 14:45:00 IST",
+          "timestamp": "2026-07-03T09:15:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-07-03 14:55:00 IST",
+          "timestamp": "2026-07-03T09:25:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 82,
+      "date": "2026-07-06",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 83,
+      "date": "2026-07-07",
+      "signalCount": 2,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 1,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-07 13:35:00 IST",
+          "timestamp": "2026-07-07T08:05:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-07-07 15:20:00 IST",
+          "timestamp": "2026-07-07T09:50:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        }
+      ]
+    },
+    {
+      "sessionIndex": 84,
+      "date": "2026-07-08",
+      "signalCount": 5,
+      "settledTrades": 5,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4,
+        "netAt040": 3,
+        "netAt060": 2,
+        "netAt080": 1,
+        "netAt100": 0
+      },
+      "targetCount": 3,
+      "stopCount": 2,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-08 12:05:00 IST",
+          "timestamp": "2026-07-08T06:35:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-07-08 12:15:00 IST",
+          "timestamp": "2026-07-08T06:45:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-07-08 12:25:00 IST",
+          "timestamp": "2026-07-08T06:55:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-07-08 12:50:00 IST",
+          "timestamp": "2026-07-08T07:20:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-07-08 13:50:00 IST",
+          "timestamp": "2026-07-08T08:20:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 85,
+      "date": "2026-07-09",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 86,
+      "date": "2026-07-10",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 87,
+      "date": "2026-07-13",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 88,
+      "date": "2026-07-14",
+      "signalCount": 3,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 2,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-14 12:30:00 IST",
+          "timestamp": "2026-07-14T07:00:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-07-14 13:40:00 IST",
+          "timestamp": "2026-07-14T08:10:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-07-14 14:50:00 IST",
+          "timestamp": "2026-07-14T09:20:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        }
+      ]
+    },
+    {
+      "sessionIndex": 89,
+      "date": "2026-07-15",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-15 13:55:00 IST",
+          "timestamp": "2026-07-15T08:25:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 90,
+      "date": "2026-07-16",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-16 13:55:00 IST",
+          "timestamp": "2026-07-16T08:25:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 91,
+      "date": "2026-07-17",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 92,
+      "date": "2026-07-20",
+      "signalCount": 2,
+      "settledTrades": 2,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": -0.4,
+        "netAt040": -0.8,
+        "netAt060": -1.2,
+        "netAt080": -1.6,
+        "netAt100": -2
+      },
+      "targetCount": 1,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-20 12:05:00 IST",
+          "timestamp": "2026-07-20T06:35:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-07-20 12:45:00 IST",
+          "timestamp": "2026-07-20T07:15:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 93,
+      "date": "2026-07-21",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": -5,
+      "netDailyReturnByCost": {
+        "netAt020": -5.2,
+        "netAt040": -5.4,
+        "netAt060": -5.6,
+        "netAt080": -5.8,
+        "netAt100": -6
+      },
+      "targetCount": 0,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-21 10:55:00 IST",
+          "timestamp": "2026-07-21T05:25:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 94,
+      "date": "2026-07-22",
+      "signalCount": 3,
+      "settledTrades": 3,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.4,
+        "netAt040": 3.8,
+        "netAt060": 3.2,
+        "netAt080": 2.6,
+        "netAt100": 2
+      },
+      "targetCount": 2,
+      "stopCount": 1,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-22 12:10:00 IST",
+          "timestamp": "2026-07-22T06:40:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-07-22 12:20:00 IST",
+          "timestamp": "2026-07-22T06:50:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-07-22 12:30:00 IST",
+          "timestamp": "2026-07-22T07:00:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 95,
+      "date": "2026-07-23",
+      "signalCount": 1,
+      "settledTrades": 1,
+      "grossDailyReturn": 5,
+      "netDailyReturnByCost": {
+        "netAt020": 4.8,
+        "netAt040": 4.6,
+        "netAt060": 4.4,
+        "netAt080": 4.2,
+        "netAt100": 4
+      },
+      "targetCount": 1,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-07-23 12:35:00 IST",
+          "timestamp": "2026-07-23T07:05:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        }
+      ]
+    },
+    {
+      "sessionIndex": 96,
+      "date": "2026-07-24",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 97,
+      "date": "2026-07-27",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 98,
+      "date": "2026-07-28",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 99,
+      "date": "2026-07-29",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 100,
+      "date": "2026-07-30",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 101,
+      "date": "2026-07-31",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 102,
+      "date": "2026-08-03",
+      "signalCount": 0,
+      "settledTrades": 0,
+      "grossDailyReturn": 0,
+      "netDailyReturnByCost": {
+        "netAt020": 0,
+        "netAt040": 0,
+        "netAt060": 0,
+        "netAt080": 0,
+        "netAt100": 0
+      },
+      "targetCount": 0,
+      "stopCount": 0,
+      "timeoutCount": 0,
+      "ambiguousCount": 0,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 0,
+      "tradeReferences": []
+    },
+    {
+      "sessionIndex": 103,
+      "date": "2026-08-04",
+      "signalCount": 13,
+      "settledTrades": 12,
+      "grossDailyReturn": 40,
+      "netDailyReturnByCost": {
+        "netAt020": 37.6,
+        "netAt040": 35.2,
+        "netAt060": 32.8,
+        "netAt080": 30.4,
+        "netAt100": 28
+      },
+      "targetCount": 10,
+      "stopCount": 2,
+      "timeoutCount": 0,
+      "ambiguousCount": 1,
+      "unavailableCount": 0,
+      "maxIntradayDrawdown": 5,
+      "tradeReferences": [
+        {
+          "timestampIst": "2026-08-04 11:55:00 IST",
+          "timestamp": "2026-08-04T06:25:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 12:05:00 IST",
+          "timestamp": "2026-08-04T06:35:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 12:20:00 IST",
+          "timestamp": "2026-08-04T06:50:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 12:30:00 IST",
+          "timestamp": "2026-08-04T07:00:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 12:40:00 IST",
+          "timestamp": "2026-08-04T07:10:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 12:50:00 IST",
+          "timestamp": "2026-08-04T07:20:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        },
+        {
+          "timestampIst": "2026-08-04 13:00:00 IST",
+          "timestamp": "2026-08-04T07:30:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 13:10:00 IST",
+          "timestamp": "2026-08-04T07:40:00.000Z",
+          "outcome": "AMBIGUOUS",
+          "returnPercent": 0
+        },
+        {
+          "timestampIst": "2026-08-04 13:20:00 IST",
+          "timestamp": "2026-08-04T07:50:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 13:30:00 IST",
+          "timestamp": "2026-08-04T08:00:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 13:40:00 IST",
+          "timestamp": "2026-08-04T08:10:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 13:50:00 IST",
+          "timestamp": "2026-08-04T08:20:00.000Z",
+          "outcome": "TARGET",
+          "returnPercent": 5
+        },
+        {
+          "timestampIst": "2026-08-04 14:10:00 IST",
+          "timestamp": "2026-08-04T08:40:00.000Z",
+          "outcome": "STOP_LOSS",
+          "returnPercent": -5
+        }
+      ]
+    }
+  ],
+  "resultMatrix": {
+    "sessions": [
+      "2026-03-02",
+      "2026-03-04",
+      "2026-03-05",
+      "2026-03-06",
+      "2026-03-09",
+      "2026-03-10",
+      "2026-03-11",
+      "2026-03-12",
+      "2026-03-13",
+      "2026-03-16",
+      "2026-03-17",
+      "2026-03-18",
+      "2026-03-19",
+      "2026-03-20",
+      "2026-03-23",
+      "2026-03-24",
+      "2026-03-25",
+      "2026-03-27",
+      "2026-03-30",
+      "2026-04-01",
+      "2026-04-02",
+      "2026-04-06",
+      "2026-04-07",
+      "2026-04-08",
+      "2026-04-09",
+      "2026-04-10",
+      "2026-04-13",
+      "2026-04-15",
+      "2026-04-16",
+      "2026-04-17",
+      "2026-04-20",
+      "2026-04-21",
+      "2026-04-22",
+      "2026-04-23",
+      "2026-04-24",
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-04-30",
+      "2026-05-04",
+      "2026-05-05",
+      "2026-05-06",
+      "2026-05-07",
+      "2026-05-08",
+      "2026-05-11",
+      "2026-05-12",
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-18",
+      "2026-05-19",
+      "2026-05-20",
+      "2026-05-21",
+      "2026-05-22",
+      "2026-05-25",
+      "2026-05-26",
+      "2026-05-27",
+      "2026-05-29",
+      "2026-06-01",
+      "2026-06-02",
+      "2026-06-03",
+      "2026-06-04",
+      "2026-06-05",
+      "2026-06-08",
+      "2026-06-09",
+      "2026-06-10",
+      "2026-06-11",
+      "2026-06-12",
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-06-18",
+      "2026-06-19",
+      "2026-06-22",
+      "2026-06-23",
+      "2026-06-24",
+      "2026-06-25",
+      "2026-06-29",
+      "2026-06-30",
+      "2026-07-01",
+      "2026-07-02",
+      "2026-07-03",
+      "2026-07-06",
+      "2026-07-07",
+      "2026-07-08",
+      "2026-07-09",
+      "2026-07-10",
+      "2026-07-13",
+      "2026-07-14",
+      "2026-07-15",
+      "2026-07-16",
+      "2026-07-17",
+      "2026-07-20",
+      "2026-07-21",
+      "2026-07-22",
+      "2026-07-23",
+      "2026-07-24",
+      "2026-07-27",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30",
+      "2026-07-31",
+      "2026-08-03",
+      "2026-08-04"
+    ],
+    "configurations": [
+      "V2_TREND_DOWN_PE|+5/-5/15"
+    ],
+    "costPercent": 0.4,
+    "values": [
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        -5.4
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        -1.6
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        4.6
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        4.6
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        8.4
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        -6.2
+      ],
+      [
+        0
+      ],
+      [
+        -0.8
+      ],
+      [
+        -0.8
+      ],
+      [
+        0
+      ],
+      [
+        -5.4
+      ],
+      [
+        9.2
+      ],
+      [
+        9.2
+      ],
+      [
+        0
+      ],
+      [
+        3.8
+      ],
+      [
+        4.6
+      ],
+      [
+        -0.8
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        -5.4
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        -5.4
+      ],
+      [
+        -10.8
+      ],
+      [
+        0
+      ],
+      [
+        -17
+      ],
+      [
+        4.6
+      ],
+      [
+        9.2
+      ],
+      [
+        18.4
+      ],
+      [
+        0
+      ],
+      [
+        4.6
+      ],
+      [
+        0
+      ],
+      [
+        -5.4
+      ],
+      [
+        3
+      ],
+      [
+        0
+      ],
+      [
+        4.6
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        -10.8
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        9.2
+      ],
+      [
+        4.6
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        3.8
+      ],
+      [
+        0
+      ],
+      [
+        4.6
+      ],
+      [
+        3
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        4.6
+      ],
+      [
+        -5.4
+      ],
+      [
+        -5.4
+      ],
+      [
+        0
+      ],
+      [
+        -0.8
+      ],
+      [
+        -5.4
+      ],
+      [
+        3.8
+      ],
+      [
+        4.6
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        0
+      ],
+      [
+        35.2
+      ]
+    ]
+  }
+}

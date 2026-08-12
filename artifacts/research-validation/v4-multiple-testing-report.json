@@ -1,0 +1,34 @@
+{
+  "strategyId": "V4_NIFTY_MOMENTUM_PE_SHADOW",
+  "observedSharpeLike": 2.5083,
+  "trialCountAssumptions": [
+    {
+      "trials": 1,
+      "dsr": 1
+    },
+    {
+      "trials": 10,
+      "dsr": 1
+    },
+    {
+      "trials": 100,
+      "dsr": 0.40752563373068984
+    },
+    {
+      "trials": 1000,
+      "dsr": 2.3869795029440866e-15
+    },
+    {
+      "trials": 120832,
+      "dsr": 0
+    }
+  ],
+  "dsrInterpretation": "HIGH OVERFIT RISK",
+  "pbo": {
+    "status": "NOT_ESTIMABLE_FROM_SINGLE_FROZEN_COLUMN",
+    "simplifiedPbo": null,
+    "note": "A single frozen candidate cannot estimate selection PBO. Preserve full train result matrices for future families."
+  },
+  "legacyStatus": "LEGACY_CONTAMINATED_HOLDOUT",
+  "uncertainty": "Trial breadth is represented as a documented sensitivity range where full historical grids were not persisted."
+}

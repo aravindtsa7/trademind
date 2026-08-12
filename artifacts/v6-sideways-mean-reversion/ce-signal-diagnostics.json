@@ -1,0 +1,59 @@
+{
+  "summary": {
+    "rawSignalsAcrossConfigurations": 557177,
+    "uniqueTimestamps": 2030,
+    "averageUniqueSignalsPerSession": 19.52,
+    "activeSessions": 102,
+    "maximumUniqueSignalsInOneDay": 54,
+    "requiredSessions": 275,
+    "completeLocalSessions": 275,
+    "missingLocalSessions": 0,
+    "incompleteLocalSessions": 0
+  },
+  "distribution": {
+    "monthly": [
+      {
+        "month": "March",
+        "signals": 402
+      },
+      {
+        "month": "April",
+        "signals": 341
+      },
+      {
+        "month": "May",
+        "signals": 433
+      },
+      {
+        "month": "June",
+        "signals": 461
+      },
+      {
+        "month": "July",
+        "signals": 372
+      },
+      {
+        "month": "Aug 1-4",
+        "signals": 21
+      }
+    ],
+    "timeOfDay": [
+      {
+        "bucket": "09:15-10:30",
+        "signals": 267
+      },
+      {
+        "bucket": "10:30-12:00",
+        "signals": 409
+      },
+      {
+        "bucket": "12:00-13:30",
+        "signals": 514
+      },
+      {
+        "bucket": "13:30-15:30",
+        "signals": 840
+      }
+    ]
+  }
+}

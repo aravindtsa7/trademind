@@ -1,4 +1,4 @@
-export type LiveCandleTimeframe = '1m' | '5m';
+export type LiveCandleTimeframe = '1m' | '3m' | '5m';
 
 export interface NormalizedLiveTickDto {
   instrumentKey: string;

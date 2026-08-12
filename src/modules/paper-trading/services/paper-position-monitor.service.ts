@@ -48,6 +48,19 @@ export default class PaperPositionMonitorService {
       });
   }
 
+  /** Uses the established TIME_EXIT close path at the market-session boundary. */
+  closeAtSessionEnd(timestamp: Date, premiumFor: (instrumentKey: string, entryPremium: number) => number | undefined): PaperPositionMonitoringResult[] {
+    if (!(timestamp instanceof Date) || Number.isNaN(timestamp.getTime())) throw new Error('EOD timestamp must be valid.');
+    return this.orderManager.getActiveOrders()
+      .filter((order) => order.status === PaperOrderStatus.OPEN)
+      .map((order) => {
+        const premium = premiumFor(order.contract.instrumentKey, order.entry.observedEntryPremium);
+        if (!Number.isFinite(premium) || (premium as number) <= 0) throw new Error(`No valid EOD premium is available for active paper order ${order.id}.`);
+        this.orderManager.close(order.id, { exitReason: PaperOrderStatus.TIME_EXIT, exitTimestamp: new Date(timestamp.getTime()), observedExitPremium: premium as number, simulatedExitPremium: premium as number });
+        return { orderId: order.id, instrumentKey: order.contract.instrumentKey, timestamp: new Date(timestamp.getTime()), observedPremium: premium as number, action: PaperOrderStatus.TIME_EXIT };
+      });
+  }
+
   private validateUpdate(update: PaperPremiumUpdate): void {
     if (!update || typeof update !== 'object') throw new Error('Paper premium update is required.');
     if (typeof update.instrumentKey !== 'string' || update.instrumentKey.trim().length === 0) throw new Error('instrumentKey must be a non-empty string.');

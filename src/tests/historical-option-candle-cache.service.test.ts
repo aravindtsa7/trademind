@@ -48,3 +48,28 @@ test('normalizes only an explicitly authorized 15:30-15:39 overfull response and
   assert.equal(upserted.length, 375); assert.equal(result.length, 375); assert.deepEqual(result[0], { instrumentKey, ...regular[0] }); assert.deepEqual(result[374], { instrumentKey, ...regular[374] });
   assert.deepEqual(cache.getSessionResults(), [{ instrumentKey, tradingDate, status: 'normalized', downloadedCandleCount: 385, storedCandleCount: 375, excludedCandleCount: 10, extraCandleTimes: extras.map((candle) => candle.candleTime.toISOString()) }]);
 });
+
+test('rejects an authorized session when its extra-row pattern differs from 15:30-15:39', async () => {
+  const instrumentKey = 'BSE_FO|840209|06-08-2026'; const tradingDate = '2026-08-03'; const start = new Date(`${tradingDate}T09:15:00+05:30`).getTime();
+  const regular = Array.from({ length: 375 }, (_, index) => ({ candleTime: new Date(start + index * 60_000), open: 100, high: 101, low: 99, close: 100.5, volume: 1n }));
+  const extras = Array.from({ length: 10 }, (_, index) => ({ ...regular[374], candleTime: new Date(`${tradingDate}T15:${String(index === 9 ? 40 : 30 + index).padStart(2, '0')}:00+05:30`) }));
+  let upserts = 0;
+  const repository = { findRange: async () => [], bulkUpsert: async () => { upserts += 1; return []; } } as unknown as HistoricalOptionCandleRepository;
+  const cache = new HistoricalOptionCandleCacheService(repository, { fetchCandles: async () => [...regular, ...extras] } as never, [{ instrumentKey, tradingDate }]);
+
+  await assert.rejects(() => cache.getCandles(instrumentKey, tradingDate), /refusing to store until guarded cleanup is authorized/);
+  assert.equal(upserts, 0);
+  assert.equal(cache.getSessionResults()[0].status, 'overfull');
+});
+
+test('reuses a complete normalized session without a second remote fetch or upsert', async () => {
+  const instrumentKey = 'BSE_FO|840341|06-08-2026'; const tradingDate = '2026-08-03'; const start = new Date(`${tradingDate}T09:15:00+05:30`).getTime();
+  const persisted = Array.from({ length: 375 }, (_, index) => ({ instrumentKey, candleTime: new Date(start + index * 60_000), open: { toString: () => '100' }, high: { toString: () => '101' }, low: { toString: () => '99' }, close: { toString: () => '100.5' }, volume: 1n, openInterest: null }));
+  let fetches = 0; let upserts = 0;
+  const repository = { findRange: async () => persisted, bulkUpsert: async () => { upserts += 1; return []; } } as unknown as HistoricalOptionCandleRepository;
+  const cache = new HistoricalOptionCandleCacheService(repository, { fetchCandles: async () => { fetches += 1; return []; } } as never, [{ instrumentKey, tradingDate }]);
+
+  const candles = await cache.getCandles(instrumentKey, tradingDate);
+  assert.equal(candles.length, 375); assert.equal(fetches, 0); assert.equal(upserts, 0);
+  assert.equal(cache.getSessionResults()[0].status, 'hit');
+});

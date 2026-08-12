@@ -1,0 +1,50 @@
+{
+  "version": "research-ledger-v1",
+  "rules": {
+    "futureFamilies": "V8+",
+    "finalHoldoutOneTime": true,
+    "failedHoldoutCannotBeRetuned": true
+  },
+  "entries": [
+    {
+      "strategyId": "V2_TREND_DOWN_PE",
+      "family": "V2",
+      "researchStatus": "PAPER",
+      "splitManifestVersion": "nifty-104-split-v1",
+      "finalHoldoutStatus": "LEGACY_CONTAMINATED",
+      "notes": "Legacy full-scope research; configs=500, policies=64, scope=2026-03-02..2026-08-04. Artifact paths are in artifacts/research-validation."
+    },
+    {
+      "strategyId": "V4_NIFTY_MOMENTUM_PE_SHADOW",
+      "family": "V4",
+      "researchStatus": "SHADOW",
+      "splitManifestVersion": "nifty-104-split-v1",
+      "finalHoldoutStatus": "LEGACY_CONTAMINATED",
+      "notes": "Legacy full-scope research; configs=1888, policies=64, scope=2026-03-02..2026-08-04. Artifact paths are in artifacts/research-validation."
+    },
+    {
+      "strategyId": "V5_NIFTY_SCALPING",
+      "family": "V5",
+      "researchStatus": "REJECTED_WEAK",
+      "splitManifestVersion": "nifty-104-split-v1",
+      "finalHoldoutStatus": "LEGACY_CONTAMINATED",
+      "notes": "Legacy full-scope research; configs=2592, policies=5, scope=2026-03-02..2026-08-04. Artifact paths are in artifacts/research-validation."
+    },
+    {
+      "strategyId": "V6_NIFTY_SIDEWAYS_MEAN_REVERSION",
+      "family": "V6",
+      "researchStatus": "REJECTED_WEAK",
+      "splitManifestVersion": "nifty-104-split-v1",
+      "finalHoldoutStatus": "LEGACY_CONTAMINATED",
+      "notes": "Legacy full-scope research; configs=11520, policies=5, scope=2026-03-02..2026-08-04. Artifact paths are in artifacts/research-validation."
+    },
+    {
+      "strategyId": "V7_NIFTY_OPTION_IMPULSE",
+      "family": "V7",
+      "researchStatus": "REJECTED_WEAK",
+      "splitManifestVersion": "nifty-104-split-v1",
+      "finalHoldoutStatus": "LEGACY_CONTAMINATED",
+      "notes": "Legacy full-scope research; configs=12800, policies=5, scope=2026-03-02..2026-08-04. Artifact paths are in artifacts/research-validation."
+    }
+  ]
+}

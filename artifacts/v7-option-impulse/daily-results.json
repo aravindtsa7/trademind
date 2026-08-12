@@ -1,0 +1,1254 @@
+{
+  "CE": [
+    {
+      "date": "2026-03-02",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-04",
+      "trades": 2,
+      "grossSum": 3.47,
+      "netSumAt040": 2.67
+    },
+    {
+      "date": "2026-03-05",
+      "trades": 2,
+      "grossSum": 0,
+      "netSumAt040": -0.8
+    },
+    {
+      "date": "2026-03-06",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-09",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-10",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-11",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-12",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-13",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-16",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-03-17",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-18",
+      "trades": 5,
+      "grossSum": 9,
+      "netSumAt040": 7
+    },
+    {
+      "date": "2026-03-19",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-20",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-23",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-24",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-25",
+      "trades": 13,
+      "grossSum": -4.41,
+      "netSumAt040": -9.61
+    },
+    {
+      "date": "2026-03-27",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-30",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-01",
+      "trades": 3,
+      "grossSum": 2.3,
+      "netSumAt040": 1.1
+    },
+    {
+      "date": "2026-04-02",
+      "trades": 4,
+      "grossSum": 0,
+      "netSumAt040": -1.6
+    },
+    {
+      "date": "2026-04-06",
+      "trades": 3,
+      "grossSum": 9,
+      "netSumAt040": 7.8
+    },
+    {
+      "date": "2026-04-07",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-08",
+      "trades": 5,
+      "grossSum": 4.91,
+      "netSumAt040": 2.91
+    },
+    {
+      "date": "2026-04-09",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-10",
+      "trades": 1,
+      "grossSum": 3,
+      "netSumAt040": 2.6
+    },
+    {
+      "date": "2026-04-13",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-15",
+      "trades": 4,
+      "grossSum": -2.81,
+      "netSumAt040": -4.41
+    },
+    {
+      "date": "2026-04-16",
+      "trades": 2,
+      "grossSum": 0,
+      "netSumAt040": -0.8
+    },
+    {
+      "date": "2026-04-17",
+      "trades": 3,
+      "grossSum": -3,
+      "netSumAt040": -4.2
+    },
+    {
+      "date": "2026-04-20",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-21",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-22",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-23",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-24",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-27",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-28",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-29",
+      "trades": 6,
+      "grossSum": 12,
+      "netSumAt040": 9.6
+    },
+    {
+      "date": "2026-04-30",
+      "trades": 3,
+      "grossSum": 3,
+      "netSumAt040": 1.8
+    },
+    {
+      "date": "2026-05-04",
+      "trades": 2,
+      "grossSum": 0,
+      "netSumAt040": -0.8
+    },
+    {
+      "date": "2026-05-05",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-06",
+      "trades": 6,
+      "grossSum": 2.55,
+      "netSumAt040": 0.15
+    },
+    {
+      "date": "2026-05-07",
+      "trades": 2,
+      "grossSum": 0,
+      "netSumAt040": -0.8
+    },
+    {
+      "date": "2026-05-08",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-11",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-12",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-13",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-14",
+      "trades": 5,
+      "grossSum": 3,
+      "netSumAt040": 1
+    },
+    {
+      "date": "2026-05-15",
+      "trades": 1,
+      "grossSum": 3,
+      "netSumAt040": 2.6
+    },
+    {
+      "date": "2026-05-18",
+      "trades": 1,
+      "grossSum": 3,
+      "netSumAt040": 2.6
+    },
+    {
+      "date": "2026-05-19",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-20",
+      "trades": 2,
+      "grossSum": 1.57,
+      "netSumAt040": 0.77
+    },
+    {
+      "date": "2026-05-21",
+      "trades": 2,
+      "grossSum": 0,
+      "netSumAt040": -0.8
+    },
+    {
+      "date": "2026-05-22",
+      "trades": 5,
+      "grossSum": 9,
+      "netSumAt040": 7
+    },
+    {
+      "date": "2026-05-25",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-26",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-27",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-29",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-01",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-02",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-03",
+      "trades": 2,
+      "grossSum": 0,
+      "netSumAt040": -0.8
+    },
+    {
+      "date": "2026-06-04",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-05",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-08",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-09",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-10",
+      "trades": 5,
+      "grossSum": 2.15,
+      "netSumAt040": 0.15
+    },
+    {
+      "date": "2026-06-11",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-06-12",
+      "trades": 7,
+      "grossSum": -3,
+      "netSumAt040": -5.8
+    },
+    {
+      "date": "2026-06-15",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-16",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-17",
+      "trades": 4,
+      "grossSum": 1.83,
+      "netSumAt040": 0.23
+    },
+    {
+      "date": "2026-06-18",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-19",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-22",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-23",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-24",
+      "trades": 6,
+      "grossSum": 13.84,
+      "netSumAt040": 11.44
+    },
+    {
+      "date": "2026-06-25",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-29",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-30",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-01",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-07-02",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-03",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-06",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-07",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-08",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-09",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-10",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-13",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-14",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-15",
+      "trades": 1,
+      "grossSum": 3,
+      "netSumAt040": 2.6
+    },
+    {
+      "date": "2026-07-16",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-17",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-20",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-21",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-22",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-23",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-24",
+      "trades": 3,
+      "grossSum": 3,
+      "netSumAt040": 1.8
+    },
+    {
+      "date": "2026-07-27",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-28",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-29",
+      "trades": 1,
+      "grossSum": 1.02,
+      "netSumAt040": 0.62
+    },
+    {
+      "date": "2026-07-30",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-31",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-08-03",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-08-04",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    }
+  ],
+  "PE": [
+    {
+      "date": "2026-03-02",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-04",
+      "trades": 4,
+      "grossSum": -0.83,
+      "netSumAt040": -2.43
+    },
+    {
+      "date": "2026-03-05",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-06",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-03-09",
+      "trades": 6,
+      "grossSum": -4,
+      "netSumAt040": -6.4
+    },
+    {
+      "date": "2026-03-10",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-11",
+      "trades": 14,
+      "grossSum": 35.67,
+      "netSumAt040": 30.07
+    },
+    {
+      "date": "2026-03-12",
+      "trades": 5,
+      "grossSum": -8,
+      "netSumAt040": -10
+    },
+    {
+      "date": "2026-03-13",
+      "trades": 19,
+      "grossSum": 20,
+      "netSumAt040": 12.4
+    },
+    {
+      "date": "2026-03-16",
+      "trades": 1,
+      "grossSum": 4,
+      "netSumAt040": 3.6
+    },
+    {
+      "date": "2026-03-17",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-18",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-19",
+      "trades": 16,
+      "grossSum": 12.67,
+      "netSumAt040": 6.27
+    },
+    {
+      "date": "2026-03-20",
+      "trades": 2,
+      "grossSum": -6,
+      "netSumAt040": -6.8
+    },
+    {
+      "date": "2026-03-23",
+      "trades": 9,
+      "grossSum": -7.45,
+      "netSumAt040": -11.05
+    },
+    {
+      "date": "2026-03-24",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-25",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-03-27",
+      "trades": 10,
+      "grossSum": 19,
+      "netSumAt040": 15
+    },
+    {
+      "date": "2026-03-30",
+      "trades": 1,
+      "grossSum": 4,
+      "netSumAt040": 3.6
+    },
+    {
+      "date": "2026-04-01",
+      "trades": 4,
+      "grossSum": 2,
+      "netSumAt040": 0.4
+    },
+    {
+      "date": "2026-04-02",
+      "trades": 2,
+      "grossSum": -6,
+      "netSumAt040": -6.8
+    },
+    {
+      "date": "2026-04-06",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-07",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-08",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-09",
+      "trades": 10,
+      "grossSum": -9,
+      "netSumAt040": -13
+    },
+    {
+      "date": "2026-04-10",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-13",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-15",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-16",
+      "trades": 5,
+      "grossSum": -8,
+      "netSumAt040": -10
+    },
+    {
+      "date": "2026-04-17",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-20",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-21",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-22",
+      "trades": 5,
+      "grossSum": 7.82,
+      "netSumAt040": 5.82
+    },
+    {
+      "date": "2026-04-23",
+      "trades": 10,
+      "grossSum": -6.78,
+      "netSumAt040": -10.78
+    },
+    {
+      "date": "2026-04-24",
+      "trades": 12,
+      "grossSum": 13,
+      "netSumAt040": 8.2
+    },
+    {
+      "date": "2026-04-27",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-28",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-04-29",
+      "trades": 4,
+      "grossSum": -9.64,
+      "netSumAt040": -11.24
+    },
+    {
+      "date": "2026-04-30",
+      "trades": 6,
+      "grossSum": 10,
+      "netSumAt040": 7.6
+    },
+    {
+      "date": "2026-05-04",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-05-05",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-06",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-05-07",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-08",
+      "trades": 18,
+      "grossSum": -3.68,
+      "netSumAt040": -10.88
+    },
+    {
+      "date": "2026-05-11",
+      "trades": 1,
+      "grossSum": 4,
+      "netSumAt040": 3.6
+    },
+    {
+      "date": "2026-05-12",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-13",
+      "trades": 1,
+      "grossSum": 4,
+      "netSumAt040": 3.6
+    },
+    {
+      "date": "2026-05-14",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-15",
+      "trades": 3,
+      "grossSum": -2,
+      "netSumAt040": -3.2
+    },
+    {
+      "date": "2026-05-18",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-05-19",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-20",
+      "trades": 2,
+      "grossSum": -3.56,
+      "netSumAt040": -4.36
+    },
+    {
+      "date": "2026-05-21",
+      "trades": 2,
+      "grossSum": 1,
+      "netSumAt040": 0.2
+    },
+    {
+      "date": "2026-05-22",
+      "trades": 1,
+      "grossSum": 4,
+      "netSumAt040": 3.6
+    },
+    {
+      "date": "2026-05-25",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-26",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-05-27",
+      "trades": 5,
+      "grossSum": -5.41,
+      "netSumAt040": -7.41
+    },
+    {
+      "date": "2026-05-29",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-06-01",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-02",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-03",
+      "trades": 10,
+      "grossSum": -8.58,
+      "netSumAt040": -12.58
+    },
+    {
+      "date": "2026-06-04",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-05",
+      "trades": 5,
+      "grossSum": 6,
+      "netSumAt040": 4
+    },
+    {
+      "date": "2026-06-08",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-09",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-10",
+      "trades": 3,
+      "grossSum": -2,
+      "netSumAt040": -3.2
+    },
+    {
+      "date": "2026-06-11",
+      "trades": 4,
+      "grossSum": -12,
+      "netSumAt040": -13.6
+    },
+    {
+      "date": "2026-06-12",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-15",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-16",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-17",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-18",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-19",
+      "trades": 1,
+      "grossSum": -3,
+      "netSumAt040": -3.4
+    },
+    {
+      "date": "2026-06-22",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-23",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-24",
+      "trades": 1,
+      "grossSum": 4,
+      "netSumAt040": 3.6
+    },
+    {
+      "date": "2026-06-25",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-29",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-06-30",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-01",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-02",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-03",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-06",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-07",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-08",
+      "trades": 15,
+      "grossSum": 13.93,
+      "netSumAt040": 7.93
+    },
+    {
+      "date": "2026-07-09",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-10",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-13",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-14",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-15",
+      "trades": 2,
+      "grossSum": 1,
+      "netSumAt040": 0.2
+    },
+    {
+      "date": "2026-07-16",
+      "trades": 1,
+      "grossSum": 4,
+      "netSumAt040": 3.6
+    },
+    {
+      "date": "2026-07-17",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-20",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-21",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-22",
+      "trades": 15,
+      "grossSum": 11,
+      "netSumAt040": 5
+    },
+    {
+      "date": "2026-07-23",
+      "trades": 7,
+      "grossSum": 14,
+      "netSumAt040": 11.2
+    },
+    {
+      "date": "2026-07-24",
+      "trades": 2,
+      "grossSum": 8,
+      "netSumAt040": 7.2
+    },
+    {
+      "date": "2026-07-27",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-28",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-29",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-30",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-07-31",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-08-03",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    },
+    {
+      "date": "2026-08-04",
+      "trades": 0,
+      "grossSum": 0,
+      "netSumAt040": 0
+    }
+  ]
+}

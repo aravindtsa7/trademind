@@ -157,3 +157,17 @@ test('propagates Upstox request failures', async () => {
     (error: unknown) => error === upstreamError
   );
 });
+
+test('retries only transient expired-option metadata failures', async () => {
+  let attempts = 0;
+  const timeout = Object.assign(new Error('timeout'), { isAxiosError: true, code: 'ECONNABORTED' });
+  const { client, axios } = createClient(() => {
+    attempts += 1;
+    return attempts < 3 ? Promise.reject(timeout) : success([createApiContract()]);
+  });
+
+  const contracts = await client.fetchExpiredOptionContracts('BSE_INDEX|SENSEX', '2026-08-06');
+
+  assert.equal(contracts.length, 1);
+  assert.equal(axios.calls.length, 3);
+});

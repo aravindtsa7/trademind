@@ -13,6 +13,7 @@ const marketTimeFormatter = new Intl.DateTimeFormat('en-CA', {
 });
 const timeframeMinutes: Record<string, number> = {
   '1m': 1,
+  '3m': 3,
   '5m': 5,
   '15m': 15,
   '30m': 30,

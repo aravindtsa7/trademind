@@ -1,0 +1,26 @@
+[
+  {
+    "minimumTradesPerSession": 3,
+    "candidateCount": 2765,
+    "positiveNetAt040Count": 0,
+    "bestPositiveNetAt040": null
+  },
+  {
+    "minimumTradesPerSession": 5,
+    "candidateCount": 120,
+    "positiveNetAt040Count": 0,
+    "bestPositiveNetAt040": null
+  },
+  {
+    "minimumTradesPerSession": 8,
+    "candidateCount": 0,
+    "positiveNetAt040Count": 0,
+    "bestPositiveNetAt040": null
+  },
+  {
+    "minimumTradesPerSession": 10,
+    "candidateCount": 0,
+    "positiveNetAt040Count": 0,
+    "bestPositiveNetAt040": null
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "CE": [
+    {
+      "month": "2026-03",
+      "signals": 1116
+    },
+    {
+      "month": "2026-04",
+      "signals": 1159
+    },
+    {
+      "month": "2026-05",
+      "signals": 972
+    },
+    {
+      "month": "2026-06",
+      "signals": 941
+    },
+    {
+      "month": "2026-07",
+      "signals": 1002
+    },
+    {
+      "month": "Aug 1-4",
+      "signals": 45
+    }
+  ],
+  "PE": [
+    {
+      "month": "2026-03",
+      "signals": 1296
+    },
+    {
+      "month": "2026-04",
+      "signals": 1170
+    },
+    {
+      "month": "2026-05",
+      "signals": 1093
+    },
+    {
+      "month": "2026-06",
+      "signals": 1107
+    },
+    {
+      "month": "2026-07",
+      "signals": 1206
+    },
+    {
+      "month": "Aug 1-4",
+      "signals": 49
+    }
+  ]
+}

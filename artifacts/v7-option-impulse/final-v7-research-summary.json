@@ -1,0 +1,2889 @@
+{
+  "scope": {
+    "start": "2026-03-02",
+    "end": "2026-08-04",
+    "targetSessions": 104
+  },
+  "configurations": {
+    "CE": 6400,
+    "PE": 6400,
+    "total": 12800
+  },
+  "policiesPerConfiguration": 5,
+  "totalPolicyEvaluations": 64000,
+  "coverage": {
+    "CE": {
+      "required": 541,
+      "complete": 541,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "PE": {
+      "required": 554,
+      "complete": 554,
+      "missing": 0,
+      "incomplete": 0
+    },
+    "global": {
+      "required": 1095,
+      "complete": 1095,
+      "missing": 0,
+      "incomplete": 0
+    }
+  },
+  "CE": {
+    "direction": "CE",
+    "policyCandidates": 32000,
+    "credibleAfter040": 141,
+    "highestFrequency": {
+      "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|CE|0.5ATR_1BAR_NO_REGIME_FILTER|RETURN_0.5|50|0",
+      "direction": "CE",
+      "config": {
+        "timeframe": 1,
+        "direction": "CE",
+        "underlying": {
+          "id": "0.5ATR_1BAR_NO_REGIME_FILTER",
+          "bodyAtrMinimum": 0.5,
+          "breakoutLookbackBars": 1,
+          "regimeFamily": "NO_REGIME_FILTER"
+        },
+        "premium": {
+          "id": "RETURN_0.5",
+          "confirmation": "RETURN_ONLY",
+          "returnPercentMinimum": 0.5
+        },
+        "minimumPremium": 50,
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 3,
+        "stop": 2,
+        "hold": 5
+      },
+      "trades": 3894,
+      "settled": 3558,
+      "tradesPerSession": 37.44,
+      "activeSessions": 102,
+      "maxTradesPerDay": 62,
+      "grossAverage": -0.14,
+      "grossMedian": -2,
+      "netAt020": -0.34,
+      "netAt040": -0.54,
+      "netAt060": -0.74,
+      "targetRate": 34.15,
+      "stopRate": 59.64,
+      "timeoutRate": 6.21,
+      "ambiguousRate": 8.19,
+      "ambiguousCount": 319,
+      "unavailableCount": 17,
+      "mfe5": 5.61,
+      "mae5": 5.25,
+      "profitableDayPercent": 37.62,
+      "maxLosingStreak": 19,
+      "credibleAt040": false,
+      "frequency": {
+        "activeSessions": 102,
+        "maxTradesPerDay": 62,
+        "averageTradesPerActiveSession": 38.18,
+        "daysWith0": 2,
+        "daysWith1To4": 3,
+        "daysWith5To9": 4,
+        "daysWith10Plus": 95
+      }
+    },
+    "highestQuality": {
+      "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|125|5",
+      "direction": "CE",
+      "config": {
+        "timeframe": 2,
+        "direction": "CE",
+        "underlying": {
+          "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+          "bodyAtrMinimum": 1.25,
+          "breakoutLookbackBars": 3,
+          "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+        },
+        "premium": {
+          "id": "RETURN_1.5",
+          "confirmation": "RETURN_ONLY",
+          "returnPercentMinimum": 1.5
+        },
+        "minimumPremium": 125,
+        "cooldownMinutes": 5
+      },
+      "policy": {
+        "target": 3,
+        "stop": 3,
+        "hold": 5
+      },
+      "trades": 33,
+      "settled": 32,
+      "tradesPerSession": 0.32,
+      "activeSessions": 22,
+      "maxTradesPerDay": 4,
+      "grossAverage": 0.87,
+      "grossMedian": 3,
+      "netAt020": 0.67,
+      "netAt040": 0.47,
+      "netAt060": 0.27,
+      "targetRate": 59.38,
+      "stopRate": 31.25,
+      "timeoutRate": 9.38,
+      "ambiguousRate": 3.03,
+      "ambiguousCount": 1,
+      "unavailableCount": 0,
+      "mfe5": 6.05,
+      "mae5": 4.77,
+      "profitableDayPercent": 66.67,
+      "maxLosingStreak": 2,
+      "credibleAt040": true,
+      "frequency": {
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "averageTradesPerActiveSession": 1.5,
+        "daysWith0": 82,
+        "daysWith1To4": 22,
+        "daysWith5To9": 0,
+        "daysWith10Plus": 0
+      }
+    },
+    "bestBalanced": {
+      "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|0.5ATR_1BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|5",
+      "direction": "CE",
+      "config": {
+        "timeframe": 2,
+        "direction": "CE",
+        "underlying": {
+          "id": "0.5ATR_1BAR_DIRECTION_ALIGNED_REGIME",
+          "bodyAtrMinimum": 0.5,
+          "breakoutLookbackBars": 1,
+          "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+        },
+        "premium": {
+          "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+          "confirmation": "BODY_BREAKOUT_AND_RETURN",
+          "bodyAtrMinimum": 0.75,
+          "breakoutLookbackBars": 2,
+          "returnPercentMinimum": 1.5
+        },
+        "minimumPremium": 125,
+        "cooldownMinutes": 5
+      },
+      "policy": {
+        "target": 3,
+        "stop": 3,
+        "hold": 5
+      },
+      "trades": 118,
+      "settled": 114,
+      "tradesPerSession": 1.13,
+      "activeSessions": 37,
+      "maxTradesPerDay": 13,
+      "grossAverage": 0.63,
+      "grossMedian": 3,
+      "netAt020": 0.43,
+      "netAt040": 0.23,
+      "netAt060": 0.03,
+      "targetRate": 52.63,
+      "stopRate": 33.33,
+      "timeoutRate": 14.04,
+      "ambiguousRate": 3.39,
+      "ambiguousCount": 4,
+      "unavailableCount": 0,
+      "mfe5": 4.63,
+      "mae5": 3.64,
+      "profitableDayPercent": 67.65,
+      "maxLosingStreak": 5,
+      "credibleAt040": true,
+      "frequency": {
+        "activeSessions": 37,
+        "maxTradesPerDay": 13,
+        "averageTradesPerActiveSession": 3.19,
+        "daysWith0": 67,
+        "daysWith1To4": 27,
+        "daysWith5To9": 9,
+        "daysWith10Plus": 1
+      }
+    },
+    "top20": [
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|125|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 33,
+        "settled": 32,
+        "tradesPerSession": 0.32,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.87,
+        "grossMedian": 3,
+        "netAt020": 0.67,
+        "netAt040": 0.47,
+        "netAt060": 0.27,
+        "targetRate": 59.38,
+        "stopRate": 31.25,
+        "timeoutRate": 9.38,
+        "ambiguousRate": 3.03,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 6.05,
+        "mae5": 4.77,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.5,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|125|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 32,
+        "settled": 31,
+        "tradesPerSession": 0.31,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.8,
+        "grossMedian": 3,
+        "netAt020": 0.6,
+        "netAt040": 0.4,
+        "netAt060": 0.2,
+        "targetRate": 58.06,
+        "stopRate": 32.26,
+        "timeoutRate": 9.68,
+        "ambiguousRate": 3.13,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.95,
+        "mae5": 4.88,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.45,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|125|0",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 34,
+        "settled": 33,
+        "tradesPerSession": 0.33,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.75,
+        "grossMedian": 3,
+        "netAt020": 0.55,
+        "netAt040": 0.35,
+        "netAt060": 0.15,
+        "targetRate": 57.58,
+        "stopRate": 33.33,
+        "timeoutRate": 9.09,
+        "ambiguousRate": 2.94,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.91,
+        "mae5": 4.75,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.55,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|125|1",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 1
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 34,
+        "settled": 33,
+        "tradesPerSession": 0.33,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.75,
+        "grossMedian": 3,
+        "netAt020": 0.55,
+        "netAt040": 0.35,
+        "netAt060": 0.15,
+        "targetRate": 57.58,
+        "stopRate": 33.33,
+        "timeoutRate": 9.09,
+        "ambiguousRate": 2.94,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.91,
+        "mae5": 4.75,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.55,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|125|2",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 2
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 34,
+        "settled": 33,
+        "tradesPerSession": 0.33,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.75,
+        "grossMedian": 3,
+        "netAt020": 0.55,
+        "netAt040": 0.35,
+        "netAt060": 0.15,
+        "targetRate": 57.58,
+        "stopRate": 33.33,
+        "timeoutRate": 9.09,
+        "ambiguousRate": 2.94,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.91,
+        "mae5": 4.75,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.55,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|125|3",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 3
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 34,
+        "settled": 33,
+        "tradesPerSession": 0.33,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.75,
+        "grossMedian": 3,
+        "netAt020": 0.55,
+        "netAt040": 0.35,
+        "netAt060": 0.15,
+        "targetRate": 57.58,
+        "stopRate": 33.33,
+        "timeoutRate": 9.09,
+        "ambiguousRate": 2.94,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.91,
+        "mae5": 4.75,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.55,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|100|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 37,
+        "settled": 35,
+        "tradesPerSession": 0.36,
+        "activeSessions": 25,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.71,
+        "grossMedian": 3,
+        "netAt020": 0.51,
+        "netAt040": 0.31,
+        "netAt060": 0.11,
+        "targetRate": 57.14,
+        "stopRate": 34.29,
+        "timeoutRate": 8.57,
+        "ambiguousRate": 5.41,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 5.76,
+        "mae5": 5.34,
+        "profitableDayPercent": 65.22,
+        "maxLosingStreak": 3,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 25,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.48,
+          "daysWith0": 79,
+          "daysWith1To4": 25,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|125|0",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 33,
+        "settled": 32,
+        "tradesPerSession": 0.32,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.68,
+        "grossMedian": 3,
+        "netAt020": 0.48,
+        "netAt040": 0.28,
+        "netAt060": 0.08,
+        "targetRate": 56.25,
+        "stopRate": 34.38,
+        "timeoutRate": 9.38,
+        "ambiguousRate": 3.03,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.81,
+        "mae5": 4.85,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.5,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|125|1",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 1
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 33,
+        "settled": 32,
+        "tradesPerSession": 0.32,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.68,
+        "grossMedian": 3,
+        "netAt020": 0.48,
+        "netAt040": 0.28,
+        "netAt060": 0.08,
+        "targetRate": 56.25,
+        "stopRate": 34.38,
+        "timeoutRate": 9.38,
+        "ambiguousRate": 3.03,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.81,
+        "mae5": 4.85,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.5,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|125|2",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 2
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 33,
+        "settled": 32,
+        "tradesPerSession": 0.32,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.68,
+        "grossMedian": 3,
+        "netAt020": 0.48,
+        "netAt040": 0.28,
+        "netAt060": 0.08,
+        "targetRate": 56.25,
+        "stopRate": 34.38,
+        "timeoutRate": 9.38,
+        "ambiguousRate": 3.03,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.81,
+        "mae5": 4.85,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.5,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|125|3",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 3
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 33,
+        "settled": 32,
+        "tradesPerSession": 0.32,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.68,
+        "grossMedian": 3,
+        "netAt020": 0.48,
+        "netAt040": 0.28,
+        "netAt060": 0.08,
+        "targetRate": 56.25,
+        "stopRate": 34.38,
+        "timeoutRate": 9.38,
+        "ambiguousRate": 3.03,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 5.81,
+        "mae5": 4.85,
+        "profitableDayPercent": 66.67,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.5,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 30,
+        "settled": 29,
+        "tradesPerSession": 0.29,
+        "activeSessions": 21,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.65,
+        "grossMedian": 3,
+        "netAt020": 0.45,
+        "netAt040": 0.25,
+        "netAt060": 0.05,
+        "targetRate": 55.17,
+        "stopRate": 34.48,
+        "timeoutRate": 10.34,
+        "ambiguousRate": 3.33,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 6.21,
+        "mae5": 4.77,
+        "profitableDayPercent": 60,
+        "maxLosingStreak": 2,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 21,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.43,
+          "daysWith0": 83,
+          "daysWith1To4": 21,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|100|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 36,
+        "settled": 34,
+        "tradesPerSession": 0.35,
+        "activeSessions": 25,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.64,
+        "grossMedian": 3,
+        "netAt020": 0.44,
+        "netAt040": 0.24,
+        "netAt060": 0.04,
+        "targetRate": 55.88,
+        "stopRate": 35.29,
+        "timeoutRate": 8.82,
+        "ambiguousRate": 5.56,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 5.66,
+        "mae5": 5.44,
+        "profitableDayPercent": 65.22,
+        "maxLosingStreak": 3,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 25,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.44,
+          "daysWith0": 79,
+          "daysWith1To4": 25,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|0.5ATR_1BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "0.5ATR_1BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 0.5,
+            "breakoutLookbackBars": 1,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 118,
+        "settled": 114,
+        "tradesPerSession": 1.13,
+        "activeSessions": 37,
+        "maxTradesPerDay": 13,
+        "grossAverage": 0.63,
+        "grossMedian": 3,
+        "netAt020": 0.43,
+        "netAt040": 0.23,
+        "netAt060": 0.03,
+        "targetRate": 52.63,
+        "stopRate": 33.33,
+        "timeoutRate": 14.04,
+        "ambiguousRate": 3.39,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.63,
+        "mae5": 3.64,
+        "profitableDayPercent": 67.65,
+        "maxLosingStreak": 5,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 37,
+          "maxTradesPerDay": 13,
+          "averageTradesPerActiveSession": 3.19,
+          "daysWith0": 67,
+          "daysWith1To4": 27,
+          "daysWith5To9": 9,
+          "daysWith10Plus": 1
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|125|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 33,
+        "settled": 32,
+        "tradesPerSession": 0.32,
+        "activeSessions": 22,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.63,
+        "grossMedian": 1.66,
+        "netAt020": 0.43,
+        "netAt040": 0.23,
+        "netAt060": 0.03,
+        "targetRate": 46.88,
+        "stopRate": 43.75,
+        "timeoutRate": 9.38,
+        "ambiguousRate": 3.03,
+        "ambiguousCount": 1,
+        "unavailableCount": 0,
+        "mfe5": 6.05,
+        "mae5": 4.77,
+        "profitableDayPercent": 57.14,
+        "maxLosingStreak": 4,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 22,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.5,
+          "daysWith0": 82,
+          "daysWith1To4": 22,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_RETURN_1.5|75|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_RETURN_1.5",
+            "confirmation": "BODY_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 75,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 55,
+        "settled": 51,
+        "tradesPerSession": 0.53,
+        "activeSessions": 30,
+        "maxTradesPerDay": 7,
+        "grossAverage": 0.61,
+        "grossMedian": 3,
+        "netAt020": 0.41,
+        "netAt040": 0.21,
+        "netAt060": 0.01,
+        "targetRate": 52.94,
+        "stopRate": 33.33,
+        "timeoutRate": 13.73,
+        "ambiguousRate": 7.27,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 5.27,
+        "mae5": 6.21,
+        "profitableDayPercent": 62.96,
+        "maxLosingStreak": 4,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 30,
+          "maxTradesPerDay": 7,
+          "averageTradesPerActiveSession": 1.83,
+          "daysWith0": 74,
+          "daysWith1To4": 29,
+          "daysWith5To9": 1,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|75|5",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 75,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 55,
+        "settled": 51,
+        "tradesPerSession": 0.53,
+        "activeSessions": 30,
+        "maxTradesPerDay": 7,
+        "grossAverage": 0.61,
+        "grossMedian": 3,
+        "netAt020": 0.41,
+        "netAt040": 0.21,
+        "netAt060": 0.01,
+        "targetRate": 52.94,
+        "stopRate": 33.33,
+        "timeoutRate": 13.73,
+        "ambiguousRate": 7.27,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 5.27,
+        "mae5": 6.21,
+        "profitableDayPercent": 62.96,
+        "maxLosingStreak": 4,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 30,
+          "maxTradesPerDay": 7,
+          "averageTradesPerActiveSession": 1.83,
+          "daysWith0": 74,
+          "daysWith1To4": 29,
+          "daysWith5To9": 1,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|100|0",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 38,
+        "settled": 36,
+        "tradesPerSession": 0.37,
+        "activeSessions": 25,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.61,
+        "grossMedian": 3,
+        "netAt020": 0.41,
+        "netAt040": 0.21,
+        "netAt060": 0.01,
+        "targetRate": 55.56,
+        "stopRate": 36.11,
+        "timeoutRate": 8.33,
+        "ambiguousRate": 5.26,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 5.64,
+        "mae5": 5.3,
+        "profitableDayPercent": 65.22,
+        "maxLosingStreak": 3,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 25,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.52,
+          "daysWith0": 79,
+          "daysWith1To4": 25,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|100|1",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 1
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 38,
+        "settled": 36,
+        "tradesPerSession": 0.37,
+        "activeSessions": 25,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.61,
+        "grossMedian": 3,
+        "netAt020": 0.41,
+        "netAt040": 0.21,
+        "netAt060": 0.01,
+        "targetRate": 55.56,
+        "stopRate": 36.11,
+        "timeoutRate": 8.33,
+        "ambiguousRate": 5.26,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 5.64,
+        "mae5": 5.3,
+        "profitableDayPercent": 65.22,
+        "maxLosingStreak": 3,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 25,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.52,
+          "daysWith0": 79,
+          "daysWith1To4": 25,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_1.5|100|2",
+        "direction": "CE",
+        "config": {
+          "timeframe": 2,
+          "direction": "CE",
+          "underlying": {
+            "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1.25,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_1.5",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 2
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 38,
+        "settled": 36,
+        "tradesPerSession": 0.37,
+        "activeSessions": 25,
+        "maxTradesPerDay": 4,
+        "grossAverage": 0.61,
+        "grossMedian": 3,
+        "netAt020": 0.41,
+        "netAt040": 0.21,
+        "netAt060": 0.01,
+        "targetRate": 55.56,
+        "stopRate": 36.11,
+        "timeoutRate": 8.33,
+        "ambiguousRate": 5.26,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 5.64,
+        "mae5": 5.3,
+        "profitableDayPercent": 65.22,
+        "maxLosingStreak": 3,
+        "credibleAt040": true,
+        "frequency": {
+          "activeSessions": 25,
+          "maxTradesPerDay": 4,
+          "averageTradesPerActiveSession": 1.52,
+          "daysWith0": 79,
+          "daysWith1To4": 25,
+          "daysWith5To9": 0,
+          "daysWith10Plus": 0
+        }
+      }
+    ]
+  },
+  "PE": {
+    "direction": "PE",
+    "policyCandidates": 32000,
+    "credibleAfter040": 0,
+    "highestFrequency": {
+      "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|0.5ATR_1BAR_NO_REGIME_FILTER|RETURN_0.5|50|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 1,
+        "direction": "PE",
+        "underlying": {
+          "id": "0.5ATR_1BAR_NO_REGIME_FILTER",
+          "bodyAtrMinimum": 0.5,
+          "breakoutLookbackBars": 1,
+          "regimeFamily": "NO_REGIME_FILTER"
+        },
+        "premium": {
+          "id": "RETURN_0.5",
+          "confirmation": "RETURN_ONLY",
+          "returnPercentMinimum": 0.5
+        },
+        "minimumPremium": 50,
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 2,
+        "stop": 2,
+        "hold": 3
+      },
+      "trades": 4348,
+      "settled": 3750,
+      "tradesPerSession": 41.81,
+      "activeSessions": 103,
+      "maxTradesPerDay": 67,
+      "grossAverage": -0.12,
+      "grossMedian": -1.59,
+      "netAt020": -0.32,
+      "netAt040": -0.52,
+      "netAt060": -0.72,
+      "targetRate": 43.55,
+      "stopRate": 49.76,
+      "timeoutRate": 6.69,
+      "ambiguousRate": 13.55,
+      "ambiguousCount": 589,
+      "unavailableCount": 9,
+      "mfe5": 5.55,
+      "mae5": 5.59,
+      "profitableDayPercent": 32.35,
+      "maxLosingStreak": 18,
+      "credibleAt040": false,
+      "frequency": {
+        "activeSessions": 103,
+        "maxTradesPerDay": 67,
+        "averageTradesPerActiveSession": 42.21,
+        "daysWith0": 1,
+        "daysWith1To4": 2,
+        "daysWith5To9": 5,
+        "daysWith10Plus": 96
+      }
+    },
+    "highestQuality": {
+      "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|5",
+      "direction": "PE",
+      "config": {
+        "timeframe": 1,
+        "direction": "PE",
+        "underlying": {
+          "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+          "bodyAtrMinimum": 1,
+          "breakoutLookbackBars": 3,
+          "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+        },
+        "premium": {
+          "id": "RETURN_2",
+          "confirmation": "RETURN_ONLY",
+          "returnPercentMinimum": 2
+        },
+        "minimumPremium": 125,
+        "cooldownMinutes": 5
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "trades": 251,
+      "settled": 249,
+      "tradesPerSession": 2.41,
+      "activeSessions": 45,
+      "maxTradesPerDay": 20,
+      "grossAverage": 0.33,
+      "grossMedian": -1.68,
+      "netAt020": 0.13,
+      "netAt040": -0.07,
+      "netAt060": -0.27,
+      "targetRate": 44.58,
+      "stopRate": 49.4,
+      "timeoutRate": 6.02,
+      "ambiguousRate": 0.8,
+      "ambiguousCount": 2,
+      "unavailableCount": 0,
+      "mfe5": 4.81,
+      "mae5": 4.11,
+      "profitableDayPercent": 48.89,
+      "maxLosingStreak": 7,
+      "credibleAt040": false,
+      "frequency": {
+        "activeSessions": 45,
+        "maxTradesPerDay": 20,
+        "averageTradesPerActiveSession": 5.58,
+        "daysWith0": 59,
+        "daysWith1To4": 25,
+        "daysWith5To9": 9,
+        "daysWith10Plus": 11
+      }
+    },
+    "bestBalanced": {
+      "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|5",
+      "direction": "PE",
+      "config": {
+        "timeframe": 1,
+        "direction": "PE",
+        "underlying": {
+          "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+          "bodyAtrMinimum": 1,
+          "breakoutLookbackBars": 3,
+          "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+        },
+        "premium": {
+          "id": "RETURN_2",
+          "confirmation": "RETURN_ONLY",
+          "returnPercentMinimum": 2
+        },
+        "minimumPremium": 125,
+        "cooldownMinutes": 5
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "trades": 251,
+      "settled": 249,
+      "tradesPerSession": 2.41,
+      "activeSessions": 45,
+      "maxTradesPerDay": 20,
+      "grossAverage": 0.33,
+      "grossMedian": -1.68,
+      "netAt020": 0.13,
+      "netAt040": -0.07,
+      "netAt060": -0.27,
+      "targetRate": 44.58,
+      "stopRate": 49.4,
+      "timeoutRate": 6.02,
+      "ambiguousRate": 0.8,
+      "ambiguousCount": 2,
+      "unavailableCount": 0,
+      "mfe5": 4.81,
+      "mae5": 4.11,
+      "profitableDayPercent": 48.89,
+      "maxLosingStreak": 7,
+      "credibleAt040": false,
+      "frequency": {
+        "activeSessions": 45,
+        "maxTradesPerDay": 20,
+        "averageTradesPerActiveSession": 5.58,
+        "daysWith0": 59,
+        "daysWith1To4": 25,
+        "daysWith5To9": 9,
+        "daysWith10Plus": 11
+      }
+    },
+    "top20": [
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 251,
+        "settled": 249,
+        "tradesPerSession": 2.41,
+        "activeSessions": 45,
+        "maxTradesPerDay": 20,
+        "grossAverage": 0.33,
+        "grossMedian": -1.68,
+        "netAt020": 0.13,
+        "netAt040": -0.07,
+        "netAt060": -0.27,
+        "targetRate": 44.58,
+        "stopRate": 49.4,
+        "timeoutRate": 6.02,
+        "ambiguousRate": 0.8,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 4.81,
+        "mae5": 4.11,
+        "profitableDayPercent": 48.89,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 20,
+          "averageTradesPerActiveSession": 5.58,
+          "daysWith0": 59,
+          "daysWith1To4": 25,
+          "daysWith5To9": 9,
+          "daysWith10Plus": 11
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|0",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 290,
+        "settled": 286,
+        "tradesPerSession": 2.79,
+        "activeSessions": 45,
+        "maxTradesPerDay": 22,
+        "grossAverage": 0.3,
+        "grossMedian": -2.4,
+        "netAt020": 0.1,
+        "netAt040": -0.1,
+        "netAt060": -0.3,
+        "targetRate": 44.06,
+        "stopRate": 49.65,
+        "timeoutRate": 6.29,
+        "ambiguousRate": 1.38,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.84,
+        "mae5": 4.16,
+        "profitableDayPercent": 48.89,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 22,
+          "averageTradesPerActiveSession": 6.44,
+          "daysWith0": 59,
+          "daysWith1To4": 22,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 12
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|1",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 1
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 290,
+        "settled": 286,
+        "tradesPerSession": 2.79,
+        "activeSessions": 45,
+        "maxTradesPerDay": 22,
+        "grossAverage": 0.3,
+        "grossMedian": -2.4,
+        "netAt020": 0.1,
+        "netAt040": -0.1,
+        "netAt060": -0.3,
+        "targetRate": 44.06,
+        "stopRate": 49.65,
+        "timeoutRate": 6.29,
+        "ambiguousRate": 1.38,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.84,
+        "mae5": 4.16,
+        "profitableDayPercent": 48.89,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 22,
+          "averageTradesPerActiveSession": 6.44,
+          "daysWith0": 59,
+          "daysWith1To4": 22,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 12
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|2",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 2
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 290,
+        "settled": 286,
+        "tradesPerSession": 2.79,
+        "activeSessions": 45,
+        "maxTradesPerDay": 22,
+        "grossAverage": 0.3,
+        "grossMedian": -2.4,
+        "netAt020": 0.1,
+        "netAt040": -0.1,
+        "netAt060": -0.3,
+        "targetRate": 44.06,
+        "stopRate": 49.65,
+        "timeoutRate": 6.29,
+        "ambiguousRate": 1.38,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.84,
+        "mae5": 4.16,
+        "profitableDayPercent": 48.89,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 22,
+          "averageTradesPerActiveSession": 6.44,
+          "daysWith0": 59,
+          "daysWith1To4": 22,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 12
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.5_BREAK_1_RETURN_0.5|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.5_BREAK_1_RETURN_0.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.5,
+            "breakoutLookbackBars": 1,
+            "returnPercentMinimum": 0.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 256,
+        "settled": 254,
+        "tradesPerSession": 2.46,
+        "activeSessions": 44,
+        "maxTradesPerDay": 20,
+        "grossAverage": 0.3,
+        "grossMedian": -1.4,
+        "netAt020": 0.1,
+        "netAt040": -0.1,
+        "netAt060": -0.3,
+        "targetRate": 43.31,
+        "stopRate": 49.61,
+        "timeoutRate": 7.09,
+        "ambiguousRate": 0.78,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 4.74,
+        "mae5": 4.05,
+        "profitableDayPercent": 47.73,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 44,
+          "maxTradesPerDay": 20,
+          "averageTradesPerActiveSession": 5.82,
+          "daysWith0": 60,
+          "daysWith1To4": 22,
+          "daysWith5To9": 12,
+          "daysWith10Plus": 10
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.5_BREAK_1_RETURN_1|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.5_BREAK_1_RETURN_1",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.5,
+            "breakoutLookbackBars": 1,
+            "returnPercentMinimum": 1
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 256,
+        "settled": 254,
+        "tradesPerSession": 2.46,
+        "activeSessions": 44,
+        "maxTradesPerDay": 20,
+        "grossAverage": 0.3,
+        "grossMedian": -1.4,
+        "netAt020": 0.1,
+        "netAt040": -0.1,
+        "netAt060": -0.3,
+        "targetRate": 43.31,
+        "stopRate": 49.61,
+        "timeoutRate": 7.09,
+        "ambiguousRate": 0.78,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 4.74,
+        "mae5": 4.05,
+        "profitableDayPercent": 47.73,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 44,
+          "maxTradesPerDay": 20,
+          "averageTradesPerActiveSession": 5.82,
+          "daysWith0": 60,
+          "daysWith1To4": 22,
+          "daysWith5To9": 12,
+          "daysWith10Plus": 10
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|100|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 281,
+        "settled": 277,
+        "tradesPerSession": 2.7,
+        "activeSessions": 48,
+        "maxTradesPerDay": 20,
+        "grossAverage": 0.3,
+        "grossMedian": -3,
+        "netAt020": 0.1,
+        "netAt040": -0.1,
+        "netAt060": -0.3,
+        "targetRate": 44.4,
+        "stopRate": 50.18,
+        "timeoutRate": 5.42,
+        "ambiguousRate": 1.42,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 5.15,
+        "mae5": 4.43,
+        "profitableDayPercent": 47.92,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 48,
+          "maxTradesPerDay": 20,
+          "averageTradesPerActiveSession": 5.85,
+          "daysWith0": 56,
+          "daysWith1To4": 25,
+          "daysWith5To9": 12,
+          "daysWith10Plus": 11
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 243,
+        "settled": 239,
+        "tradesPerSession": 2.34,
+        "activeSessions": 44,
+        "maxTradesPerDay": 18,
+        "grossAverage": 0.29,
+        "grossMedian": 3,
+        "netAt020": 0.09,
+        "netAt040": -0.11,
+        "netAt060": -0.31,
+        "targetRate": 51.05,
+        "stopRate": 41,
+        "timeoutRate": 7.95,
+        "ambiguousRate": 1.65,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.79,
+        "mae5": 4.07,
+        "profitableDayPercent": 50,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 44,
+          "maxTradesPerDay": 18,
+          "averageTradesPerActiveSession": 5.52,
+          "daysWith0": 60,
+          "daysWith1To4": 24,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 9
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 251,
+        "settled": 247,
+        "tradesPerSession": 2.41,
+        "activeSessions": 45,
+        "maxTradesPerDay": 20,
+        "grossAverage": 0.29,
+        "grossMedian": 3,
+        "netAt020": 0.09,
+        "netAt040": -0.11,
+        "netAt060": -0.31,
+        "targetRate": 51.82,
+        "stopRate": 41.7,
+        "timeoutRate": 6.48,
+        "ambiguousRate": 1.59,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.81,
+        "mae5": 4.11,
+        "profitableDayPercent": 55.56,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 20,
+          "averageTradesPerActiveSession": 5.58,
+          "daysWith0": 59,
+          "daysWith1To4": 25,
+          "daysWith5To9": 9,
+          "daysWith10Plus": 11
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|3",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 3
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 275,
+        "settled": 271,
+        "tradesPerSession": 2.64,
+        "activeSessions": 45,
+        "maxTradesPerDay": 21,
+        "grossAverage": 0.29,
+        "grossMedian": -2.58,
+        "netAt020": 0.09,
+        "netAt040": -0.11,
+        "netAt060": -0.31,
+        "targetRate": 43.91,
+        "stopRate": 49.82,
+        "timeoutRate": 6.27,
+        "ambiguousRate": 1.45,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.79,
+        "mae5": 4.1,
+        "profitableDayPercent": 48.89,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 21,
+          "averageTradesPerActiveSession": 6.11,
+          "daysWith0": 59,
+          "daysWith1To4": 22,
+          "daysWith5To9": 12,
+          "daysWith10Plus": 11
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BREAK_2_RETURN_1.5|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BREAK_2_RETURN_1.5",
+            "confirmation": "BREAKOUT_AND_RETURN",
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 243,
+        "settled": 241,
+        "tradesPerSession": 2.34,
+        "activeSessions": 44,
+        "maxTradesPerDay": 18,
+        "grossAverage": 0.29,
+        "grossMedian": -1.68,
+        "netAt020": 0.09,
+        "netAt040": -0.11,
+        "netAt060": -0.31,
+        "targetRate": 43.15,
+        "stopRate": 49.79,
+        "timeoutRate": 7.05,
+        "ambiguousRate": 0.82,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 4.79,
+        "mae5": 4.07,
+        "profitableDayPercent": 45.45,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 44,
+          "maxTradesPerDay": 18,
+          "averageTradesPerActiveSession": 5.52,
+          "daysWith0": 60,
+          "daysWith1To4": 24,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 9
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|100|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 243,
+        "settled": 239,
+        "tradesPerSession": 2.34,
+        "activeSessions": 46,
+        "maxTradesPerDay": 17,
+        "grossAverage": 0.28,
+        "grossMedian": -3,
+        "netAt020": 0.08,
+        "netAt040": -0.12,
+        "netAt060": -0.32,
+        "targetRate": 43.51,
+        "stopRate": 50.21,
+        "timeoutRate": 6.28,
+        "ambiguousRate": 1.65,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 5.3,
+        "mae5": 4.32,
+        "profitableDayPercent": 52.17,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 46,
+          "maxTradesPerDay": 17,
+          "averageTradesPerActiveSession": 5.28,
+          "daysWith0": 58,
+          "daysWith1To4": 27,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 8
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 218,
+        "settled": 214,
+        "tradesPerSession": 2.1,
+        "activeSessions": 43,
+        "maxTradesPerDay": 17,
+        "grossAverage": 0.27,
+        "grossMedian": 3,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 51.4,
+        "stopRate": 41.59,
+        "timeoutRate": 7.01,
+        "ambiguousRate": 1.83,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 4.94,
+        "mae5": 4.09,
+        "profitableDayPercent": 51.16,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 43,
+          "maxTradesPerDay": 17,
+          "averageTradesPerActiveSession": 5.07,
+          "daysWith0": 61,
+          "daysWith1To4": 27,
+          "daysWith5To9": 8,
+          "daysWith10Plus": 8
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 218,
+        "settled": 216,
+        "tradesPerSession": 2.1,
+        "activeSessions": 43,
+        "maxTradesPerDay": 17,
+        "grossAverage": 0.27,
+        "grossMedian": -2.34,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 43.06,
+        "stopRate": 50,
+        "timeoutRate": 6.94,
+        "ambiguousRate": 0.92,
+        "ambiguousCount": 2,
+        "unavailableCount": 0,
+        "mfe5": 4.94,
+        "mae5": 4.09,
+        "profitableDayPercent": 51.16,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 43,
+          "maxTradesPerDay": 17,
+          "averageTradesPerActiveSession": 5.07,
+          "daysWith0": 61,
+          "daysWith1To4": 27,
+          "daysWith5To9": 8,
+          "daysWith10Plus": 8
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_RETURN_1.5|100|5",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_RETURN_1.5",
+            "confirmation": "BODY_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 100,
+          "cooldownMinutes": 5
+        },
+        "policy": {
+          "target": 4,
+          "stop": 3,
+          "hold": 7
+        },
+        "trades": 250,
+        "settled": 246,
+        "tradesPerSession": 2.4,
+        "activeSessions": 46,
+        "maxTradesPerDay": 17,
+        "grossAverage": 0.27,
+        "grossMedian": -3,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 43.5,
+        "stopRate": 50.41,
+        "timeoutRate": 6.1,
+        "ambiguousRate": 1.6,
+        "ambiguousCount": 4,
+        "unavailableCount": 0,
+        "mfe5": 5.29,
+        "mae5": 4.32,
+        "profitableDayPercent": 52.17,
+        "maxLosingStreak": 7,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 46,
+          "maxTradesPerDay": 17,
+          "averageTradesPerActiveSession": 5.43,
+          "daysWith0": 58,
+          "daysWith1To4": 25,
+          "daysWith5To9": 13,
+          "daysWith10Plus": 8
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|0",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 248,
+        "settled": 242,
+        "tradesPerSession": 2.38,
+        "activeSessions": 43,
+        "maxTradesPerDay": 19,
+        "grossAverage": 0.27,
+        "grossMedian": 3,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 50.83,
+        "stopRate": 41.32,
+        "timeoutRate": 7.85,
+        "ambiguousRate": 2.42,
+        "ambiguousCount": 6,
+        "unavailableCount": 0,
+        "mfe5": 4.91,
+        "mae5": 4.15,
+        "profitableDayPercent": 51.16,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 43,
+          "maxTradesPerDay": 19,
+          "averageTradesPerActiveSession": 5.77,
+          "daysWith0": 61,
+          "daysWith1To4": 26,
+          "daysWith5To9": 8,
+          "daysWith10Plus": 9
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|1",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 1
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 248,
+        "settled": 242,
+        "tradesPerSession": 2.38,
+        "activeSessions": 43,
+        "maxTradesPerDay": 19,
+        "grossAverage": 0.27,
+        "grossMedian": 3,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 50.83,
+        "stopRate": 41.32,
+        "timeoutRate": 7.85,
+        "ambiguousRate": 2.42,
+        "ambiguousCount": 6,
+        "unavailableCount": 0,
+        "mfe5": 4.91,
+        "mae5": 4.15,
+        "profitableDayPercent": 51.16,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 43,
+          "maxTradesPerDay": 19,
+          "averageTradesPerActiveSession": 5.77,
+          "daysWith0": 61,
+          "daysWith1To4": 26,
+          "daysWith5To9": 8,
+          "daysWith10Plus": 9
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|2",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+            "confirmation": "BODY_BREAKOUT_AND_RETURN",
+            "bodyAtrMinimum": 0.75,
+            "breakoutLookbackBars": 2,
+            "returnPercentMinimum": 1.5
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 2
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 248,
+        "settled": 242,
+        "tradesPerSession": 2.38,
+        "activeSessions": 43,
+        "maxTradesPerDay": 19,
+        "grossAverage": 0.27,
+        "grossMedian": 3,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 50.83,
+        "stopRate": 41.32,
+        "timeoutRate": 7.85,
+        "ambiguousRate": 2.42,
+        "ambiguousCount": 6,
+        "unavailableCount": 0,
+        "mfe5": 4.91,
+        "mae5": 4.15,
+        "profitableDayPercent": 51.16,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 43,
+          "maxTradesPerDay": 19,
+          "averageTradesPerActiveSession": 5.77,
+          "daysWith0": 61,
+          "daysWith1To4": 26,
+          "daysWith5To9": 8,
+          "daysWith10Plus": 9
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|0",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 0
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 290,
+        "settled": 284,
+        "tradesPerSession": 2.79,
+        "activeSessions": 45,
+        "maxTradesPerDay": 22,
+        "grossAverage": 0.27,
+        "grossMedian": 3,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 51.06,
+        "stopRate": 41.9,
+        "timeoutRate": 7.04,
+        "ambiguousRate": 2.07,
+        "ambiguousCount": 6,
+        "unavailableCount": 0,
+        "mfe5": 4.84,
+        "mae5": 4.16,
+        "profitableDayPercent": 53.33,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 22,
+          "averageTradesPerActiveSession": 6.44,
+          "daysWith0": 59,
+          "daysWith1To4": 22,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 12
+        }
+      },
+      {
+        "configKey": "V7_OPTION_PREMIUM_IMPULSE|1m|PE|1ATR_3BAR_DIRECTION_ALIGNED_REGIME|RETURN_2|125|1",
+        "direction": "PE",
+        "config": {
+          "timeframe": 1,
+          "direction": "PE",
+          "underlying": {
+            "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+            "bodyAtrMinimum": 1,
+            "breakoutLookbackBars": 3,
+            "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+          },
+          "premium": {
+            "id": "RETURN_2",
+            "confirmation": "RETURN_ONLY",
+            "returnPercentMinimum": 2
+          },
+          "minimumPremium": 125,
+          "cooldownMinutes": 1
+        },
+        "policy": {
+          "target": 3,
+          "stop": 3,
+          "hold": 5
+        },
+        "trades": 290,
+        "settled": 284,
+        "tradesPerSession": 2.79,
+        "activeSessions": 45,
+        "maxTradesPerDay": 22,
+        "grossAverage": 0.27,
+        "grossMedian": 3,
+        "netAt020": 0.07,
+        "netAt040": -0.13,
+        "netAt060": -0.33,
+        "targetRate": 51.06,
+        "stopRate": 41.9,
+        "timeoutRate": 7.04,
+        "ambiguousRate": 2.07,
+        "ambiguousCount": 6,
+        "unavailableCount": 0,
+        "mfe5": 4.84,
+        "mae5": 4.16,
+        "profitableDayPercent": 53.33,
+        "maxLosingStreak": 8,
+        "credibleAt040": false,
+        "frequency": {
+          "activeSessions": 45,
+          "maxTradesPerDay": 22,
+          "averageTradesPerActiveSession": 6.44,
+          "daysWith0": 59,
+          "daysWith1To4": 22,
+          "daysWith5To9": 11,
+          "daysWith10Plus": 12
+        }
+      }
+    ]
+  },
+  "tiers": [
+    {
+      "minimumTradesPerSession": 3,
+      "candidateCount": 38090,
+      "positiveNetAt040Count": 0,
+      "bestPositiveNetAt040": null
+    },
+    {
+      "minimumTradesPerSession": 5,
+      "candidateCount": 27745,
+      "positiveNetAt040Count": 0,
+      "bestPositiveNetAt040": null
+    },
+    {
+      "minimumTradesPerSession": 8,
+      "candidateCount": 16160,
+      "positiveNetAt040Count": 0,
+      "bestPositiveNetAt040": null
+    },
+    {
+      "minimumTradesPerSession": 10,
+      "candidateCount": 11545,
+      "positiveNetAt040Count": 0,
+      "bestPositiveNetAt040": null
+    }
+  ],
+  "combined": {
+    "status": "NOT_COMBINED: both directions did not independently meet credibility criteria."
+  },
+  "parameterFamilies": {
+    "underlyingTimeframe": {
+      "1m": {
+        "candidates": 32000,
+        "bestNetAt040": -0.07,
+        "averageNetAt040": -0.54,
+        "positiveNetAt040": 0
+      },
+      "2m": {
+        "candidates": 32000,
+        "bestNetAt040": 0.47,
+        "averageNetAt040": -0.52,
+        "positiveNetAt040": 175
+      }
+    },
+    "regimeFamily": {
+      "NO_REGIME_FILTER": {
+        "candidates": 32000,
+        "bestNetAt040": -0.02,
+        "averageNetAt040": -0.54,
+        "positiveNetAt040": 0
+      },
+      "DIRECTION_ALIGNED_REGIME": {
+        "candidates": 32000,
+        "bestNetAt040": 0.47,
+        "averageNetAt040": -0.52,
+        "positiveNetAt040": 175
+      }
+    },
+    "premiumConfirmation": {
+      "RETURN_ONLY": {
+        "candidates": 16000,
+        "bestNetAt040": 0.47,
+        "averageNetAt040": -0.51,
+        "positiveNetAt040": 40
+      },
+      "BODY_AND_RETURN": {
+        "candidates": 16000,
+        "bestNetAt040": 0.21,
+        "averageNetAt040": -0.54,
+        "positiveNetAt040": 50
+      },
+      "BREAKOUT_AND_RETURN": {
+        "candidates": 16000,
+        "bestNetAt040": 0.4,
+        "averageNetAt040": -0.52,
+        "positiveNetAt040": 29
+      },
+      "BODY_BREAKOUT_AND_RETURN": {
+        "candidates": 16000,
+        "bestNetAt040": 0.23,
+        "averageNetAt040": -0.54,
+        "positiveNetAt040": 56
+      }
+    },
+    "minimumPremium": {
+      "50": {
+        "candidates": 16000,
+        "bestNetAt040": 0.08,
+        "averageNetAt040": -0.56,
+        "positiveNetAt040": 12
+      },
+      "75": {
+        "candidates": 16000,
+        "bestNetAt040": 0.21,
+        "averageNetAt040": -0.54,
+        "positiveNetAt040": 39
+      },
+      "100": {
+        "candidates": 16000,
+        "bestNetAt040": 0.31,
+        "averageNetAt040": -0.52,
+        "positiveNetAt040": 35
+      },
+      "125": {
+        "candidates": 16000,
+        "bestNetAt040": 0.47,
+        "averageNetAt040": -0.49,
+        "positiveNetAt040": 89
+      }
+    },
+    "cooldown": {
+      "0": {
+        "candidates": 12800,
+        "bestNetAt040": 0.35,
+        "averageNetAt040": -0.53,
+        "positiveNetAt040": 28
+      },
+      "1": {
+        "candidates": 12800,
+        "bestNetAt040": 0.35,
+        "averageNetAt040": -0.53,
+        "positiveNetAt040": 28
+      },
+      "2": {
+        "candidates": 12800,
+        "bestNetAt040": 0.35,
+        "averageNetAt040": -0.53,
+        "positiveNetAt040": 28
+      },
+      "3": {
+        "candidates": 12800,
+        "bestNetAt040": 0.35,
+        "averageNetAt040": -0.54,
+        "positiveNetAt040": 28
+      },
+      "5": {
+        "candidates": 12800,
+        "bestNetAt040": 0.47,
+        "averageNetAt040": -0.51,
+        "positiveNetAt040": 63
+      }
+    },
+    "underlyingBreakoutLookback": {
+      "1": {
+        "candidates": 12800,
+        "bestNetAt040": 0.23,
+        "averageNetAt040": -0.54,
+        "positiveNetAt040": 26
+      },
+      "2": {
+        "candidates": 25600,
+        "bestNetAt040": 0.12,
+        "averageNetAt040": -0.53,
+        "positiveNetAt040": 26
+      },
+      "3": {
+        "candidates": 25600,
+        "bestNetAt040": 0.47,
+        "averageNetAt040": -0.52,
+        "positiveNetAt040": 123
+      }
+    },
+    "optionBreakoutLookback": {
+      "1": {
+        "candidates": 16000,
+        "bestNetAt040": 0.1,
+        "averageNetAt040": -0.53,
+        "positiveNetAt040": 1
+      },
+      "2": {
+        "candidates": 8000,
+        "bestNetAt040": 0.4,
+        "averageNetAt040": -0.51,
+        "positiveNetAt040": 75
+      },
+      "3": {
+        "candidates": 8000,
+        "bestNetAt040": 0.17,
+        "averageNetAt040": -0.55,
+        "positiveNetAt040": 9
+      },
+      "NONE": {
+        "candidates": 32000,
+        "bestNetAt040": 0.47,
+        "averageNetAt040": -0.53,
+        "positiveNetAt040": 90
+      }
+    }
+  },
+  "overlap": {
+    "status": "SIGNAL_TIMESTAMP_ARTIFACTS_NOT_AVAILABLE",
+    "candidate": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|0.5ATR_1BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|5",
+    "note": "Existing V2/V4/V5/V6 artifacts contain summaries, not complete timestamp sets; no overlap counts were inferred.",
+    "artifacts": [
+      {
+        "name": "V2",
+        "available": true
+      },
+      {
+        "name": "V4",
+        "available": true
+      },
+      {
+        "name": "V5",
+        "available": true
+      },
+      {
+        "name": "V6",
+        "available": true
+      }
+    ]
+  },
+  "preloader": {
+    "underlyingRowsLoaded": 40383,
+    "uniqueOptionContractDateSessions": 1095,
+    "optionSessionsLoadedFromMySql": 1095,
+    "optionCandlesLoadedFromMySql": 410625,
+    "completeLocalSessions": 1095,
+    "incompleteLocalSessions": 0,
+    "missingLocalSessions": 0,
+    "upstoxMissingSessionDownloads": 0,
+    "newlyStoredOptionCandles": 0,
+    "inMemoryLookupHits": 0,
+    "dbFallbackHits": 0,
+    "bulkPreloadQueryCount": 11,
+    "bulkPreloadDurationMs": 64524,
+    "preloadDurationMs": 72372,
+    "researchDurationMs": 0,
+    "totalDurationMs": 77381,
+    "optionPathAnalyses": 11148,
+    "uniqueConfirmedSignals": 11148
+  },
+  "verdict": "WEAK"
+}

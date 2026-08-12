@@ -1,0 +1,28 @@
+{
+  "CE": {
+    "V2": {
+      "exact": 0,
+      "plusMinus2Minutes": 0,
+      "plusMinus5Minutes": 0
+    },
+    "V4": {
+      "exact": 0,
+      "plusMinus2Minutes": 0,
+      "plusMinus5Minutes": 0
+    },
+    "incrementalTradesPerSessionAfterExactDuplicates": 1.16
+  },
+  "PE": {
+    "V2": {
+      "exact": 2,
+      "plusMinus2Minutes": 6,
+      "plusMinus5Minutes": 15
+    },
+    "V4": {
+      "exact": 4,
+      "plusMinus2Minutes": 12,
+      "plusMinus5Minutes": 13
+    },
+    "incrementalTradesPerSessionAfterExactDuplicates": 0.5
+  }
+}

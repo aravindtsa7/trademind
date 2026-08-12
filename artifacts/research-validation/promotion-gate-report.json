@@ -1,0 +1,28 @@
+{
+  "version": "promotion-gates-v1",
+  "defaults": {
+    "preferredMinimumTrades": 50,
+    "minimumForwardShadowTrades": 30,
+    "minimumForwardShadowSessions": 20,
+    "minimumForwardPaperTrades": 75,
+    "minimumForwardPaperSessions": 40,
+    "minimumStricterCostPercent": 0.6
+  },
+  "V7_CE_DIAGNOSTIC": {
+    "stage": "RESEARCH_TO_SHADOW",
+    "decision": "NOT_ELIGIBLE",
+    "reasons": [
+      "no positive stricter-cost expectancy",
+      "validation performance collapsed"
+    ],
+    "defaults": {
+      "preferredMinimumTrades": 50,
+      "minimumForwardShadowTrades": 30,
+      "minimumForwardShadowSessions": 20,
+      "minimumForwardPaperTrades": 75,
+      "minimumForwardPaperSessions": 40,
+      "minimumStricterCostPercent": 0.6
+    }
+  },
+  "note": "Gates produce manual-review eligibility only; they never approve live deployment."
+}

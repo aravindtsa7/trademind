@@ -7,6 +7,7 @@ import {
 import { OptionContract, OptionContractType } from '../types';
 
 const expiredInstrumentsBaseUrl = 'https://api.upstox.com/v2/expired-instruments';
+const maximumTransientAttempts = 3;
 
 export default class UpstoxExpiredOptionClient {
   private readonly axios: AxiosInstance;
@@ -31,9 +32,7 @@ export default class UpstoxExpiredOptionClient {
         url,
       });
 
-      const response = await this.axios.get<UpstoxExpiredInstrumentsApiResponseDto<unknown>>(url, {
-        headers: this.getHeaders(),
-      });
+      const response = await this.getWithTransientRetry<UpstoxExpiredInstrumentsApiResponseDto<unknown>>(url);
       const expiries = this.validateExpiriesResponse(response.data);
 
       logger.info('Upstox expired instrument expiries received', {
@@ -70,9 +69,7 @@ export default class UpstoxExpiredOptionClient {
         url,
       });
 
-      const response = await this.axios.get<UpstoxExpiredInstrumentsApiResponseDto<unknown>>(url, {
-        headers: this.getHeaders(),
-      });
+      const response = await this.getWithTransientRetry<UpstoxExpiredInstrumentsApiResponseDto<unknown>>(url);
       const contracts = this.validateContractsResponse(response.data).map((contract) =>
         this.mapContract(contract)
       );
@@ -102,6 +99,24 @@ export default class UpstoxExpiredOptionClient {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.accessToken}`,
     };
+  }
+
+  private async getWithTransientRetry<T>(url: string): Promise<{ data: T }> {
+    let failure: unknown;
+    for (let attempt = 1; attempt <= maximumTransientAttempts; attempt += 1) {
+      try {
+        return await this.axios.get<T>(url, { headers: this.getHeaders() });
+      } catch (error) {
+        failure = error;
+        if (!this.isTransientNetworkFailure(error) || attempt === maximumTransientAttempts) throw error;
+        await new Promise<void>((resolve) => setTimeout(resolve, attempt * 250));
+      }
+    }
+    throw failure;
+  }
+
+  private isTransientNetworkFailure(error: unknown): boolean {
+    return axios.isAxiosError(error) && !error.response && ['ECONNABORTED', 'ETIMEDOUT', 'ECONNRESET', 'EAI_AGAIN'].includes(error.code ?? '');
   }
 
   private createUrl(path: string, parameters: Record<string, string>): string {

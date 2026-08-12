@@ -1,0 +1,20 @@
+{
+  "CE": {
+    "required": 541,
+    "complete": 541,
+    "missing": 0,
+    "incomplete": 0
+  },
+  "PE": {
+    "required": 554,
+    "complete": 554,
+    "missing": 0,
+    "incomplete": 0
+  },
+  "global": {
+    "required": 1095,
+    "complete": 1095,
+    "missing": 0,
+    "incomplete": 0
+  }
+}

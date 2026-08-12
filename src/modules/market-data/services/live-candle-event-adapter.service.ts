@@ -4,7 +4,7 @@ import { LiveCandleDto, LiveCandleTimeframe, NormalizedLiveTickDto } from '../dt
 import { MarketTickEvent } from '../processors/tick.processor';
 import LiveCandleBuilderService from './live-candle-builder.service';
 
-const supportedTimeframes: readonly LiveCandleTimeframe[] = ['1m', '5m'];
+const supportedTimeframes: readonly LiveCandleTimeframe[] = ['1m', '3m', '5m'];
 
 /** Bridges shared market ticks into completed in-memory candle events. */
 export default class LiveCandleEventAdapterService {
@@ -27,6 +27,11 @@ export default class LiveCandleEventAdapterService {
     if (!this.started) return;
     this.bus.off('market.tick', this.tickListener);
     this.started = false;
+  }
+
+  /** Flushes existing regular-session candles without accepting a post-market tick. */
+  finishSession(instrumentKey?: string): void {
+    this.candleBuilder.finishSession(instrumentKey).forEach((candle) => this.emitCompleted(candle));
   }
 
   private handleTick(event: unknown): void {

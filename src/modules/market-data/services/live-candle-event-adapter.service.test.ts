@@ -64,3 +64,11 @@ test('does not mutate incoming tick events', () => {
   const { bus, adapter } = setup(); const event = tick('NIFTY', 9, 15, 100); const original = structuredClone(event); adapter.start(); bus.emit('market.tick', event);
   assert.deepEqual(event, original);
 });
+
+test('EOD flushes the final observed in-session candle once and repeated post-market ticks create no candle', () => {
+  const { bus, builder, adapter } = setup(); const events: LiveCandleDto[] = []; bus.on('market.candle.completed', (event) => events.push(event)); adapter.start();
+  bus.emit('market.tick', tick('NIFTY', 15, 25, 100)); bus.emit('market.tick', tick('NIFTY', 15, 29, 101)); adapter.finishSession('NIFTY'); adapter.finishSession('NIFTY');
+  bus.emit('market.tick', tick('NIFTY', 15, 30, 102)); bus.emit('market.tick', tick('NIFTY', 15, 31, 103));
+  assert.equal(events.filter((event) => event.timeframe === '5m' && event.candleTime.getTime() === ist(15, 25).getTime()).length, 1);
+  assert.equal(builder.getActiveCandle('NIFTY', '5m'), undefined);
+});

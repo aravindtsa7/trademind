@@ -1,0 +1,54 @@
+{
+  "CE": [
+    {
+      "month": "March",
+      "signals": 402
+    },
+    {
+      "month": "April",
+      "signals": 341
+    },
+    {
+      "month": "May",
+      "signals": 433
+    },
+    {
+      "month": "June",
+      "signals": 461
+    },
+    {
+      "month": "July",
+      "signals": 372
+    },
+    {
+      "month": "Aug 1-4",
+      "signals": 21
+    }
+  ],
+  "PE": [
+    {
+      "month": "March",
+      "signals": 353
+    },
+    {
+      "month": "April",
+      "signals": 471
+    },
+    {
+      "month": "May",
+      "signals": 377
+    },
+    {
+      "month": "June",
+      "signals": 426
+    },
+    {
+      "month": "July",
+      "signals": 441
+    },
+    {
+      "month": "Aug 1-4",
+      "signals": 12
+    }
+  ]
+}

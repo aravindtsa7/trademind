@@ -1,0 +1,38 @@
+{
+  "CE": [
+    {
+      "family": "RETURN_ONLY",
+      "signals": 4977
+    },
+    {
+      "family": "BODY_AND_RETURN",
+      "signals": 132
+    },
+    {
+      "family": "BREAKOUT_AND_RETURN",
+      "signals": 125
+    },
+    {
+      "family": "BODY_BREAKOUT_AND_RETURN",
+      "signals": 1
+    }
+  ],
+  "PE": [
+    {
+      "family": "RETURN_ONLY",
+      "signals": 5588
+    },
+    {
+      "family": "BODY_AND_RETURN",
+      "signals": 186
+    },
+    {
+      "family": "BREAKOUT_AND_RETURN",
+      "signals": 147
+    },
+    {
+      "family": "BODY_BREAKOUT_AND_RETURN",
+      "signals": 0
+    }
+  ]
+}

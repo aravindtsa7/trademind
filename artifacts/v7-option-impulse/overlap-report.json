@@ -1,0 +1,23 @@
+{
+  "status": "SIGNAL_TIMESTAMP_ARTIFACTS_NOT_AVAILABLE",
+  "candidate": "V7_OPTION_PREMIUM_IMPULSE|2m|CE|0.5ATR_1BAR_DIRECTION_ALIGNED_REGIME|BODY_0.75_BREAK_2_RETURN_1.5|125|5",
+  "note": "Existing V2/V4/V5/V6 artifacts contain summaries, not complete timestamp sets; no overlap counts were inferred.",
+  "artifacts": [
+    {
+      "name": "V2",
+      "available": true
+    },
+    {
+      "name": "V4",
+      "available": true
+    },
+    {
+      "name": "V5",
+      "available": true
+    },
+    {
+      "name": "V6",
+      "available": true
+    }
+  ]
+}

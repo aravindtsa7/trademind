@@ -1,5 +1,6 @@
 import eventBus from '../../../core/events';
 import logger from '../../../core/logger/logger';
+import { shouldEmitTradingLog } from '../../../core/logger/trading-log-mode';
 import {
   LtpcDto,
   MarketDataFeedDto,
@@ -51,7 +52,7 @@ export default class TickProcessor {
 
     const feedType = message.type ?? 'initial_feed';
     if (!supportedFeedTypes.has(feedType)) {
-      logger.debug('Ignoring unsupported market data feed type', { feedType });
+      if (shouldEmitTradingLog('RAW_MARKET_DATA_PACKET')) logger.debug('Ignoring unsupported market data feed type', { feedType });
       return;
     }
 

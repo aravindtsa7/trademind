@@ -1,0 +1,79 @@
+{
+  "start": "2026-03-02",
+  "end": "2026-08-04",
+  "targetSessions": 104,
+  "grid": {
+    "totalConfigurations": 2592,
+    "ceConfigurations": 1296,
+    "peConfigurations": 1296,
+    "dimensions": {
+      "timeframe": "2m completed",
+      "proximityPercent": [
+        0.05,
+        0.1,
+        0.15,
+        0.2
+      ],
+      "ceRsiGreaterThan": [
+        50,
+        55,
+        60
+      ],
+      "peRsiLessThan": [
+        50,
+        45,
+        40
+      ],
+      "bodyAtrMinimum": [
+        0.25,
+        0.5,
+        0.75
+      ],
+      "pullbackLookbackBars": [
+        1,
+        2,
+        3
+      ],
+      "confirmation": [
+        "TREND_CLOSE",
+        "PRIOR_BREAK",
+        "EMA_RECLAIM"
+      ],
+      "cooldownMinutes": [
+        0,
+        2,
+        3,
+        5
+      ]
+    }
+  },
+  "signals": {
+    "CE": {
+      "rawSignalsAcrossConfigurations": 459247,
+      "uniqueSignalTimestamps": 1377,
+      "requiredUniqueOptionSessions": 194,
+      "completeLocalSessions": 194,
+      "missingLocalSessions": 0,
+      "incompleteLocalSessions": 0
+    },
+    "PE": {
+      "rawSignalsAcrossConfigurations": 561977,
+      "uniqueSignalTimestamps": 1650,
+      "requiredUniqueOptionSessions": 226,
+      "completeLocalSessions": 226,
+      "missingLocalSessions": 0,
+      "incompleteLocalSessions": 0
+    },
+    "uniqueDirectionalTimestamps": 3027,
+    "noLookAhead": "PASSED"
+  },
+  "global": {
+    "requiredUniqueOptionSessions": 420,
+    "completeLocalSessions": 420,
+    "missingLocalSessions": 0,
+    "incompleteLocalSessions": 0,
+    "expectedNewRowsAt375PerMissingSession": 0,
+    "exactRemoteFetchesRequired": 0,
+    "optionCandleDownloads": 0
+  }
+}

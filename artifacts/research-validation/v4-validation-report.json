@@ -1,0 +1,27 @@
+{
+  "status": "LEGACY_RESEARCH_SUMMARY_ONLY",
+  "holdoutStatus": "LEGACY_CONTAMINATED_HOLDOUT",
+  "strategyId": "V4_NIFTY_STRUCTURAL_FAMILIES",
+  "scope": {
+    "instrumentKey": "NSE_INDEX|Nifty 50",
+    "startDate": "2026-03-02",
+    "endDate": "2026-08-04",
+    "sessionCount": 104
+  },
+  "splitCounts": {
+    "TRAIN": 60,
+    "EMBARGO_1": 3,
+    "VALIDATION": 20,
+    "EMBARGO_2": 3,
+    "FINAL_HOLDOUT": 18
+  },
+  "sourceArtifact": "C:\\TSA\\trademind\\artifacts\\nifty-v4-structural-outcomes-2026-08-04.txt",
+  "historicalReference": {
+    "openingRangeConfigs": 864,
+    "momentumConfigs": 1024,
+    "uniqueDirectionalSignalTimestamps": 14685,
+    "unresolvedOptionEntries": 43
+  },
+  "trainValidationHoldout": "NOT_RECOMPUTED: the legacy V4 artifact is a full-scope summary without daily result matrices.",
+  "note": "This is not an out-of-sample result. The 104 sessions were already used during V4 discovery."
+}

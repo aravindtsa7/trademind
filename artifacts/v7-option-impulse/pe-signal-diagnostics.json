@@ -1,0 +1,97 @@
+{
+  "summary": {
+    "rawSignalsAcrossConfigurations": 4459887,
+    "uniqueSignalTimestamps": 5921,
+    "averageUniqueSignalsPerSession": 56.93,
+    "activeSessions": 103,
+    "maximumUniqueSignalsInOneDay": 97,
+    "requiredOptionSessions": 554,
+    "completeLocalSessions": 554,
+    "missingLocalSessions": 0,
+    "incompleteLocalSessions": 0
+  },
+  "distribution": {
+    "monthly": [
+      {
+        "month": "2026-03",
+        "signals": 1296
+      },
+      {
+        "month": "2026-04",
+        "signals": 1170
+      },
+      {
+        "month": "2026-05",
+        "signals": 1093
+      },
+      {
+        "month": "2026-06",
+        "signals": 1107
+      },
+      {
+        "month": "2026-07",
+        "signals": 1206
+      },
+      {
+        "month": "Aug 1-4",
+        "signals": 49
+      }
+    ],
+    "timeOfDay": [
+      {
+        "bucket": "09:15-10:30",
+        "signals": 1090
+      },
+      {
+        "bucket": "10:30-12:00",
+        "signals": 1557
+      },
+      {
+        "bucket": "12:00-13:30",
+        "signals": 1481
+      },
+      {
+        "bucket": "13:30-15:30",
+        "signals": 1792
+      }
+    ],
+    "regimeFamily": [
+      {
+        "family": "NO_REGIME_FILTER",
+        "signals": 5914
+      },
+      {
+        "family": "DIRECTION_ALIGNED_REGIME",
+        "signals": 7
+      }
+    ],
+    "underlyingTimeframe": [
+      {
+        "timeframe": "1m",
+        "signals": 5321
+      },
+      {
+        "timeframe": "2m",
+        "signals": 600
+      }
+    ],
+    "premiumConfirmation": [
+      {
+        "family": "RETURN_ONLY",
+        "signals": 5588
+      },
+      {
+        "family": "BODY_AND_RETURN",
+        "signals": 186
+      },
+      {
+        "family": "BREAKOUT_AND_RETURN",
+        "signals": 147
+      },
+      {
+        "family": "BODY_BREAKOUT_AND_RETURN",
+        "signals": 0
+      }
+    ]
+  }
+}

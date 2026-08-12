@@ -1,0 +1,1387 @@
+NIFTY V4 STRUCTURAL OUTCOME RESEARCH {
+  targetSessions: 104,
+  endDate: '2026-08-04',
+  openingRangeConfigs: 864,
+  momentumConfigs: 1024,
+  uniqueDirectionalSignalTimestamps: 14685,
+  localOnly: true
+}
+No-look-ahead validation passed for all V4 signals.
+UNRESOLVED OPTION ENTRIES {
+  count: 43,
+  treatment: 'excluded from resolved outcome metrics',
+  examples: [
+    'Option path analysis cannot find a candle at 2026-08-03T10:00:00.000Z.',
+    'Option path analysis cannot find a candle at 2026-07-23T10:00:00.000Z.',
+    'Option path analysis cannot find a candle at 2026-05-15T10:00:00.000Z.'
+  ]
+}
+
+OPENING RANGE — ALL SUBFAMILIES | configs=864 policies/config=64 {
+  policyCandidates: 55296,
+  viableAfter040Cost: 603,
+  highestSustainableFrequencyPerSession: 5.75
+}
+Highest frequency: OPENING_RANGE|10|1|BREAKOUT_RETEST_UP_CE|0.05|0.05|0 | +5/-5/10m | resolved=598 freq=5.75/session active=9.06 | target=47.96 stop=40.00 time=68 ambiguous=27 unavailable=6 | gross=0.41 median=2.00 net20=0.21 net40=0.01 net60=-0.19 | MFE5=7.31 MAE5=7.07
+Highest quality / cost-adjusted: OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+Best balanced: OPENING_RANGE|15|5|BREAKOUT_RETEST_UP_CE|0.1|0.05|10 | +4/-5/5m | resolved=116 freq=1.12/session active=2.52 | target=51.79 stop=25.89 time=25 ambiguous=3 unavailable=1 | gross=0.67 median=4.00 net20=0.47 net40=0.27 net60=0.07 | MFE5=6.68 MAE5=5.93
+TOP 20
+1. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+2. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|5 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+3. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|0 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+4. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|5 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+5. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|10 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+6. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|10 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=54.55 stop=45.45 time=0 ambiguous=6 unavailable=2 | gross=0.91 median=5.00 net20=0.71 net40=0.51 net60=0.31 | MFE5=7.12 MAE5=7.68
+7. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|0 | +2/-5/15m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.87 median=2.00 net20=0.67 net40=0.47 net60=0.27 | MFE5=10.47 MAE5=6.31
+8. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|5 | +2/-5/15m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.87 median=2.00 net20=0.67 net40=0.47 net60=0.27 | MFE5=10.47 MAE5=6.31
+9. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|10 | +2/-5/15m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.87 median=2.00 net20=0.67 net40=0.47 net60=0.27 | MFE5=10.47 MAE5=6.31
+10. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|0 | +2/-5/10m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.86 median=2.00 net20=0.66 net40=0.46 net60=0.26 | MFE5=10.47 MAE5=6.31
+11. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|5 | +2/-5/10m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.86 median=2.00 net20=0.66 net40=0.46 net60=0.26 | MFE5=10.47 MAE5=6.31
+12. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|10 | +2/-5/10m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.86 median=2.00 net20=0.66 net40=0.46 net60=0.26 | MFE5=10.47 MAE5=6.31
+13. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|0 | +4/-4/5m | resolved=32 freq=0.31/session active=1.14 | target=56.25 stop=34.38 time=3 ambiguous=0 unavailable=0 | gross=0.82 median=4.00 net20=0.62 net40=0.42 net60=0.22 | MFE5=9.89 MAE5=7.10
+14. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|5 | +4/-4/5m | resolved=32 freq=0.31/session active=1.14 | target=56.25 stop=34.38 time=3 ambiguous=0 unavailable=0 | gross=0.82 median=4.00 net20=0.62 net40=0.42 net60=0.22 | MFE5=9.89 MAE5=7.10
+15. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|10 | +4/-4/5m | resolved=32 freq=0.31/session active=1.14 | target=56.25 stop=34.38 time=3 ambiguous=0 unavailable=0 | gross=0.82 median=4.00 net20=0.62 net40=0.42 net60=0.22 | MFE5=9.89 MAE5=7.10
+16. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|0 | +2/-5/7m | resolved=54 freq=0.52/session active=1.54 | target=79.17 stop=14.58 time=3 ambiguous=4 unavailable=2 | gross=0.80 median=2.00 net20=0.60 net40=0.40 net60=0.20 | MFE5=10.47 MAE5=6.31
+17. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|5 | +2/-5/7m | resolved=54 freq=0.52/session active=1.54 | target=79.17 stop=14.58 time=3 ambiguous=4 unavailable=2 | gross=0.80 median=2.00 net20=0.60 net40=0.40 net60=0.20 | MFE5=10.47 MAE5=6.31
+18. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|10 | +2/-5/7m | resolved=54 freq=0.52/session active=1.54 | target=79.17 stop=14.58 time=3 ambiguous=4 unavailable=2 | gross=0.80 median=2.00 net20=0.60 net40=0.40 net60=0.20 | MFE5=10.47 MAE5=6.31
+19. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-5/15m | resolved=74 freq=0.71/session active=1.85 | target=57.35 stop=41.18 time=1 ambiguous=5 unavailable=1 | gross=0.79 median=5.00 net20=0.59 net40=0.39 net60=0.19 | MFE5=7.08 MAE5=7.62
+20. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|5 | +5/-5/15m | resolved=74 freq=0.71/session active=1.85 | target=57.35 stop=41.18 time=1 ambiguous=5 unavailable=1 | gross=0.79 median=5.00 net20=0.59 net40=0.39 net60=0.19 | MFE5=7.08 MAE5=7.62
+ROBUSTNESS LEADER 1: OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 12,
+      grossAverage: 1.63,
+      netAverageAt040: 1.23,
+      grossMedian: 5,
+      targetRate: 62.5,
+      stopRate: 37.5
+    },
+    {
+      month: 'April',
+      trades: 23,
+      grossAverage: 1.57,
+      netAverageAt040: 1.17,
+      grossMedian: 5,
+      targetRate: 61.9,
+      stopRate: 38.1
+    },
+    {
+      month: 'May',
+      trades: 9,
+      grossAverage: 1,
+      netAverageAt040: 0.6,
+      grossMedian: 5,
+      targetRate: 55.56,
+      stopRate: 44.44
+    },
+    {
+      month: 'June',
+      trades: 13,
+      grossAverage: 1.25,
+      netAverageAt040: 0.85,
+      grossMedian: 5,
+      targetRate: 58.33,
+      stopRate: 41.67
+    },
+    {
+      month: 'July',
+      trades: 16,
+      grossAverage: -0.63,
+      netAverageAt040: -1.03,
+      grossMedian: -4,
+      targetRate: 37.5,
+      stopRate: 62.5
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 1,
+      grossAverage: 5,
+      netAverageAt040: 4.6,
+      grossMedian: 5,
+      targetRate: 100,
+      stopRate: 0
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 41,
+      grossAverage: 1.91,
+      netAverageAt040: 1.51,
+      grossMedian: 5,
+      targetRate: 65.71,
+      stopRate: 34.29
+    },
+    {
+      period: 'Second half',
+      trades: 33,
+      grossAverage: -0.06,
+      netAverageAt040: -0.46,
+      grossMedian: -4,
+      targetRate: 43.75,
+      stopRate: 56.25
+    }
+  ],
+  frequency: {
+    tradesPerSession: 0.71,
+    averageTradesPerActiveSession: 1.85,
+    daysWith0Trades: 64,
+    daysWith1To4Trades: 38,
+    daysWith5To9Trades: 2,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 5
+  },
+  profitableDayPercent: 60.53,
+  maximumLosingTradeStreak: 6,
+  maximumLosingDayStreak: 2,
+  averageExcludingBest5: 0.65,
+  best5ContributionPercent: 13.51,
+  largestWinner: 5,
+  largestLoser: -4
+}
+V2 OVERLAP {
+  comparablePeTrades: 0,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 0.71
+}
+ROBUSTNESS LEADER 2: OPENING_RANGE|10|1|BREAKOUT_RETEST_UP_CE|0.05|0.05|0 | +5/-5/10m | resolved=598 freq=5.75/session active=9.06 | target=47.96 stop=40.00 time=68 ambiguous=27 unavailable=6 | gross=0.41 median=2.00 net20=0.21 net40=0.01 net60=-0.19 | MFE5=7.31 MAE5=7.07
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 71,
+      grossAverage: -0.1,
+      netAverageAt040: -0.5,
+      grossMedian: -0.71,
+      targetRate: 41.07,
+      stopRate: 44.64
+    },
+    {
+      month: 'April',
+      trades: 125,
+      grossAverage: -0.3,
+      netAverageAt040: -0.7,
+      grossMedian: -3.18,
+      targetRate: 42.37,
+      stopRate: 50
+    },
+    {
+      month: 'May',
+      trades: 72,
+      grossAverage: -0.4,
+      netAverageAt040: -0.8,
+      grossMedian: -2.37,
+      targetRate: 41.43,
+      stopRate: 48.57
+    },
+    {
+      month: 'June',
+      trades: 134,
+      grossAverage: 0.3,
+      netAverageAt040: -0.1,
+      grossMedian: 0.54,
+      targetRate: 46.51,
+      stopRate: 39.53
+    },
+    {
+      month: 'July',
+      trades: 150,
+      grossAverage: 0.96,
+      netAverageAt040: 0.56,
+      grossMedian: 5,
+      targetRate: 52.05,
+      stopRate: 32.88
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 46,
+      grossAverage: 2.61,
+      netAverageAt040: 2.21,
+      grossMedian: 5,
+      targetRate: 71.74,
+      stopRate: 19.57
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 226,
+      grossAverage: -0.42,
+      netAverageAt040: -0.82,
+      grossMedian: -2.76,
+      targetRate: 40.39,
+      stopRate: 49.75
+    },
+    {
+      period: 'Second half',
+      trades: 372,
+      grossAverage: 0.87,
+      netAverageAt040: 0.47,
+      grossMedian: 5,
+      targetRate: 52.21,
+      stopRate: 34.53
+    }
+  ],
+  frequency: {
+    tradesPerSession: 5.75,
+    averageTradesPerActiveSession: 9.06,
+    daysWith0Trades: 38,
+    daysWith1To4Trades: 26,
+    daysWith5To9Trades: 16,
+    daysWith10PlusTrades: 24,
+    maximumTradesInOneDay: 46
+  },
+  profitableDayPercent: 56.06,
+  maximumLosingTradeStreak: 13,
+  maximumLosingDayStreak: 3,
+  averageExcludingBest5: 0.37,
+  best5ContributionPercent: 1.77,
+  largestWinner: 5,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 0,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 5.75
+}
+ROBUSTNESS LEADER 3: OPENING_RANGE|15|5|BREAKOUT_RETEST_UP_CE|0.1|0.05|10 | +4/-5/5m | resolved=116 freq=1.12/session active=2.52 | target=51.79 stop=25.89 time=25 ambiguous=3 unavailable=1 | gross=0.67 median=4.00 net20=0.47 net40=0.27 net60=0.07 | MFE5=6.68 MAE5=5.93
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 14,
+      grossAverage: 0.59,
+      netAverageAt040: 0.19,
+      grossMedian: 2.2,
+      targetRate: 50,
+      stopRate: 25
+    },
+    {
+      month: 'April',
+      trades: 31,
+      grossAverage: 0.57,
+      netAverageAt040: 0.17,
+      grossMedian: 1.43,
+      targetRate: 43.33,
+      stopRate: 26.67
+    },
+    {
+      month: 'May',
+      trades: 16,
+      grossAverage: 0.39,
+      netAverageAt040: -0.01,
+      grossMedian: 4,
+      targetRate: 53.33,
+      stopRate: 26.67
+    },
+    {
+      month: 'June',
+      trades: 29,
+      grossAverage: 1.25,
+      netAverageAt040: 0.85,
+      grossMedian: 4,
+      targetRate: 62.07,
+      stopRate: 24.14
+    },
+    {
+      month: 'July',
+      trades: 24,
+      grossAverage: 0.05,
+      netAverageAt040: -0.35,
+      grossMedian: 1.62,
+      targetRate: 45.83,
+      stopRate: 29.17
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 2,
+      grossAverage: 4,
+      netAverageAt040: 3.6,
+      grossMedian: 4,
+      targetRate: 100,
+      stopRate: 0
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 52,
+      grossAverage: 0.29,
+      netAverageAt040: -0.11,
+      grossMedian: 0.8,
+      targetRate: 42.86,
+      stopRate: 28.57
+    },
+    {
+      period: 'Second half',
+      trades: 64,
+      grossAverage: 0.98,
+      netAverageAt040: 0.58,
+      grossMedian: 4,
+      targetRate: 58.73,
+      stopRate: 23.81
+    }
+  ],
+  frequency: {
+    tradesPerSession: 1.12,
+    averageTradesPerActiveSession: 2.52,
+    daysWith0Trades: 58,
+    daysWith1To4Trades: 39,
+    daysWith5To9Trades: 7,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 8
+  },
+  profitableDayPercent: 53.33,
+  maximumLosingTradeStreak: 5,
+  maximumLosingDayStreak: 2,
+  averageExcludingBest5: 0.52,
+  best5ContributionPercent: 8.13,
+  largestWinner: 4,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 0,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 1.12
+}
+
+OPENING RANGE A1 — BREAKOUT + RETEST | configs=432 policies/config=64 {
+  policyCandidates: 27648,
+  viableAfter040Cost: 295,
+  highestSustainableFrequencyPerSession: 5.75
+}
+Highest frequency: OPENING_RANGE|10|1|BREAKOUT_RETEST_UP_CE|0.05|0.05|0 | +5/-5/10m | resolved=598 freq=5.75/session active=9.06 | target=47.96 stop=40.00 time=68 ambiguous=27 unavailable=6 | gross=0.41 median=2.00 net20=0.21 net40=0.01 net60=-0.19 | MFE5=7.31 MAE5=7.07
+Highest quality / cost-adjusted: OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+Best balanced: OPENING_RANGE|15|5|BREAKOUT_RETEST_UP_CE|0.1|0.05|10 | +4/-5/5m | resolved=116 freq=1.12/session active=2.52 | target=51.79 stop=25.89 time=25 ambiguous=3 unavailable=1 | gross=0.67 median=4.00 net20=0.47 net40=0.27 net60=0.07 | MFE5=6.68 MAE5=5.93
+TOP 20
+1. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+2. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|5 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+3. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|10 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=54.55 stop=45.45 time=0 ambiguous=6 unavailable=2 | gross=0.91 median=5.00 net20=0.71 net40=0.51 net60=0.31 | MFE5=7.12 MAE5=7.68
+4. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-5/15m | resolved=74 freq=0.71/session active=1.85 | target=57.35 stop=41.18 time=1 ambiguous=5 unavailable=1 | gross=0.79 median=5.00 net20=0.59 net40=0.39 net60=0.19 | MFE5=7.08 MAE5=7.62
+5. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|5 | +5/-5/15m | resolved=74 freq=0.71/session active=1.85 | target=57.35 stop=41.18 time=1 ambiguous=5 unavailable=1 | gross=0.79 median=5.00 net20=0.59 net40=0.39 net60=0.19 | MFE5=7.08 MAE5=7.62
+6. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-4/10m | resolved=74 freq=0.71/session active=1.85 | target=47.76 stop=43.28 time=6 ambiguous=6 unavailable=1 | gross=0.77 median=3.52 net20=0.57 net40=0.37 net60=0.17 | MFE5=7.08 MAE5=7.62
+7. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|5 | +5/-4/10m | resolved=74 freq=0.71/session active=1.85 | target=47.76 stop=43.28 time=6 ambiguous=6 unavailable=1 | gross=0.77 median=3.52 net20=0.57 net40=0.37 net60=0.17 | MFE5=7.08 MAE5=7.62
+8. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|10 | +5/-5/15m | resolved=74 freq=0.71/session active=1.85 | target=56.72 stop=41.79 time=1 ambiguous=5 unavailable=2 | gross=0.73 median=5.00 net20=0.53 net40=0.33 net60=0.13 | MFE5=7.12 MAE5=7.68
+9. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|10 | +5/-4/10m | resolved=74 freq=0.71/session active=1.85 | target=46.97 stop=43.94 time=6 ambiguous=6 unavailable=2 | gross=0.70 median=2.21 net20=0.50 net40=0.30 net60=0.10 | MFE5=7.12 MAE5=7.68
+10. OPENING_RANGE|15|5|BREAKOUT_RETEST_UP_CE|0.1|0.05|10 | +4/-5/5m | resolved=116 freq=1.12/session active=2.52 | target=51.79 stop=25.89 time=25 ambiguous=3 unavailable=1 | gross=0.67 median=4.00 net20=0.47 net40=0.27 net60=0.07 | MFE5=6.68 MAE5=5.93
+11. OPENING_RANGE|15|3|BREAKOUT_RETEST_DOWN_PE|0.1|0|10 | +5/-5/15m | resolved=56 freq=0.54/session active=1.56 | target=54.55 stop=41.82 time=2 ambiguous=1 unavailable=0 | gross=0.67 median=5.00 net20=0.47 net40=0.27 net60=0.07 | MFE5=8.16 MAE5=6.96
+12. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +4/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=58.21 stop=41.79 time=0 ambiguous=6 unavailable=1 | gross=0.66 median=4.00 net20=0.46 net40=0.26 net60=0.06 | MFE5=7.08 MAE5=7.62
+13. OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|5 | +4/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=58.21 stop=41.79 time=0 ambiguous=6 unavailable=1 | gross=0.66 median=4.00 net20=0.46 net40=0.26 net60=0.06 | MFE5=7.08 MAE5=7.62
+14. OPENING_RANGE|10|5|BREAKOUT_RETEST_DOWN_PE|0.1|0|0 | +4/-3/10m | resolved=46 freq=0.44/session active=1.59 | target=51.11 stop=46.67 time=1 ambiguous=1 unavailable=0 | gross=0.66 median=4.00 net20=0.46 net40=0.26 net60=0.06 | MFE5=7.68 MAE5=5.36
+15. OPENING_RANGE|10|5|BREAKOUT_RETEST_DOWN_PE|0.1|0|5 | +4/-3/10m | resolved=46 freq=0.44/session active=1.59 | target=51.11 stop=46.67 time=1 ambiguous=1 unavailable=0 | gross=0.66 median=4.00 net20=0.46 net40=0.26 net60=0.06 | MFE5=7.68 MAE5=5.36
+16. OPENING_RANGE|10|5|BREAKOUT_RETEST_DOWN_PE|0.1|0|10 | +4/-3/10m | resolved=46 freq=0.44/session active=1.59 | target=51.11 stop=46.67 time=1 ambiguous=1 unavailable=0 | gross=0.66 median=4.00 net20=0.46 net40=0.26 net60=0.06 | MFE5=7.68 MAE5=5.36
+17. OPENING_RANGE|10|5|BREAKOUT_RETEST_DOWN_PE|0.1|0|0 | +4/-3/15m | resolved=46 freq=0.44/session active=1.59 | target=51.11 stop=46.67 time=1 ambiguous=1 unavailable=0 | gross=0.65 median=4.00 net20=0.45 net40=0.25 net60=0.05 | MFE5=7.68 MAE5=5.36
+18. OPENING_RANGE|10|5|BREAKOUT_RETEST_DOWN_PE|0.1|0|5 | +4/-3/15m | resolved=46 freq=0.44/session active=1.59 | target=51.11 stop=46.67 time=1 ambiguous=1 unavailable=0 | gross=0.65 median=4.00 net20=0.45 net40=0.25 net60=0.05 | MFE5=7.68 MAE5=5.36
+19. OPENING_RANGE|10|5|BREAKOUT_RETEST_DOWN_PE|0.1|0|10 | +4/-3/15m | resolved=46 freq=0.44/session active=1.59 | target=51.11 stop=46.67 time=1 ambiguous=1 unavailable=0 | gross=0.65 median=4.00 net20=0.45 net40=0.25 net60=0.05 | MFE5=7.68 MAE5=5.36
+20. OPENING_RANGE|15|2|BREAKOUT_RETEST_DOWN_PE|0.1|0|0 | +4/-4/15m | resolved=59 freq=0.57/session active=1.55 | target=54.39 stop=40.35 time=3 ambiguous=2 unavailable=0 | gross=0.65 median=4.00 net20=0.45 net40=0.25 net60=0.05 | MFE5=7.55 MAE5=6.88
+ROBUSTNESS LEADER 1: OPENING_RANGE|30|1|BREAKOUT_RETEST_UP_CE|0.1|0|0 | +5/-4/15m | resolved=74 freq=0.71/session active=1.85 | target=55.22 stop=44.78 time=0 ambiguous=6 unavailable=1 | gross=0.97 median=5.00 net20=0.77 net40=0.57 net60=0.37 | MFE5=7.08 MAE5=7.62
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 12,
+      grossAverage: 1.63,
+      netAverageAt040: 1.23,
+      grossMedian: 5,
+      targetRate: 62.5,
+      stopRate: 37.5
+    },
+    {
+      month: 'April',
+      trades: 23,
+      grossAverage: 1.57,
+      netAverageAt040: 1.17,
+      grossMedian: 5,
+      targetRate: 61.9,
+      stopRate: 38.1
+    },
+    {
+      month: 'May',
+      trades: 9,
+      grossAverage: 1,
+      netAverageAt040: 0.6,
+      grossMedian: 5,
+      targetRate: 55.56,
+      stopRate: 44.44
+    },
+    {
+      month: 'June',
+      trades: 13,
+      grossAverage: 1.25,
+      netAverageAt040: 0.85,
+      grossMedian: 5,
+      targetRate: 58.33,
+      stopRate: 41.67
+    },
+    {
+      month: 'July',
+      trades: 16,
+      grossAverage: -0.63,
+      netAverageAt040: -1.03,
+      grossMedian: -4,
+      targetRate: 37.5,
+      stopRate: 62.5
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 1,
+      grossAverage: 5,
+      netAverageAt040: 4.6,
+      grossMedian: 5,
+      targetRate: 100,
+      stopRate: 0
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 41,
+      grossAverage: 1.91,
+      netAverageAt040: 1.51,
+      grossMedian: 5,
+      targetRate: 65.71,
+      stopRate: 34.29
+    },
+    {
+      period: 'Second half',
+      trades: 33,
+      grossAverage: -0.06,
+      netAverageAt040: -0.46,
+      grossMedian: -4,
+      targetRate: 43.75,
+      stopRate: 56.25
+    }
+  ],
+  frequency: {
+    tradesPerSession: 0.71,
+    averageTradesPerActiveSession: 1.85,
+    daysWith0Trades: 64,
+    daysWith1To4Trades: 38,
+    daysWith5To9Trades: 2,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 5
+  },
+  profitableDayPercent: 60.53,
+  maximumLosingTradeStreak: 6,
+  maximumLosingDayStreak: 2,
+  averageExcludingBest5: 0.65,
+  best5ContributionPercent: 13.51,
+  largestWinner: 5,
+  largestLoser: -4
+}
+V2 OVERLAP {
+  comparablePeTrades: 0,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 0.71
+}
+ROBUSTNESS LEADER 2: OPENING_RANGE|10|1|BREAKOUT_RETEST_UP_CE|0.05|0.05|0 | +5/-5/10m | resolved=598 freq=5.75/session active=9.06 | target=47.96 stop=40.00 time=68 ambiguous=27 unavailable=6 | gross=0.41 median=2.00 net20=0.21 net40=0.01 net60=-0.19 | MFE5=7.31 MAE5=7.07
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 71,
+      grossAverage: -0.1,
+      netAverageAt040: -0.5,
+      grossMedian: -0.71,
+      targetRate: 41.07,
+      stopRate: 44.64
+    },
+    {
+      month: 'April',
+      trades: 125,
+      grossAverage: -0.3,
+      netAverageAt040: -0.7,
+      grossMedian: -3.18,
+      targetRate: 42.37,
+      stopRate: 50
+    },
+    {
+      month: 'May',
+      trades: 72,
+      grossAverage: -0.4,
+      netAverageAt040: -0.8,
+      grossMedian: -2.37,
+      targetRate: 41.43,
+      stopRate: 48.57
+    },
+    {
+      month: 'June',
+      trades: 134,
+      grossAverage: 0.3,
+      netAverageAt040: -0.1,
+      grossMedian: 0.54,
+      targetRate: 46.51,
+      stopRate: 39.53
+    },
+    {
+      month: 'July',
+      trades: 150,
+      grossAverage: 0.96,
+      netAverageAt040: 0.56,
+      grossMedian: 5,
+      targetRate: 52.05,
+      stopRate: 32.88
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 46,
+      grossAverage: 2.61,
+      netAverageAt040: 2.21,
+      grossMedian: 5,
+      targetRate: 71.74,
+      stopRate: 19.57
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 226,
+      grossAverage: -0.42,
+      netAverageAt040: -0.82,
+      grossMedian: -2.76,
+      targetRate: 40.39,
+      stopRate: 49.75
+    },
+    {
+      period: 'Second half',
+      trades: 372,
+      grossAverage: 0.87,
+      netAverageAt040: 0.47,
+      grossMedian: 5,
+      targetRate: 52.21,
+      stopRate: 34.53
+    }
+  ],
+  frequency: {
+    tradesPerSession: 5.75,
+    averageTradesPerActiveSession: 9.06,
+    daysWith0Trades: 38,
+    daysWith1To4Trades: 26,
+    daysWith5To9Trades: 16,
+    daysWith10PlusTrades: 24,
+    maximumTradesInOneDay: 46
+  },
+  profitableDayPercent: 56.06,
+  maximumLosingTradeStreak: 13,
+  maximumLosingDayStreak: 3,
+  averageExcludingBest5: 0.37,
+  best5ContributionPercent: 1.77,
+  largestWinner: 5,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 0,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 5.75
+}
+ROBUSTNESS LEADER 3: OPENING_RANGE|15|5|BREAKOUT_RETEST_UP_CE|0.1|0.05|10 | +4/-5/5m | resolved=116 freq=1.12/session active=2.52 | target=51.79 stop=25.89 time=25 ambiguous=3 unavailable=1 | gross=0.67 median=4.00 net20=0.47 net40=0.27 net60=0.07 | MFE5=6.68 MAE5=5.93
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 14,
+      grossAverage: 0.59,
+      netAverageAt040: 0.19,
+      grossMedian: 2.2,
+      targetRate: 50,
+      stopRate: 25
+    },
+    {
+      month: 'April',
+      trades: 31,
+      grossAverage: 0.57,
+      netAverageAt040: 0.17,
+      grossMedian: 1.43,
+      targetRate: 43.33,
+      stopRate: 26.67
+    },
+    {
+      month: 'May',
+      trades: 16,
+      grossAverage: 0.39,
+      netAverageAt040: -0.01,
+      grossMedian: 4,
+      targetRate: 53.33,
+      stopRate: 26.67
+    },
+    {
+      month: 'June',
+      trades: 29,
+      grossAverage: 1.25,
+      netAverageAt040: 0.85,
+      grossMedian: 4,
+      targetRate: 62.07,
+      stopRate: 24.14
+    },
+    {
+      month: 'July',
+      trades: 24,
+      grossAverage: 0.05,
+      netAverageAt040: -0.35,
+      grossMedian: 1.62,
+      targetRate: 45.83,
+      stopRate: 29.17
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 2,
+      grossAverage: 4,
+      netAverageAt040: 3.6,
+      grossMedian: 4,
+      targetRate: 100,
+      stopRate: 0
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 52,
+      grossAverage: 0.29,
+      netAverageAt040: -0.11,
+      grossMedian: 0.8,
+      targetRate: 42.86,
+      stopRate: 28.57
+    },
+    {
+      period: 'Second half',
+      trades: 64,
+      grossAverage: 0.98,
+      netAverageAt040: 0.58,
+      grossMedian: 4,
+      targetRate: 58.73,
+      stopRate: 23.81
+    }
+  ],
+  frequency: {
+    tradesPerSession: 1.12,
+    averageTradesPerActiveSession: 2.52,
+    daysWith0Trades: 58,
+    daysWith1To4Trades: 39,
+    daysWith5To9Trades: 7,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 8
+  },
+  profitableDayPercent: 53.33,
+  maximumLosingTradeStreak: 5,
+  maximumLosingDayStreak: 2,
+  averageExcludingBest5: 0.52,
+  best5ContributionPercent: 8.13,
+  largestWinner: 4,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 0,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 1.12
+}
+
+OPENING RANGE A2 — FAILED BREAKOUT | configs=432 policies/config=64 {
+  policyCandidates: 27648,
+  viableAfter040Cost: 308,
+  highestSustainableFrequencyPerSession: 1.32
+}
+Highest frequency: OPENING_RANGE|10|1|FAILED_BREAKOUT_UP_PE|0.05|0|0 | +4/-5/10m | resolved=137 freq=1.32/session active=2.54 | target=55.65 stop=36.29 time=10 ambiguous=13 unavailable=0 | gross=0.45 median=4.00 net20=0.25 net40=0.05 net60=-0.15 | MFE5=8.63 MAE5=9.31
+Highest quality / cost-adjusted: OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|0 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+Best balanced: OPENING_RANGE|10|2|FAILED_BREAKOUT_DOWN_CE|0|0.05|0 | +5/-5/7m | resolved=119 freq=1.14/session active=2.20 | target=43.40 stop=32.08 time=26 ambiguous=10 unavailable=3 | gross=0.61 median=1.58 net20=0.41 net40=0.21 net60=0.01 | MFE5=11.99 MAE5=8.40
+TOP 20
+1. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|0 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+2. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|5 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+3. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|10 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+4. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|0 | +2/-5/15m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.87 median=2.00 net20=0.67 net40=0.47 net60=0.27 | MFE5=10.47 MAE5=6.31
+5. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|5 | +2/-5/15m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.87 median=2.00 net20=0.67 net40=0.47 net60=0.27 | MFE5=10.47 MAE5=6.31
+6. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|10 | +2/-5/15m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.87 median=2.00 net20=0.67 net40=0.47 net60=0.27 | MFE5=10.47 MAE5=6.31
+7. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|0 | +2/-5/10m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.86 median=2.00 net20=0.66 net40=0.46 net60=0.26 | MFE5=10.47 MAE5=6.31
+8. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|5 | +2/-5/10m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.86 median=2.00 net20=0.66 net40=0.46 net60=0.26 | MFE5=10.47 MAE5=6.31
+9. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|10 | +2/-5/10m | resolved=54 freq=0.52/session active=1.54 | target=81.25 stop=14.58 time=2 ambiguous=4 unavailable=2 | gross=0.86 median=2.00 net20=0.66 net40=0.46 net60=0.26 | MFE5=10.47 MAE5=6.31
+10. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|0 | +4/-4/5m | resolved=32 freq=0.31/session active=1.14 | target=56.25 stop=34.38 time=3 ambiguous=0 unavailable=0 | gross=0.82 median=4.00 net20=0.62 net40=0.42 net60=0.22 | MFE5=9.89 MAE5=7.10
+11. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|5 | +4/-4/5m | resolved=32 freq=0.31/session active=1.14 | target=56.25 stop=34.38 time=3 ambiguous=0 unavailable=0 | gross=0.82 median=4.00 net20=0.62 net40=0.42 net60=0.22 | MFE5=9.89 MAE5=7.10
+12. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|10 | +4/-4/5m | resolved=32 freq=0.31/session active=1.14 | target=56.25 stop=34.38 time=3 ambiguous=0 unavailable=0 | gross=0.82 median=4.00 net20=0.62 net40=0.42 net60=0.22 | MFE5=9.89 MAE5=7.10
+13. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|0 | +2/-5/7m | resolved=54 freq=0.52/session active=1.54 | target=79.17 stop=14.58 time=3 ambiguous=4 unavailable=2 | gross=0.80 median=2.00 net20=0.60 net40=0.40 net60=0.20 | MFE5=10.47 MAE5=6.31
+14. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|5 | +2/-5/7m | resolved=54 freq=0.52/session active=1.54 | target=79.17 stop=14.58 time=3 ambiguous=4 unavailable=2 | gross=0.80 median=2.00 net20=0.60 net40=0.40 net60=0.20 | MFE5=10.47 MAE5=6.31
+15. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|10 | +2/-5/7m | resolved=54 freq=0.52/session active=1.54 | target=79.17 stop=14.58 time=3 ambiguous=4 unavailable=2 | gross=0.80 median=2.00 net20=0.60 net40=0.40 net60=0.20 | MFE5=10.47 MAE5=6.31
+16. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|0 | +2/-5/5m | resolved=54 freq=0.52/session active=1.54 | target=75.00 stop=12.50 time=6 ambiguous=4 unavailable=2 | gross=0.76 median=2.00 net20=0.56 net40=0.36 net60=0.16 | MFE5=10.47 MAE5=6.31
+17. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|5 | +2/-5/5m | resolved=54 freq=0.52/session active=1.54 | target=75.00 stop=12.50 time=6 ambiguous=4 unavailable=2 | gross=0.76 median=2.00 net20=0.56 net40=0.36 net60=0.16 | MFE5=10.47 MAE5=6.31
+18. OPENING_RANGE|30|2|FAILED_BREAKOUT_DOWN_CE|0.1|0|10 | +2/-5/5m | resolved=54 freq=0.52/session active=1.54 | target=75.00 stop=12.50 time=6 ambiguous=4 unavailable=2 | gross=0.76 median=2.00 net20=0.56 net40=0.36 net60=0.16 | MFE5=10.47 MAE5=6.31
+19. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|0 | +4/-5/5m | resolved=32 freq=0.31/session active=1.14 | target=59.38 stop=31.25 time=3 ambiguous=0 unavailable=0 | gross=0.76 median=4.00 net20=0.56 net40=0.36 net60=0.16 | MFE5=9.89 MAE5=7.10
+20. OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|5 | +4/-5/5m | resolved=32 freq=0.31/session active=1.14 | target=59.38 stop=31.25 time=3 ambiguous=0 unavailable=0 | gross=0.76 median=4.00 net20=0.56 net40=0.36 net60=0.16 | MFE5=9.89 MAE5=7.10
+ROBUSTNESS LEADER 1: OPENING_RANGE|30|5|FAILED_BREAKOUT_UP_PE|0.1|0.05|0 | +4/-3/5m | resolved=32 freq=0.31/session active=1.14 | target=53.33 stop=40.00 time=2 ambiguous=2 unavailable=0 | gross=0.92 median=4.00 net20=0.72 net40=0.52 net60=0.32 | MFE5=9.89 MAE5=7.10
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 4,
+      grossAverage: 1.11,
+      netAverageAt040: 0.71,
+      grossMedian: 1.73,
+      targetRate: 50,
+      stopRate: 25
+    },
+    {
+      month: 'April',
+      trades: 10,
+      grossAverage: 2.23,
+      netAverageAt040: 1.83,
+      grossMedian: 4,
+      targetRate: 70,
+      stopRate: 20
+    },
+    {
+      month: 'May',
+      trades: 7,
+      grossAverage: 0.5,
+      netAverageAt040: 0.1,
+      grossMedian: 0.5,
+      targetRate: 50,
+      stopRate: 50
+    },
+    {
+      month: 'June',
+      trades: 7,
+      grossAverage: -0.67,
+      netAverageAt040: -1.07,
+      grossMedian: -3,
+      targetRate: 33.33,
+      stopRate: 66.67
+    },
+    {
+      month: 'July',
+      trades: 4,
+      grossAverage: 0.5,
+      netAverageAt040: 0.1,
+      grossMedian: 0.5,
+      targetRate: 50,
+      stopRate: 50
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 0,
+      grossAverage: 0,
+      netAverageAt040: -0.4,
+      grossMedian: 0,
+      targetRate: 0,
+      stopRate: 0
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 19,
+      grossAverage: 1.35,
+      netAverageAt040: 0.95,
+      grossMedian: 4,
+      targetRate: 57.89,
+      stopRate: 31.58
+    },
+    {
+      period: 'Second half',
+      trades: 13,
+      grossAverage: 0.18,
+      netAverageAt040: -0.22,
+      grossMedian: -3,
+      targetRate: 45.45,
+      stopRate: 54.55
+    }
+  ],
+  frequency: {
+    tradesPerSession: 0.31,
+    averageTradesPerActiveSession: 1.14,
+    daysWith0Trades: 76,
+    daysWith1To4Trades: 28,
+    daysWith5To9Trades: 0,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 2
+  },
+  profitableDayPercent: 55.56,
+  maximumLosingTradeStreak: 3,
+  maximumLosingDayStreak: 1,
+  averageExcludingBest5: 0.31,
+  best5ContributionPercent: 31.12,
+  largestWinner: 4,
+  largestLoser: -3
+}
+V2 OVERLAP {
+  comparablePeTrades: 32,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 0.31
+}
+ROBUSTNESS LEADER 2: OPENING_RANGE|10|1|FAILED_BREAKOUT_UP_PE|0.05|0|0 | +4/-5/10m | resolved=137 freq=1.32/session active=2.54 | target=55.65 stop=36.29 time=10 ambiguous=13 unavailable=0 | gross=0.45 median=4.00 net20=0.25 net40=0.05 net60=-0.15 | MFE5=8.63 MAE5=9.31
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 27,
+      grossAverage: -0.47,
+      netAverageAt040: -0.87,
+      grossMedian: -0.15,
+      targetRate: 45.45,
+      stopRate: 45.45
+    },
+    {
+      month: 'April',
+      trades: 33,
+      grossAverage: 0.81,
+      netAverageAt040: 0.41,
+      grossMedian: 4,
+      targetRate: 64.52,
+      stopRate: 35.48
+    },
+    {
+      month: 'May',
+      trades: 21,
+      grossAverage: 0.4,
+      netAverageAt040: -0,
+      grossMedian: 2.53,
+      targetRate: 44.44,
+      stopRate: 33.33
+    },
+    {
+      month: 'June',
+      trades: 25,
+      grossAverage: -0.62,
+      netAverageAt040: -1.02,
+      grossMedian: -0.67,
+      targetRate: 43.48,
+      stopRate: 47.83
+    },
+    {
+      month: 'July',
+      trades: 28,
+      grossAverage: 1.76,
+      netAverageAt040: 1.36,
+      grossMedian: 4,
+      targetRate: 74.07,
+      stopRate: 22.22
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 3,
+      grossAverage: 0.1,
+      netAverageAt040: -0.3,
+      grossMedian: 1.29,
+      targetRate: 33.33,
+      stopRate: 33.33
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 71,
+      grossAverage: 0.26,
+      netAverageAt040: -0.14,
+      grossMedian: 4,
+      targetRate: 54.84,
+      stopRate: 38.71
+    },
+    {
+      period: 'Second half',
+      trades: 66,
+      grossAverage: 0.63,
+      netAverageAt040: 0.23,
+      grossMedian: 4,
+      targetRate: 56.45,
+      stopRate: 33.87
+    }
+  ],
+  frequency: {
+    tradesPerSession: 1.32,
+    averageTradesPerActiveSession: 2.54,
+    daysWith0Trades: 50,
+    daysWith1To4Trades: 48,
+    daysWith5To9Trades: 6,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 6
+  },
+  profitableDayPercent: 59.62,
+  maximumLosingTradeStreak: 3,
+  maximumLosingDayStreak: 2,
+  averageExcludingBest5: 0.3,
+  best5ContributionPercent: 7,
+  largestWinner: 4,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 137,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 1,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 1.32
+}
+ROBUSTNESS LEADER 3: OPENING_RANGE|10|2|FAILED_BREAKOUT_DOWN_CE|0|0.05|0 | +5/-5/7m | resolved=119 freq=1.14/session active=2.20 | target=43.40 stop=32.08 time=26 ambiguous=10 unavailable=3 | gross=0.61 median=1.58 net20=0.41 net40=0.21 net60=0.01 | MFE5=11.99 MAE5=8.40
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 30,
+      grossAverage: 1.48,
+      netAverageAt040: 1.08,
+      grossMedian: 4.42,
+      targetRate: 48.15,
+      stopRate: 22.22
+    },
+    {
+      month: 'April',
+      trades: 20,
+      grossAverage: -0.01,
+      netAverageAt040: -0.41,
+      grossMedian: -0.17,
+      targetRate: 30,
+      stopRate: 30
+    },
+    {
+      month: 'May',
+      trades: 24,
+      grossAverage: -0.23,
+      netAverageAt040: -0.63,
+      grossMedian: -0.72,
+      targetRate: 34.78,
+      stopRate: 43.48
+    },
+    {
+      month: 'June',
+      trades: 24,
+      grossAverage: 0.83,
+      netAverageAt040: 0.43,
+      grossMedian: 5,
+      targetRate: 55,
+      stopRate: 35
+    },
+    {
+      month: 'July',
+      trades: 20,
+      grossAverage: 0.86,
+      netAverageAt040: 0.46,
+      grossMedian: 2.82,
+      targetRate: 50,
+      stopRate: 31.25
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 1,
+      grossAverage: 0,
+      netAverageAt040: -0.4,
+      grossMedian: 0,
+      targetRate: 0,
+      stopRate: 0
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 69,
+      grossAverage: 0.5,
+      netAverageAt040: 0.1,
+      grossMedian: 0.14,
+      targetRate: 40,
+      stopRate: 30.77
+    },
+    {
+      period: 'Second half',
+      trades: 50,
+      grossAverage: 0.79,
+      netAverageAt040: 0.39,
+      grossMedian: 3.5,
+      targetRate: 48.78,
+      stopRate: 34.15
+    }
+  ],
+  frequency: {
+    tradesPerSession: 1.14,
+    averageTradesPerActiveSession: 2.2,
+    daysWith0Trades: 50,
+    daysWith1To4Trades: 49,
+    daysWith5To9Trades: 5,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 6
+  },
+  profitableDayPercent: 61.54,
+  maximumLosingTradeStreak: 4,
+  maximumLosingDayStreak: 4,
+  averageExcludingBest5: 0.39,
+  best5ContributionPercent: 9.77,
+  largestWinner: 5,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 0,
+  exactSameTimestampOverlaps: 0,
+  overlapsWithinPlusMinus5Minutes: 0,
+  independentPercent: 100,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 1.14
+}
+
+MOMENTUM EXPANSION | configs=1024 policies/config=64 {
+  policyCandidates: 30592,
+  viableAfter040Cost: 600,
+  highestSustainableFrequencyPerSession: 2.13
+}
+Highest frequency: MOMENTUM_EXPANSION|3|PE|3|2|0.75|0.1|false|true|0 | +5/-5/15m | resolved=221 freq=2.13/session active=3.51 | target=51.50 stop=42.50 time=12 ambiguous=18 unavailable=3 | gross=0.45 median=5.00 net20=0.25 net40=0.05 net60=-0.15 | MFE5=9.78 MAE5=8.19
+Highest quality / cost-adjusted: MOMENTUM_EXPANSION|3|PE|3|1.5|1|0.1|false|true|5 | +5/-5/15m | resolved=72 freq=0.69/session active=1.76 | target=65.57 stop=34.43 time=0 ambiguous=9 unavailable=2 | gross=1.56 median=5.00 net20=1.36 net40=1.16 net60=0.96 | MFE5=11.47 MAE5=9.42
+Best balanced: MOMENTUM_EXPANSION|3|PE|3|2|1|0.1|false|true|5 | +5/-5/15m | resolved=111 freq=1.07/session active=2.47 | target=61.22 stop=35.71 time=3 ambiguous=11 unavailable=2 | gross=1.22 median=5.00 net20=1.02 net40=0.82 net60=0.62 | MFE5=10.89 MAE5=8.14
+TOP 20
+1. MOMENTUM_EXPANSION|3|PE|3|1.5|1|0.1|false|true|5 | +5/-5/15m | resolved=72 freq=0.69/session active=1.76 | target=65.57 stop=34.43 time=0 ambiguous=9 unavailable=2 | gross=1.56 median=5.00 net20=1.36 net40=1.16 net60=0.96 | MFE5=11.47 MAE5=9.42
+2. MOMENTUM_EXPANSION|3|PE|5|2|1|0.1|false|true|5 | +5/-5/15m | resolved=62 freq=0.60/session active=2.07 | target=64.15 stop=33.96 time=1 ambiguous=8 unavailable=1 | gross=1.47 median=5.00 net20=1.27 net40=1.07 net60=0.87 | MFE5=14.03 MAE5=9.15
+3. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|0 | +5/-4/15m | resolved=42 freq=0.40/session active=1.31 | target=58.33 stop=38.89 time=1 ambiguous=5 unavailable=1 | gross=1.47 median=5.00 net20=1.27 net40=1.07 net60=0.87 | MFE5=12.37 MAE5=8.47
+4. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|5 | +5/-4/15m | resolved=42 freq=0.40/session active=1.31 | target=58.33 stop=38.89 time=1 ambiguous=5 unavailable=1 | gross=1.47 median=5.00 net20=1.27 net40=1.07 net60=0.87 | MFE5=12.37 MAE5=8.47
+5. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|0 | +5/-5/15m | resolved=42 freq=0.40/session active=1.31 | target=62.16 stop=35.14 time=1 ambiguous=4 unavailable=1 | gross=1.46 median=5.00 net20=1.26 net40=1.06 net60=0.86 | MFE5=12.37 MAE5=8.47
+6. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|5 | +5/-5/15m | resolved=42 freq=0.40/session active=1.31 | target=62.16 stop=35.14 time=1 ambiguous=4 unavailable=1 | gross=1.46 median=5.00 net20=1.26 net40=1.06 net60=0.86 | MFE5=12.37 MAE5=8.47
+7. MOMENTUM_EXPANSION|3|PE|5|2|1|0.1|false|true|5 | +5/-5/10m | resolved=62 freq=0.60/session active=2.07 | target=60.38 stop=33.96 time=3 ambiguous=8 unavailable=1 | gross=1.39 median=5.00 net20=1.19 net40=0.99 net60=0.79 | MFE5=14.03 MAE5=9.15
+8. MOMENTUM_EXPANSION|3|PE|3|1.5|1|0.25|false|true|5 | +5/-5/15m | resolved=66 freq=0.63/session active=1.61 | target=63.64 stop=36.36 time=0 ambiguous=9 unavailable=2 | gross=1.36 median=5.00 net20=1.16 net40=0.96 net60=0.76 | MFE5=11.93 MAE5=9.64
+9. MOMENTUM_EXPANSION|3|PE|3|1.5|1|0.1|false|true|0 | +5/-5/15m | resolved=74 freq=0.71/session active=1.80 | target=63.49 stop=36.51 time=0 ambiguous=9 unavailable=2 | gross=1.35 median=5.00 net20=1.15 net40=0.95 net60=0.75 | MFE5=11.19 MAE5=9.71
+10. MOMENTUM_EXPANSION|3|PE|5|2|1|0.25|false|true|5 | +5/-5/15m | resolved=57 freq=0.55/session active=1.97 | target=62.50 stop=35.42 time=1 ambiguous=8 unavailable=1 | gross=1.32 median=5.00 net20=1.12 net40=0.92 net60=0.72 | MFE5=14.11 MAE5=9.69
+11. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|0 | +5/-4/10m | resolved=42 freq=0.40/session active=1.31 | target=55.56 stop=38.89 time=2 ambiguous=5 unavailable=1 | gross=1.29 median=5.00 net20=1.09 net40=0.89 net60=0.69 | MFE5=12.37 MAE5=8.47
+12. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|5 | +5/-4/10m | resolved=42 freq=0.40/session active=1.31 | target=55.56 stop=38.89 time=2 ambiguous=5 unavailable=1 | gross=1.29 median=5.00 net20=1.09 net40=0.89 net60=0.69 | MFE5=12.37 MAE5=8.47
+13. MOMENTUM_EXPANSION|3|PE|5|2|1|0.1|false|true|0 | +5/-5/15m | resolved=64 freq=0.62/session active=2.13 | target=61.82 stop=36.36 time=1 ambiguous=8 unavailable=1 | gross=1.24 median=5.00 net20=1.04 net40=0.84 net60=0.64 | MFE5=13.64 MAE5=9.49
+14. MOMENTUM_EXPANSION|3|PE|5|2|1|0.25|false|true|5 | +5/-5/10m | resolved=57 freq=0.55/session active=1.97 | target=58.33 stop=35.42 time=3 ambiguous=8 unavailable=1 | gross=1.22 median=5.00 net20=1.02 net40=0.82 net60=0.62 | MFE5=14.11 MAE5=9.69
+15. MOMENTUM_EXPANSION|3|PE|3|2|1|0.1|false|true|5 | +5/-5/15m | resolved=111 freq=1.07/session active=2.47 | target=61.22 stop=35.71 time=3 ambiguous=11 unavailable=2 | gross=1.22 median=5.00 net20=1.02 net40=0.82 net60=0.62 | MFE5=10.89 MAE5=8.14
+16. MOMENTUM_EXPANSION|3|PE|5|2|1|0.1|false|true|5 | +3/-5/15m | resolved=62 freq=0.60/session active=2.07 | target=77.55 stop=22.45 time=0 ambiguous=12 unavailable=1 | gross=1.20 median=3.00 net20=1.00 net40=0.80 net60=0.60 | MFE5=14.03 MAE5=9.15
+17. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|0 | +5/-4/5m | resolved=42 freq=0.40/session active=1.31 | target=47.22 stop=33.33 time=7 ambiguous=5 unavailable=1 | gross=1.17 median=2.92 net20=0.97 net40=0.77 net60=0.57 | MFE5=12.37 MAE5=8.47
+18. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|5 | +5/-4/5m | resolved=42 freq=0.40/session active=1.31 | target=47.22 stop=33.33 time=7 ambiguous=5 unavailable=1 | gross=1.17 median=2.92 net20=0.97 net40=0.77 net60=0.57 | MFE5=12.37 MAE5=8.47
+19. MOMENTUM_EXPANSION|3|PE|3|1.5|1|0.1|false|true|5 | +5/-5/10m | resolved=72 freq=0.69/session active=1.76 | target=59.02 stop=34.43 time=4 ambiguous=9 unavailable=2 | gross=1.17 median=5.00 net20=0.97 net40=0.77 net60=0.57 | MFE5=11.47 MAE5=9.42
+20. MOMENTUM_EXPANSION|3|PE|5|1.5|0.75|0.1|false|true|0 | +5/-4/7m | resolved=42 freq=0.40/session active=1.31 | target=50.00 stop=36.11 time=5 ambiguous=5 unavailable=1 | gross=1.16 median=4.31 net20=0.96 net40=0.76 net60=0.56 | MFE5=12.37 MAE5=8.47
+ROBUSTNESS LEADER 1: MOMENTUM_EXPANSION|3|PE|3|1.5|1|0.1|false|true|5 | +5/-5/15m | resolved=72 freq=0.69/session active=1.76 | target=65.57 stop=34.43 time=0 ambiguous=9 unavailable=2 | gross=1.56 median=5.00 net20=1.36 net40=1.16 net60=0.96 | MFE5=11.47 MAE5=9.42
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 21,
+      grossAverage: 0.29,
+      netAverageAt040: -0.11,
+      grossMedian: 5,
+      targetRate: 52.94,
+      stopRate: 47.06
+    },
+    {
+      month: 'April',
+      trades: 11,
+      grossAverage: 2.78,
+      netAverageAt040: 2.38,
+      grossMedian: 5,
+      targetRate: 77.78,
+      stopRate: 22.22
+    },
+    {
+      month: 'May',
+      trades: 15,
+      grossAverage: 1.92,
+      netAverageAt040: 1.52,
+      grossMedian: 5,
+      targetRate: 69.23,
+      stopRate: 30.77
+    },
+    {
+      month: 'June',
+      trades: 17,
+      grossAverage: 1.67,
+      netAverageAt040: 1.27,
+      grossMedian: 5,
+      targetRate: 66.67,
+      stopRate: 33.33
+    },
+    {
+      month: 'July',
+      trades: 5,
+      grossAverage: -0,
+      netAverageAt040: -0.4,
+      grossMedian: -0,
+      targetRate: 50,
+      stopRate: 50
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 3,
+      grossAverage: 5,
+      netAverageAt040: 4.6,
+      grossMedian: 5,
+      targetRate: 100,
+      stopRate: 0
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 42,
+      grossAverage: 2.06,
+      netAverageAt040: 1.66,
+      grossMedian: 5,
+      targetRate: 70.59,
+      stopRate: 29.41
+    },
+    {
+      period: 'Second half',
+      trades: 30,
+      grossAverage: 0.93,
+      netAverageAt040: 0.53,
+      grossMedian: 5,
+      targetRate: 59.26,
+      stopRate: 40.74
+    }
+  ],
+  frequency: {
+    tradesPerSession: 0.69,
+    averageTradesPerActiveSession: 1.76,
+    daysWith0Trades: 63,
+    daysWith1To4Trades: 41,
+    daysWith5To9Trades: 0,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 4
+  },
+  profitableDayPercent: 59.46,
+  maximumLosingTradeStreak: 4,
+  maximumLosingDayStreak: 3,
+  averageExcludingBest5: 1.25,
+  best5ContributionPercent: 12.5,
+  largestWinner: 5,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 72,
+  exactSameTimestampOverlaps: 4,
+  overlapsWithinPlusMinus5Minutes: 25,
+  independentPercent: 94.44,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 0.65
+}
+ROBUSTNESS LEADER 2: MOMENTUM_EXPANSION|3|PE|3|2|0.75|0.1|false|true|0 | +5/-5/15m | resolved=221 freq=2.13/session active=3.51 | target=51.50 stop=42.50 time=12 ambiguous=18 unavailable=3 | gross=0.45 median=5.00 net20=0.25 net40=0.05 net60=-0.15 | MFE5=9.78 MAE5=8.19
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 62,
+      grossAverage: 0.52,
+      netAverageAt040: 0.12,
+      grossMedian: 3.54,
+      targetRate: 48.21,
+      stopRate: 41.07
+    },
+    {
+      month: 'April',
+      trades: 37,
+      grossAverage: 0.35,
+      netAverageAt040: -0.05,
+      grossMedian: 5,
+      targetRate: 51.52,
+      stopRate: 42.42
+    },
+    {
+      month: 'May',
+      trades: 49,
+      grossAverage: -0.04,
+      netAverageAt040: -0.44,
+      grossMedian: -1.86,
+      targetRate: 48.84,
+      stopRate: 48.84
+    },
+    {
+      month: 'June',
+      trades: 39,
+      grossAverage: 0.56,
+      netAverageAt040: 0.16,
+      grossMedian: 5,
+      targetRate: 55.56,
+      stopRate: 44.44
+    },
+    {
+      month: 'July',
+      trades: 25,
+      grossAverage: 1.53,
+      netAverageAt040: 1.13,
+      grossMedian: 5,
+      targetRate: 60.87,
+      stopRate: 26.09
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 9,
+      grossAverage: -0.56,
+      netAverageAt040: -0.96,
+      grossMedian: -5,
+      targetRate: 44.44,
+      stopRate: 55.56
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 135,
+      grossAverage: 0.63,
+      netAverageAt040: 0.23,
+      grossMedian: 5,
+      targetRate: 52.5,
+      stopRate: 40.83
+    },
+    {
+      period: 'Second half',
+      trades: 86,
+      grossAverage: 0.17,
+      netAverageAt040: -0.23,
+      grossMedian: 3.11,
+      targetRate: 50,
+      stopRate: 45
+    }
+  ],
+  frequency: {
+    tradesPerSession: 2.13,
+    averageTradesPerActiveSession: 3.51,
+    daysWith0Trades: 41,
+    daysWith1To4Trades: 45,
+    daysWith5To9Trades: 17,
+    daysWith10PlusTrades: 1,
+    maximumTradesInOneDay: 10
+  },
+  profitableDayPercent: 53.33,
+  maximumLosingTradeStreak: 5,
+  maximumLosingDayStreak: 3,
+  averageExcludingBest5: 0.33,
+  best5ContributionPercent: 4.75,
+  largestWinner: 5,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 221,
+  exactSameTimestampOverlaps: 10,
+  overlapsWithinPlusMinus5Minutes: 51,
+  independentPercent: 95.48,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 2.03
+}
+ROBUSTNESS LEADER 3: MOMENTUM_EXPANSION|3|PE|3|2|1|0.1|false|true|5 | +5/-5/15m | resolved=111 freq=1.07/session active=2.47 | target=61.22 stop=35.71 time=3 ambiguous=11 unavailable=2 | gross=1.22 median=5.00 net20=1.02 net40=0.82 net60=0.62 | MFE5=10.89 MAE5=8.14
+ROBUSTNESS {
+  monthly: [
+    {
+      month: 'March',
+      trades: 31,
+      grossAverage: 0.93,
+      netAverageAt040: 0.53,
+      grossMedian: 5,
+      targetRate: 59.26,
+      stopRate: 40.74
+    },
+    {
+      month: 'April',
+      trades: 13,
+      grossAverage: 2.58,
+      netAverageAt040: 2.18,
+      grossMedian: 5,
+      targetRate: 72.73,
+      stopRate: 18.18
+    },
+    {
+      month: 'May',
+      trades: 25,
+      grossAverage: 1.05,
+      netAverageAt040: 0.65,
+      grossMedian: 5,
+      targetRate: 59.09,
+      stopRate: 36.36
+    },
+    {
+      month: 'June',
+      trades: 25,
+      grossAverage: 0.45,
+      netAverageAt040: 0.05,
+      grossMedian: 5,
+      targetRate: 54.55,
+      stopRate: 45.45
+    },
+    {
+      month: 'July',
+      trades: 12,
+      grossAverage: 1.62,
+      netAverageAt040: 1.22,
+      grossMedian: 5,
+      targetRate: 63.64,
+      stopRate: 27.27
+    },
+    {
+      month: 'Aug 1-4',
+      trades: 5,
+      grossAverage: 3,
+      netAverageAt040: 2.6,
+      grossMedian: 5,
+      targetRate: 80,
+      stopRate: 20
+    }
+  ],
+  halves: [
+    {
+      period: 'First half',
+      trades: 61,
+      grossAverage: 1.8,
+      netAverageAt040: 1.4,
+      grossMedian: 5,
+      targetRate: 67.31,
+      stopRate: 30.77
+    },
+    {
+      period: 'Second half',
+      trades: 50,
+      grossAverage: 0.56,
+      netAverageAt040: 0.16,
+      grossMedian: 5,
+      targetRate: 54.35,
+      stopRate: 41.3
+    }
+  ],
+  frequency: {
+    tradesPerSession: 1.07,
+    averageTradesPerActiveSession: 2.47,
+    daysWith0Trades: 59,
+    daysWith1To4Trades: 35,
+    daysWith5To9Trades: 10,
+    daysWith10PlusTrades: 0,
+    maximumTradesInOneDay: 6
+  },
+  profitableDayPercent: 68.29,
+  maximumLosingTradeStreak: 6,
+  maximumLosingDayStreak: 3,
+  averageExcludingBest5: 1.01,
+  best5ContributionPercent: 8.33,
+  largestWinner: 5,
+  largestLoser: -5
+}
+V2 OVERLAP {
+  comparablePeTrades: 111,
+  exactSameTimestampOverlaps: 7,
+  overlapsWithinPlusMinus5Minutes: 35,
+  independentPercent: 93.69,
+  incrementalTradesPerSessionAfterExactDuplicateRemoval: 1
+}
+V4 PERFORMANCE / CACHE {
+  uniquePathAnalyses: 14642,
+  policiesDerived: 937088,
+  preloader: {
+    underlyingRowsLoaded: 40125,
+    uniqueOptionContractDateSessions: 1010,
+    optionSessionsLoadedFromMySql: 1010,
+    optionCandlesLoadedFromMySql: 378750,
+    completeLocalSessions: 1010,
+    incompleteLocalSessions: 0,
+    missingLocalSessions: 0,
+    upstoxMissingSessionDownloads: 0,
+    newlyStoredOptionCandles: 0,
+    inMemoryLookupHits: 14685,
+    dbFallbackHits: 0,
+    bulkPreloadQueryCount: 11,
+    bulkPreloadDurationMs: 29585,
+    preloadDurationMs: 32365,
+    researchDurationMs: 0,
+    totalDurationMs: 62791
+  },
+  upstoxDownloads: 0,
+  dbFallbackHits: 0,
+  inMemoryLookupHits: 14685
+}

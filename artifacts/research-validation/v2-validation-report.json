@@ -1,0 +1,27 @@
+{
+  "status": "LEGACY_RESEARCH_SUMMARY_ONLY",
+  "holdoutStatus": "LEGACY_CONTAMINATED_HOLDOUT",
+  "strategyId": "V2_TREND_DOWN_PE",
+  "frozenConfiguration": "5m|EMA35 proximity 0.20%|RSI<35|cooldown 10m|+5/-5/15m",
+  "scope": {
+    "instrumentKey": "NSE_INDEX|Nifty 50",
+    "startDate": "2026-03-02",
+    "endDate": "2026-08-04",
+    "sessionCount": 104
+  },
+  "splitCounts": {
+    "TRAIN": 60,
+    "EMBARGO_1": 3,
+    "VALIDATION": 20,
+    "EMBARGO_2": 3,
+    "FINAL_HOLDOUT": 18
+  },
+  "historicalReference": {
+    "resolvedTrades": 103,
+    "targetRate": 61.8,
+    "stopRate": 38.2,
+    "averagePolicyReturn": 1.18
+  },
+  "trainValidationHoldout": "NOT_RECOMPUTED: existing V2 artifacts do not persist a session-by-configuration outcome matrix.",
+  "note": "This is not an out-of-sample result. The 104 sessions were already used during V2 discovery."
+}

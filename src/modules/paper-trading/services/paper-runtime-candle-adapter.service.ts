@@ -20,7 +20,10 @@ export interface PaperRuntimeCandleRuntime {
 /** Bridges completed NIFTY 5m candles into the running paper-trading runtime. */
 export default class PaperRuntimeCandleAdapterService {
   private started = false;
-  private readonly candleListener = (event: unknown): void => { void this.handleCandle(event); };
+  private pending = Promise.resolve();
+  private readonly candleListener = (event: unknown): void => {
+    this.pending = this.pending.then(() => this.handleCandle(event));
+  };
 
   constructor(
     private readonly runtime: PaperRuntimeCandleRuntime,
@@ -39,6 +42,9 @@ export default class PaperRuntimeCandleAdapterService {
     this.bus.off('market.candle.completed', this.candleListener);
     this.started = false;
   }
+
+  /** Allows EOD to include the final emitted 5m candle before stopping runtime state. */
+  async drain(): Promise<void> { await this.pending; }
 
   private async handleCandle(event: unknown): Promise<void> {
     const candle = this.normalizeCandle(event);

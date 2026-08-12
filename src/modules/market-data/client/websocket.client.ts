@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { EventEmitter } from 'events';
 import logger from '../../../core/logger/logger';
+import { shouldEmitTradingLog } from '../../../core/logger/trading-log-mode';
 
 const marketDataAuthorizeUrl = 'https://api.upstox.com/v3/feed/market-data-feed/authorize';
 
@@ -47,9 +48,9 @@ export default class MarketDataWebSocketClient extends EventEmitter {
           }
 
           const message = Buffer.from(event.data);
-          logger.debug('Received Upstox market data WebSocket message', {
-            bytes: message.length,
-          });
+          if (shouldEmitTradingLog('RAW_MARKET_DATA_PACKET')) {
+            logger.debug('Received Upstox market data WebSocket message', { bytes: message.length });
+          }
           this.emit('message', message);
         });
 
@@ -94,7 +95,7 @@ export default class MarketDataWebSocketClient extends EventEmitter {
     }
 
     this.socket.send(data);
-    logger.debug('Sent Upstox market data WebSocket message');
+    if (shouldEmitTradingLog('RAW_MARKET_DATA_PACKET')) logger.debug('Sent Upstox market data WebSocket message');
   }
 
   private async getAuthorizedWebSocketUrl(): Promise<string> {

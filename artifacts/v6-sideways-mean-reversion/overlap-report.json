@@ -1,0 +1,38 @@
+{
+  "CE": {
+    "V2": {
+      "exact": 0,
+      "plusMinus2": 0,
+      "plusMinus5": 0
+    },
+    "V4": {
+      "exact": 0,
+      "plusMinus2": 0,
+      "plusMinus5": 0
+    },
+    "V5": {
+      "exact": 0,
+      "plusMinus2": 0,
+      "plusMinus5": 0
+    },
+    "incrementalTradesPerSessionAfterExactDuplicates": 0.29
+  },
+  "PE": {
+    "V2": {
+      "exact": 0,
+      "plusMinus2": 0,
+      "plusMinus5": 0
+    },
+    "V4": {
+      "exact": 0,
+      "plusMinus2": 1,
+      "plusMinus5": 1
+    },
+    "V5": {
+      "exact": 0,
+      "plusMinus2": 0,
+      "plusMinus5": 0
+    },
+    "incrementalTradesPerSessionAfterExactDuplicates": 1.29
+  }
+}

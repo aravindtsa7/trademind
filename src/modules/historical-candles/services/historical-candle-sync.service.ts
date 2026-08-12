@@ -33,6 +33,34 @@ export default class HistoricalCandleSyncService {
   private repository = new HistoricalCandleRepository();
   private client = new UpstoxHistoricalClient();
 
+  async plan(instrumentKey: string, fromDate: string, toDate: string): Promise<{
+    instrumentKey: string;
+    timeframe: string;
+    fromDate: string;
+    toDate: string;
+    existingRowCount: number;
+    chunks: Array<{ fromDate: string; toDate: string }>;
+  }> {
+    const requestedRange = this.createRequestedRange(fromDate, toDate);
+    const existingCandles = await this.repository.findRange(
+      instrumentKey,
+      oneMinuteTimeframe,
+      requestedRange.from,
+      requestedRange.to
+    );
+    const chunks = this.getMissingRanges(requestedRange, existingCandles).flatMap((range) =>
+      this.splitIntoMonthlyChunks(range)
+    );
+    return {
+      instrumentKey,
+      timeframe: oneMinuteTimeframe,
+      fromDate,
+      toDate,
+      existingRowCount: existingCandles.length,
+      chunks: chunks.map((chunk) => ({ fromDate: chunk.fromDate, toDate: chunk.toDate })),
+    };
+  }
+
   async sync(
     instrumentKey: string,
     fromDate: string,
@@ -92,11 +120,7 @@ export default class HistoricalCandleSyncService {
               toDate: chunk.toDate,
             });
 
-            const candles = await this.client.fetchOneMinuteCandles(
-              instrumentKey,
-              chunk.toDate,
-              chunk.fromDate
-            );
+            const candles = await this.fetchChunkWithRetry(instrumentKey, chunk);
             this.validateDownloadedCandles(candles);
             downloaded += candles.length;
 
@@ -286,6 +310,22 @@ export default class HistoricalCandleSyncService {
         throw new Error('Downloaded historical candle contains invalid values.');
       }
     });
+  }
+
+  private async fetchChunkWithRetry(
+    instrumentKey: string,
+    chunk: HistoricalCandleRange
+  ): Promise<UpstoxHistoricalCandleDto[]> {
+    let failure: unknown;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        return await this.client.fetchOneMinuteCandles(instrumentKey, chunk.toDate, chunk.fromDate);
+      } catch (error) {
+        failure = error;
+        if (attempt < 3) await new Promise<void>((resolve) => setTimeout(resolve, attempt * 500));
+      }
+    }
+    throw failure;
   }
 
   private toEntity(

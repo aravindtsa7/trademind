@@ -1,0 +1,90 @@
+{
+  "strategyId": "V2_TREND_DOWN_PE",
+  "status": "LEGACY_RESEARCH",
+  "holdoutStatus": "LEGACY_CONTAMINATED_HOLDOUT",
+  "splitManifestVersion": "nifty-104-split-v1",
+  "TRAIN": {
+    "tradeCount": 53,
+    "sessionCount": 60,
+    "tradesPerSession": 0.8833,
+    "averageGrossReturn": 0.7778,
+    "medianReturn": 5,
+    "standardDeviation": 4.9949,
+    "downsideDeviation": 5,
+    "sharpeLike": 1.0446,
+    "sortinoLike": 1.0435,
+    "maximumDrawdown": 40,
+    "maxConsecutiveLosses": 8,
+    "profitableDayPercentage": 47.619,
+    "targetRate": 49.0566,
+    "stopRate": 35.8491,
+    "timeoutRate": 0,
+    "ambiguousRate": 13.2075,
+    "unavailableRate": 1.8868,
+    "netByCost": {
+      "netAt020": 0.5778,
+      "netAt040": 0.3778,
+      "netAt060": 0.1778,
+      "netAt080": -0.0222,
+      "netAt100": -0.2222
+    }
+  },
+  "VALIDATION": {
+    "tradeCount": 16,
+    "sessionCount": 20,
+    "tradesPerSession": 0.8,
+    "averageGrossReturn": 1.4286,
+    "medianReturn": 5,
+    "standardDeviation": 4.9725,
+    "downsideDeviation": 5,
+    "sharpeLike": 1.075,
+    "sortinoLike": 1.069,
+    "maximumDrawdown": 10,
+    "maxConsecutiveLosses": 2,
+    "profitableDayPercentage": 83.3333,
+    "targetRate": 56.25,
+    "stopRate": 31.25,
+    "timeoutRate": 0,
+    "ambiguousRate": 12.5,
+    "unavailableRate": 0,
+    "netByCost": {
+      "netAt020": 1.2286,
+      "netAt040": 1.0286,
+      "netAt060": 0.8286,
+      "netAt080": 0.6286,
+      "netAt100": 0.4286
+    }
+  },
+  "LEGACY_CONTAMINATED_HOLDOUT": {
+    "tradeCount": 25,
+    "sessionCount": 18,
+    "tradesPerSession": 1.3889,
+    "averageGrossReturn": 1.8182,
+    "medianReturn": 5,
+    "standardDeviation": 4.7673,
+    "downsideDeviation": 5,
+    "sharpeLike": 1.7889,
+    "sortinoLike": 1.7056,
+    "maximumDrawdown": 15,
+    "maxConsecutiveLosses": 3,
+    "profitableDayPercentage": 50,
+    "targetRate": 60,
+    "stopRate": 28,
+    "timeoutRate": 0,
+    "ambiguousRate": 12,
+    "unavailableRate": 0,
+    "netByCost": {
+      "netAt020": 1.6182,
+      "netAt040": 1.4182,
+      "netAt060": 1.2182,
+      "netAt080": 1.0182,
+      "netAt100": 0.8182
+    }
+  },
+  "degradation": {
+    "netAt040Ratio": 0.3673,
+    "tradesPerSessionRatio": 1.1041,
+    "signConsistentAt040": true
+  },
+  "note": "FINAL_HOLDOUT is reported only as LEGACY_CONTAMINATED_HOLDOUT; it is not clean OOS evidence."
+}

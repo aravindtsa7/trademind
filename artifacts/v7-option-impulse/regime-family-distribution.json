@@ -1,0 +1,22 @@
+{
+  "CE": [
+    {
+      "family": "NO_REGIME_FILTER",
+      "signals": 5230
+    },
+    {
+      "family": "DIRECTION_ALIGNED_REGIME",
+      "signals": 5
+    }
+  ],
+  "PE": [
+    {
+      "family": "NO_REGIME_FILTER",
+      "signals": 5914
+    },
+    {
+      "family": "DIRECTION_ALIGNED_REGIME",
+      "signals": 7
+    }
+  ]
+}

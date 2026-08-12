@@ -1,0 +1,6417 @@
+{
+  "schemaVersion": 1,
+  "underlyingInstrumentKey": "BSE_INDEX|SENSEX",
+  "researchEndDate": "2026-08-04",
+  "uniqueRequiredSessions": 712,
+  "missingSessions": [
+    {
+      "instrumentKey": "BSE_FO|841978|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842027|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842105|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842180|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842224|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842238|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842287|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842375|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842433|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842482|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842607|05-03-2026",
+      "tradingDate": "2026-03-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|841993|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842147|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842196|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842200|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842403|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842458|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842588|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842591|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842741|05-03-2026",
+      "tradingDate": "2026-03-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|841978|05-03-2026",
+      "tradingDate": "2026-03-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842104|05-03-2026",
+      "tradingDate": "2026-03-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842180|05-03-2026",
+      "tradingDate": "2026-03-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842200|05-03-2026",
+      "tradingDate": "2026-03-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842312|05-03-2026",
+      "tradingDate": "2026-03-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842387|05-03-2026",
+      "tradingDate": "2026-03-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842458|05-03-2026",
+      "tradingDate": "2026-03-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845683|12-03-2026",
+      "tradingDate": "2026-03-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845716|12-03-2026",
+      "tradingDate": "2026-03-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845851|12-03-2026",
+      "tradingDate": "2026-03-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845889|12-03-2026",
+      "tradingDate": "2026-03-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845916|12-03-2026",
+      "tradingDate": "2026-03-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846065|12-03-2026",
+      "tradingDate": "2026-03-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845700|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845740|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845752|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845888|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845956|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846101|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846141|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846144|12-03-2026",
+      "tradingDate": "2026-03-09",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845772|12-03-2026",
+      "tradingDate": "2026-03-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845970|12-03-2026",
+      "tradingDate": "2026-03-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846005|12-03-2026",
+      "tradingDate": "2026-03-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846116|12-03-2026",
+      "tradingDate": "2026-03-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846161|12-03-2026",
+      "tradingDate": "2026-03-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846186|12-03-2026",
+      "tradingDate": "2026-03-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845687|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845721|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845752|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845788|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845818|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845858|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845888|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845927|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845956|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846005|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846141|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846161|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846165|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846238|12-03-2026",
+      "tradingDate": "2026-03-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845792|12-03-2026",
+      "tradingDate": "2026-03-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845990|12-03-2026",
+      "tradingDate": "2026-03-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846030|12-03-2026",
+      "tradingDate": "2026-03-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846135|12-03-2026",
+      "tradingDate": "2026-03-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846177|12-03-2026",
+      "tradingDate": "2026-03-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|846213|12-03-2026",
+      "tradingDate": "2026-03-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|848593|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|848779|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850116|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850616|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851123|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852620|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852914|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853888|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854418|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854933|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855886|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|856422|19-03-2026",
+      "tradingDate": "2026-03-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849570|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850116|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851070|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851608|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852133|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852620|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852683|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853187|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853609|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853709|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855193|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855687|19-03-2026",
+      "tradingDate": "2026-03-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|848848|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849331|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850843|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851341|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851725|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853187|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853709|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854223|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855193|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855687|19-03-2026",
+      "tradingDate": "2026-03-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850403|19-03-2026",
+      "tradingDate": "2026-03-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850896|19-03-2026",
+      "tradingDate": "2026-03-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855625|19-03-2026",
+      "tradingDate": "2026-03-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|856557|19-03-2026",
+      "tradingDate": "2026-03-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|848593|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849570|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850116|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850616|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851123|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851608|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852133|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852620|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853609|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853888|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855886|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|856422|19-03-2026",
+      "tradingDate": "2026-03-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822477|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822787|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840456|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840731|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840787|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840851|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840950|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840978|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|841226|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864149|25-03-2026",
+      "tradingDate": "2026-03-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|843726|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|843908|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844209|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844301|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844349|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844706|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844778|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|845639|25-03-2026",
+      "tradingDate": "2026-03-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840925|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|841125|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|841151|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|841212|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|841241|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842143|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|842598|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|843260|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|843392|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|843745|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844001|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844085|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844171|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844444|25-03-2026",
+      "tradingDate": "2026-03-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822261|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822321|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822363|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822407|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822460|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822477|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822513|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822545|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822591|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822787|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864149|25-03-2026",
+      "tradingDate": "2026-03-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864030|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864767|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864828|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864949|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864976|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865018|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865027|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865043|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865117|02-04-2026",
+      "tradingDate": "2026-03-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865059|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865169|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866539|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|867445|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|867478|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|867905|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|876925|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|876974|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877080|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877126|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877151|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877173|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877418|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877574|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877673|02-04-2026",
+      "tradingDate": "2026-03-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864968|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|864988|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865013|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865038|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865053|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865059|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865071|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865079|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865108|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865169|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866539|02-04-2026",
+      "tradingDate": "2026-04-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865004|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865021|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865038|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865087|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|865108|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866412|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|867376|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|867782|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|867925|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877010|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877065|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877151|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877559|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|877597|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|878344|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|878623|02-04-2026",
+      "tradingDate": "2026-04-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866100|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866132|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866170|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866205|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866238|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866274|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866292|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866424|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866490|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866559|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866570|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866598|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866640|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|867779|09-04-2026",
+      "tradingDate": "2026-04-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866229|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866292|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866326|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866361|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866424|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866458|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866490|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866506|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866570|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866640|09-04-2026",
+      "tradingDate": "2026-04-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866167|09-04-2026",
+      "tradingDate": "2026-04-08",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866203|09-04-2026",
+      "tradingDate": "2026-04-08",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866483|09-04-2026",
+      "tradingDate": "2026-04-08",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866591|09-04-2026",
+      "tradingDate": "2026-04-08",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866635|09-04-2026",
+      "tradingDate": "2026-04-08",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866114|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866247|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866276|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866311|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866410|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866444|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866479|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|866551|09-04-2026",
+      "tradingDate": "2026-04-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|872711|16-04-2026",
+      "tradingDate": "2026-04-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|873192|16-04-2026",
+      "tradingDate": "2026-04-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|873686|16-04-2026",
+      "tradingDate": "2026-04-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|875054|16-04-2026",
+      "tradingDate": "2026-04-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|875521|16-04-2026",
+      "tradingDate": "2026-04-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|869603|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|869783|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|870082|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|870265|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|870754|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|872176|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|872669|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|874579|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|875387|16-04-2026",
+      "tradingDate": "2026-04-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|869554|16-04-2026",
+      "tradingDate": "2026-04-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|871451|16-04-2026",
+      "tradingDate": "2026-04-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|874632|16-04-2026",
+      "tradingDate": "2026-04-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|875327|16-04-2026",
+      "tradingDate": "2026-04-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|870031|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|870517|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|871024|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|872017|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|873938|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|875758|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|875802|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|876279|16-04-2026",
+      "tradingDate": "2026-04-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880973|23-04-2026",
+      "tradingDate": "2026-04-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881003|23-04-2026",
+      "tradingDate": "2026-04-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881099|23-04-2026",
+      "tradingDate": "2026-04-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881126|23-04-2026",
+      "tradingDate": "2026-04-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881159|23-04-2026",
+      "tradingDate": "2026-04-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881019|23-04-2026",
+      "tradingDate": "2026-04-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881115|23-04-2026",
+      "tradingDate": "2026-04-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881143|23-04-2026",
+      "tradingDate": "2026-04-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880727|23-04-2026",
+      "tradingDate": "2026-04-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880766|23-04-2026",
+      "tradingDate": "2026-04-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880890|23-04-2026",
+      "tradingDate": "2026-04-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880918|23-04-2026",
+      "tradingDate": "2026-04-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880986|23-04-2026",
+      "tradingDate": "2026-04-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881019|23-04-2026",
+      "tradingDate": "2026-04-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881143|23-04-2026",
+      "tradingDate": "2026-04-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881172|23-04-2026",
+      "tradingDate": "2026-04-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880687|23-04-2026",
+      "tradingDate": "2026-04-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880707|23-04-2026",
+      "tradingDate": "2026-04-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880754|23-04-2026",
+      "tradingDate": "2026-04-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|880878|23-04-2026",
+      "tradingDate": "2026-04-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881053|23-04-2026",
+      "tradingDate": "2026-04-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|881086|23-04-2026",
+      "tradingDate": "2026-04-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849599|30-04-2026",
+      "tradingDate": "2026-04-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850142|30-04-2026",
+      "tradingDate": "2026-04-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851095|30-04-2026",
+      "tradingDate": "2026-04-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851639|30-04-2026",
+      "tradingDate": "2026-04-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852165|30-04-2026",
+      "tradingDate": "2026-04-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853634|30-04-2026",
+      "tradingDate": "2026-04-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854898|30-04-2026",
+      "tradingDate": "2026-04-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849532|30-04-2026",
+      "tradingDate": "2026-04-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853690|30-04-2026",
+      "tradingDate": "2026-04-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854206|30-04-2026",
+      "tradingDate": "2026-04-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855656|30-04-2026",
+      "tradingDate": "2026-04-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|856180|30-04-2026",
+      "tradingDate": "2026-04-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850142|30-04-2026",
+      "tradingDate": "2026-04-28",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852165|30-04-2026",
+      "tradingDate": "2026-04-28",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854898|30-04-2026",
+      "tradingDate": "2026-04-28",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|848551|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849841|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852719|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853222|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853914|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854206|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854446|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|854725|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855228|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855920|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|856180|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|856453|30-04-2026",
+      "tradingDate": "2026-04-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849532|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|849599|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|850426|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851095|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|851639|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|852165|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853100|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853634|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|853690|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|855656|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|856577|30-04-2026",
+      "tradingDate": "2026-04-30",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888186|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888282|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888354|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888376|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888441|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888884|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889074|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889130|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889146|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889188|07-05-2026",
+      "tradingDate": "2026-05-04",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888376|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888487|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888672|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888740|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888816|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888939|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889000|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889146|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889177|07-05-2026",
+      "tradingDate": "2026-05-05",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888217|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888282|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888487|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888771|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888816|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888884|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889007|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889074|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889188|07-05-2026",
+      "tradingDate": "2026-05-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888517|07-05-2026",
+      "tradingDate": "2026-05-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888588|07-05-2026",
+      "tradingDate": "2026-05-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888771|07-05-2026",
+      "tradingDate": "2026-05-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888842|07-05-2026",
+      "tradingDate": "2026-05-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|889188|07-05-2026",
+      "tradingDate": "2026-05-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1107783|14-05-2026",
+      "tradingDate": "2026-05-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1109576|14-05-2026",
+      "tradingDate": "2026-05-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1110007|14-05-2026",
+      "tradingDate": "2026-05-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1112295|14-05-2026",
+      "tradingDate": "2026-05-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1102302|14-05-2026",
+      "tradingDate": "2026-05-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1103257|14-05-2026",
+      "tradingDate": "2026-05-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1105666|14-05-2026",
+      "tradingDate": "2026-05-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1106554|14-05-2026",
+      "tradingDate": "2026-05-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1107376|14-05-2026",
+      "tradingDate": "2026-05-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1102388|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1103361|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1105761|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1106632|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1108344|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1108759|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1109574|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1110004|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1110442|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1112919|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1113145|14-05-2026",
+      "tradingDate": "2026-05-12",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1102388|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1103776|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1103968|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1104670|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1105761|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1108081|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1108134|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1110236|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1111621|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1112919|14-05-2026",
+      "tradingDate": "2026-05-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1106733|14-05-2026",
+      "tradingDate": "2026-05-14",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1107550|14-05-2026",
+      "tradingDate": "2026-05-14",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1108984|14-05-2026",
+      "tradingDate": "2026-05-14",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1109429|14-05-2026",
+      "tradingDate": "2026-05-14",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1110675|14-05-2026",
+      "tradingDate": "2026-05-14",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122381|21-05-2026",
+      "tradingDate": "2026-05-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122422|21-05-2026",
+      "tradingDate": "2026-05-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122438|21-05-2026",
+      "tradingDate": "2026-05-15",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122551|21-05-2026",
+      "tradingDate": "2026-05-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122619|21-05-2026",
+      "tradingDate": "2026-05-15",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122679|21-05-2026",
+      "tradingDate": "2026-05-15",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122927|21-05-2026",
+      "tradingDate": "2026-05-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122458|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122654|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122755|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122793|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122916|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122963|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1123015|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1123019|21-05-2026",
+      "tradingDate": "2026-05-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122334|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122381|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122392|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122438|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122504|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122551|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122619|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122679|21-05-2026",
+      "tradingDate": "2026-05-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122504|21-05-2026",
+      "tradingDate": "2026-05-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122660|21-05-2026",
+      "tradingDate": "2026-05-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122844|21-05-2026",
+      "tradingDate": "2026-05-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122888|21-05-2026",
+      "tradingDate": "2026-05-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1123019|21-05-2026",
+      "tradingDate": "2026-05-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122334|21-05-2026",
+      "tradingDate": "2026-05-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122381|21-05-2026",
+      "tradingDate": "2026-05-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122392|21-05-2026",
+      "tradingDate": "2026-05-21",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122551|21-05-2026",
+      "tradingDate": "2026-05-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122565|21-05-2026",
+      "tradingDate": "2026-05-21",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1122619|21-05-2026",
+      "tradingDate": "2026-05-21",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|868847|27-05-2026",
+      "tradingDate": "2026-05-22",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|872788|27-05-2026",
+      "tradingDate": "2026-05-22",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|873456|27-05-2026",
+      "tradingDate": "2026-05-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|874203|27-05-2026",
+      "tradingDate": "2026-05-22",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|874652|27-05-2026",
+      "tradingDate": "2026-05-22",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|875774|27-05-2026",
+      "tradingDate": "2026-05-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|870052|27-05-2026",
+      "tradingDate": "2026-05-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|870546|27-05-2026",
+      "tradingDate": "2026-05-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|871043|27-05-2026",
+      "tradingDate": "2026-05-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|872461|27-05-2026",
+      "tradingDate": "2026-05-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|876295|27-05-2026",
+      "tradingDate": "2026-05-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|869089|27-05-2026",
+      "tradingDate": "2026-05-26",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|869817|27-05-2026",
+      "tradingDate": "2026-05-26",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|871043|27-05-2026",
+      "tradingDate": "2026-05-26",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|871705|27-05-2026",
+      "tradingDate": "2026-05-26",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|872204|27-05-2026",
+      "tradingDate": "2026-05-26",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|873612|27-05-2026",
+      "tradingDate": "2026-05-26",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|876295|27-05-2026",
+      "tradingDate": "2026-05-26",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|869089|27-05-2026",
+      "tradingDate": "2026-05-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|873612|27-05-2026",
+      "tradingDate": "2026-05-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|874426|27-05-2026",
+      "tradingDate": "2026-05-27",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1127979|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128016|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128077|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128135|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128188|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128250|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128311|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128473|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128491|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128697|04-06-2026",
+      "tradingDate": "2026-05-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1127917|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1127979|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128077|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128367|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128473|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128524|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128589|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128646|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128697|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128804|04-06-2026",
+      "tradingDate": "2026-06-01",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128033|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128430|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128441|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128502|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128524|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128673|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128727|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128744|04-06-2026",
+      "tradingDate": "2026-06-02",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1127888|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128084|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128140|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128310|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128373|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128382|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128430|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128558|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128614|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128673|04-06-2026",
+      "tradingDate": "2026-06-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128524|04-06-2026",
+      "tradingDate": "2026-06-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1128744|04-06-2026",
+      "tradingDate": "2026-06-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132353|11-06-2026",
+      "tradingDate": "2026-06-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132402|11-06-2026",
+      "tradingDate": "2026-06-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132571|11-06-2026",
+      "tradingDate": "2026-06-05",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132167|11-06-2026",
+      "tradingDate": "2026-06-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132214|11-06-2026",
+      "tradingDate": "2026-06-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132746|11-06-2026",
+      "tradingDate": "2026-06-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132797|11-06-2026",
+      "tradingDate": "2026-06-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132838|11-06-2026",
+      "tradingDate": "2026-06-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132097|11-06-2026",
+      "tradingDate": "2026-06-09",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132167|11-06-2026",
+      "tradingDate": "2026-06-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132599|11-06-2026",
+      "tradingDate": "2026-06-09",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132797|11-06-2026",
+      "tradingDate": "2026-06-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132222|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132331|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132353|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132422|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132457|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132512|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132571|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132638|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132647|11-06-2026",
+      "tradingDate": "2026-06-10",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132214|11-06-2026",
+      "tradingDate": "2026-06-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132222|11-06-2026",
+      "tradingDate": "2026-06-11",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132457|11-06-2026",
+      "tradingDate": "2026-06-11",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132638|11-06-2026",
+      "tradingDate": "2026-06-11",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132647|11-06-2026",
+      "tradingDate": "2026-06-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132797|11-06-2026",
+      "tradingDate": "2026-06-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1132838|11-06-2026",
+      "tradingDate": "2026-06-11",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1138949|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1139521|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1140869|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1141543|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1142439|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1143872|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1145591|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1146232|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1146605|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1147515|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1150295|18-06-2026",
+      "tradingDate": "2026-06-12",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1137766|18-06-2026",
+      "tradingDate": "2026-06-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1139332|18-06-2026",
+      "tradingDate": "2026-06-15",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1145316|18-06-2026",
+      "tradingDate": "2026-06-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1148517|18-06-2026",
+      "tradingDate": "2026-06-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1149374|18-06-2026",
+      "tradingDate": "2026-06-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1150672|18-06-2026",
+      "tradingDate": "2026-06-15",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1137766|18-06-2026",
+      "tradingDate": "2026-06-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1145316|18-06-2026",
+      "tradingDate": "2026-06-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1149374|18-06-2026",
+      "tradingDate": "2026-06-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1140215|18-06-2026",
+      "tradingDate": "2026-06-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1143703|18-06-2026",
+      "tradingDate": "2026-06-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1144730|18-06-2026",
+      "tradingDate": "2026-06-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1140874|18-06-2026",
+      "tradingDate": "2026-06-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1141549|18-06-2026",
+      "tradingDate": "2026-06-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1144730|18-06-2026",
+      "tradingDate": "2026-06-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1145596|18-06-2026",
+      "tradingDate": "2026-06-18",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887729|25-06-2026",
+      "tradingDate": "2026-06-19",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887804|25-06-2026",
+      "tradingDate": "2026-06-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887832|25-06-2026",
+      "tradingDate": "2026-06-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887879|25-06-2026",
+      "tradingDate": "2026-06-19",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887916|25-06-2026",
+      "tradingDate": "2026-06-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887942|25-06-2026",
+      "tradingDate": "2026-06-19",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887593|25-06-2026",
+      "tradingDate": "2026-06-22",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887709|25-06-2026",
+      "tradingDate": "2026-06-22",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888039|25-06-2026",
+      "tradingDate": "2026-06-22",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|844253|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887663|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887770|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887804|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887832|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887861|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887887|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887916|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887942|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888003|25-06-2026",
+      "tradingDate": "2026-06-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|843961|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887709|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887729|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887770|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887846|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887879|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887887|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888039|25-06-2026",
+      "tradingDate": "2026-06-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887583|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887620|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887652|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887663|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887693|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887945|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|887979|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888014|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|888026|25-06-2026",
+      "tradingDate": "2026-06-25",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820805|02-07-2026",
+      "tradingDate": "2026-06-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820850|02-07-2026",
+      "tradingDate": "2026-06-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820988|02-07-2026",
+      "tradingDate": "2026-06-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|821030|02-07-2026",
+      "tradingDate": "2026-06-29",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820767|02-07-2026",
+      "tradingDate": "2026-06-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820988|02-07-2026",
+      "tradingDate": "2026-06-30",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820390|02-07-2026",
+      "tradingDate": "2026-07-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820625|02-07-2026",
+      "tradingDate": "2026-07-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820702|02-07-2026",
+      "tradingDate": "2026-07-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820878|02-07-2026",
+      "tradingDate": "2026-07-01",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820479|02-07-2026",
+      "tradingDate": "2026-07-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820536|02-07-2026",
+      "tradingDate": "2026-07-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|820666|02-07-2026",
+      "tradingDate": "2026-07-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|821038|02-07-2026",
+      "tradingDate": "2026-07-02",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822000|09-07-2026",
+      "tradingDate": "2026-07-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822113|09-07-2026",
+      "tradingDate": "2026-07-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822273|09-07-2026",
+      "tradingDate": "2026-07-03",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822322|09-07-2026",
+      "tradingDate": "2026-07-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822397|09-07-2026",
+      "tradingDate": "2026-07-03",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822000|09-07-2026",
+      "tradingDate": "2026-07-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822029|09-07-2026",
+      "tradingDate": "2026-07-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822149|09-07-2026",
+      "tradingDate": "2026-07-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822180|09-07-2026",
+      "tradingDate": "2026-07-06",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822012|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822062|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822088|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822095|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822130|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822180|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822247|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822432|09-07-2026",
+      "tradingDate": "2026-07-07",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822046|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822075|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822101|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822190|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822217|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822237|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822273|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822332|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822362|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|822397|09-07-2026",
+      "tradingDate": "2026-07-08",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|821984|09-07-2026",
+      "tradingDate": "2026-07-09",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|825826|16-07-2026",
+      "tradingDate": "2026-07-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|827798|16-07-2026",
+      "tradingDate": "2026-07-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828283|16-07-2026",
+      "tradingDate": "2026-07-10",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|823754|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|824353|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826336|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826524|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826997|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828283|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828466|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828968|16-07-2026",
+      "tradingDate": "2026-07-13",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826524|16-07-2026",
+      "tradingDate": "2026-07-14",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826997|16-07-2026",
+      "tradingDate": "2026-07-14",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828466|16-07-2026",
+      "tradingDate": "2026-07-14",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828968|16-07-2026",
+      "tradingDate": "2026-07-14",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|825826|16-07-2026",
+      "tradingDate": "2026-07-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826524|16-07-2026",
+      "tradingDate": "2026-07-15",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828283|16-07-2026",
+      "tradingDate": "2026-07-15",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828968|16-07-2026",
+      "tradingDate": "2026-07-15",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|825826|16-07-2026",
+      "tradingDate": "2026-07-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826524|16-07-2026",
+      "tradingDate": "2026-07-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|826997|16-07-2026",
+      "tradingDate": "2026-07-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|827798|16-07-2026",
+      "tradingDate": "2026-07-16",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|828968|16-07-2026",
+      "tradingDate": "2026-07-16",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835243|23-07-2026",
+      "tradingDate": "2026-07-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835290|23-07-2026",
+      "tradingDate": "2026-07-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835505|23-07-2026",
+      "tradingDate": "2026-07-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835537|23-07-2026",
+      "tradingDate": "2026-07-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835664|23-07-2026",
+      "tradingDate": "2026-07-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835702|23-07-2026",
+      "tradingDate": "2026-07-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835731|23-07-2026",
+      "tradingDate": "2026-07-17",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835243|23-07-2026",
+      "tradingDate": "2026-07-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835342|23-07-2026",
+      "tradingDate": "2026-07-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835373|23-07-2026",
+      "tradingDate": "2026-07-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835731|23-07-2026",
+      "tradingDate": "2026-07-20",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835793|23-07-2026",
+      "tradingDate": "2026-07-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835842|23-07-2026",
+      "tradingDate": "2026-07-20",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835243|23-07-2026",
+      "tradingDate": "2026-07-21",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835303|23-07-2026",
+      "tradingDate": "2026-07-21",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835342|23-07-2026",
+      "tradingDate": "2026-07-21",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835793|23-07-2026",
+      "tradingDate": "2026-07-21",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835410|23-07-2026",
+      "tradingDate": "2026-07-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835489|23-07-2026",
+      "tradingDate": "2026-07-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835643|23-07-2026",
+      "tradingDate": "2026-07-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835685|23-07-2026",
+      "tradingDate": "2026-07-22",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835442|23-07-2026",
+      "tradingDate": "2026-07-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835560|23-07-2026",
+      "tradingDate": "2026-07-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835601|23-07-2026",
+      "tradingDate": "2026-07-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835719|23-07-2026",
+      "tradingDate": "2026-07-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|835768|23-07-2026",
+      "tradingDate": "2026-07-23",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1138891|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1139837|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1141440|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1142032|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1143192|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1146071|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1147226|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1148478|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1150248|30-07-2026",
+      "tradingDate": "2026-07-24",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1137000|30-07-2026",
+      "tradingDate": "2026-07-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1137827|30-07-2026",
+      "tradingDate": "2026-07-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1138985|30-07-2026",
+      "tradingDate": "2026-07-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1148570|30-07-2026",
+      "tradingDate": "2026-07-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1149433|30-07-2026",
+      "tradingDate": "2026-07-27",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1138985|30-07-2026",
+      "tradingDate": "2026-07-28",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1147852|30-07-2026",
+      "tradingDate": "2026-07-28",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1149433|30-07-2026",
+      "tradingDate": "2026-07-28",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1141595|30-07-2026",
+      "tradingDate": "2026-07-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1142497|30-07-2026",
+      "tradingDate": "2026-07-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1145633|30-07-2026",
+      "tradingDate": "2026-07-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1146670|30-07-2026",
+      "tradingDate": "2026-07-29",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|1142497|30-07-2026",
+      "tradingDate": "2026-07-30",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840140|06-08-2026",
+      "tradingDate": "2026-07-31",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840281|06-08-2026",
+      "tradingDate": "2026-07-31",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840713|06-08-2026",
+      "tradingDate": "2026-07-31",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840209|06-08-2026",
+      "tradingDate": "2026-08-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840341|06-08-2026",
+      "tradingDate": "2026-08-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840680|06-08-2026",
+      "tradingDate": "2026-08-03",
+      "directions": [
+        "CE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840267|06-08-2026",
+      "tradingDate": "2026-08-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840297|06-08-2026",
+      "tradingDate": "2026-08-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840399|06-08-2026",
+      "tradingDate": "2026-08-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    },
+    {
+      "instrumentKey": "BSE_FO|840446|06-08-2026",
+      "tradingDate": "2026-08-04",
+      "directions": [
+        "PE"
+      ],
+      "locallyAvailableCandleCount": 0,
+      "completenessState": "MISSING"
+    }
+  ],
+  "incompleteSessions": []
+}

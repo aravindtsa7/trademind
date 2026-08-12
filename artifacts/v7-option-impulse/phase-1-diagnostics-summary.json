@@ -1,0 +1,208 @@
+{
+  "targetDateRange": {
+    "start": "2026-03-02",
+    "end": "2026-08-04",
+    "targetSessions": 104
+  },
+  "grid": {
+    "exhaustiveNonEquivalentConfigurations": 122880,
+    "exhaustivePerDirection": 61440,
+    "selectedPairwiseConfigurations": 12800,
+    "selectedPairwisePerDirection": 6400,
+    "intentionallyOmittedCrossInteractions": 110080,
+    "mathematicallyEquivalentConfigurationsPruned": 0,
+    "underlyingProfiles": [
+      {
+        "id": "0.5ATR_1BAR_NO_REGIME_FILTER",
+        "bodyAtrMinimum": 0.5,
+        "breakoutLookbackBars": 1,
+        "regimeFamily": "NO_REGIME_FILTER"
+      },
+      {
+        "id": "0.5ATR_2BAR_NO_REGIME_FILTER",
+        "bodyAtrMinimum": 0.5,
+        "breakoutLookbackBars": 2,
+        "regimeFamily": "NO_REGIME_FILTER"
+      },
+      {
+        "id": "0.75ATR_2BAR_NO_REGIME_FILTER",
+        "bodyAtrMinimum": 0.75,
+        "breakoutLookbackBars": 2,
+        "regimeFamily": "NO_REGIME_FILTER"
+      },
+      {
+        "id": "1ATR_3BAR_NO_REGIME_FILTER",
+        "bodyAtrMinimum": 1,
+        "breakoutLookbackBars": 3,
+        "regimeFamily": "NO_REGIME_FILTER"
+      },
+      {
+        "id": "1.25ATR_3BAR_NO_REGIME_FILTER",
+        "bodyAtrMinimum": 1.25,
+        "breakoutLookbackBars": 3,
+        "regimeFamily": "NO_REGIME_FILTER"
+      },
+      {
+        "id": "0.5ATR_1BAR_DIRECTION_ALIGNED_REGIME",
+        "bodyAtrMinimum": 0.5,
+        "breakoutLookbackBars": 1,
+        "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+      },
+      {
+        "id": "0.5ATR_2BAR_DIRECTION_ALIGNED_REGIME",
+        "bodyAtrMinimum": 0.5,
+        "breakoutLookbackBars": 2,
+        "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+      },
+      {
+        "id": "0.75ATR_2BAR_DIRECTION_ALIGNED_REGIME",
+        "bodyAtrMinimum": 0.75,
+        "breakoutLookbackBars": 2,
+        "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+      },
+      {
+        "id": "1ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+        "bodyAtrMinimum": 1,
+        "breakoutLookbackBars": 3,
+        "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+      },
+      {
+        "id": "1.25ATR_3BAR_DIRECTION_ALIGNED_REGIME",
+        "bodyAtrMinimum": 1.25,
+        "breakoutLookbackBars": 3,
+        "regimeFamily": "DIRECTION_ALIGNED_REGIME"
+      }
+    ],
+    "premiumProfiles": [
+      {
+        "id": "RETURN_0.5",
+        "confirmation": "RETURN_ONLY",
+        "returnPercentMinimum": 0.5
+      },
+      {
+        "id": "RETURN_1",
+        "confirmation": "RETURN_ONLY",
+        "returnPercentMinimum": 1
+      },
+      {
+        "id": "RETURN_1.5",
+        "confirmation": "RETURN_ONLY",
+        "returnPercentMinimum": 1.5
+      },
+      {
+        "id": "RETURN_2",
+        "confirmation": "RETURN_ONLY",
+        "returnPercentMinimum": 2
+      },
+      {
+        "id": "BODY_0.5_RETURN_0.5",
+        "confirmation": "BODY_AND_RETURN",
+        "bodyAtrMinimum": 0.5,
+        "returnPercentMinimum": 0.5
+      },
+      {
+        "id": "BODY_0.5_RETURN_1",
+        "confirmation": "BODY_AND_RETURN",
+        "bodyAtrMinimum": 0.5,
+        "returnPercentMinimum": 1
+      },
+      {
+        "id": "BODY_0.75_RETURN_1.5",
+        "confirmation": "BODY_AND_RETURN",
+        "bodyAtrMinimum": 0.75,
+        "returnPercentMinimum": 1.5
+      },
+      {
+        "id": "BODY_1_RETURN_2",
+        "confirmation": "BODY_AND_RETURN",
+        "bodyAtrMinimum": 1,
+        "returnPercentMinimum": 2
+      },
+      {
+        "id": "BREAK_1_RETURN_0.5",
+        "confirmation": "BREAKOUT_AND_RETURN",
+        "breakoutLookbackBars": 1,
+        "returnPercentMinimum": 0.5
+      },
+      {
+        "id": "BREAK_1_RETURN_1",
+        "confirmation": "BREAKOUT_AND_RETURN",
+        "breakoutLookbackBars": 1,
+        "returnPercentMinimum": 1
+      },
+      {
+        "id": "BREAK_2_RETURN_1.5",
+        "confirmation": "BREAKOUT_AND_RETURN",
+        "breakoutLookbackBars": 2,
+        "returnPercentMinimum": 1.5
+      },
+      {
+        "id": "BREAK_3_RETURN_2",
+        "confirmation": "BREAKOUT_AND_RETURN",
+        "breakoutLookbackBars": 3,
+        "returnPercentMinimum": 2
+      },
+      {
+        "id": "BODY_0.5_BREAK_1_RETURN_0.5",
+        "confirmation": "BODY_BREAKOUT_AND_RETURN",
+        "bodyAtrMinimum": 0.5,
+        "breakoutLookbackBars": 1,
+        "returnPercentMinimum": 0.5
+      },
+      {
+        "id": "BODY_0.5_BREAK_1_RETURN_1",
+        "confirmation": "BODY_BREAKOUT_AND_RETURN",
+        "bodyAtrMinimum": 0.5,
+        "breakoutLookbackBars": 1,
+        "returnPercentMinimum": 1
+      },
+      {
+        "id": "BODY_0.75_BREAK_2_RETURN_1.5",
+        "confirmation": "BODY_BREAKOUT_AND_RETURN",
+        "bodyAtrMinimum": 0.75,
+        "breakoutLookbackBars": 2,
+        "returnPercentMinimum": 1.5
+      },
+      {
+        "id": "BODY_1_BREAK_3_RETURN_2",
+        "confirmation": "BODY_BREAKOUT_AND_RETURN",
+        "bodyAtrMinimum": 1,
+        "breakoutLookbackBars": 3,
+        "returnPercentMinimum": 2
+      }
+    ]
+  },
+  "CE": {
+    "rawSignalsAcrossConfigurations": 3889374,
+    "uniqueSignalTimestamps": 5235,
+    "averageUniqueSignalsPerSession": 50.34,
+    "activeSessions": 102,
+    "maximumUniqueSignalsInOneDay": 79,
+    "requiredOptionSessions": 541,
+    "completeLocalSessions": 541,
+    "missingLocalSessions": 0,
+    "incompleteLocalSessions": 0
+  },
+  "PE": {
+    "rawSignalsAcrossConfigurations": 4459887,
+    "uniqueSignalTimestamps": 5921,
+    "averageUniqueSignalsPerSession": 56.93,
+    "activeSessions": 103,
+    "maximumUniqueSignalsInOneDay": 97,
+    "requiredOptionSessions": 554,
+    "completeLocalSessions": 554,
+    "missingLocalSessions": 0,
+    "incompleteLocalSessions": 0
+  },
+  "combinedUniqueTimestamps": 11156,
+  "signalDiagnosticsAvailable": true,
+  "global": {
+    "required": 1095,
+    "complete": 1095,
+    "missing": 0,
+    "incomplete": 0,
+    "malformedOrOverfull": 0,
+    "optionCandleDownloads": 0,
+    "optionCandleWrites": 0
+  }
+}

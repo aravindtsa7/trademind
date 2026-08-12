@@ -1,0 +1,1612 @@
+{
+  "version": "walk-forward-v1",
+  "defaults": {
+    "trainWindow": 50,
+    "validationWindow": 10,
+    "step": 10,
+    "embargo": 2,
+    "mode": "ROLLING"
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "train": [
+        {
+          "index": 0,
+          "tradingDate": "2026-03-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 1,
+          "tradingDate": "2026-03-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 2,
+          "tradingDate": "2026-03-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 3,
+          "tradingDate": "2026-03-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 4,
+          "tradingDate": "2026-03-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 5,
+          "tradingDate": "2026-03-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 6,
+          "tradingDate": "2026-03-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 7,
+          "tradingDate": "2026-03-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 8,
+          "tradingDate": "2026-03-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 9,
+          "tradingDate": "2026-03-16",
+          "split": "TRAIN"
+        },
+        {
+          "index": 10,
+          "tradingDate": "2026-03-17",
+          "split": "TRAIN"
+        },
+        {
+          "index": 11,
+          "tradingDate": "2026-03-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 12,
+          "tradingDate": "2026-03-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 13,
+          "tradingDate": "2026-03-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 14,
+          "tradingDate": "2026-03-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 15,
+          "tradingDate": "2026-03-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 16,
+          "tradingDate": "2026-03-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 17,
+          "tradingDate": "2026-03-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 18,
+          "tradingDate": "2026-03-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 19,
+          "tradingDate": "2026-04-01",
+          "split": "TRAIN"
+        },
+        {
+          "index": 20,
+          "tradingDate": "2026-04-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 21,
+          "tradingDate": "2026-04-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 22,
+          "tradingDate": "2026-04-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 23,
+          "tradingDate": "2026-04-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 24,
+          "tradingDate": "2026-04-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 25,
+          "tradingDate": "2026-04-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 26,
+          "tradingDate": "2026-04-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 27,
+          "tradingDate": "2026-04-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 28,
+          "tradingDate": "2026-04-16",
+          "split": "TRAIN"
+        },
+        {
+          "index": 29,
+          "tradingDate": "2026-04-17",
+          "split": "TRAIN"
+        },
+        {
+          "index": 30,
+          "tradingDate": "2026-04-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 31,
+          "tradingDate": "2026-04-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 32,
+          "tradingDate": "2026-04-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 33,
+          "tradingDate": "2026-04-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 34,
+          "tradingDate": "2026-04-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 35,
+          "tradingDate": "2026-04-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 36,
+          "tradingDate": "2026-04-28",
+          "split": "TRAIN"
+        },
+        {
+          "index": 37,
+          "tradingDate": "2026-04-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 38,
+          "tradingDate": "2026-04-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 39,
+          "tradingDate": "2026-05-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 40,
+          "tradingDate": "2026-05-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 41,
+          "tradingDate": "2026-05-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 42,
+          "tradingDate": "2026-05-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 43,
+          "tradingDate": "2026-05-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 44,
+          "tradingDate": "2026-05-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 45,
+          "tradingDate": "2026-05-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 46,
+          "tradingDate": "2026-05-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 47,
+          "tradingDate": "2026-05-14",
+          "split": "TRAIN"
+        },
+        {
+          "index": 48,
+          "tradingDate": "2026-05-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 49,
+          "tradingDate": "2026-05-18",
+          "split": "TRAIN"
+        }
+      ],
+      "embargo": [
+        {
+          "index": 50,
+          "tradingDate": "2026-05-19",
+          "split": "EMBARGO_1"
+        },
+        {
+          "index": 51,
+          "tradingDate": "2026-05-20",
+          "split": "EMBARGO_1"
+        }
+      ],
+      "validation": [
+        {
+          "index": 52,
+          "tradingDate": "2026-05-21",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 53,
+          "tradingDate": "2026-05-22",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 54,
+          "tradingDate": "2026-05-25",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 55,
+          "tradingDate": "2026-05-26",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 56,
+          "tradingDate": "2026-05-27",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 57,
+          "tradingDate": "2026-05-29",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 58,
+          "tradingDate": "2026-06-01",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 59,
+          "tradingDate": "2026-06-02",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 60,
+          "tradingDate": "2026-06-03",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 61,
+          "tradingDate": "2026-06-04",
+          "split": "VALIDATION"
+        }
+      ],
+      "configsConsidered": 0
+    },
+    {
+      "fold": 2,
+      "train": [
+        {
+          "index": 10,
+          "tradingDate": "2026-03-17",
+          "split": "TRAIN"
+        },
+        {
+          "index": 11,
+          "tradingDate": "2026-03-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 12,
+          "tradingDate": "2026-03-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 13,
+          "tradingDate": "2026-03-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 14,
+          "tradingDate": "2026-03-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 15,
+          "tradingDate": "2026-03-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 16,
+          "tradingDate": "2026-03-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 17,
+          "tradingDate": "2026-03-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 18,
+          "tradingDate": "2026-03-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 19,
+          "tradingDate": "2026-04-01",
+          "split": "TRAIN"
+        },
+        {
+          "index": 20,
+          "tradingDate": "2026-04-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 21,
+          "tradingDate": "2026-04-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 22,
+          "tradingDate": "2026-04-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 23,
+          "tradingDate": "2026-04-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 24,
+          "tradingDate": "2026-04-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 25,
+          "tradingDate": "2026-04-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 26,
+          "tradingDate": "2026-04-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 27,
+          "tradingDate": "2026-04-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 28,
+          "tradingDate": "2026-04-16",
+          "split": "TRAIN"
+        },
+        {
+          "index": 29,
+          "tradingDate": "2026-04-17",
+          "split": "TRAIN"
+        },
+        {
+          "index": 30,
+          "tradingDate": "2026-04-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 31,
+          "tradingDate": "2026-04-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 32,
+          "tradingDate": "2026-04-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 33,
+          "tradingDate": "2026-04-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 34,
+          "tradingDate": "2026-04-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 35,
+          "tradingDate": "2026-04-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 36,
+          "tradingDate": "2026-04-28",
+          "split": "TRAIN"
+        },
+        {
+          "index": 37,
+          "tradingDate": "2026-04-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 38,
+          "tradingDate": "2026-04-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 39,
+          "tradingDate": "2026-05-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 40,
+          "tradingDate": "2026-05-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 41,
+          "tradingDate": "2026-05-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 42,
+          "tradingDate": "2026-05-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 43,
+          "tradingDate": "2026-05-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 44,
+          "tradingDate": "2026-05-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 45,
+          "tradingDate": "2026-05-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 46,
+          "tradingDate": "2026-05-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 47,
+          "tradingDate": "2026-05-14",
+          "split": "TRAIN"
+        },
+        {
+          "index": 48,
+          "tradingDate": "2026-05-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 49,
+          "tradingDate": "2026-05-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 50,
+          "tradingDate": "2026-05-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 51,
+          "tradingDate": "2026-05-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 52,
+          "tradingDate": "2026-05-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 53,
+          "tradingDate": "2026-05-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 54,
+          "tradingDate": "2026-05-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 55,
+          "tradingDate": "2026-05-26",
+          "split": "TRAIN"
+        },
+        {
+          "index": 56,
+          "tradingDate": "2026-05-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 57,
+          "tradingDate": "2026-05-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 58,
+          "tradingDate": "2026-06-01",
+          "split": "TRAIN"
+        },
+        {
+          "index": 59,
+          "tradingDate": "2026-06-02",
+          "split": "TRAIN"
+        }
+      ],
+      "embargo": [
+        {
+          "index": 60,
+          "tradingDate": "2026-06-03",
+          "split": "EMBARGO_1"
+        },
+        {
+          "index": 61,
+          "tradingDate": "2026-06-04",
+          "split": "EMBARGO_1"
+        }
+      ],
+      "validation": [
+        {
+          "index": 62,
+          "tradingDate": "2026-06-05",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 63,
+          "tradingDate": "2026-06-08",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 64,
+          "tradingDate": "2026-06-09",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 65,
+          "tradingDate": "2026-06-10",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 66,
+          "tradingDate": "2026-06-11",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 67,
+          "tradingDate": "2026-06-12",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 68,
+          "tradingDate": "2026-06-15",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 69,
+          "tradingDate": "2026-06-16",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 70,
+          "tradingDate": "2026-06-17",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 71,
+          "tradingDate": "2026-06-18",
+          "split": "VALIDATION"
+        }
+      ],
+      "configsConsidered": 0
+    },
+    {
+      "fold": 3,
+      "train": [
+        {
+          "index": 20,
+          "tradingDate": "2026-04-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 21,
+          "tradingDate": "2026-04-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 22,
+          "tradingDate": "2026-04-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 23,
+          "tradingDate": "2026-04-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 24,
+          "tradingDate": "2026-04-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 25,
+          "tradingDate": "2026-04-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 26,
+          "tradingDate": "2026-04-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 27,
+          "tradingDate": "2026-04-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 28,
+          "tradingDate": "2026-04-16",
+          "split": "TRAIN"
+        },
+        {
+          "index": 29,
+          "tradingDate": "2026-04-17",
+          "split": "TRAIN"
+        },
+        {
+          "index": 30,
+          "tradingDate": "2026-04-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 31,
+          "tradingDate": "2026-04-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 32,
+          "tradingDate": "2026-04-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 33,
+          "tradingDate": "2026-04-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 34,
+          "tradingDate": "2026-04-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 35,
+          "tradingDate": "2026-04-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 36,
+          "tradingDate": "2026-04-28",
+          "split": "TRAIN"
+        },
+        {
+          "index": 37,
+          "tradingDate": "2026-04-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 38,
+          "tradingDate": "2026-04-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 39,
+          "tradingDate": "2026-05-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 40,
+          "tradingDate": "2026-05-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 41,
+          "tradingDate": "2026-05-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 42,
+          "tradingDate": "2026-05-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 43,
+          "tradingDate": "2026-05-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 44,
+          "tradingDate": "2026-05-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 45,
+          "tradingDate": "2026-05-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 46,
+          "tradingDate": "2026-05-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 47,
+          "tradingDate": "2026-05-14",
+          "split": "TRAIN"
+        },
+        {
+          "index": 48,
+          "tradingDate": "2026-05-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 49,
+          "tradingDate": "2026-05-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 50,
+          "tradingDate": "2026-05-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 51,
+          "tradingDate": "2026-05-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 52,
+          "tradingDate": "2026-05-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 53,
+          "tradingDate": "2026-05-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 54,
+          "tradingDate": "2026-05-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 55,
+          "tradingDate": "2026-05-26",
+          "split": "TRAIN"
+        },
+        {
+          "index": 56,
+          "tradingDate": "2026-05-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 57,
+          "tradingDate": "2026-05-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 58,
+          "tradingDate": "2026-06-01",
+          "split": "TRAIN"
+        },
+        {
+          "index": 59,
+          "tradingDate": "2026-06-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 60,
+          "tradingDate": "2026-06-03",
+          "split": "TRAIN"
+        },
+        {
+          "index": 61,
+          "tradingDate": "2026-06-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 62,
+          "tradingDate": "2026-06-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 63,
+          "tradingDate": "2026-06-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 64,
+          "tradingDate": "2026-06-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 65,
+          "tradingDate": "2026-06-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 66,
+          "tradingDate": "2026-06-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 67,
+          "tradingDate": "2026-06-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 68,
+          "tradingDate": "2026-06-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 69,
+          "tradingDate": "2026-06-16",
+          "split": "TRAIN"
+        }
+      ],
+      "embargo": [
+        {
+          "index": 70,
+          "tradingDate": "2026-06-17",
+          "split": "EMBARGO_1"
+        },
+        {
+          "index": 71,
+          "tradingDate": "2026-06-18",
+          "split": "EMBARGO_1"
+        }
+      ],
+      "validation": [
+        {
+          "index": 72,
+          "tradingDate": "2026-06-19",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 73,
+          "tradingDate": "2026-06-22",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 74,
+          "tradingDate": "2026-06-23",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 75,
+          "tradingDate": "2026-06-24",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 76,
+          "tradingDate": "2026-06-25",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 77,
+          "tradingDate": "2026-06-29",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 78,
+          "tradingDate": "2026-06-30",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 79,
+          "tradingDate": "2026-07-01",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 80,
+          "tradingDate": "2026-07-02",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 81,
+          "tradingDate": "2026-07-03",
+          "split": "VALIDATION"
+        }
+      ],
+      "configsConsidered": 0
+    },
+    {
+      "fold": 4,
+      "train": [
+        {
+          "index": 30,
+          "tradingDate": "2026-04-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 31,
+          "tradingDate": "2026-04-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 32,
+          "tradingDate": "2026-04-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 33,
+          "tradingDate": "2026-04-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 34,
+          "tradingDate": "2026-04-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 35,
+          "tradingDate": "2026-04-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 36,
+          "tradingDate": "2026-04-28",
+          "split": "TRAIN"
+        },
+        {
+          "index": 37,
+          "tradingDate": "2026-04-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 38,
+          "tradingDate": "2026-04-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 39,
+          "tradingDate": "2026-05-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 40,
+          "tradingDate": "2026-05-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 41,
+          "tradingDate": "2026-05-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 42,
+          "tradingDate": "2026-05-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 43,
+          "tradingDate": "2026-05-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 44,
+          "tradingDate": "2026-05-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 45,
+          "tradingDate": "2026-05-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 46,
+          "tradingDate": "2026-05-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 47,
+          "tradingDate": "2026-05-14",
+          "split": "TRAIN"
+        },
+        {
+          "index": 48,
+          "tradingDate": "2026-05-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 49,
+          "tradingDate": "2026-05-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 50,
+          "tradingDate": "2026-05-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 51,
+          "tradingDate": "2026-05-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 52,
+          "tradingDate": "2026-05-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 53,
+          "tradingDate": "2026-05-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 54,
+          "tradingDate": "2026-05-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 55,
+          "tradingDate": "2026-05-26",
+          "split": "TRAIN"
+        },
+        {
+          "index": 56,
+          "tradingDate": "2026-05-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 57,
+          "tradingDate": "2026-05-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 58,
+          "tradingDate": "2026-06-01",
+          "split": "TRAIN"
+        },
+        {
+          "index": 59,
+          "tradingDate": "2026-06-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 60,
+          "tradingDate": "2026-06-03",
+          "split": "TRAIN"
+        },
+        {
+          "index": 61,
+          "tradingDate": "2026-06-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 62,
+          "tradingDate": "2026-06-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 63,
+          "tradingDate": "2026-06-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 64,
+          "tradingDate": "2026-06-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 65,
+          "tradingDate": "2026-06-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 66,
+          "tradingDate": "2026-06-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 67,
+          "tradingDate": "2026-06-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 68,
+          "tradingDate": "2026-06-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 69,
+          "tradingDate": "2026-06-16",
+          "split": "TRAIN"
+        },
+        {
+          "index": 70,
+          "tradingDate": "2026-06-17",
+          "split": "TRAIN"
+        },
+        {
+          "index": 71,
+          "tradingDate": "2026-06-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 72,
+          "tradingDate": "2026-06-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 73,
+          "tradingDate": "2026-06-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 74,
+          "tradingDate": "2026-06-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 75,
+          "tradingDate": "2026-06-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 76,
+          "tradingDate": "2026-06-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 77,
+          "tradingDate": "2026-06-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 78,
+          "tradingDate": "2026-06-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 79,
+          "tradingDate": "2026-07-01",
+          "split": "TRAIN"
+        }
+      ],
+      "embargo": [
+        {
+          "index": 80,
+          "tradingDate": "2026-07-02",
+          "split": "EMBARGO_1"
+        },
+        {
+          "index": 81,
+          "tradingDate": "2026-07-03",
+          "split": "EMBARGO_1"
+        }
+      ],
+      "validation": [
+        {
+          "index": 82,
+          "tradingDate": "2026-07-06",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 83,
+          "tradingDate": "2026-07-07",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 84,
+          "tradingDate": "2026-07-08",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 85,
+          "tradingDate": "2026-07-09",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 86,
+          "tradingDate": "2026-07-10",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 87,
+          "tradingDate": "2026-07-13",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 88,
+          "tradingDate": "2026-07-14",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 89,
+          "tradingDate": "2026-07-15",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 90,
+          "tradingDate": "2026-07-16",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 91,
+          "tradingDate": "2026-07-17",
+          "split": "VALIDATION"
+        }
+      ],
+      "configsConsidered": 0
+    },
+    {
+      "fold": 5,
+      "train": [
+        {
+          "index": 40,
+          "tradingDate": "2026-05-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 41,
+          "tradingDate": "2026-05-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 42,
+          "tradingDate": "2026-05-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 43,
+          "tradingDate": "2026-05-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 44,
+          "tradingDate": "2026-05-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 45,
+          "tradingDate": "2026-05-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 46,
+          "tradingDate": "2026-05-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 47,
+          "tradingDate": "2026-05-14",
+          "split": "TRAIN"
+        },
+        {
+          "index": 48,
+          "tradingDate": "2026-05-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 49,
+          "tradingDate": "2026-05-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 50,
+          "tradingDate": "2026-05-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 51,
+          "tradingDate": "2026-05-20",
+          "split": "TRAIN"
+        },
+        {
+          "index": 52,
+          "tradingDate": "2026-05-21",
+          "split": "TRAIN"
+        },
+        {
+          "index": 53,
+          "tradingDate": "2026-05-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 54,
+          "tradingDate": "2026-05-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 55,
+          "tradingDate": "2026-05-26",
+          "split": "TRAIN"
+        },
+        {
+          "index": 56,
+          "tradingDate": "2026-05-27",
+          "split": "TRAIN"
+        },
+        {
+          "index": 57,
+          "tradingDate": "2026-05-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 58,
+          "tradingDate": "2026-06-01",
+          "split": "TRAIN"
+        },
+        {
+          "index": 59,
+          "tradingDate": "2026-06-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 60,
+          "tradingDate": "2026-06-03",
+          "split": "TRAIN"
+        },
+        {
+          "index": 61,
+          "tradingDate": "2026-06-04",
+          "split": "TRAIN"
+        },
+        {
+          "index": 62,
+          "tradingDate": "2026-06-05",
+          "split": "TRAIN"
+        },
+        {
+          "index": 63,
+          "tradingDate": "2026-06-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 64,
+          "tradingDate": "2026-06-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 65,
+          "tradingDate": "2026-06-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 66,
+          "tradingDate": "2026-06-11",
+          "split": "TRAIN"
+        },
+        {
+          "index": 67,
+          "tradingDate": "2026-06-12",
+          "split": "TRAIN"
+        },
+        {
+          "index": 68,
+          "tradingDate": "2026-06-15",
+          "split": "TRAIN"
+        },
+        {
+          "index": 69,
+          "tradingDate": "2026-06-16",
+          "split": "TRAIN"
+        },
+        {
+          "index": 70,
+          "tradingDate": "2026-06-17",
+          "split": "TRAIN"
+        },
+        {
+          "index": 71,
+          "tradingDate": "2026-06-18",
+          "split": "TRAIN"
+        },
+        {
+          "index": 72,
+          "tradingDate": "2026-06-19",
+          "split": "TRAIN"
+        },
+        {
+          "index": 73,
+          "tradingDate": "2026-06-22",
+          "split": "TRAIN"
+        },
+        {
+          "index": 74,
+          "tradingDate": "2026-06-23",
+          "split": "TRAIN"
+        },
+        {
+          "index": 75,
+          "tradingDate": "2026-06-24",
+          "split": "TRAIN"
+        },
+        {
+          "index": 76,
+          "tradingDate": "2026-06-25",
+          "split": "TRAIN"
+        },
+        {
+          "index": 77,
+          "tradingDate": "2026-06-29",
+          "split": "TRAIN"
+        },
+        {
+          "index": 78,
+          "tradingDate": "2026-06-30",
+          "split": "TRAIN"
+        },
+        {
+          "index": 79,
+          "tradingDate": "2026-07-01",
+          "split": "TRAIN"
+        },
+        {
+          "index": 80,
+          "tradingDate": "2026-07-02",
+          "split": "TRAIN"
+        },
+        {
+          "index": 81,
+          "tradingDate": "2026-07-03",
+          "split": "TRAIN"
+        },
+        {
+          "index": 82,
+          "tradingDate": "2026-07-06",
+          "split": "TRAIN"
+        },
+        {
+          "index": 83,
+          "tradingDate": "2026-07-07",
+          "split": "TRAIN"
+        },
+        {
+          "index": 84,
+          "tradingDate": "2026-07-08",
+          "split": "TRAIN"
+        },
+        {
+          "index": 85,
+          "tradingDate": "2026-07-09",
+          "split": "TRAIN"
+        },
+        {
+          "index": 86,
+          "tradingDate": "2026-07-10",
+          "split": "TRAIN"
+        },
+        {
+          "index": 87,
+          "tradingDate": "2026-07-13",
+          "split": "TRAIN"
+        },
+        {
+          "index": 88,
+          "tradingDate": "2026-07-14",
+          "split": "TRAIN"
+        },
+        {
+          "index": 89,
+          "tradingDate": "2026-07-15",
+          "split": "TRAIN"
+        }
+      ],
+      "embargo": [
+        {
+          "index": 90,
+          "tradingDate": "2026-07-16",
+          "split": "EMBARGO_1"
+        },
+        {
+          "index": 91,
+          "tradingDate": "2026-07-17",
+          "split": "EMBARGO_1"
+        }
+      ],
+      "validation": [
+        {
+          "index": 92,
+          "tradingDate": "2026-07-20",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 93,
+          "tradingDate": "2026-07-21",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 94,
+          "tradingDate": "2026-07-22",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 95,
+          "tradingDate": "2026-07-23",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 96,
+          "tradingDate": "2026-07-24",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 97,
+          "tradingDate": "2026-07-27",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 98,
+          "tradingDate": "2026-07-28",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 99,
+          "tradingDate": "2026-07-29",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 100,
+          "tradingDate": "2026-07-30",
+          "split": "VALIDATION"
+        },
+        {
+          "index": 101,
+          "tradingDate": "2026-07-31",
+          "split": "VALIDATION"
+        }
+      ],
+      "configsConsidered": 0
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+import 'dotenv/config';
+import { appendFileSync, mkdirSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import eventBus from '../core/events';
+import HistoricalCandleRepository from '../modules/historical-candles/repositories/historical-candle.repository';
+import InstrumentRepository from '../modules/instruments/repositories/instrument.repository';
+import { Candle } from '../modules/indicators/types';
+import MarketDataWebSocketClient from '../modules/market-data/client/websocket.client';
+import ConnectionManager from '../modules/market-data/managers/connection.manager';
+import SubscriptionManager, { MarketDataSubscriptionMode } from '../modules/market-data/managers/subscription.manager';
+import ProtobufDecoder from '../modules/market-data/protobuf/protobuf.decoder';
+import TickProcessor, { MarketTickEvent } from '../modules/market-data/processors/tick.processor';
+import LiveCandleBuilderService from '../modules/market-data/services/live-candle-builder.service';
+import LiveCandleEventAdapterService from '../modules/market-data/services/live-candle-event-adapter.service';
+import V4NiftyMomentumShadowEvaluatorService, { v4MomentumShadowPolicy, v4MomentumShadowStrategyId } from '../modules/adaptive-intraday/services/v4-nifty-momentum-shadow-evaluator.service';
+import V4MomentumShadowTrackerService, { assertV4ShadowRuntimeGuards, V4ShadowTradeJournalEntry } from '../modules/adaptive-intraday/services/v4-momentum-shadow-tracker.service';
+import OptionContractSelectorService from '../modules/options/services/option-contract-selector.service';
+import { OptionContract } from '../modules/options/types';
+import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-paper-fresh-warmup.service';
+import { PaperStrategyWarmupTarget } from '../modules/paper-trading/dto/paper-strategy-warmup.dto';
+import { StrategySignal } from '../modules/strategies/dto/strategy-signal.dto';
+import { IstSessionEodCoordinator, isAtOrAfterIstSessionEnd } from '../modules/market-data/services/ist-market-session-eod.service';
+import { ForwardValidationJournal, strategyFingerprint } from '../modules/research-validation';
+
+const nifty = 'NSE_INDEX|Nifty 50';
+const journalPath = resolve(process.cwd(), process.env.V4_SHADOW_JOURNAL_PATH ?? 'artifacts/v4-nifty-momentum-shadow.jsonl');
+const formatter = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'medium', hourCycle: 'h23' });
+
+class ShadowWarmupTarget implements PaperStrategyWarmupTarget {
+  private count = 0;
+  seedHistoricalCandles(candles: readonly Candle[]): void { this.count = candles.length; }
+  isWarmupReady(): boolean { return this.count >= 36; }
+}
+class CurrentNiftyPeContracts {
+  constructor(private readonly instruments = new InstrumentRepository(), private readonly selector = new OptionContractSelectorService()) {}
+  async resolve(spotPrice: number, timestamp: Date): Promise<OptionContract> {
+    const contracts = (await this.instruments.findActive()).filter((instrument) => isNifty(instrument.underlyingSymbol) && instrument.instrumentType === 'PE').map((instrument): OptionContract => ({ instrumentKey: instrument.instrumentKey, tradingSymbol: instrument.tradingSymbol, underlying: 'NIFTY 50', strikePrice: Number(instrument.strikePrice), expiry: new Date(instrument.expiry.getTime()), optionType: 'PE', exchange: instrument.exchange, segment: instrument.segment, lotSize: instrument.lotSize }));
+    if (!contracts.length) throw new Error('No active NIFTY PE contracts are available for shadow observation.');
+    const chosen = this.selector.select({ underlying: 'NIFTY 50', spotPrice, signal: StrategySignal.BUY_PE, timestamp, contracts });
+    const contract = contracts.find((value) => value.instrumentKey === chosen.instrumentKey); if (!contract) throw new Error('Live NIFTY PE selection returned an unknown contract.');
+    return contract;
+  }
+}
+
+async function run(): Promise<void> {
+  assertV4ShadowRuntimeGuards();
+  const forwardFingerprint = strategyFingerprint({ strategyId: v4MomentumShadowStrategyId, timeframe: '3m', compressionBars: 3, compressionRangeAtr: 2, bodyAtr: 1, breakoutAtr: 0.1, regime: 'TREND_DOWN', cooldownMinutes: 5, targetPercent: 5, stopPercent: 5, holdMinutes: 15, shadowOnly: true });
+  console.log(`[V4_FORWARD_FINGERPRINT] strategyId=${v4MomentumShadowStrategyId} fingerprint=${forwardFingerprint}`);
+  const token = process.env.UPSTOX_ACCESS_TOKEN?.trim(); if (!token) throw new Error('UPSTOX_ACCESS_TOKEN is required for shadow market-data observation.');
+  if (!inMarketSession(new Date())) { console.log('[V4_STARTUP] Shadow runtime was not started outside the weekday 09:15–15:30 IST session. No data was fabricated.'); return; }
+
+  const evaluator = new V4NiftyMomentumShadowEvaluatorService();
+  const forwardJournal = new ForwardValidationJournal(v4MomentumShadowStrategyId, forwardFingerprint);
+  const warmup = await new LivePaperFreshWarmupService(new HistoricalCandleRepository(), new ShadowWarmupTarget()).warmUp();
+  console.log(`[V4_WARMUP_READY] source=${warmup.currentDaySource} attempts=${warmup.intradayBackfillAttempts} lagMinutes=${warmup.currentDayLagMinutes ?? 'N/A'} retryReason=${warmup.intradayRetryReason ?? 'NONE'} now=${format(warmup.currentIstTimestamp)} rowsReturned=${warmup.currentDayRowsReturned} firstCurrent=${warmup.firstCurrentDayCandle ? format(warmup.firstCurrentDayCandle) : 'NONE'} lastCurrent=${warmup.lastCurrentDayCandle ? format(warmup.lastCurrentDayCandle) : 'NONE'} latest1m=${warmup.latestUnderlyingHistoricalCandle ? format(warmup.latestUnderlyingHistoricalCandle) : 'NONE'} expected1m=${warmup.latestCompletedOneMinuteExpected ? format(warmup.latestCompletedOneMinuteExpected) : 'NONE'} latest5m=${warmup.latestCompletedFiveMinuteAvailable ? format(warmup.latestCompletedFiveMinuteAvailable) : 'NONE'} ageMinutes=${warmup.warmupAgeMinutes?.toFixed(2) ?? 'N/A'} missingMinutes=${warmup.currentDayMissingMinuteCount} duplicates=${warmup.currentDayDuplicateCount} ready=${warmup.ready} reason=${warmup.freshnessReason}`);
+  if (!warmup.ready) { console.log('[V4_STARTUP] BLOCKED_NOT_READY: no V4 entries will be evaluated.'); return; }
+  forwardJournal.append({ recordType: 'SESSION', tradingDate: istDate(new Date()), strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, runtimeStartedAt: new Date().toISOString(), warmupReadyAt: new Date().toISOString(), marketDataHealthy: true, sessionCompleted: false, flags: ['FORWARD_EVALUATION_ONLY', 'SHADOW_ONLY'] });
+  evaluator.seedHistoricalOneMinute(warmup.seededOneMinuteCandles);
+
+  const websocket = new MarketDataWebSocketClient(token); const connection = new ConnectionManager(token, websocket); const subscriptions = new SubscriptionManager(token, connection); const decoder = new ProtobufDecoder(); const ticks = new TickProcessor(); const candleEvents = new LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus); const tracker = new V4MomentumShadowTrackerService(); const contracts = new CurrentNiftyPeContracts();
+  let completed3m = 0; let opportunities = 0; let signals = 0; let closing = false; let eodStarted = false; let requestEod: (() => void) | undefined;
+  const eodCoordinator = new IstSessionEodCoordinator();
+  const append = (entry: V4ShadowTradeJournalEntry): void => { mkdirSync(dirname(journalPath), { recursive: true }); appendFileSync(journalPath, `${JSON.stringify(entry)}\n`, 'utf8'); forwardJournal.append({ recordType: 'EXIT', tradingDate: entry.tradingDate, strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, signalId: `V4-${entry.signalTimestamp.getTime()}`, signalTimestampIst: format(entry.signalTimestamp), selectedOptionInstrument: entry.optionInstrument, theoreticalEntryPrice: entry.referencePremium || null, theoreticalExitPrice: entry.exitPremium, executableEntryPrice: entry.referencePremium || null, executableExitPrice: entry.exitPremium, entryPriceSource: 'ESTIMATED_LTP', exitPriceSource: 'ESTIMATED_LTP', theoreticalReturn: entry.grossReturnPercent, executableEstimatedReturn: entry.grossReturnPercent, totalEstimatedSlippage: 0, totalExecutionFrictionPercent: 0, exitReason: entry.exitReason === 'STOP_LOSS' ? 'STOP' : entry.exitReason === 'TIMEOUT' ? 'TIMEOUT' : entry.exitReason === 'AMBIGUOUS' ? 'AMBIGUOUS' : entry.exitReason === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'TARGET', executionQuoteQuality: 'LTP_ONLY', flags: ['FORWARD_EVALUATION_ONLY', 'LTP_ONLY'] }); console.log(`[V4_PAPER_TRADE_CLOSED] ${entry.exitReason} ${entry.optionInstrument} gross=${entry.grossReturnPercent ?? 'N/A'} net40=${entry.netReturnAt040 ?? 'N/A'}`); };
+  const flush = (entries: readonly V4ShadowTradeJournalEntry[]) => entries.forEach(append);
+  const cleanupEpochNormalizer = installEpochTimestampNormalizer();
+  const onMessage = (buffer: Buffer) => { try { ticks.process(decoder.decode(buffer)); } catch (error) { console.error('[V4_MARKET_DATA_ERROR]', message(error)); } };
+  const onTick = (event: unknown) => { const tick = event as Partial<MarketTickEvent>; if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || typeof tick.timestamp !== 'string') return; const at = new Date(tick.timestamp); if (Number.isNaN(at.getTime())) return; if (isAtOrAfterIstSessionEnd(at)) { requestEod?.(); return; } flush(tracker.observePremium(tick.instrumentKey, tick.ltp, at)); };
+  const onCandle = (event: unknown) => { void handleCandle(event); };
+  const handleCandle = async (event: unknown): Promise<void> => {
+    const candle = event as { instrumentKey?: string; timeframe?: string; completed?: boolean; candleTime?: Date; open?: number; high?: number; low?: number; close?: number };
+    if (eodStarted || candle.instrumentKey !== nifty || candle.completed !== true || !(candle.candleTime instanceof Date) || ![candle.open,candle.high,candle.low,candle.close].every((value) => typeof value === 'number' && Number.isFinite(value))) return;
+    const value: Candle = { timestamp: new Date(candle.candleTime.getTime()), open: candle.open!, high: candle.high!, low: candle.low!, close: candle.close!, volume: 0 };
+    if (candle.timeframe === '5m') { evaluator.processCompletedFiveMinute(value); return; }
+    if (candle.timeframe !== '3m') return;
+    completed3m += 1; const decision = evaluator.evaluateCompletedThreeMinute(value); if (decision.regimeAligned) opportunities += 1;
+    console.log(`[V4_ENTRY_EVALUATION] ${format(decision.timestamp)} close=${decision.close.toFixed(2)} regime=${decision.regime ?? 'NOT_READY'} atr=${num(decision.atr)} compression=${num(decision.compressionRange)} ratio=${num(decision.compressionRangeAtr)} body=${num(decision.body)} bodyAtr=${num(decision.bodyAtr)} threshold=${num(decision.breakoutThreshold)} breakout=${decision.breakoutPassed} regimePass=${decision.regimeAligned} cooldown=${decision.cooldownEligible} signal=${decision.signal} reason=${decision.rejectionReason}`);
+    if (!decision.signal) return;
+    signals += 1;
+    forwardJournal.append({ recordType: 'SIGNAL', tradingDate: istDate(decision.timestamp), strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, signalId: `V4-${decision.timestamp.getTime()}`, signalTimestampIst: format(decision.timestamp), signalTimestampUtc: decision.timestamp.toISOString(), underlyingInstrument: nifty, underlyingClose: decision.close, regime: decision.regime ?? 'NOT_READY', indicators: { atr: decision.atr, compressionRange: decision.compressionRange, compressionRangeAtr: decision.compressionRangeAtr, body: decision.body, bodyAtr: decision.bodyAtr, breakoutThreshold: decision.breakoutThreshold, breakoutPass: decision.breakoutPassed, regimePass: decision.regimeAligned, cooldownEligible: decision.cooldownEligible }, optionType: 'PE', signalReason: decision.rejectionReason, flags: ['FORWARD_EVALUATION_ONLY'] });
+    console.log(`[V4 SIGNAL] ${format(decision.timestamp)} PE bodyATR=${num(decision.bodyAtr)} breakout=${decision.breakoutPassed} regime=${decision.regime ?? 'NOT_READY'}`);
+    try { const contract = await contracts.resolve(decision.close, decision.timestamp); tracker.registerSignal(decision.timestamp, contract); forwardJournal.append({ recordType: 'ENTRY', tradingDate: istDate(decision.timestamp), strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, signalId: `V4-${decision.timestamp.getTime()}`, signalTimestampIst: format(decision.timestamp), selectedOptionInstrument: contract.instrumentKey, optionType: 'PE', strike: contract.strikePrice, expiry: contract.expiry.toISOString(), flags: ['FORWARD_EVALUATION_ONLY', 'LTP_ONLY'] }); await subscriptions.subscribe(contract.instrumentKey, MarketDataSubscriptionMode.FULL); console.log(`[V4_SHADOW_OPTION_SUBSCRIBED] ${contract.tradingSymbol} ${contract.instrumentKey}`); console.log(`[V4_ENTER_PE_SHADOW] ${format(decision.timestamp)} ${contract.tradingSymbol} target=${v4MomentumShadowPolicy.targetPercent}% stop=${v4MomentumShadowPolicy.stopLossPercent}% hold=${v4MomentumShadowPolicy.maximumHoldingMinutes}m`); }
+    catch (error) { console.error('[V4_SHADOW_CONTRACT_RESOLUTION_FAILED]', message(error)); }
+  };
+  const interval = setInterval(() => flush(tracker.advance(new Date())), 15_000); interval.unref();
+  const status = setInterval(() => console.log(`[V4_SHADOW_STATUS] completed3m=${completed3m} regimeAligned=${opportunities} signals=${signals} open=${tracker.getOpenCount()} closed=${tracker.getClosed().length}`), 60_000); status.unref();
+  const shutdown = (): void => { if (closing) return; closing = true; clearInterval(interval); clearInterval(status); flush(tracker.advance(new Date())); candleEvents.stop(); websocket.off('message', onMessage); eventBus.off('market.tick', onTick); eventBus.off('market.candle.completed', onCandle); cleanupEpochNormalizer(); subscriptions.unsubscribeMany(subscriptions.getSubscriptions().map((value) => value.instrumentKey)); connection.disconnect(); const closed = tracker.getClosed(); const settled = closed.filter((entry) => entry.grossReturnPercent !== null); const gross = settled.length ? settled.reduce((sum, entry) => sum + (entry.grossReturnPercent ?? 0), 0) / settled.length : 0; forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, sessionCompleted: true, eodReason: 'SESSION_END', signals, resolvedTrades: settled.length, unresolvedTrades: closed.length - settled.length, target: closed.filter(x=>x.exitReason==='TARGET').length, stop: closed.filter(x=>x.exitReason==='STOP_LOSS').length, timeout: closed.filter(x=>x.exitReason==='TIMEOUT').length, eod: closed.filter(x=>x.exitReason==='TIMEOUT').length, averageTheoretical: gross, averageExecutable: gross, averageFriction: 0, status: 'COMPLETED' }); console.log(`V4 MOMENTUM SHADOW DAILY date=${istDate(new Date())} completed3m=${completed3m} regimeAligned=${opportunities} signals=${signals} resolved=${settled.length} targets=${closed.filter(x=>x.exitReason==='TARGET').length} stops=${closed.filter(x=>x.exitReason==='STOP_LOSS').length} timeouts=${closed.filter(x=>x.exitReason==='TIMEOUT').length} ambiguous=${closed.filter(x=>x.exitReason==='AMBIGUOUS').length} grossAvg=${gross.toFixed(2)} net40=${(gross-.4).toFixed(2)} fixedNotionalPnl=${(gross * 1000).toFixed(2)}`); };
+  const finishEod = async (): Promise<void> => { await eodCoordinator.runOnce(new Date(), () => { eodStarted = true; candleEvents.finishSession(nifty); flush(tracker.closeAtSessionEnd(new Date())); shutdown(); const closed = tracker.getClosed(); console.log(`[V4_EOD_SUMMARY]\ndate=${istDate(new Date())}\nstrategyId=${v4MomentumShadowStrategyId}\ncompleted3m=${completed3m}\nregimeAligned=${opportunities}\nsignals=${signals}\nshadowOpened=${tracker.getOpenedCount()}\nshadowClosed=${closed.length}\ntarget=${closed.filter(x=>x.exitReason==='TARGET').length}\nstop=${closed.filter(x=>x.exitReason==='STOP_LOSS').length}\ntimeout=${closed.filter(x=>x.exitReason==='TIMEOUT').length}\nopen=${tracker.getOpenCount()}\nstatus=COMPLETED`); }); };
+  requestEod = () => { void finishEod(); }; const eodTimer = eodCoordinator.schedule(finishEod);
+  process.once('SIGINT', () => { clearTimeout(eodTimer); shutdown(); }); process.once('SIGTERM', () => { clearTimeout(eodTimer); shutdown(); });
+  websocket.on('message', onMessage); eventBus.on('market.tick', onTick); eventBus.on('market.candle.completed', onCandle); candleEvents.start(); await subscriptions.subscribe(nifty, MarketDataSubscriptionMode.FULL);
+  console.log(`[V4_STARTUP] strategyId=${v4MomentumShadowStrategyId} shadowOnly=true paperOrders=false brokerOrders=false journal=${journalPath}`);
+}
+function isNifty(value: string): boolean { return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === 'NIFTY50' || value.trim().toUpperCase() === 'NIFTY'; }
+function installEpochTimestampNormalizer(): () => void { const listener = (event: unknown): void => { const tick = event as Partial<MarketTickEvent>; if (typeof tick.instrumentKey !== 'string' || typeof tick.timestamp !== 'string' || !/^\d+$/.test(tick.timestamp)) return; const timestamp = new Date(Number(tick.timestamp)); if (Number.isNaN(timestamp.getTime())) return; eventBus.emit('market.tick', { instrumentKey: tick.instrumentKey, timestamp: timestamp.toISOString(), ltp: tick.ltp, lastTradedTime: tick.lastTradedTime, lastTradedQuantity: tick.lastTradedQuantity, closePrice: tick.closePrice } satisfies MarketTickEvent); }; eventBus.prependListener('market.tick', listener); return () => eventBus.off('market.tick', listener); }
+function format(value: Date): string { return formatter.format(value); } function num(value: number | null): string { return value === null ? 'N/A' : value.toFixed(4); } function message(error: unknown): string { return error instanceof Error ? error.message : 'Unknown error.'; }
+function istDate(value: Date): string { const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value).map(x=>[x.type,x.value])); return `${p.year}-${p.month}-${p.day}`; }
+function inMarketSession(value: Date): boolean { const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(value).map(x=>[x.type,x.value])); const minute=Number(p.hour)*60+Number(p.minute); return p.weekday !== 'Sat' && p.weekday !== 'Sun' && minute >= 555 && minute < 930; }
+void run().catch((error) => { console.error('[V4_SHADOW_FATAL]', message(error)); process.exitCode = 1; });

@@ -1,0 +1,350 @@
+{
+  "strategyId": "V4_NIFTY_MOMENTUM_PE_SHADOW",
+  "method": "FROZEN_CONFIG_STABILITY",
+  "trainWindow": 50,
+  "embargo": 2,
+  "validationWindow": 10,
+  "step": 10,
+  "folds": [
+    {
+      "fold": 1,
+      "trainStart": "2026-03-02",
+      "trainEnd": "2026-05-18",
+      "embargoDates": [
+        "2026-05-19",
+        "2026-05-20"
+      ],
+      "validationStart": "2026-05-21",
+      "validationEnd": "2026-06-04",
+      "trainMetrics": {
+        "tradeCount": 60,
+        "sessionCount": 50,
+        "tradesPerSession": 1.2,
+        "averageGrossReturn": 1.7956,
+        "medianReturn": 5,
+        "standardDeviation": 4.6653,
+        "downsideDeviation": 4.8668,
+        "sharpeLike": 2.7754,
+        "sortinoLike": 2.6605,
+        "maximumDrawdown": 20,
+        "maxConsecutiveLosses": 4,
+        "profitableDayPercentage": 75,
+        "targetRate": 58.3333,
+        "stopRate": 26.6667,
+        "timeoutRate": 1.6667,
+        "ambiguousRate": 10,
+        "unavailableRate": 3.3333,
+        "netByCost": {
+          "netAt020": 1.5956,
+          "netAt040": 1.3956,
+          "netAt060": 1.1956,
+          "netAt080": 0.9956,
+          "netAt100": 0.7956
+        }
+      },
+      "validationMetrics": {
+        "tradeCount": 14,
+        "sessionCount": 10,
+        "tradesPerSession": 1.4,
+        "averageGrossReturn": -0.9123,
+        "medianReturn": -5,
+        "standardDeviation": 4.9383,
+        "downsideDeviation": 4.7231,
+        "sharpeLike": -0.6661,
+        "sortinoLike": -0.6964,
+        "maximumDrawdown": 26.86,
+        "maxConsecutiveLosses": 6,
+        "profitableDayPercentage": 25,
+        "targetRate": 35.7143,
+        "stopRate": 50,
+        "timeoutRate": 7.1429,
+        "ambiguousRate": 7.1429,
+        "unavailableRate": 0,
+        "netByCost": {
+          "netAt020": -1.1123,
+          "netAt040": -1.3123,
+          "netAt060": -1.5123,
+          "netAt080": -1.7123,
+          "netAt100": -1.9123
+        }
+      },
+      "degradation": {
+        "netAt040Ratio": -1.0635,
+        "signConsistentAt040": false,
+        "tradeCountPerSessionRatio": 0.8571
+      }
+    },
+    {
+      "fold": 2,
+      "trainStart": "2026-03-17",
+      "trainEnd": "2026-06-02",
+      "embargoDates": [
+        "2026-06-03",
+        "2026-06-04"
+      ],
+      "validationStart": "2026-06-05",
+      "validationEnd": "2026-06-18",
+      "trainMetrics": {
+        "tradeCount": 58,
+        "sessionCount": 50,
+        "tradesPerSession": 1.16,
+        "averageGrossReturn": 1.6635,
+        "medianReturn": 5,
+        "standardDeviation": 4.6671,
+        "downsideDeviation": 4.7348,
+        "sharpeLike": 2.495,
+        "sortinoLike": 2.4593,
+        "maximumDrawdown": 26.86,
+        "maxConsecutiveLosses": 6,
+        "profitableDayPercentage": 68.1818,
+        "targetRate": 55.1724,
+        "stopRate": 25.8621,
+        "timeoutRate": 3.4483,
+        "ambiguousRate": 12.069,
+        "unavailableRate": 3.4483,
+        "netByCost": {
+          "netAt020": 1.4635,
+          "netAt040": 1.2635,
+          "netAt060": 1.0635,
+          "netAt080": 0.8635,
+          "netAt100": 0.6635
+        }
+      },
+      "validationMetrics": {
+        "tradeCount": 7,
+        "sessionCount": 10,
+        "tradesPerSession": 0.7,
+        "averageGrossReturn": 0.7143,
+        "medianReturn": 5,
+        "standardDeviation": 5.3452,
+        "downsideDeviation": 5,
+        "sharpeLike": 0.3536,
+        "sortinoLike": 0.378,
+        "maximumDrawdown": 10,
+        "maxConsecutiveLosses": 2,
+        "profitableDayPercentage": 66.6667,
+        "targetRate": 57.1429,
+        "stopRate": 42.8571,
+        "timeoutRate": 0,
+        "ambiguousRate": 0,
+        "unavailableRate": 0,
+        "netByCost": {
+          "netAt020": 0.5143,
+          "netAt040": 0.3143,
+          "netAt060": 0.1143,
+          "netAt080": -0.0857,
+          "netAt100": -0.2857
+        }
+      },
+      "degradation": {
+        "netAt040Ratio": 4.02,
+        "signConsistentAt040": true,
+        "tradeCountPerSessionRatio": 1.6571
+      }
+    },
+    {
+      "fold": 3,
+      "trainStart": "2026-04-02",
+      "trainEnd": "2026-06-16",
+      "embargoDates": [
+        "2026-06-17",
+        "2026-06-18"
+      ],
+      "validationStart": "2026-06-19",
+      "validationEnd": "2026-07-03",
+      "trainMetrics": {
+        "tradeCount": 50,
+        "sessionCount": 50,
+        "tradesPerSession": 1,
+        "averageGrossReturn": 1.2843,
+        "medianReturn": 5,
+        "standardDeviation": 4.7826,
+        "downsideDeviation": 4.7348,
+        "sharpeLike": 1.7813,
+        "sortinoLike": 1.7993,
+        "maximumDrawdown": 26.86,
+        "maxConsecutiveLosses": 6,
+        "profitableDayPercentage": 61.9048,
+        "targetRate": 54,
+        "stopRate": 30,
+        "timeoutRate": 4,
+        "ambiguousRate": 10,
+        "unavailableRate": 2,
+        "netByCost": {
+          "netAt020": 1.0843,
+          "netAt040": 0.8843,
+          "netAt060": 0.6843,
+          "netAt080": 0.4843,
+          "netAt100": 0.2843
+        }
+      },
+      "validationMetrics": {
+        "tradeCount": 13,
+        "sessionCount": 10,
+        "tradesPerSession": 1.3,
+        "averageGrossReturn": 0.4545,
+        "medianReturn": 5,
+        "standardDeviation": 5.2223,
+        "downsideDeviation": 5,
+        "sharpeLike": 0.2887,
+        "sortinoLike": 0.3015,
+        "maximumDrawdown": 15,
+        "maxConsecutiveLosses": 3,
+        "profitableDayPercentage": 60,
+        "targetRate": 46.1538,
+        "stopRate": 38.4615,
+        "timeoutRate": 0,
+        "ambiguousRate": 15.3846,
+        "unavailableRate": 0,
+        "netByCost": {
+          "netAt020": 0.2545,
+          "netAt040": 0.0545,
+          "netAt060": -0.1455,
+          "netAt080": -0.3455,
+          "netAt100": -0.5455
+        }
+      },
+      "degradation": {
+        "netAt040Ratio": 16.2257,
+        "signConsistentAt040": true,
+        "tradeCountPerSessionRatio": 0.7692
+      }
+    },
+    {
+      "fold": 4,
+      "trainStart": "2026-04-20",
+      "trainEnd": "2026-07-01",
+      "embargoDates": [
+        "2026-07-02",
+        "2026-07-03"
+      ],
+      "validationStart": "2026-07-06",
+      "validationEnd": "2026-07-17",
+      "trainMetrics": {
+        "tradeCount": 61,
+        "sessionCount": 50,
+        "tradesPerSession": 1.22,
+        "averageGrossReturn": 1.1606,
+        "medianReturn": 5,
+        "standardDeviation": 4.8233,
+        "downsideDeviation": 4.7865,
+        "sharpeLike": 1.7517,
+        "sortinoLike": 1.7652,
+        "maximumDrawdown": 26.86,
+        "maxConsecutiveLosses": 6,
+        "profitableDayPercentage": 62.5,
+        "targetRate": 52.459,
+        "stopRate": 31.1475,
+        "timeoutRate": 3.2787,
+        "ambiguousRate": 11.4754,
+        "unavailableRate": 1.6393,
+        "netByCost": {
+          "netAt020": 0.9606,
+          "netAt040": 0.7606,
+          "netAt060": 0.5606,
+          "netAt080": 0.3606,
+          "netAt100": 0.1606
+        }
+      },
+      "validationMetrics": {
+        "tradeCount": 3,
+        "sessionCount": 10,
+        "tradesPerSession": 0.3,
+        "averageGrossReturn": 5,
+        "medianReturn": 5,
+        "standardDeviation": 0,
+        "downsideDeviation": 0,
+        "sharpeLike": 0,
+        "sortinoLike": 0,
+        "maximumDrawdown": 0,
+        "maxConsecutiveLosses": 0,
+        "profitableDayPercentage": 100,
+        "targetRate": 66.6667,
+        "stopRate": 0,
+        "timeoutRate": 0,
+        "ambiguousRate": 33.3333,
+        "unavailableRate": 0,
+        "netByCost": {
+          "netAt020": 4.8,
+          "netAt040": 4.6,
+          "netAt060": 4.4,
+          "netAt080": 4.2,
+          "netAt100": 4
+        }
+      },
+      "degradation": {
+        "netAt040Ratio": 0.1653,
+        "signConsistentAt040": true,
+        "tradeCountPerSessionRatio": 4.0667
+      }
+    },
+    {
+      "fold": 5,
+      "trainStart": "2026-05-05",
+      "trainEnd": "2026-07-15",
+      "embargoDates": [
+        "2026-07-16",
+        "2026-07-17"
+      ],
+      "validationStart": "2026-07-20",
+      "validationEnd": "2026-07-31",
+      "trainMetrics": {
+        "tradeCount": 54,
+        "sessionCount": 50,
+        "tradesPerSession": 1.08,
+        "averageGrossReturn": 1.0243,
+        "medianReturn": 5,
+        "standardDeviation": 4.8993,
+        "downsideDeviation": 4.8853,
+        "sharpeLike": 1.4332,
+        "sortinoLike": 1.4374,
+        "maximumDrawdown": 26.86,
+        "maxConsecutiveLosses": 6,
+        "profitableDayPercentage": 57.1429,
+        "targetRate": 51.8519,
+        "stopRate": 33.3333,
+        "timeoutRate": 1.8519,
+        "ambiguousRate": 12.963,
+        "unavailableRate": 0,
+        "netByCost": {
+          "netAt020": 0.8243,
+          "netAt040": 0.6243,
+          "netAt060": 0.4243,
+          "netAt080": 0.2243,
+          "netAt100": 0.0243
+        }
+      },
+      "validationMetrics": {
+        "tradeCount": 8,
+        "sessionCount": 10,
+        "tradesPerSession": 0.8,
+        "averageGrossReturn": 0.3538,
+        "medianReturn": 1.415,
+        "standardDeviation": 5.0527,
+        "downsideDeviation": 4.464,
+        "sharpeLike": 0.198,
+        "sortinoLike": 0.2241,
+        "maximumDrawdown": 7.17,
+        "maxConsecutiveLosses": 2,
+        "profitableDayPercentage": 66.6667,
+        "targetRate": 50,
+        "stopRate": 37.5,
+        "timeoutRate": 12.5,
+        "ambiguousRate": 0,
+        "unavailableRate": 0,
+        "netByCost": {
+          "netAt020": 0.1537,
+          "netAt040": -0.0463,
+          "netAt060": -0.2462,
+          "netAt080": -0.4463,
+          "netAt100": -0.6462
+        }
+      },
+      "degradation": {
+        "netAt040Ratio": -13.4838,
+        "signConsistentAt040": false,
+        "tradeCountPerSessionRatio": 1.35
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "version": "selection-bias-v1",
+  "legacyFamilies": [
+    "V2",
+    "V4"
+  ],
+  "v7Reference": {
+    "configurations": 12800,
+    "policies": 5,
+    "totalPolicyEvaluations": 64000
+  },
+  "protocol": {
+    "trainMetricDeclared": true,
+    "validationTopK": 20,
+    "validationMayNotSelectReplacement": true
+  },
+  "limitation": "Legacy artifacts do not contain a complete session-by-configuration matrix; no retroactive PBO/DSR claim is made."
+}

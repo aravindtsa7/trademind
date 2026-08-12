@@ -1,0 +1,250 @@
+{
+  "CE": {
+    "monthly": [
+      {
+        "month": "March",
+        "trades": 23,
+        "grossAverage": 0.22,
+        "netAt040": -0.18,
+        "median": 1.59,
+        "targetRate": 47.82608695652174,
+        "stopRate": 43.47826086956522
+      },
+      {
+        "month": "April",
+        "trades": 34,
+        "grossAverage": 0.84,
+        "netAt040": 0.44,
+        "median": 3,
+        "targetRate": 55.88235294117647,
+        "stopRate": 29.411764705882355
+      },
+      {
+        "month": "May",
+        "trades": 26,
+        "grossAverage": 0.85,
+        "netAt040": 0.45,
+        "median": 3,
+        "targetRate": 57.692307692307686,
+        "stopRate": 30.76923076923077
+      },
+      {
+        "month": "June",
+        "trades": 25,
+        "grossAverage": 0.47,
+        "netAt040": 0.07,
+        "median": 1.43,
+        "targetRate": 48,
+        "stopRate": 32
+      },
+      {
+        "month": "July",
+        "trades": 6,
+        "grossAverage": 0.67,
+        "netAt040": 0.27,
+        "median": 2.01,
+        "targetRate": 50,
+        "stopRate": 33.33333333333333
+      },
+      {
+        "month": "Aug 1-4",
+        "trades": 0,
+        "grossAverage": 0,
+        "netAt040": -0.4,
+        "median": 0,
+        "targetRate": 0,
+        "stopRate": 0
+      }
+    ],
+    "halves": [
+      {
+        "period": "First half",
+        "trades": 76,
+        "grossAverage": 0.61,
+        "netAt040": 0.21,
+        "median": 3,
+        "targetRate": 52.63157894736842,
+        "stopRate": 34.21052631578947
+      },
+      {
+        "period": "Second half",
+        "trades": 38,
+        "grossAverage": 0.65,
+        "netAt040": 0.25,
+        "median": 3,
+        "targetRate": 52.63157894736842,
+        "stopRate": 31.57894736842105
+      }
+    ],
+    "frequency": {
+      "activeSessions": 37,
+      "maxTradesPerDay": 13,
+      "averageTradesPerActiveSession": 3.19,
+      "daysWith0": 67,
+      "daysWith1To4": 27,
+      "daysWith5To9": 9,
+      "daysWith10Plus": 1
+    },
+    "profitableDayPercent": 67.65,
+    "maxConsecutiveLosses": 5,
+    "maxLosingDayStreak": 2,
+    "averageExcludingBest5": 0.52,
+    "best5ContributionPercent": 7.92,
+    "largestWinner": 3,
+    "largestLoser": -3,
+    "timeOfDay": [
+      {
+        "bucket": "09:15-10:30",
+        "trades": 20,
+        "grossAverage": 0.29,
+        "netAt040": -0.11,
+        "median": 0.42
+      },
+      {
+        "bucket": "10:30-12:00",
+        "trades": 33,
+        "grossAverage": 0.85,
+        "netAt040": 0.45,
+        "median": 3
+      },
+      {
+        "bucket": "12:00-13:30",
+        "trades": 27,
+        "grossAverage": 0.47,
+        "netAt040": 0.07,
+        "median": 3
+      },
+      {
+        "bucket": "13:30-15:30",
+        "trades": 34,
+        "grossAverage": 0.73,
+        "netAt040": 0.33,
+        "median": 3
+      }
+    ]
+  },
+  "PE": {
+    "monthly": [
+      {
+        "month": "March",
+        "trades": 88,
+        "grossAverage": 0.75,
+        "netAt040": 0.35,
+        "median": 3.4,
+        "targetRate": 50,
+        "stopRate": 44.31818181818182
+      },
+      {
+        "month": "April",
+        "trades": 58,
+        "grossAverage": -0.11,
+        "netAt040": -0.51,
+        "median": -3,
+        "targetRate": 37.93103448275862,
+        "stopRate": 55.172413793103445
+      },
+      {
+        "month": "May",
+        "trades": 37,
+        "grossAverage": -0.37,
+        "netAt040": -0.77,
+        "median": -3,
+        "targetRate": 35.13513513513514,
+        "stopRate": 56.75675675675676
+      },
+      {
+        "month": "June",
+        "trades": 24,
+        "grossAverage": -0.65,
+        "netAt040": -1.05,
+        "median": -3,
+        "targetRate": 33.33333333333333,
+        "stopRate": 62.5
+      },
+      {
+        "month": "July",
+        "trades": 42,
+        "grossAverage": 1.24,
+        "netAt040": 0.84,
+        "median": 4,
+        "targetRate": 57.14285714285714,
+        "stopRate": 38.095238095238095
+      },
+      {
+        "month": "Aug 1-4",
+        "trades": 0,
+        "grossAverage": 0,
+        "netAt040": -0.4,
+        "median": 0,
+        "targetRate": 0,
+        "stopRate": 0
+      }
+    ],
+    "halves": [
+      {
+        "period": "First half",
+        "trades": 174,
+        "grossAverage": 0.28,
+        "netAt040": -0.12,
+        "median": -2.34,
+        "targetRate": 43.67816091954023,
+        "stopRate": 50
+      },
+      {
+        "period": "Second half",
+        "trades": 75,
+        "grossAverage": 0.44,
+        "netAt040": 0.04,
+        "median": -0.41,
+        "targetRate": 46.666666666666664,
+        "stopRate": 48
+      }
+    ],
+    "frequency": {
+      "activeSessions": 45,
+      "maxTradesPerDay": 20,
+      "averageTradesPerActiveSession": 5.58,
+      "daysWith0": 59,
+      "daysWith1To4": 25,
+      "daysWith5To9": 9,
+      "daysWith10Plus": 11
+    },
+    "profitableDayPercent": 48.89,
+    "maxConsecutiveLosses": 7,
+    "maxLosingDayStreak": 2,
+    "averageExcludingBest5": 0.25,
+    "best5ContributionPercent": 4.36,
+    "largestWinner": 4,
+    "largestLoser": -3,
+    "timeOfDay": [
+      {
+        "bucket": "09:15-10:30",
+        "trades": 52,
+        "grossAverage": 0.49,
+        "netAt040": 0.09,
+        "median": 0.3
+      },
+      {
+        "bucket": "10:30-12:00",
+        "trades": 64,
+        "grossAverage": 0.44,
+        "netAt040": 0.04,
+        "median": -0.06
+      },
+      {
+        "bucket": "12:00-13:30",
+        "trades": 60,
+        "grossAverage": 0.29,
+        "netAt040": -0.11,
+        "median": -3
+      },
+      {
+        "bucket": "13:30-15:30",
+        "trades": 73,
+        "grossAverage": 0.15,
+        "netAt040": -0.25,
+        "median": -3
+      }
+    ]
+  }
+}

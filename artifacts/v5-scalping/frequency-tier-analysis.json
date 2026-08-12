@@ -1,0 +1,178 @@
+[
+  {
+    "minimumTradesPerSession": 3,
+    "candidateCount": 7030,
+    "positiveNetAt040Count": 0,
+    "credibleCount": 0,
+    "highestFrequency": {
+      "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.2,
+        "rsiThreshold": 50,
+        "bodyAtrMinimum": 0.25,
+        "pullbackLookbackBars": 3,
+        "confirmation": "TREND_CLOSE",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 1616,
+      "tradesPerSession": 15.54,
+      "activeSessionTrades": 23.76,
+      "maxTradesPerDay": 73,
+      "grossAverage": -0.07,
+      "grossMedian": -3,
+      "netAverageAt020": -0.27,
+      "netAverageAt040": -0.47,
+      "netAverageAt060": -0.67,
+      "targetRate": 39.45,
+      "stopRate": 55.91,
+      "timeoutRate": 4.64,
+      "ambiguousRate": 11.39,
+      "ambiguousCount": 184,
+      "unavailableCount": 10,
+      "mfe5": 8.9,
+      "mae5": 8.43,
+      "credibleAt040": false
+    },
+    "bestPositiveNetAt040": null
+  },
+  {
+    "minimumTradesPerSession": 5,
+    "candidateCount": 3710,
+    "positiveNetAt040Count": 0,
+    "credibleCount": 0,
+    "highestFrequency": {
+      "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.2,
+        "rsiThreshold": 50,
+        "bodyAtrMinimum": 0.25,
+        "pullbackLookbackBars": 3,
+        "confirmation": "TREND_CLOSE",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 1616,
+      "tradesPerSession": 15.54,
+      "activeSessionTrades": 23.76,
+      "maxTradesPerDay": 73,
+      "grossAverage": -0.07,
+      "grossMedian": -3,
+      "netAverageAt020": -0.27,
+      "netAverageAt040": -0.47,
+      "netAverageAt060": -0.67,
+      "targetRate": 39.45,
+      "stopRate": 55.91,
+      "timeoutRate": 4.64,
+      "ambiguousRate": 11.39,
+      "ambiguousCount": 184,
+      "unavailableCount": 10,
+      "mfe5": 8.9,
+      "mae5": 8.43,
+      "credibleAt040": false
+    },
+    "bestPositiveNetAt040": null
+  },
+  {
+    "minimumTradesPerSession": 8,
+    "candidateCount": 1150,
+    "positiveNetAt040Count": 0,
+    "credibleCount": 0,
+    "highestFrequency": {
+      "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.2,
+        "rsiThreshold": 50,
+        "bodyAtrMinimum": 0.25,
+        "pullbackLookbackBars": 3,
+        "confirmation": "TREND_CLOSE",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 1616,
+      "tradesPerSession": 15.54,
+      "activeSessionTrades": 23.76,
+      "maxTradesPerDay": 73,
+      "grossAverage": -0.07,
+      "grossMedian": -3,
+      "netAverageAt020": -0.27,
+      "netAverageAt040": -0.47,
+      "netAverageAt060": -0.67,
+      "targetRate": 39.45,
+      "stopRate": 55.91,
+      "timeoutRate": 4.64,
+      "ambiguousRate": 11.39,
+      "ambiguousCount": 184,
+      "unavailableCount": 10,
+      "mfe5": 8.9,
+      "mae5": 8.43,
+      "credibleAt040": false
+    },
+    "bestPositiveNetAt040": null
+  },
+  {
+    "minimumTradesPerSession": 10,
+    "candidateCount": 470,
+    "positiveNetAt040Count": 0,
+    "credibleCount": 0,
+    "highestFrequency": {
+      "configKey": "V5_SCALPING|2m|PE|0.2|50|0.25|3|TREND_CLOSE|0",
+      "direction": "PE",
+      "config": {
+        "timeframe": 2,
+        "direction": "PE",
+        "ema20ProximityPercent": 0.2,
+        "rsiThreshold": 50,
+        "bodyAtrMinimum": 0.25,
+        "pullbackLookbackBars": 3,
+        "confirmation": "TREND_CLOSE",
+        "cooldownMinutes": 0
+      },
+      "policy": {
+        "target": 4,
+        "stop": 3,
+        "hold": 7
+      },
+      "resolvedTrades": 1616,
+      "tradesPerSession": 15.54,
+      "activeSessionTrades": 23.76,
+      "maxTradesPerDay": 73,
+      "grossAverage": -0.07,
+      "grossMedian": -3,
+      "netAverageAt020": -0.27,
+      "netAverageAt040": -0.47,
+      "netAverageAt060": -0.67,
+      "targetRate": 39.45,
+      "stopRate": 55.91,
+      "timeoutRate": 4.64,
+      "ambiguousRate": 11.39,
+      "ambiguousCount": 184,
+      "unavailableCount": 10,
+      "mfe5": 8.9,
+      "mae5": 8.43,
+      "credibleAt040": false
+    },
+    "bestPositiveNetAt040": null
+  }
+]

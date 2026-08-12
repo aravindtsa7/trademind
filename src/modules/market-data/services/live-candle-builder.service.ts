@@ -11,7 +11,7 @@ interface ActiveCandle extends LiveCandleDto {
 
 const sessionStartMinute = 9 * 60 + 15;
 const sessionEndMinuteExclusive = 15 * 60 + 30;
-const timeframeMinutes: Record<LiveCandleTimeframe, number> = { '1m': 1, '5m': 5 };
+const timeframeMinutes: Record<LiveCandleTimeframe, number> = { '1m': 1, '3m': 3, '5m': 5 };
 
 /**
  * Builds IST session-anchored candles from chronological ticks. Ticks outside
@@ -71,6 +71,17 @@ export default class LiveCandleBuilderService {
   getActiveCandle(instrumentKey: string, timeframe: LiveCandleTimeframe): LiveCandleDto | undefined {
     const active = this.activeCandles.get(this.key(instrumentKey, timeframe));
     return active ? cloneCandle(active) : undefined;
+  }
+
+  /** Completes only already-observed in-session candles at the official session boundary. */
+  finishSession(instrumentKey?: string): LiveCandleDto[] {
+    const completed: LiveCandleDto[] = [];
+    for (const [key, candle] of this.activeCandles) {
+      if (instrumentKey !== undefined && candle.instrumentKey !== instrumentKey) continue;
+      completed.push({ ...cloneCandle(candle), completed: true });
+      this.activeCandles.delete(key);
+    }
+    return completed;
   }
 
   reset(instrumentKey?: string, timeframe?: LiveCandleTimeframe): void {
