@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-12T16:04:55.461Z",
+  "generatedAt": "2026-08-13T10:52:36.832Z",
   "networkRequests": 0,
   "V2": {
     "strategyId": "V2_TREND_DOWN_PE",
-    "sessionsObserved": 0,
+    "sessionsObserved": 1,
     "signals": 0,
     "resolvedTrades": 0,
     "unresolvedTrades": 0,
@@ -22,20 +22,24 @@
     "maxDrawdown": 0,
     "maxLossStreak": 0,
     "costStress": {
-      "netAt02": -0.2,
-      "netAt04": -0.4,
-      "netAt06": -0.6,
-      "netAt08": -0.8,
-      "netAt1": -1
+      "netAt02": 0,
+      "netAt04": 0,
+      "netAt06": 0,
+      "netAt08": 0,
+      "netAt1": 0
     },
-    "dataQualityFlags": [],
+    "infrastructureEventCount": 0,
+    "infrastructureEventTypes": [],
+    "dataQualityFlags": [
+      "FORWARD_EVALUATION_ONLY"
+    ],
     "timeOfDayFriction": {},
     "premiumBucketFriction": {},
     "promotionDiagnostic": "NOT_ENOUGH_FORWARD_DATA"
   },
   "V4": {
     "strategyId": "V4_NIFTY_MOMENTUM_PE_SHADOW",
-    "sessionsObserved": 0,
+    "sessionsObserved": 1,
     "signals": 0,
     "resolvedTrades": 0,
     "unresolvedTrades": 0,
@@ -54,13 +58,18 @@
     "maxDrawdown": 0,
     "maxLossStreak": 0,
     "costStress": {
-      "netAt02": -0.2,
-      "netAt04": -0.4,
-      "netAt06": -0.6,
-      "netAt08": -0.8,
-      "netAt1": -1
+      "netAt02": 0,
+      "netAt04": 0,
+      "netAt06": 0,
+      "netAt08": 0,
+      "netAt1": 0
     },
-    "dataQualityFlags": [],
+    "infrastructureEventCount": 0,
+    "infrastructureEventTypes": [],
+    "dataQualityFlags": [
+      "FORWARD_EVALUATION_ONLY",
+      "SHADOW_ONLY"
+    ],
     "timeOfDayFriction": {},
     "premiumBucketFriction": {},
     "promotionDiagnostic": "NOT_ENOUGH_FORWARD_DATA"

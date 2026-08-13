@@ -9,3 +9,11 @@ The current decoded market-data model exposes LTP and a separate depth event typ
 Forward journals are evaluation data. They must not be used to tune frozen thresholds or exits. If rules change, create a new strategy version and fingerprint with a separate journal. A failed strategy cannot be repeatedly retuned against the same forward dataset and still call it unseen.
 
 `npm run report:forward-validation` is local-only: it reads journals and writes `artifacts/forward-validation/forward-validation-summary.json`; it performs no network requests.
+
+Runtime infrastructure events are appended as `EVENT` records (for example
+`WEBSOCKET_DISCONNECTED`, `WEBSOCKET_RECONNECTED`, `RECONNECT_FAILED`,
+`MANUAL_RESTART`, `EOD_FORCED_EXIT`, and `CLEAN_SHUTDOWN`) with data-quality
+flags. Reconnect retries are bounded; exhaustion fails closed. Session counts in
+reports are unique IST trading dates, so restarts on one date do not inflate
+`sessionsObserved`. The IST 15:30 watchdog is idempotent and intentionally
+disconnects the socket, so an EOD shutdown cannot start a reconnect loop.

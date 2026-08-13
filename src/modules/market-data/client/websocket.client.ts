@@ -62,7 +62,8 @@ export default class MarketDataWebSocketClient extends EventEmitter {
         });
 
         socket.addEventListener('close', (event: CloseEvent) => {
-          if (this.socket === socket) {
+          const isCurrentSocket = this.socket === socket;
+          if (isCurrentSocket) {
             this.socket = undefined;
           }
 
@@ -71,7 +72,7 @@ export default class MarketDataWebSocketClient extends EventEmitter {
             reason: event.reason,
             wasClean: event.wasClean,
           });
-          this.emit('disconnected', event);
+          this.emit('disconnected', event, isCurrentSocket);
         });
       });
     } catch (error) {

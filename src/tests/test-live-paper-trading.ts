@@ -186,6 +186,7 @@ async function run(): Promise<void> {
     }
   );
   const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0);
+  const forwardJournal = new ForwardValidationJournal('V2_TREND_DOWN_PE', forwardFingerprint);
   const warmupResult = await new LivePaperFreshWarmupService(
     new HistoricalCandleRepository(),
     strategyAdapter,
@@ -196,8 +197,8 @@ async function run(): Promise<void> {
     return;
   }
   const strategyResults = new Map<number, LivePaperStrategyResult>();
-  const forwardJournal = new ForwardValidationJournal('V2_TREND_DOWN_PE', forwardFingerprint);
   const forwardDate = istDate(new Date());
+  if (forwardJournal.hasRecordsForDate(forwardDate)) forwardJournal.appendEvent(forwardDate, 'MANUAL_RESTART', ['MANUAL_RESTART'], { reason: 'existing_session_journal' });
   forwardJournal.append({ recordType: 'SESSION', tradingDate: forwardDate, strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, runtimeStartedAt: new Date().toISOString(), marketDataHealthy: true, sessionCompleted: false, flags: ['FORWARD_EVALUATION_ONLY'] });
   const instrumentedStrategyAdapter = {
     async processCompletedCandle(input: LivePaperCompletedCandleInput): Promise<LivePaperStrategyResult> {
@@ -217,7 +218,10 @@ async function run(): Promise<void> {
   const eodCoordinator = new IstSessionEodCoordinator();
   let lastNiftyTickPrintedAt = 0;
   let shuttingDown = false;
+  let eodRequested = false;
   let requestEod: (() => void) | undefined;
+  let eodTimer: NodeJS.Timeout | undefined;
+  let eodWatchdog: NodeJS.Timeout | undefined;
   const cleanupEpochTimestampNormalizer = installEpochTimestampNormalizer(eventBus);
 
   const onWebSocketMessage = (buffer: Buffer): void => {
@@ -232,7 +236,7 @@ async function run(): Promise<void> {
     if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || !Number.isFinite(tick.ltp) || tick.ltp <= 0 || typeof tick.timestamp !== 'string') return;
     const timestamp = new Date(tick.timestamp);
     if (Number.isNaN(timestamp.getTime())) return;
-    if (isAtOrAfterIstSessionEnd(timestamp)) { requestEod?.(); return; }
+    if (isAtOrAfterIstSessionEnd(timestamp)) { eodRequested = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
     latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp);
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();
@@ -241,10 +245,12 @@ async function run(): Promise<void> {
   };
   const onCompletedCandle = (event: unknown): void => {
     const candle = event as { instrumentKey?: string; timeframe?: string; candleTime?: Date; open?: number; high?: number; low?: number; close?: number; completed?: boolean };
+    if (eodRequested) return;
     if (candle.instrumentKey !== niftyInstrumentKey || candle.timeframe !== '5m' || candle.completed !== true || !(candle.candleTime instanceof Date)) return;
     console.log(`[market.candle.completed] NIFTY 5m ${formatIst(candle.candleTime)} | O ${candle.open?.toFixed(2)} H ${candle.high?.toFixed(2)} L ${candle.low?.toFixed(2)} C ${candle.close?.toFixed(2)}`);
   };
   const onStrategyEvaluated = (event: unknown): void => {
+    if (eodRequested) return;
     const evaluation = event as StrategyEvaluatedEvent;
     if (!(evaluation.candleTimestamp instanceof Date)) return;
     const indicatorValues = strategyResults.get(evaluation.candleTimestamp.getTime());
@@ -287,8 +293,11 @@ async function run(): Promise<void> {
     if (shuttingDown) return;
     shuttingDown = true;
     forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: true, eodReason: reason, status: 'COMPLETED' });
+    forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     console.log(`\nGraceful shutdown requested (${reason}).`);
     clearInterval(statusTimer);
+    if (eodTimer) clearTimeout(eodTimer);
+    if (eodWatchdog) clearInterval(eodWatchdog);
 
     paperRuntimeCandleAdapter.stop();
     const stopResult = runtime.stop(); // Runtime stops PaperMarketDataAdapterService.
@@ -323,9 +332,11 @@ async function run(): Promise<void> {
   const finishEod = async (): Promise<void> => {
     await eodCoordinator.runOnce(new Date(), async () => {
       // A candle completing exactly at 15:30 is observable, but cannot create a new entry.
+      eodRequested = true;
       paperRuntimeCandleAdapter.stop();
       liveCandleEventAdapter.finishSession(niftyInstrumentKey);
       const eodAt = new Date();
+      forwardJournal.appendEvent(istDate(eodAt), 'EOD_FORCED_EXIT', ['EOD_FORCED_EXIT']);
       const actions = positionMonitor.closeAtSessionEnd(eodAt, (instrumentKey, entryPremium) => latestPremiumByInstrument.get(instrumentKey) ?? entryPremium);
       actions.forEach((action) => {
         eventBus.emit('paper.order.action', action);
@@ -336,8 +347,20 @@ async function run(): Promise<void> {
       console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=COMPLETED`);
     });
   };
+  connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string }) => {
+    forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_DISCONNECTED', ['WEBSOCKET_DISCONNECTED'], { code: details.code ?? null, reason: details.reason ?? null });
+  });
+  connectionManager.on('reconnected', (details: { downtimeMs?: number }) => {
+    forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_RECONNECTED', ['WEBSOCKET_RECONNECTED'], { downtimeMs: details.downtimeMs ?? null });
+  });
+  connectionManager.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => {
+    forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null });
+    void shutdown('RECONNECT_FAILED');
+  });
   requestEod = () => { void finishEod(); };
-  const eodTimer = eodCoordinator.schedule(finishEod);
+  eodTimer = eodCoordinator.schedule(finishEod);
+  eodWatchdog = setInterval(() => { if (isAtOrAfterIstSessionEnd(new Date())) void finishEod(); }, 1_000);
+  eodWatchdog.unref();
 
   process.once('SIGINT', () => { clearTimeout(eodTimer); void shutdown('SIGINT'); });
   process.once('SIGTERM', () => { clearTimeout(eodTimer); void shutdown('SIGTERM'); });

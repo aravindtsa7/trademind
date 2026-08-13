@@ -4,6 +4,13 @@ import MarketDataWebSocketClient from '../client/websocket.client';
 
 const initialReconnectDelayMs = 1_000;
 const maximumReconnectDelayMs = 30_000;
+const defaultMaximumReconnectAttempts = 6;
+const defaultMaximumReconnectDurationMs = 60_000;
+
+export interface ConnectionManagerOptions {
+  maximumReconnectAttempts?: number;
+  maximumReconnectDurationMs?: number;
+}
 
 export enum ConnectionState {
   DISCONNECTED = 'DISCONNECTED',
@@ -19,10 +26,15 @@ export default class ConnectionManager extends EventEmitter {
   private reconnectAttempts = 0;
   private connectPromise?: Promise<void>;
   private manuallyDisconnected = false;
+  private reconnectStartedAt?: number;
+  private readonly maximumReconnectAttempts: number;
+  private readonly maximumReconnectDurationMs: number;
 
-  constructor(accessToken: string, client = new MarketDataWebSocketClient(accessToken)) {
+  constructor(accessToken: string, client = new MarketDataWebSocketClient(accessToken), options: ConnectionManagerOptions = {}) {
     super();
     this.client = client;
+    this.maximumReconnectAttempts = options.maximumReconnectAttempts ?? defaultMaximumReconnectAttempts;
+    this.maximumReconnectDurationMs = options.maximumReconnectDurationMs ?? defaultMaximumReconnectDurationMs;
     this.registerClientListeners();
   }
 
@@ -76,17 +88,28 @@ export default class ConnectionManager extends EventEmitter {
 
   private registerClientListeners(): void {
     this.client.on('connected', () => {
+      const wasReconnecting = this.state === ConnectionState.RECONNECTING || this.reconnectAttempts > 0;
       this.clearReconnectTimer();
       this.reconnectAttempts = 0;
+      const downtimeMs = this.reconnectStartedAt === undefined ? 0 : Date.now() - this.reconnectStartedAt;
+      this.reconnectStartedAt = undefined;
       this.setState(ConnectionState.CONNECTED);
+      if (wasReconnecting) {
+        logger.info('Market data WebSocket reconnected', { downtimeMs });
+        this.emit('reconnected', { downtimeMs });
+      }
     });
 
-    this.client.on('disconnected', () => {
+    this.client.on('disconnected', (event: { code?: number; reason?: string } | undefined, isCurrentSocket = true) => {
+      if (!isCurrentSocket) return;
       if (this.manuallyDisconnected) {
         return;
       }
 
-      logger.warn('Market data WebSocket disconnected unexpectedly');
+      logger.warn('Market data WebSocket disconnected unexpectedly', { code: event?.code, reason: event?.reason });
+      this.emit('unexpectedDisconnect', { code: event?.code, reason: event?.reason });
+      this.reconnectStartedAt ??= Date.now();
+      this.setState(ConnectionState.RECONNECTING);
       this.scheduleReconnect();
     });
 
@@ -97,6 +120,15 @@ export default class ConnectionManager extends EventEmitter {
 
   private scheduleReconnect(): void {
     if (this.manuallyDisconnected || this.reconnectTimer || this.state === ConnectionState.CONNECTED) {
+      return;
+    }
+
+    this.reconnectStartedAt ??= Date.now();
+    const elapsedMs = Date.now() - this.reconnectStartedAt;
+    if (this.reconnectAttempts >= this.maximumReconnectAttempts || elapsedMs >= this.maximumReconnectDurationMs) {
+      this.setState(ConnectionState.DISCONNECTED);
+      logger.error('Market data WebSocket reconnect failed closed', { attempts: this.reconnectAttempts, downtimeMs: elapsedMs });
+      this.emit('reconnectFailed', { attempts: this.reconnectAttempts, downtimeMs: elapsedMs });
       return;
     }
 

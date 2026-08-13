@@ -121,8 +121,8 @@ export default class SubscriptionManager {
   private registerConnectionListeners(): void {
     this.connectionManager.on(
       'stateChanged',
-      ({ state }: { state: ConnectionState }) => {
-        if (state === ConnectionState.CONNECTED) {
+      ({ previousState, state }: { previousState: ConnectionState; state: ConnectionState }) => {
+        if (state === ConnectionState.CONNECTED && previousState !== ConnectionState.CONNECTED) {
           this.restoreSubscriptions();
         }
       }

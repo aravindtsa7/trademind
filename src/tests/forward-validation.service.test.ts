@@ -3,7 +3,7 @@ import test from 'node:test';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { ForwardValidationJournal, estimateEntry, estimateExit, executionComparison, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
+import { ForwardValidationJournal, costStressExpectancy, estimateEntry, estimateExit, executionComparison, normalizeQuote, strategyFingerprint, uniqueForwardTradingDates } from '../modules/research-validation';
 
 test('strategy fingerprints are deterministic and change with frozen rules', () => {
   const base = { strategyId: 'V2_TREND_DOWN_PE', timeframe: '5m', cooldown: 10, target: 5 };
@@ -35,6 +35,7 @@ test('journal is append-only and refuses fingerprint mismatch', () => {
   try {
     const journal = new ForwardValidationJournal('V2', 'abc', directory);
     journal.append({ recordType: 'SIGNAL', tradingDate: '2026-08-12', strategyId: 'V2', fingerprint: 'abc', signalId: 's1' });
+    journal.append({ recordType: 'SIGNAL', tradingDate: '2026-08-12', strategyId: 'V2', fingerprint: 'abc', signalId: 's1' });
     journal.append({ recordType: 'EXIT', tradingDate: '2026-08-12', strategyId: 'V2', fingerprint: 'abc', signalId: 's1', executableEstimatedReturn: 1 });
     assert.equal(journal.read('2026-08-12').length, 2);
     assert.throws(() => journal.append({ recordType: 'SIGNAL', tradingDate: '2026-08-12', strategyId: 'V2', fingerprint: 'different' }));
@@ -52,4 +53,17 @@ test('signal IDs and EOD records can be represented without orders', () => {
     assert.equal(new Set(records.filter((record) => record.signalId).map((record) => record.signalId)).size, 1);
     assert.equal(records.at(-1)?.status, 'COMPLETED');
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test('forward sessions count unique IST dates across restarts and preserve distinct dates', () => {
+  assert.deepEqual(uniqueForwardTradingDates([
+    { tradingDate: '2026-08-13' },
+    { tradingDate: '2026-08-13' },
+    { tradingDate: '2026-08-14' },
+  ]), ['2026-08-13', '2026-08-14']);
+});
+
+test('cost stress does not charge a flat cost when there are no resolved trades', () => {
+  assert.deepEqual(costStressExpectancy([]), { netAt02: 0, netAt04: 0, netAt06: 0, netAt08: 0, netAt1: 0 });
+  assert.equal(costStressExpectancy([1, -1], [.4]).netAt04, -.4);
 });
