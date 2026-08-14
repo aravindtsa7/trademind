@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-08-13T10:52:36.832Z",
+  "generatedAt": "2026-08-14T10:07:01.327Z",
   "networkRequests": 0,
   "V2": {
     "strategyId": "V2_TREND_DOWN_PE",
-    "sessionsObserved": 1,
+    "sessionsObserved": 2,
     "signals": 0,
     "resolvedTrades": 0,
     "unresolvedTrades": 0,
@@ -28,10 +28,19 @@
       "netAt08": 0,
       "netAt1": 0
     },
-    "infrastructureEventCount": 0,
-    "infrastructureEventTypes": [],
+    "infrastructureEventCount": 6,
+    "infrastructureEventTypes": [
+      "RECONNECT_FAILED",
+      "CLEAN_SHUTDOWN",
+      "MANUAL_RESTART"
+    ],
     "dataQualityFlags": [
-      "FORWARD_EVALUATION_ONLY"
+      "FORWARD_EVALUATION_ONLY",
+      "RECONNECT_FAILED",
+      "DATA_GAP",
+      "CRITICAL_DATA_QUALITY",
+      "CLEAN_SHUTDOWN",
+      "MANUAL_RESTART"
     ],
     "timeOfDayFriction": {},
     "premiumBucketFriction": {},
@@ -39,7 +48,7 @@
   },
   "V4": {
     "strategyId": "V4_NIFTY_MOMENTUM_PE_SHADOW",
-    "sessionsObserved": 1,
+    "sessionsObserved": 2,
     "signals": 0,
     "resolvedTrades": 0,
     "unresolvedTrades": 0,
@@ -64,11 +73,20 @@
       "netAt08": 0,
       "netAt1": 0
     },
-    "infrastructureEventCount": 0,
-    "infrastructureEventTypes": [],
+    "infrastructureEventCount": 4,
+    "infrastructureEventTypes": [
+      "RECONNECT_FAILED",
+      "CLEAN_SHUTDOWN",
+      "MANUAL_RESTART"
+    ],
     "dataQualityFlags": [
       "FORWARD_EVALUATION_ONLY",
-      "SHADOW_ONLY"
+      "SHADOW_ONLY",
+      "RECONNECT_FAILED",
+      "DATA_GAP",
+      "CRITICAL_DATA_QUALITY",
+      "CLEAN_SHUTDOWN",
+      "MANUAL_RESTART"
     ],
     "timeOfDayFriction": {},
     "premiumBucketFriction": {},
