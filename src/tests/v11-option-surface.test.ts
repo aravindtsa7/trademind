@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict'; import test from 'node:test';
+import { deduplicateSurfaceRequirements, selectNiftyOptionSurface } from '../modules/research/v11-nifty-iv-skew/option-surface';
+import { OptionContract } from '../modules/options/types';
+const c=(strike:number,type:'CE'|'PE', key=`${strike}${type}`):OptionContract=>({ instrumentKey:key,tradingSymbol:key,underlying:'NIFTY 50',strikePrice:strike,optionType:type,expiry:new Date('2026-04-02T00:00:00+05:30'),exchange:'NSE',segment:'NSE_FO' });
+test('V11 selects actual adjacent non-uniform strikes with lower ATM tie-break',()=>{ const chain=[...([19800,19850,19925,20025,20100,20200,20350].flatMap(s=>[c(s,'CE'),c(s,'PE')]))]; const s=selectNiftyOptionSurface(chain,'2026-03-20',19975); assert.equal(s.atmStrike,19925); assert.equal(s.legs.DOWN1_PE?.strikePrice,19850); assert.equal(s.legs.UP3_CE?.strikePrice,20200); });
+test('V11 rejects duplicate same-expiry strike/type mappings',()=>assert.throws(()=>selectNiftyOptionSurface([c(20000,'CE','a'),c(20000,'CE','b'),c(20000,'PE')],'2026-03-20',20000)));
+test('V11 deduplicates manifest by exact instrument/date only',()=>{ const r=deduplicateSurfaceRequirements([{instrumentKey:'x',tradingDate:'2026-03-02',expiryDate:'2026-03-05',strike:1,optionType:'CE',tradingSymbol:'x',leg:'ATM_CE'},{instrumentKey:'x',tradingDate:'2026-03-02',expiryDate:'2026-03-05',strike:1,optionType:'CE',tradingSymbol:'x',leg:'UP1_CE'}]); assert.equal(r.length,1); });

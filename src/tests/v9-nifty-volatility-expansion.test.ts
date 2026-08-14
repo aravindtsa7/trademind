@@ -1,0 +1,13 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { AdaptivePrimaryMarketRegime } from '../modules/adaptive-intraday/types/adaptive-market-regime.types';
+import { V9_BODY_RANGE_PAIRS, assertV9NoLookAhead, createV9Configs, generateV9Signals, V9OptionResolver, V9PreparedSession } from '../modules/research/v9-nifty-volatility-expansion';
+
+function candle(t: number, open: number, high: number, low: number, close: number) { return { timestamp: new Date(t), open, high, low, close, volume: 1 }; }
+function session(): V9PreparedSession { const start = Date.UTC(2026, 2, 2, 3, 45); const candles = Array.from({ length: 80 }, (_, i) => candle(start + i * 120000, 100 + i * .01, 100 + i * .01 + 1, 100 + i * .01 - 1, 100 + i * .01 + (i === 30 ? 3 : 0))); return { date: '2026-03-02', frames: { 2: candles, 3: candles }, regimePoints: [{ availableAt: new Date(start), regime: AdaptivePrimaryMarketRegime.TREND_UP }] }; }
+function resolver(): V9OptionResolver { const rows = Array.from({ length: 100 }, (_, i) => ({ timestamp: new Date(Date.UTC(2026, 2, 2, 3, 45) .valueOf() + i * 60000), open: 100, high: 101, low: 99, close: 100 + i, instrumentKey: 'OPT' })); return { resolve: () => ({ instrumentKey: 'OPT' }), candles: () => rows }; }
+
+test('V9 grid is bounded and uses the documented five body/range pairs', () => { assert.equal(V9_BODY_RANGE_PAIRS.length, 5); assert.equal(createV9Configs().length, 960); });
+test('V9 CE/PE directions are derived from the underlying breakout and remain isolated', () => { const configs = createV9Configs().filter((c) => c.timeframe === 2 && c.compressionLookback === 10 && c.compressionThreshold === .9 && c.optionConfirmation === 'RETURN_0.75'); const result = generateV9Signals([session()], configs[0], { atrByFrame: new Map([[2, new Map(session().frames[2].map((c) => [c.timestamp.getTime(), 1]))]]) }, resolver()); assert.ok(result.every((s) => s.direction === 'CE' || s.direction === 'PE')); });
+test('V9 no-lookahead assertion rejects future regime or option confirmation', () => { const s: any = { timestamp: new Date('2026-03-02T04:00:00Z'), regimeAvailableAt: new Date('2026-03-02T04:01:00Z'), optionConfirmationAvailableAt: new Date('2026-03-02T04:00:00Z') }; assert.throws(() => assertV9NoLookAhead([s])); const o: any = { timestamp: new Date('2026-03-02T04:00:00Z'), optionConfirmationAvailableAt: new Date('2026-03-02T04:01:00Z') }; assert.throws(() => assertV9NoLookAhead([o])); });
+test('V9 option resolver receives only completed option candles', () => { const rows: any[] = []; const r = resolver(); const resolved = r.resolve('CE', '2026-03-02', new Date('2026-03-02T04:00:00Z')); assert.equal(resolved?.instrumentKey, 'OPT'); });

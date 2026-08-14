@@ -17,7 +17,8 @@
     "paper:v1": "tsx src/tests/test-live-paper-trading.ts",
     "paper:v2": "tsx src/tests/test-live-paper-trading-v2.ts",
     "shadow:v4:momentum": "tsx src/tests/test-live-v4-nifty-momentum-shadow-entry.ts",
-    "report:forward-validation": "tsx src/tests/report-forward-validation.ts"
+    "report:forward-validation": "tsx src/tests/report-forward-validation.ts",
+    "collect:v12:order-flow": "tsx src/tests/collect-v12-nifty-option-order-flow.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",

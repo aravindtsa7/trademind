@@ -10,8 +10,10 @@ const historicalCandleBaseUrl = 'https://api.upstox.com/v3/historical-candle';
 
 export default class UpstoxHistoricalClient {
   private axios: AxiosInstance;
+  private readonly accessToken?: string;
 
-  constructor() {
+  constructor(accessToken = process.env.UPSTOX_ACCESS_TOKEN?.trim()) {
+    this.accessToken = accessToken || undefined;
     this.axios = axios.create({ timeout: 10_000 });
   }
 
@@ -33,7 +35,10 @@ export default class UpstoxHistoricalClient {
       });
 
       const response = await this.axios.get<UpstoxHistoricalCandleApiResponseDto>(url, {
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          ...(this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}),
+        },
       });
       const candles = this.validateResponse(response.data).map((candle) => this.mapCandle(candle));
 
