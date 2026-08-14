@@ -46,6 +46,19 @@ test('intentional disconnect does not schedule a reconnect', async () => {
   assert.equal(client.connects, 1);
 });
 
+test('duplicate close/error callbacks create one reconnect episode, while intentional close creates none', async () => {
+  const client = new FakeClient();
+  const manager = new ConnectionManager('token', client as never, { maximumReconnectAttempts: 2, maximumReconnectDurationMs: 5_000 });
+  let disconnects = 0; let reconnectFailures = 0;
+  manager.on('unexpectedDisconnect', () => { disconnects += 1; }); manager.on('reconnectFailed', () => { reconnectFailures += 1; });
+  await manager.connect();
+  client.emit('disconnected', { code: 1006 }, true); client.emit('connectionError', new Error('late socket error')); client.emit('disconnected', { code: 1006 }, true);
+  await wait(20); assert.equal(disconnects, 1);
+  await wait(1_100); assert.equal(manager.getState(), ConnectionState.CONNECTED);
+  manager.disconnect(); client.emit('connectionError', new Error('expected after close')); client.emit('disconnected', { code: 1006 }, true);
+  await wait(20); assert.equal(reconnectFailures, 0); assert.equal(manager.getState(), ConnectionState.DISCONNECTED);
+});
+
 test('reconnect attempts fail closed within configured bounds', async () => {
   const client = new FakeClient();
   client.failures = 10;

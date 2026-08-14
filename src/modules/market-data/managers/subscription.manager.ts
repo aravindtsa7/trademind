@@ -69,6 +69,13 @@ export default class SubscriptionManager {
         mode,
       });
     } catch (error) {
+      // The subscription intent is retained and ConnectionManager already owns
+      // its bounded reconnect loop. Do not terminate a live harness merely
+      // because the first authorization/socket attempt was transiently down.
+      if (this.connectionManager.getState() === ConnectionState.RECONNECTING) {
+        logger.warn('Market data subscription is pending reconnect', { instrumentCount: keysToSubscribe.length, mode });
+        return;
+      }
       logger.error('Failed to subscribe to market data instruments', {
         instrumentCount: keysToSubscribe.length,
         mode,

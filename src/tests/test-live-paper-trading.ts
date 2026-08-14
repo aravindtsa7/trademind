@@ -23,6 +23,8 @@ import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-
 import { LivePaperCompletedCandleInput, LivePaperStrategyResult } from '../modules/paper-trading/dto/live-paper-strategy.dto';
 import { PaperTradingRuntimeState } from '../modules/paper-trading/dto/paper-trading-runtime.dto';
 import { IstSessionEodCoordinator, isAtOrAfterIstSessionEnd } from '../modules/market-data/services/ist-market-session-eod.service';
+import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
+import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
 import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
 
 const niftyInstrumentKey = 'NSE_INDEX|Nifty 50';
@@ -222,6 +224,26 @@ async function run(): Promise<void> {
   let requestEod: (() => void) | undefined;
   let eodTimer: NodeJS.Timeout | undefined;
   let eodWatchdog: NodeJS.Timeout | undefined;
+  let latestRecoveryWarmup: Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>> | undefined;
+  const recoveryWarmupTarget = { count: 0, seedHistoricalCandles(candles: readonly import('../modules/indicators/types').Candle[]): void { this.count = candles.length; }, isWarmupReady(): boolean { return this.count >= 36; } };
+  const recovery = new MarketDataRecoveryCoordinatorService({
+    backfill: async () => {
+      latestRecoveryWarmup = await new LivePaperFreshWarmupService(new HistoricalCandleRepository(), recoveryWarmupTarget).warmUp();
+      return { ready: latestRecoveryWarmup.ready, reason: latestRecoveryWarmup.freshnessReason, missingMinutes: latestRecoveryWarmup.currentDayMissingMinuteCount, duplicateMinutes: latestRecoveryWarmup.currentDayDuplicateCount };
+    },
+    onRecovered: () => {
+      if (!latestRecoveryWarmup) return;
+      const completed = new CandleTimeframeAggregatorService().aggregate(latestRecoveryWarmup.seededOneMinuteCandles, '5m', { incompleteLeadingBucket: 'discard', incompleteTrailingBucket: 'discard' });
+      strategyAdapter.recoverHistoricalCandles(completed);
+      liveCandleBuilder.reset(niftyInstrumentKey); liveCandleEventAdapter.start();
+    },
+    onEvent: (eventType, details) => {
+      const unrecovered = eventType === 'DATA_GAP_UNRECOVERABLE';
+      forwardJournal.appendEvent(forwardDate, eventType, [eventType, ...(unrecovered ? ['CRITICAL_DATA_QUALITY'] : [])], details);
+      console.log(`[MARKET_DATA_BACKFILL] event=${eventType} state=${recovery.getState()}`);
+    },
+  });
+  recovery.on('stateChanged', (state) => { if (state === 'READY' && !shuttingDown) { paperMarketDataAdapter.setMarketDataAvailable(true); paperRuntimeCandleAdapter.start(); } });
   const cleanupEpochTimestampNormalizer = installEpochTimestampNormalizer(eventBus);
 
   const onWebSocketMessage = (buffer: Buffer): void => {
@@ -237,6 +259,7 @@ async function run(): Promise<void> {
     const timestamp = new Date(tick.timestamp);
     if (Number.isNaN(timestamp.getTime())) return;
     if (isAtOrAfterIstSessionEnd(timestamp)) { eodRequested = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
+    if (tick.instrumentKey === niftyInstrumentKey) recovery.handleLiveTick(timestamp);
     latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp);
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();
@@ -348,10 +371,14 @@ async function run(): Promise<void> {
     });
   };
   connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string }) => {
+    recovery.handleUnexpectedDisconnect();
+    paperMarketDataAdapter.setMarketDataAvailable(false);
+    paperRuntimeCandleAdapter.stop(); liveCandleEventAdapter.stop();
     forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_DISCONNECTED', ['WEBSOCKET_DISCONNECTED'], { code: details.code ?? null, reason: details.reason ?? null });
   });
   connectionManager.on('reconnected', (details: { downtimeMs?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_RECONNECTED', ['WEBSOCKET_RECONNECTED'], { downtimeMs: details.downtimeMs ?? null });
+    recovery.handleReconnected();
   });
   connectionManager.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null });

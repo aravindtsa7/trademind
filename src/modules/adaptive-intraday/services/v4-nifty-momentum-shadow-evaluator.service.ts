@@ -35,6 +35,19 @@ export default class V4NiftyMomentumShadowEvaluatorService {
     this.aggregator.aggregate(this.oneMinute, '5m', completeOnly).forEach((candle) => { this.fiveMinute.push(clone(candle)); this.seededFiveMinute.add(candle.timestamp.getTime()); });
   }
 
+  /** Adds only unseen completed one-minute recovery data; no historical signal is evaluated and cooldown state is preserved. */
+  recoverHistoricalOneMinute(candles: readonly Candle[]): void {
+    let latest = this.oneMinute.at(-1)?.timestamp.getTime() ?? Number.NEGATIVE_INFINITY;
+    for (const candle of candles) {
+      if (!(candle.timestamp instanceof Date) || !Number.isFinite(candle.close) || candle.close <= 0) throw new Error('V4 recovery requires valid one-minute candles.');
+      const timestamp = candle.timestamp.getTime(); if (timestamp <= latest) continue;
+      this.oneMinute.push(clone(candle)); latest = timestamp;
+    }
+    const completeOnly = { incompleteLeadingBucket: 'discard' as const, incompleteTrailingBucket: 'discard' as const };
+    this.aggregator.aggregate(this.oneMinute, '3m', completeOnly).forEach((candle) => { if (!this.threeMinute.some((value) => value.timestamp.getTime() === candle.timestamp.getTime())) { this.threeMinute.push(clone(candle)); this.seededThreeMinute.add(candle.timestamp.getTime()); } });
+    this.aggregator.aggregate(this.oneMinute, '5m', completeOnly).forEach((candle) => { if (!this.fiveMinute.some((value) => value.timestamp.getTime() === candle.timestamp.getTime())) { this.fiveMinute.push(clone(candle)); this.seededFiveMinute.add(candle.timestamp.getTime()); } });
+  }
+
   processCompletedFiveMinute(candle: Candle): void {
     if (this.seededFiveMinute.has(candle.timestamp.getTime()) || this.fiveMinute.some((value) => value.timestamp.getTime() === candle.timestamp.getTime())) return;
     if (this.fiveMinute.length && candle.timestamp <= this.fiveMinute.at(-1)!.timestamp) return;

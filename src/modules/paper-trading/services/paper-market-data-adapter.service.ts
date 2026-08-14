@@ -10,6 +10,7 @@ import PaperPositionMonitorService from './paper-position-monitor.service';
  */
 export default class PaperMarketDataAdapterService {
   private started = false;
+  private marketDataAvailable = true;
   private readonly tickListener = (tick: unknown): void => this.handleTick(tick);
 
   constructor(
@@ -29,7 +30,11 @@ export default class PaperMarketDataAdapterService {
     this.started = false;
   }
 
+  /** Reconnect safety gate; retains listeners but never advances paper exits over an unknown market-data interval. */
+  setMarketDataAvailable(available: boolean): void { this.marketDataAvailable = available; }
+
   private handleTick(tick: unknown): void {
+    if (!this.marketDataAvailable) return;
     const update = this.normalizeTick(tick);
     if (!update) return;
     const actions = this.positionMonitor.monitor(update);

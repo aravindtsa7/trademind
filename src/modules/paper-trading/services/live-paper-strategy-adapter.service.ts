@@ -151,6 +151,20 @@ export default class LivePaperStrategyAdapterService {
     };
   }
 
+  /** Infrastructure-only reconnect repair: append unseen completed candles without evaluating or resetting frozen V2 cooldown state. */
+  recoverHistoricalCandles(candles: readonly Candle[]): void {
+    let latest = this.history.at(-1)?.timestamp.getTime() ?? Number.NEGATIVE_INFINITY;
+    for (const candle of candles) {
+      this.validateCandle(candle);
+      const timestamp = candle.timestamp.getTime();
+      if (this.seededHistoricalTimestamps.has(timestamp) || this.processedTimestamps.has(timestamp)) continue;
+      if (timestamp <= latest) continue;
+      this.history.push(cloneCandle(candle));
+      this.seededHistoricalTimestamps.add(timestamp);
+      latest = timestamp;
+    }
+  }
+
   private async processV2(input: LivePaperCompletedCandleInput, indicators: ReturnType<IndicatorEngineService['calculate']>, fastEma: EmaResult, slowEma: EmaResult, rsi14: number): Promise<LivePaperStrategyResult> {
     const candle = input.candle; const key = candle.timestamp.getTime(); const completedAt = new Date(key + 5 * 60_000); const adx = this.getAdx(indicators).values.find((value) => value.timestamp.getTime() === key); const atr = this.getScalar(indicators, IndicatorType.ATR, 14).values.find((value) => value.timestamp.getTime() === key)?.value; const ema15 = latestEma(fastEma); const ema35 = latestEma(slowEma);
     const regime = adx && atr !== undefined ? this.regimeService.classify({ timestamp: candle.timestamp, close: candle.close, ema15, ema35, rsi14, adx14: adx.adx, atr14: atr }).primaryRegime : undefined;

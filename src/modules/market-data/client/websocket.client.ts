@@ -14,6 +14,7 @@ interface WebSocketAuthorizationResponse {
 export default class MarketDataWebSocketClient extends EventEmitter {
   private axios: AxiosInstance;
   private socket?: WebSocket;
+  private intentionalDisconnect = false;
 
   constructor(private accessToken: string) {
     super();
@@ -22,15 +23,25 @@ export default class MarketDataWebSocketClient extends EventEmitter {
 
   async connect(): Promise<void> {
     try {
+      this.intentionalDisconnect = false;
       if (this.socket?.readyState === WebSocket.OPEN) {
         logger.info('Upstox market data WebSocket is already connected');
         return;
       }
 
       const authorizedUrl = await this.getAuthorizedWebSocketUrl();
+      if (this.intentionalDisconnect) {
+        throw new Error('WebSocket connection was cancelled by an intentional disconnect.');
+      }
       logger.info('Connecting to Upstox market data WebSocket');
 
       await new Promise<void>((resolve, reject) => {
+        let settled = false;
+        const finish = (error?: Error): void => {
+          if (settled) return;
+          settled = true;
+          error ? reject(error) : resolve();
+        };
         const socket = new WebSocket(authorizedUrl);
         socket.binaryType = 'arraybuffer';
         this.socket = socket;
@@ -38,7 +49,7 @@ export default class MarketDataWebSocketClient extends EventEmitter {
         socket.addEventListener('open', () => {
           logger.info('Connected to Upstox market data WebSocket');
           this.emit('connected');
-          resolve();
+          finish();
         });
 
         socket.addEventListener('message', (event: MessageEvent) => {
@@ -56,9 +67,14 @@ export default class MarketDataWebSocketClient extends EventEmitter {
 
         socket.addEventListener('error', () => {
           const error = new Error('Upstox market data WebSocket connection failed.');
+          if (this.intentionalDisconnect) {
+            logger.debug('Ignoring expected WebSocket error during intentional disconnect');
+            finish(error);
+            return;
+          }
           logger.error('Upstox market data WebSocket error', { error });
           this.emit('connectionError', error);
-          reject(error);
+          finish(error);
         });
 
         socket.addEventListener('close', (event: CloseEvent) => {
@@ -67,21 +83,25 @@ export default class MarketDataWebSocketClient extends EventEmitter {
             this.socket = undefined;
           }
 
-          logger.info('Disconnected from Upstox market data WebSocket', {
+          const intentional = this.intentionalDisconnect;
+          logger.info(intentional ? 'Disconnected from Upstox market data WebSocket intentionally' : 'Disconnected from Upstox market data WebSocket', {
             code: event.code,
             reason: event.reason,
             wasClean: event.wasClean,
           });
-          this.emit('disconnected', event, isCurrentSocket);
+          if (!settled && !intentional) finish(new Error(`Upstox market data WebSocket closed before opening (code ${event.code}).`));
+          this.emit('disconnected', { ...event, intentional }, isCurrentSocket);
         });
       });
     } catch (error) {
+      if (this.intentionalDisconnect) throw error;
       logger.error('Failed to connect to Upstox market data WebSocket', { error });
       throw error;
     }
   }
 
   disconnect(): void {
+    this.intentionalDisconnect = true;
     if (!this.socket) {
       return;
     }
