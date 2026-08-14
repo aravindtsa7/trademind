@@ -6,3 +6,14 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
+
+# Generated research artifacts
+artifacts/banknifty-data-audit/
+artifacts/banknifty-data-prep/
+artifacts/banknifty-option-prep/
+artifacts/banknifty-v1-opening-range-retest/
+artifacts/v8-nifty-bullish-reclaim/
+artifacts/v9-nifty-volatility-expansion/
+artifacts/v10-nifty-banknifty-lead-lag/
+artifacts/v11-nifty-iv-skew/
+artifacts/v12-order-flow/
