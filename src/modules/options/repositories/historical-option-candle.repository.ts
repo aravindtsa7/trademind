@@ -27,6 +27,21 @@ export default class HistoricalOptionCandleRepository {
     return rows.flat();
   }
 
+  /**
+   * Local-only contract metadata recovered from already cached historical
+   * option candles.  Research callers use this only when their approved
+   * dates are explicit; it never infers a contract from a future session.
+   */
+  async findContractMetadataForTradingDates(tradingDates: readonly string[], timeframe = '1minute'): Promise<HistoricalOptionCandle[]> {
+    const uniqueDates = [...new Set(tradingDates)].sort();
+    if (!uniqueDates.length) return [];
+    return this.execute('find contract metadata for trading dates', () => prisma.historicalOptionCandle.findMany({
+      where: { timeframe, OR: uniqueDates.map((tradingDate) => ({ candleTime: { gte: dayStart(tradingDate), lte: dayEnd(tradingDate) } })) },
+      distinct: ['instrumentKey'],
+      orderBy: [{ instrumentKey: 'asc' }, { candleTime: 'asc' }],
+    }));
+  }
+
   async deleteExactCandleTimes(instrumentKey: string, timeframe: string, candleTimes: readonly Date[]): Promise<number> {
     if (candleTimes.length === 0) return 0;
     return this.execute('delete exact candle times', async () => (await prisma.historicalOptionCandle.deleteMany({ where: { instrumentKey, timeframe, candleTime: { in: [...candleTimes] } } })).count);

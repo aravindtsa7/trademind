@@ -45,6 +45,20 @@
       "splitManifestVersion": "nifty-104-split-v1",
       "finalHoldoutStatus": "LEGACY_CONTAMINATED",
       "notes": "Legacy full-scope research; configs=12800, policies=5, scope=2026-03-02..2026-08-04. Artifact paths are in artifacts/research-validation."
+    },
+    {
+      "strategyId": "V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW",
+      "family": "V8",
+      "researchStatus": "SHADOW_ONLY",
+      "splitManifestVersion": "nifty-104-split-v1",
+      "finalHoldoutStatus": "LEGACY_CONTAMINATED",
+      "forwardValidationStartDate": "2026-08-17",
+      "promotionStatus": {
+        "paper": "NOT_ELIGIBLE_FOR_PAPER",
+        "live": "NOT_ELIGIBLE_FOR_LIVE",
+        "manualReviewRequirements": "At least 30 resolved new forward shadow trades, 20 distinct forward sessions, positive executable-estimated expectancy, acceptable drawdown, no critical data-quality failures, and measured friction that does not eliminate the edge."
+      },
+      "notes": "Frozen solely using TRAIN-only revalidation (60 sessions, 4608 configs x 9 policies). Legacy VALIDATION is contaminated diagnostic only. The legacy V8 runner raw-loaded FINAL_HOLDOUT underlying rows but did not outcome-score FINAL_HOLDOUT; therefore FINAL_HOLDOUT is unavailable for historical promotion testing. The PATH B freeze and diagnostic paths did not access FINAL_HOLDOUT. Fingerprint c815f819acd71e98. Frozen artifact: artifacts/v8-nifty-bullish-reclaim/train-only-freeze-v1/frozen-candidate.json."
     }
   ]
 }

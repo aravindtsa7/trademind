@@ -7,7 +7,6 @@ import IndicatorEngineService from '../modules/indicators/services/indicator-eng
 import { IndicatorType } from '../modules/indicators/types';
 import AdaptiveMarketRegimeService from '../modules/adaptive-intraday/services/adaptive-market-regime.service';
 import { Candle } from '../modules/indicators/types';
-import UpstoxExpiredOptionClient from '../modules/options/client/upstox-expired-option.client';
 import HistoricalOptionCandleRepository from '../modules/options/repositories/historical-option-candle.repository';
 import HistoricalOptionCandleCacheService from '../modules/options/services/historical-option-candle-cache.service';
 import HistoricalOptionResearchPreloaderService from '../modules/options/services/historical-option-research-preloader.service';
@@ -18,7 +17,7 @@ import { OptionContract, OptionContractType } from '../modules/options/types';
 import { StrategySignal } from '../modules/strategies/dto/strategy-signal.dto';
 import { chooseHistoricalOptionExpiry } from './helpers/v3-option-cache-diagnostics';
 import { filterCrossSessionResearchTargets, prepareCrossSessionIndicatorWarmup, CrossSessionPreparedSession } from './helpers/cross-session-indicator-warmup';
-import { assertV8NoLookAhead, createV8BullishReclaimConfigs, generateV8BullishReclaimSignals, V8BullishReclaimConfig, V8BullishReclaimSignal, V8IndicatorContext, V8PreparedSession, V8_STRATEGY_ID, v8ConfigKey } from '../modules/research/v8-nifty-bullish-reclaim';
+import { assertV8NoLookAhead, assertV8TrainOnlyDates, createV8BullishReclaimConfigs, generateV8BullishReclaimSignals, selectV8TrainOnlyWinner, V8BullishReclaimConfig, V8BullishReclaimSignal, V8IndicatorContext, V8PreparedSession, V8_STRATEGY_ID, V8_TRAIN_FREEZE_SELECTION_POLICY, v8ConfigKey, v8FrozenStrategyFingerprint, v8FrozenStrategyInputs } from '../modules/research/v8-nifty-bullish-reclaim';
 import { deflatedSharpeRatio, resultMatrix, simplifiedPbo } from '../modules/research-validation';
 import { ResearchSplitManifest } from '../modules/research-validation/types/research-validation.types';
 import UpstoxExpiredOptionCandleClient from '../modules/options/client/upstox-expired-option-candle.client';
@@ -28,7 +27,11 @@ logger.silent = true;
 
 const UNDERLYING = 'NSE_INDEX|Nifty 50';
 const END_DATE = process.env.RESEARCH_END_DATE?.trim() || '2026-08-04';
-const DIRECTORY = resolve(process.cwd(), 'artifacts', 'v8-nifty-bullish-reclaim');
+const TRAIN_ONLY_FREEZE = process.env.V8_TRAIN_ONLY_FREEZE === 'true';
+const LEGACY_VALIDATION_DIAGNOSTIC = process.env.V8_LEGACY_VALIDATION_DIAGNOSTIC === 'true';
+if (TRAIN_ONLY_FREEZE && LEGACY_VALIDATION_DIAGNOSTIC) throw new Error('V8 cannot run TRAIN freeze and legacy validation diagnostic together.');
+const FREEZE_DIRECTORY = resolve(process.cwd(), 'artifacts', 'v8-nifty-bullish-reclaim', 'train-only-freeze-v1');
+const DIRECTORY = LEGACY_VALIDATION_DIAGNOSTIC ? FREEZE_DIRECTORY : resolve(process.cwd(), 'artifacts', 'v8-nifty-bullish-reclaim', ...(TRAIN_ONLY_FREEZE ? ['train-only-freeze-v1'] : []));
 const SPLIT_PATH = resolve(process.cwd(), 'artifacts', 'research-validation', 'nifty-104-split-v1.json');
 const POLICIES = [
   { target: 4, stop: 4, hold: 10 }, { target: 4, stop: 4, hold: 15 }, { target: 4, stop: 4, hold: 20 },
@@ -47,20 +50,23 @@ interface RecordValue { signal: V8BullishReclaimSignal; exit: OptionExitPolicyEv
 async function run(): Promise<void> {
   if (process.env.RESEARCH_LOCAL_ONLY !== 'true') throw new Error('V8 Phase 2 requires RESEARCH_LOCAL_ONLY=true.');
   const token = process.env.UPSTOX_ACCESS_TOKEN?.trim();
-  if (!token) throw new Error('Set UPSTOX_ACCESS_TOKEN in .env for historical contract metadata.');
   const manifest = JSON.parse(readFileSync(SPLIT_PATH, 'utf8')) as ResearchSplitManifest;
   const splitByDate = new Map(manifest.sessions.map((entry) => [entry.tradingDate, entry.split]));
-  const allowedDates = manifest.sessions.filter((entry) => (entry.split === 'TRAIN' || entry.split === 'VALIDATION') && entry.tradingDate <= END_DATE).map((entry) => entry.tradingDate);
-  if (allowedDates.length !== 80) throw new Error(`Expected 80 TRAIN+VALIDATION sessions; found ${allowedDates.length}.`);
+  const allowedDates = manifest.sessions.filter((entry) => (TRAIN_ONLY_FREEZE ? entry.split === 'TRAIN' : LEGACY_VALIDATION_DIAGNOSTIC ? entry.split === 'VALIDATION' : entry.split === 'TRAIN' || entry.split === 'VALIDATION') && entry.tradingDate <= END_DATE).map((entry) => entry.tradingDate);
+  const expectedSessions = TRAIN_ONLY_FREEZE ? 60 : LEGACY_VALIDATION_DIAGNOSTIC ? 20 : 80;
+  if (allowedDates.length !== expectedSessions) throw new Error(`Expected ${expectedSessions} allowed V8 sessions; found ${allowedDates.length}.`);
   const dates = [...allowedDates].sort();
   const dateIndex = new Map(dates.map((date, index) => [date, index]));
 
   const optionRepository = new HistoricalOptionCandleRepository();
   const underlyingRepository = new HistoricalCandleRepository();
-  const preloader = new HistoricalOptionResearchPreloaderService(underlyingRepository, optionRepository, new HistoricalOptionCandleCacheService(optionRepository, new UpstoxExpiredOptionCandleClient(token)), true);
+  const preloader = new HistoricalOptionResearchPreloaderService(underlyingRepository, optionRepository, new HistoricalOptionCandleCacheService(optionRepository, new UpstoxExpiredOptionCandleClient(token ?? 'RESEARCH_LOCAL_ONLY_NO_NETWORK')), true);
   const sessions = await loadSessions(preloader, splitByDate, dates);
   const indicators = createIndicators(sessions, new IndicatorEngineService());
-  const configs = createV8BullishReclaimConfigs();
+  const frozenInput = LEGACY_VALIDATION_DIAGNOSTIC ? JSON.parse(readFileSync(resolve(FREEZE_DIRECTORY, 'frozen-candidate.json'), 'utf8')) as { candidate: { id: string; config: V8BullishReclaimConfig; policy: Policy } } : undefined;
+  const configs = createV8BullishReclaimConfigs().filter((config) => !frozenInput || v8ConfigKey(config) === v8ConfigKey(frozenInput.candidate.config));
+  const policies = POLICIES.filter((policy) => !frozenInput || policyKey(policy) === policyKey(frozenInput.candidate.policy));
+  if (LEGACY_VALIDATION_DIAGNOSTIC && (configs.length !== 1 || policies.length !== 1)) throw new Error('Frozen V8 candidate was not represented exactly once in the frozen grid.');
   const signalsByConfig = new Map<string, V8BullishReclaimSignal[]>();
   const uniqueSignals = new Map<string, V8BullishReclaimSignal>();
   configs.forEach((config) => {
@@ -70,33 +76,37 @@ async function run(): Promise<void> {
     signals.forEach((signal) => uniqueSignals.set(signalKey(signal), uniqueSignals.get(signalKey(signal)) ?? signal));
   });
 
-  const metadataClient = new UpstoxExpiredOptionClient(token);
   const selector = new OptionContractSelectorService();
-  const expiries = new Map<string, Promise<string[]>>();
-  const contracts = new Map<string, Promise<readonly OptionContract[]>>();
-  const preparedValues = await mapConcurrent([...uniqueSignals.values()], 4, async (signal) => prepare(signal, metadataClient, selector, expiries, contracts));
+  const contractsByDate = localContractsByDate(await optionRepository.findContractMetadataForTradingDates(dates), dates);
+  const preparedValues = await mapConcurrent([...uniqueSignals.values()], 4, async (signal) => prepare(signal, selector, contractsByDate));
   const required = [...new Map(preparedValues.map((item) => [`${item.instrumentKey}\u0000${item.tradingDate}`, item])).values()];
   const inspection = await preloader.inspectLocalOptionSessions(required);
   const coverage = { required: inspection.uniqueRequiredSessions, complete: inspection.completeLocalSessions, missing: inspection.missingLocalSessions, incomplete: inspection.incompleteLocalSessions };
-  if (coverage.missing || coverage.incomplete) {
-    write('outcome-summary.json', { phase: 'PHASE_2_BLOCKED_CACHE', scope: { instrumentKey: UNDERLYING, start: dates[0], end: END_DATE, targetSessions: dates.length, includedSplits: ['TRAIN', 'VALIDATION'], excludedSplits: ['EMBARGO_1', 'EMBARGO_2', 'FINAL_HOLDOUT'] }, configurations: configs.length, policiesPerConfiguration: POLICIES.length, coverage, missingSessions: inspection.sessions.filter((session) => !session.complete) });
-    throw new Error(`V8 Phase 2 blocked by local cache coverage: ${JSON.stringify(coverage)}.`);
-  }
-  await preloader.preloadOptionSessions(required);
+  const completeKeys = new Set(inspection.sessions.filter((session) => session.complete).map((session) => `${session.instrumentKey}\u0000${session.tradingDate}`));
+  const completePrepared = preparedValues.filter((item) => completeKeys.has(`${item.instrumentKey}\u0000${item.tradingDate}`));
+  // Strictly local research: a missing cached option path is an unavailable
+  // outcome, never a reason to contact Upstox or to discard the whole grid.
+  await preloader.preloadOptionSessions(completePrepared);
   const preload = preloader.getStats();
   if (preload.upstoxMissingSessionDownloads !== 0 || preload.dbFallbackHits !== 0) throw new Error(`Unexpected option cache activity: ${JSON.stringify(preload)}.`);
 
   const resolutions = new Map<string, Resolution>();
   await mapConcurrent(preparedValues, 10, async (item) => {
+    if (!completeKeys.has(`${item.instrumentKey}\u0000${item.tradingDate}`)) {
+      const exits = new Map<string, OptionExitPolicyEvaluationResult>();
+      policies.forEach((policy) => exits.set(policyKey(policy), unavailableExit(item.signal, policy)));
+      resolutions.set(signalKey(item.signal), { selectedContract: item.selectedContract, exits });
+      return;
+    }
     try {
       const candles = await preloader.getOptionSession(item);
       const path = new OptionPremiumPathAnalysisService(item.signal.timestamp, candles);
       const exits = new Map<string, OptionExitPolicyEvaluationResult>();
-      POLICIES.forEach((policy) => exits.set(policyKey(policy), path.evaluate({ type: 'TARGET_STOP', targetPercent: policy.target, stopLossPercent: policy.stop, maximumHoldingMinutes: policy.hold })));
+      policies.forEach((policy) => exits.set(policyKey(policy), path.evaluate({ type: 'TARGET_STOP', targetPercent: policy.target, stopLossPercent: policy.stop, maximumHoldingMinutes: policy.hold })));
       resolutions.set(signalKey(item.signal), { selectedContract: item.selectedContract, exits });
     } catch {
       const exits = new Map<string, OptionExitPolicyEvaluationResult>();
-      POLICIES.forEach((policy) => exits.set(policyKey(policy), unavailableExit(item.signal, policy)));
+      policies.forEach((policy) => exits.set(policyKey(policy), unavailableExit(item.signal, policy)));
       resolutions.set(signalKey(item.signal), { selectedContract: item.selectedContract, exits });
     }
   });
@@ -104,9 +114,27 @@ async function run(): Promise<void> {
   const metrics: CandidateMetric[] = [];
   configs.forEach((config) => {
     const signals = signalsByConfig.get(v8ConfigKey(config)) ?? [];
-    POLICIES.forEach((policy) => metrics.push(calculateMetric(config, policy, signals, resolutions, dates, dateIndex, splitByDate)));
+    policies.forEach((policy) => metrics.push(calculateMetric(config, policy, signals, resolutions, dates, dateIndex, splitByDate)));
   });
+  if (LEGACY_VALIDATION_DIAGNOSTIC) {
+    const candidate = metrics[0];
+    write('legacy-validation-diagnostic.json', {
+      label: 'LEGACY_CONTAMINATED_DIAGNOSTIC',
+      strategyId: 'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW',
+      selectionInfluence: 'NONE',
+      finalHoldoutAccessed: false,
+      dates,
+      candidate: serializeMetric(candidate, dates),
+      monthly: monthlyBreakdown(candidate, dates),
+      firstHalfSecondHalf: halfBreakdown(candidate, dates),
+      coverage,
+      cache: { ...preloader.getStats(), optionDownloads: 0, writes: 0 },
+    });
+    console.log(JSON.stringify({ mode: 'LEGACY_CONTAMINATED_DIAGNOSTIC', finalHoldoutAccessed: false, candidate: serializeMetric(candidate, dates), coverage }, null, 2));
+    return;
+  }
   const groups = candidateGroups(metrics, signalsByConfig, resolutions, dates, dateIndex, splitByDate);
+  const frozen = TRAIN_ONLY_FREEZE ? selectV8TrainOnlyWinner(metrics) : undefined;
   const tiers = frequencyTiers(metrics, dates, signalsByConfig, resolutions);
   const parameterFamilies = familyAnalysis(metrics);
   const walkForward = walkForwardDiagnostics(metrics, dates, signalsByConfig, resolutions, dateIndex);
@@ -116,23 +144,51 @@ async function run(): Promise<void> {
   mkdirSync(DIRECTORY, { recursive: true });
   const serializedGroups = serializeGroups(groups, dates, signalsByConfig, resolutions, splitByDate);
   write('top-candidates.json', { groups: serializedGroups, frequencyTiers: tiers });
-  write('validation-report.json', { split: { mode: 'TRAIN_VALIDATION_ONLY', dates: { train: dates.filter((date) => splitByDate.get(date) === 'TRAIN'), validation: dates.filter((date) => splitByDate.get(date) === 'VALIDATION') }, finalHoldoutAccessed: false }, groups: serializedGroups, walkForward, multipleTesting, verdict });
-  write('outcome-summary.json', { strategyId: V8_STRATEGY_ID, phase: 'PHASE_2_OUTCOME_RESEARCH', scope: { instrumentKey: UNDERLYING, start: dates[0], end: END_DATE, targetSessions: dates.length, includedSplits: ['TRAIN', 'VALIDATION'], excludedSplits: ['EMBARGO_1', 'EMBARGO_2', 'FINAL_HOLDOUT'], currentSessionExcluded: '2026-08-13' }, configurations: configs.length, policiesPerConfiguration: POLICIES.length, totalPolicyEvaluations: metrics.length, coverage, cache: { ...preload, optionDownloads: preload.upstoxMissingSessionDownloads, writes: preload.newlyStoredOptionCandles }, groups: serializedGroups, frequencyTiers: tiers, parameterFamilies, multipleTesting, overlap, verdict, promotion: { shadowRecommendationOnly: true, paperOrLiveIntegration: false } });
-  console.log(JSON.stringify({ strategyId: V8_STRATEGY_ID, sessions: dates.length, configurations: configs.length, policiesPerConfiguration: POLICIES.length, totalPolicyEvaluations: metrics.length, coverage, cache: { optionDownloads: preload.upstoxMissingSessionDownloads, newlyStoredRows: preload.newlyStoredOptionCandles, dbFallbackHits: preload.dbFallbackHits }, groups: serializedGroups, frequencyTiers: tiers, multipleTesting, overlap, verdict }, null, 2));
+  write('validation-report.json', { split: { mode: TRAIN_ONLY_FREEZE ? 'TRAIN_ONLY_FREEZE' : 'TRAIN_VALIDATION_ONLY', dates: { train: dates.filter((date) => splitByDate.get(date) === 'TRAIN'), validation: TRAIN_ONLY_FREEZE ? [] : dates.filter((date) => splitByDate.get(date) === 'VALIDATION') }, finalHoldoutAccessed: false, validationStatus: TRAIN_ONLY_FREEZE ? 'LEGACY_CONTAMINATED_DIAGNOSTIC_NOT_READ' : undefined }, groups: serializedGroups, walkForward, multipleTesting, verdict });
+  write('outcome-summary.json', { strategyId: V8_STRATEGY_ID, phase: TRAIN_ONLY_FREEZE ? 'TRAIN_ONLY_FROZEN_SELECTION' : 'PHASE_2_OUTCOME_RESEARCH', scope: { instrumentKey: UNDERLYING, start: dates[0], end: dates.at(-1), targetSessions: dates.length, includedSplits: TRAIN_ONLY_FREEZE ? ['TRAIN'] : ['TRAIN', 'VALIDATION'], excludedSplits: ['EMBARGO_1', 'EMBARGO_2', 'VALIDATION', 'FINAL_HOLDOUT'].filter((split) => !(!TRAIN_ONLY_FREEZE && split === 'VALIDATION')), currentSessionExcluded: '2026-08-13', finalHoldoutAccessed: false }, configurations: configs.length, policiesPerConfiguration: policies.length, totalPolicyEvaluations: metrics.length, coverage, cache: { ...preload, optionDownloads: preload.upstoxMissingSessionDownloads, writes: preload.newlyStoredOptionCandles }, groups: serializedGroups, frozenCandidate: frozen, frequencyTiers: tiers, parameterFamilies, multipleTesting, overlap, verdict, promotion: { shadowOnly: true, paperEligible: false, liveEligible: false } });
+  if (frozen) write('frozen-candidate.json', { strategyId: 'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW', selectionScope: 'TRAIN_ONLY', selectionPolicy: V8_TRAIN_FREEZE_SELECTION_POLICY, finalHoldoutAccessed: false, validationStatus: 'LEGACY_CONTAMINATED_DIAGNOSTIC_NOT_READ', candidate: serializeMetric(frozen, dates), trainDiagnostics: { monthly: monthlyBreakdown(frozen, dates), firstHalfSecondHalf: halfBreakdown(frozen, dates) }, fingerprintInputs: v8FrozenStrategyInputs(frozen), fingerprint: v8FrozenStrategyFingerprint(frozen), promotionStatus: { mode: 'SHADOW_ONLY', paper: 'NOT_ELIGIBLE_FOR_PAPER', live: 'NOT_ELIGIBLE_FOR_LIVE' } });
+  console.log(JSON.stringify({ strategyId: V8_STRATEGY_ID, mode: TRAIN_ONLY_FREEZE ? 'TRAIN_ONLY_FREEZE' : 'TRAIN_VALIDATION_ONLY', sessions: dates.length, configurations: configs.length, policiesPerConfiguration: policies.length, totalPolicyEvaluations: metrics.length, frozenCandidate: frozen, coverage, cache: { optionDownloads: preload.upstoxMissingSessionDownloads, newlyStoredRows: preload.newlyStoredOptionCandles, dbFallbackHits: preload.dbFallbackHits }, verdict }, null, 2));
 }
 
 async function loadSessions(preloader: HistoricalOptionResearchPreloaderService, splitByDate: ReadonlyMap<string, string>, dates: readonly string[]): Promise<V8PreparedSession[]> {
-  const complete = [...(await preloader.preloadUnderlying(UNDERLYING, '1minute')).underlyingByDate.entries()].filter(([, rows]) => completeSession(rows)).sort(([left], [right]) => left.localeCompare(right));
+  if (TRAIN_ONLY_FREEZE) assertV8TrainOnlyDates(dates, splitByDate);
+  const dataset = TRAIN_ONLY_FREEZE || LEGACY_VALIDATION_DIAGNOSTIC ? await preloader.preloadUnderlyingRange(UNDERLYING, '1minute', new Date(`${dates[0]}T00:00:00+05:30`), new Date(`${dates.at(-1)}T23:59:59.999+05:30`)) : await preloader.preloadUnderlying(UNDERLYING, '1minute');
+  const complete = [...dataset.underlyingByDate.entries()].filter(([date, rows]) => dates.includes(date) && completeSession(rows)).sort(([left], [right]) => left.localeCompare(right));
   const all = prepareCrossSessionIndicatorWarmup(complete.map(([date, candles]) => ({ date, candles })), new CandleTimeframeAggregatorService(), new IndicatorEngineService(), new AdaptiveMarketRegimeService({ trendStrengthThreshold: 20, emaProximityPercent: .05, highVolatilityThreshold: .1, lowVolatilityThreshold: .05 }));
   const allowed = new Set(dates);
   const result = filterCrossSessionResearchTargets(all, END_DATE).filter((session) => allowed.has(session.date)) as V8PreparedSession[];
-  if (result.length !== dates.length || result.some((session) => !['TRAIN', 'VALIDATION'].includes(splitByDate.get(session.date) ?? ''))) throw new Error('Protected V8 session preparation mismatch.');
+  if (result.length !== dates.length || result.some((session) => TRAIN_ONLY_FREEZE ? splitByDate.get(session.date) !== 'TRAIN' : !['TRAIN', 'VALIDATION'].includes(splitByDate.get(session.date) ?? ''))) throw new Error('Protected V8 session preparation mismatch.');
   return result;
 }
 
 function createIndicators(sessions: readonly V8PreparedSession[], engine: IndicatorEngineService): V8IndicatorContext { const maps = ([2, 3] as const).map((timeframe) => { const values = new Map<number, number>(); sessions.forEach((session) => { const result = engine.calculate(session.frames[timeframe].candles, { indicators: [{ type: IndicatorType.ATR, period: 14 }] }); result.indicators.find((entry) => entry.config.type === IndicatorType.ATR)?.result.values.forEach((entry) => { if ('value' in entry && typeof entry.value === 'number') values.set(entry.timestamp.getTime(), entry.value); }); }); return [timeframe, values] as const; }); return { atr14ByFrame: new Map(maps) }; }
 
-async function prepare(signal: V8BullishReclaimSignal, client: UpstoxExpiredOptionClient, selector: OptionContractSelectorService, expiryCache: Map<string, Promise<string[]>>, contractCache: Map<string, Promise<readonly OptionContract[]>>): Promise<Prepared> { const expiryList = await cached(expiryCache, UNDERLYING, () => client.fetchAvailableExpiries(UNDERLYING)); const expiry = chooseHistoricalOptionExpiry(expiryList, signal.date); const available = await cached(contractCache, expiry, () => client.fetchExpiredOptionContracts(UNDERLYING, expiry)); const underlying = available[0]?.underlying; if (!underlying) throw new Error(`Missing historical option underlying for expiry ${expiry}.`); const selected = selector.select({ underlying, spotPrice: signal.spotPrice, signal: StrategySignal.BUY_CE, timestamp: signal.timestamp, contracts: available }); const contract = available.find((entry) => entry.instrumentKey === selected.instrumentKey); if (!contract) throw new Error(`Selected contract ${selected.instrumentKey} was absent.`); return { signal, selectedContract: contract, instrumentKey: contract.instrumentKey, tradingDate: signal.date, metadata: { tradingSymbol: contract.tradingSymbol, optionType: contract.optionType, strikePrice: contract.strikePrice, expiry: contract.expiry } }; }
+async function prepare(signal: V8BullishReclaimSignal, selector: OptionContractSelectorService, contractsByDate: ReadonlyMap<string, readonly OptionContract[]>): Promise<Prepared> {
+  const dateContracts = contractsByDate.get(signal.date) ?? [];
+  const expiryList = [...new Set(dateContracts.map((contract) => istDate(contract.expiry)))].sort();
+  const expiry = chooseHistoricalOptionExpiry(expiryList, signal.date);
+  const available = dateContracts.filter((contract) => istDate(contract.expiry) === expiry);
+  const underlying = available[0]?.underlying;
+  if (!underlying || !available.length) throw new Error(`Local-only V8 contract metadata missing for ${signal.date} expiry ${expiry}.`);
+  const selected = selector.select({ underlying, spotPrice: signal.spotPrice, signal: StrategySignal.BUY_CE, timestamp: signal.timestamp, contracts: available });
+  const contract = available.find((entry) => entry.instrumentKey === selected.instrumentKey);
+  if (!contract) throw new Error(`Selected local V8 contract ${selected.instrumentKey} was absent.`);
+  return { signal, selectedContract: contract, instrumentKey: contract.instrumentKey, tradingDate: signal.date, metadata: { tradingSymbol: contract.tradingSymbol, optionType: contract.optionType, strikePrice: contract.strikePrice, expiry: contract.expiry } };
+}
+
+function localContractsByDate(rows: readonly { instrumentKey: string; tradingSymbol: string | null; optionType: string | null; strikePrice: unknown; expiry: Date | null }[], dates: readonly string[]): Map<string, readonly OptionContract[]> {
+  const result = new Map<string, OptionContract[]>();
+  const requested = new Set(dates);
+  rows.forEach((row) => {
+    if (!row.optionType || (row.optionType !== 'CE' && row.optionType !== 'PE') || row.strikePrice === null || !row.expiry) return;
+    const expiry = new Date(row.expiry.getTime());
+    const contract: OptionContract = { instrumentKey: row.instrumentKey, tradingSymbol: row.tradingSymbol ?? row.instrumentKey, underlying: 'NIFTY 50', strikePrice: Number(row.strikePrice), expiry, optionType: row.optionType, exchange: 'NSE', segment: 'FO' };
+    dates.forEach((date) => { if (requested.has(date) && expiry.getTime() >= new Date(`${date}T00:00:00+05:30`).getTime()) result.set(date, [...(result.get(date) ?? []), contract]); });
+  });
+  dates.forEach((date) => { if (!(result.get(date)?.length)) throw new Error(`No local historical option contract metadata available for V8 date ${date}.`); });
+  return result;
+}
+function istDate(timestamp: Date): string { const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(timestamp).map((part) => [part.type, part.value])); return `${parts.year}-${parts.month}-${parts.day}`; }
 
 function calculateMetric(config: V8BullishReclaimConfig, policy: Policy, signals: readonly V8BullishReclaimSignal[], resolutions: ReadonlyMap<string, Resolution>, dates: readonly string[], dateIndex: ReadonlyMap<string, number>, splitByDate: ReadonlyMap<string, string>): CandidateMetric {
   const records = signals.map((signal) => ({ signal, exit: resolutions.get(signalKey(signal))?.exits.get(policyKey(policy)) ?? unavailableExit(signal, policy) }));
@@ -176,7 +232,9 @@ function multipleTestingDiagnostics(metrics: readonly CandidateMetric[], dates: 
 function recordsFor(metric: CandidateMetric, dates: ReadonlySet<string>, signalsByConfig: ReadonlyMap<string, readonly V8BullishReclaimSignal[]>, resolutions: ReadonlyMap<string, Resolution>): RecordValue[] { return (signalsByConfig.get(v8ConfigKey(metric.config)) ?? []).filter((signal) => dates.has(signal.date)).map((signal) => ({ signal, exit: resolutions.get(signalKey(signal))?.exits.get(policyKey(metric.policy)) ?? unavailableExit(signal, metric.policy) })); }
 
 function serializeGroups(groups: ReturnType<typeof candidateGroups>, dates: readonly string[], signalsByConfig: ReadonlyMap<string, readonly V8BullishReclaimSignal[]>, resolutions: ReadonlyMap<string, Resolution>, splitByDate: ReadonlyMap<string, string>) { const encode = (metric: CandidateMetric | undefined) => metric ? { ...serializeMetric(metric, dates), breakdown: detailedBreakdown(metric, signalsByConfig, resolutions, dates, splitByDate) } : null; return { credibleCandidateCount: groups.credibleCount, highestFrequency: encode(groups.highestFrequency), highestQuality: encode(groups.highestQuality), bestBalanced: encode(groups.bestBalanced), bestValidationStability: encode(groups.bestValidationStability), bestCostRobustness: encode(groups.bestCostRobustness), top20: groups.top20.map(encode) }; }
-function serializeMetric(metric: CandidateMetric, dates: readonly string[]) { return { id: metric.id, config: metric.config, policy: metric.policy, totalSignals: metric.totalSignals, resolvedTrades: metric.resolvedTrades, settledTrades: metric.settledTrades, unavailableTrades: metric.unavailableTrades, tradesPerSession: metric.settledTrades / 80, targetCount: metric.targetCount, stopCount: metric.stopCount, timeoutCount: metric.timeoutCount, ambiguousCount: metric.ambiguousCount, targetRate: metric.targetRate, stopRate: metric.stopRate, timeoutRate: metric.timeoutRate, ambiguousRate: metric.ambiguousRate, unavailableRate: metric.unavailableRate, grossAverage: metric.grossAverage, grossMedian: metric.grossMedian, netAt020: metric.netAt020, netAt040: metric.netAt040, netAt060: metric.netAt060, netAt080: metric.netAt080, netAt100: metric.netAt100, maxDrawdown: metric.maxDrawdown, maxLosingStreak: metric.maxLosingStreak, profitableDayPercent: metric.profitableDayPercent, train: metric.train, validation: metric.validation, trainToValidationDegradationNetAt040: metric.validation.netAt040 - metric.train.netAt040, dailyGross: dates.map((date, index) => ({ date, gross: metric.dailyGross[index], netAt040: metric.dailyNet40[index] })) }; }
+function serializeMetric(metric: CandidateMetric, dates: readonly string[]) { return { id: metric.id, config: metric.config, policy: metric.policy, totalSignals: metric.totalSignals, resolvedTrades: metric.resolvedTrades, settledTrades: metric.settledTrades, unavailableTrades: metric.unavailableTrades, tradesPerSession: dates.length ? metric.settledTrades / dates.length : 0, targetCount: metric.targetCount, stopCount: metric.stopCount, timeoutCount: metric.timeoutCount, ambiguousCount: metric.ambiguousCount, targetRate: metric.targetRate, stopRate: metric.stopRate, timeoutRate: metric.timeoutRate, ambiguousRate: metric.ambiguousRate, unavailableRate: metric.unavailableRate, grossAverage: metric.grossAverage, grossMedian: metric.grossMedian, netAt020: metric.netAt020, netAt040: metric.netAt040, netAt060: metric.netAt060, netAt080: metric.netAt080, netAt100: metric.netAt100, maxDrawdown: metric.maxDrawdown, maxLosingStreak: metric.maxLosingStreak, profitableDayPercent: metric.profitableDayPercent, train: metric.train, validation: metric.validation, trainToValidationDegradationNetAt040: metric.validation.netAt040 - metric.train.netAt040, dailyGross: dates.map((date, index) => ({ date, gross: metric.dailyGross[index], netAt040: metric.dailyNet40[index] })) }; }
+function monthlyBreakdown(metric: CandidateMetric, dates: readonly string[]) { const groups = new Map<string, { gross: number[]; net40: number[] }>(); dates.forEach((date, index) => { const month = date.slice(0, 7); const value = groups.get(month) ?? { gross: [], net40: [] }; value.gross.push(metric.dailyGross[index]); value.net40.push(metric.dailyNet40[index]); groups.set(month, value); }); return [...groups.entries()].map(([month, values]) => ({ month, activeDays: values.gross.filter((value) => value !== 0).length, grossAveragePerSession: average(values.gross), netAt040AveragePerSession: average(values.net40), grossTotal: values.gross.reduce((sum, value) => sum + value, 0), netAt040Total: values.net40.reduce((sum, value) => sum + value, 0) })); }
+function halfBreakdown(metric: CandidateMetric, dates: readonly string[]) { const midpoint = Math.ceil(dates.length / 2); const make = (start: number, end: number) => ({ sessions: end - start, grossAveragePerSession: average(metric.dailyGross.slice(start, end)), netAt040AveragePerSession: average(metric.dailyNet40.slice(start, end)), grossTotal: metric.dailyGross.slice(start, end).reduce((sum, value) => sum + value, 0), netAt040Total: metric.dailyNet40.slice(start, end).reduce((sum, value) => sum + value, 0) }); return { firstHalf: make(0, midpoint), secondHalf: make(midpoint, dates.length) }; }
 function detailedBreakdown(metric: CandidateMetric, signalsByConfig: ReadonlyMap<string, readonly V8BullishReclaimSignal[]>, resolutions: ReadonlyMap<string, Resolution>, dates: readonly string[], splitByDate: ReadonlyMap<string, string>) { const records = recordsFor(metric, new Set(dates), signalsByConfig, resolutions); const months: Array<[string, string]> = [['March', '2026-03'], ['April', '2026-04'], ['May', '2026-05'], ['June', '2026-06'], ['July', '2026-07'], ['Aug 1-4', '2026-08']]; const midpoint = Math.floor(dates.length / 2); const firstDates = new Set(dates.slice(0, midpoint)); const summary = (items: readonly RecordValue[]) => subsetSummary(items); const timeBuckets: Array<[string, number, number]> = [['09:15-10:30', 555, 630], ['10:30-12:00', 630, 720], ['12:00-13:30', 720, 810], ['13:30-15:30', 810, 930]]; return { monthly: months.map(([month, prefix]) => ({ month, ...summary(records.filter((record) => record.signal.date.startsWith(prefix))) })), firstHalf: summary(records.filter((record) => firstDates.has(record.signal.date))), secondHalf: summary(records.filter((record) => !firstDates.has(record.signal.date))), timeOfDay: timeBuckets.map(([bucket, start, end]) => ({ bucket, ...summary(records.filter((record) => { const minute = istMinute(record.signal.timestamp); return minute >= start && minute < end; })) })), train: summary(records.filter((record) => splitByDate.get(record.signal.date) === 'TRAIN')), validation: summary(records.filter((record) => splitByDate.get(record.signal.date) === 'VALIDATION')) }; }
 function overlapReport(metric: CandidateMetric | undefined, signalsByConfig: ReadonlyMap<string, readonly V8BullishReclaimSignal[]>) { if (!metric) return { status: 'OVERLAP_NOT_ESTIMABLE', reason: 'No candidate.' }; const v8 = [...new Set((signalsByConfig.get(v8ConfigKey(metric.config)) ?? []).map((signal) => signal.timestamp.getTime()))]; const refs = ['v2-session-result-matrix.json', 'v4-session-result-matrix.json'].map((file) => { try { const matrix = JSON.parse(readFileSync(resolve(process.cwd(), 'artifacts', 'research-validation', file), 'utf8')) as { sessions: Array<{ date: string; tradeReferences: Array<{ timestamp: string }> }> }; const timestamps = matrix.sessions.flatMap((session) => session.tradeReferences.map((reference) => new Date(reference.timestamp).getTime())); const exact = v8.filter((timestamp) => timestamps.includes(timestamp)).length; const near = v8.filter((timestamp) => timestamps.some((reference) => Math.abs(reference - timestamp) <= 5 * 60_000)).length; return { file, exactOverlap: exact, within5Minutes: near, independentSignals: v8.length - exact, v8Signals: v8.length }; } catch { return { file, status: 'OVERLAP_NOT_ESTIMABLE' }; } }); return { status: 'ESTIMATED_FROM_SESSION_MATRIX_TRADE_REFERENCES', candidate: metric.id, comparisons: refs }; }
 
