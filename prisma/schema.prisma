@@ -114,3 +114,119 @@ model HistoricalOptionCandle {
   @@index([instrumentKey, timeframe])
   @@index([candleTime])
 }
+
+// Durable broker-neutral execution audit.  Paper execution uses this schema
+// through the execution repository deployment adapter; no broker credentials
+// or order-routing fields are persisted here.
+model ExecutionOrder {
+  executionOrderId          String   @id
+  intentId                  String   @unique
+  strategyId                String
+  runtimeId                 String
+  sessionDate               String
+  instrumentKey             String
+  side                      String
+  quantity                  Int
+  requestedPrice            Decimal? @db.Decimal(20, 8)
+  executionMode             String
+  status                    String
+  cumulativeFilledQuantity  Int      @default(0)
+  cumulativeExitQuantity    Int      @default(0)
+  remainingQuantity         Int
+  averageFillPrice          Decimal? @db.Decimal(20, 8)
+  averageExitPrice          Decimal? @db.Decimal(20, 8)
+  correlationId             String
+  version                   Int      @default(0)
+  externalOrderId           String?  @unique
+  paperOrderId              String?  @unique
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  fills                     ExecutionFill[]
+  transitions               ExecutionStateTransition[]
+  paperPosition             PaperPortfolioPosition?
+
+  @@index([sessionDate, status])
+  @@index([strategyId, sessionDate])
+  @@index([instrumentKey, sessionDate])
+}
+
+model PaperPortfolioPosition {
+  positionId          String   @id
+  executionOrderId    String   @unique
+  originatingIntentId String   @unique
+  originatingOrderId  String   @unique
+  strategyId          String
+  sessionDate         String
+  instrumentKey       String
+  underlying          String
+  side                String
+  quantity            Int
+  entryTimestamp      DateTime
+  entryPrice          Decimal  @db.Decimal(20, 8)
+  currentMarkPrice    Decimal? @db.Decimal(20, 8)
+  realizedPnl         Decimal  @default(0) @db.Decimal(20, 8)
+  unrealizedPnl       Decimal? @db.Decimal(20, 8)
+  status              String
+  correlationId       String
+  exitTimestamp       DateTime?
+  exitPrice           Decimal? @db.Decimal(20, 8)
+  exitReason          String?
+  stateVersion        Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  executionOrder      ExecutionOrder @relation(fields: [executionOrderId], references: [executionOrderId], onDelete: Restrict)
+  fills               PaperPortfolioFill[]
+
+  @@index([sessionDate, status])
+  @@index([strategyId, sessionDate])
+  @@index([instrumentKey, sessionDate])
+}
+
+model PaperPortfolioFill {
+  paperFillId       String   @id
+  positionId        String
+  executionFillId  String   @unique
+  type              String
+  timestamp         DateTime
+  price             Decimal  @db.Decimal(20, 8)
+  quantity          Int
+  source            String
+  exitReason        String?
+  fillQuality       String?
+  slippage          Decimal? @db.Decimal(20, 8)
+  createdAt         DateTime @default(now())
+  position          PaperPortfolioPosition @relation(fields: [positionId], references: [positionId], onDelete: Cascade)
+
+  @@index([positionId, timestamp])
+}
+
+model ExecutionFill {
+  fillId           String   @id
+  executionOrderId String
+  leg              String
+  quantity         Int
+  price            Decimal  @db.Decimal(20, 8)
+  timestamp        DateTime
+  source           String
+  quoteQuality     String
+  slippage         Decimal  @db.Decimal(20, 8)
+  correlationId    String
+  createdAt        DateTime @default(now())
+  order            ExecutionOrder @relation(fields: [executionOrderId], references: [executionOrderId], onDelete: Cascade)
+
+  @@index([executionOrderId, timestamp])
+}
+
+model ExecutionStateTransition {
+  transitionId     String   @id
+  executionOrderId String
+  previousState    String?
+  nextState        String
+  timestamp        DateTime
+  reason           String?
+  correlationId    String
+  createdAt        DateTime @default(now())
+  order            ExecutionOrder @relation(fields: [executionOrderId], references: [executionOrderId], onDelete: Cascade)
+
+  @@index([executionOrderId, timestamp])
+}

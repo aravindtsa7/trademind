@@ -7,7 +7,12 @@ import {
   PaperOrderStatus,
 } from '../types/paper-trading.types';
 
-const activeStatuses = new Set<PaperOrderStatus>([PaperOrderStatus.PENDING, PaperOrderStatus.OPEN]);
+const activeStatuses = new Set<PaperOrderStatus>([
+  PaperOrderStatus.PENDING,
+  PaperOrderStatus.OPEN,
+  PaperOrderStatus.EXIT_PENDING,
+  PaperOrderStatus.RECONCILIATION_REQUIRED,
+]);
 const closedStatuses = new Set<PaperOrderStatus>([
   PaperOrderStatus.TARGET_EXIT,
   PaperOrderStatus.STOP_EXIT,
@@ -28,6 +33,7 @@ export default class PaperOrderManagerService implements PaperOrderManager {
     const stopPremium = input.entry.simulatedEntryPremium * (1 - input.exitConfiguration.stopLossPercent / 100);
     const order: PaperOrder = {
       id: randomUUID(),
+      ...(input.executionOrderId ? { executionOrderId: input.executionOrderId } : {}),
       status: PaperOrderStatus.PENDING,
       signalTimestamp: new Date(input.signalTimestamp.getTime()),
       signalType: input.signalType,
@@ -50,6 +56,20 @@ export default class PaperOrderManagerService implements PaperOrderManager {
 
   markOpen(id: string): PaperOrder {
     return this.updateStatus(id, PaperOrderStatus.OPEN);
+  }
+
+  /** Reserves the local lifecycle while the durable exit transaction commits. */
+  requestExit(id: string): PaperOrder {
+    const order = this.requireOrder(id);
+    if (order.status === PaperOrderStatus.EXIT_PENDING) return cloneOrder(order);
+    return this.updateStatus(id, PaperOrderStatus.EXIT_PENDING);
+  }
+
+  /** Fails closed after an uncertain durable exit; reconciliation owns recovery. */
+  markReconciliationRequired(id: string): PaperOrder {
+    const order = this.requireOrder(id);
+    if (order.status === PaperOrderStatus.RECONCILIATION_REQUIRED) return cloneOrder(order);
+    return this.updateStatus(id, PaperOrderStatus.RECONCILIATION_REQUIRED);
   }
 
   getById(id: string): PaperOrder | undefined {
@@ -78,8 +98,8 @@ export default class PaperOrderManagerService implements PaperOrderManager {
 
   close(id: string, input: ClosePaperOrderDto): PaperOrder {
     const order = this.requireOrder(id);
-    if (order.status !== PaperOrderStatus.OPEN) {
-      throw new Error(`Only OPEN paper orders can close; current status is ${order.status}.`);
+    if (order.status !== PaperOrderStatus.OPEN && order.status !== PaperOrderStatus.EXIT_PENDING) {
+      throw new Error(`Only OPEN or EXIT_PENDING paper orders can close; current status is ${order.status}.`);
     }
     this.validateExitInput(input, order.entry.entryTimestamp);
     const exit: PaperOrderExit = {
@@ -102,6 +122,8 @@ export default class PaperOrderManagerService implements PaperOrderManager {
 
   private isTransitionAllowed(from: PaperOrderStatus, to: PaperOrderStatus): boolean {
     if (from === PaperOrderStatus.PENDING) return to === PaperOrderStatus.OPEN || to === PaperOrderStatus.CANCELLED;
+    if (from === PaperOrderStatus.OPEN) return to === PaperOrderStatus.EXIT_PENDING || to === PaperOrderStatus.RECONCILIATION_REQUIRED;
+    if (from === PaperOrderStatus.EXIT_PENDING) return to === PaperOrderStatus.RECONCILIATION_REQUIRED;
     return false;
   }
 
@@ -145,6 +167,7 @@ export default class PaperOrderManagerService implements PaperOrderManager {
 function cloneOrder(order: PaperOrder): PaperOrder {
   return {
     ...order,
+    ...(order.executionOrderId ? { executionOrderId: order.executionOrderId } : {}),
     signalTimestamp: new Date(order.signalTimestamp.getTime()),
     contract: { ...order.contract, expiry: new Date(order.contract.expiry.getTime()) },
     entry: { ...order.entry, entryTimestamp: new Date(order.entry.entryTimestamp.getTime()), ...(order.entry.executionFill ? { executionFill: { ...order.entry.executionFill } } : {}) },

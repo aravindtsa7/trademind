@@ -13,6 +13,8 @@ import { ExecutionQuoteSnapshot } from '../dto/paper-fill-model.dto';
 export default class PaperMarketDataAdapterService {
   private started = false;
   private marketDataAvailable = true;
+  /** Serializes only awaitable durable exits; market quote processing remains synchronous. */
+  private durableExitQueue: Promise<void> = Promise.resolve();
   private readonly tickListener = (tick: unknown): void => this.handleTick(tick);
   private readonly depthListener = (depth: unknown): void => this.handleDepth(depth);
   private readonly depthByInstrument = new Map<string, { bid?: number; ask?: number; bidSize?: number; askSize?: number; timestamp?: string; levels: readonly { bid?: number; ask?: number; bidSize?: number; askSize?: number }[]; generationId?: number }>();
@@ -44,6 +46,23 @@ export default class PaperMarketDataAdapterService {
   /** Reconnect safety gate; retains listeners but never advances paper exits over an unknown market-data interval. */
   setMarketDataAvailable(available: boolean): void { this.marketDataAvailable = available; }
 
+  /**
+   * Shutdown/EOD waits only for already acknowledged durable mutations. The
+   * caller decides the safe bounded timeout and fails closed on false.
+   */
+  async drainDurableExitQueue(timeoutMs: number): Promise<boolean> {
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new Error('timeoutMs must be a non-negative finite number.');
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      return await Promise.race([
+        this.durableExitQueue.then(() => true),
+        new Promise<boolean>((resolve) => { timer = setTimeout(() => resolve(false), timeoutMs); }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
   private handleTick(tick: unknown): void {
     if (!this.marketDataAvailable) return;
     const update = this.normalizeTick(tick);
@@ -54,10 +73,27 @@ export default class PaperMarketDataAdapterService {
     const ageMs = quoteTimestamp && !Number.isNaN(quoteTimestamp.getTime()) ? update.timestamp.getTime() - quoteTimestamp.getTime() : undefined;
     this.portfolio?.mark({ instrumentKey: update.instrumentKey, timestamp: update.timestamp, bid: depth?.bid, ask: depth?.ask, ltp: update.premium, ageMs, maxAgeMs: this.maxQuoteAgeMs });
     this.refreshExecutionQuote(update.instrumentKey);
-    const actions = this.positionMonitor.monitor(update);
-    actions.filter((action) => action.action !== 'NONE').forEach((action) => {
-      this.bus.emit('paper.order.action', action);
-    });
+    if (this.positionMonitor.hasDurableExitPersistence()) {
+      // Work is serialized in event order. The first queued monitor reserves
+      // OPEN -> EXIT_PENDING before its persistence await; later queued ticks
+      // then observe a non-OPEN order and cannot create another exit.
+      this.durableExitQueue = this.durableExitQueue
+        .then(async () => {
+          const actions = await this.positionMonitor.monitorDurably(update);
+          this.emitActions(actions);
+        })
+        .catch(() => {
+          // monitorDurably converts persistence failures into a fail-closed
+          // RECONCILIATION_REQUIRED order. Never let a logging/event boundary
+          // reject the queue and poison subsequent deterministic work.
+        });
+      return;
+    }
+    this.emitActions(this.positionMonitor.monitor(update));
+  }
+
+  private emitActions(actions: PaperPositionMonitoringResult[]): void {
+    actions.filter((action) => action.action !== 'NONE').forEach((action) => this.bus.emit('paper.order.action', action));
   }
 
   private handleDepth(depth: unknown): void {

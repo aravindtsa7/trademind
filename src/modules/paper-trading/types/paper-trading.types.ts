@@ -5,6 +5,10 @@ import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 export enum PaperOrderStatus {
   PENDING = 'PENDING',
   OPEN = 'OPEN',
+  /** A durable execution/portfolio exit transaction is in progress. */
+  EXIT_PENDING = 'EXIT_PENDING',
+  /** Durable state is uncertain; no new local lifecycle mutation is safe. */
+  RECONCILIATION_REQUIRED = 'RECONCILIATION_REQUIRED',
   TARGET_EXIT = 'TARGET_EXIT',
   STOP_EXIT = 'STOP_EXIT',
   TIME_EXIT = 'TIME_EXIT',
@@ -52,6 +56,8 @@ export interface PaperOrderExit {
 
 export interface PaperOrder {
   id: string;
+  /** Durable broker-neutral lifecycle owner; absent only for legacy tests. */
+  executionOrderId?: string;
   status: PaperOrderStatus;
   signalTimestamp: Date;
   signalType: PaperOrderSignalType;

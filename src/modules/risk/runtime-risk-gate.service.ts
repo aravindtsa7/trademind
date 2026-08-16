@@ -3,10 +3,11 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { dirname, resolve } from 'path';
 import { isAtOrAfterIstSessionEnd, isWithinIstMarketSession } from '../market-data/services/ist-market-session-eod.service';
 import { PortfolioSnapshot } from '../paper-trading/dto/paper-portfolio.dto';
+import { ExecutionHealth } from '../execution/execution.types';
 
 export type RiskDecisionType = 'APPROVED' | 'DENIED';
 export type RiskTradingState = 'ACTIVE' | 'HALTED' | 'REDUCING';
-export type RiskDenialReason = 'KILL_SWITCH_ACTIVE'|'MARKET_DATA_NOT_READY'|'STALE_QUOTE'|'QUOTE_UNAVAILABLE'|'DAILY_LOSS_LIMIT'|'MAX_OPEN_POSITIONS'|'MAX_TOTAL_EXPOSURE'|'MAX_STRATEGY_EXPOSURE'|'DUPLICATE_INTENT'|'COOLDOWN_OR_RATE_LIMIT'|'SESSION_NOT_TRADABLE'|'EOD_BLOCK'|'RUNTIME_DEGRADED'|'UNKNOWN_RISK_STATE';
+export type RiskDenialReason = 'KILL_SWITCH_ACTIVE'|'MARKET_DATA_NOT_READY'|'STALE_QUOTE'|'QUOTE_UNAVAILABLE'|'DAILY_LOSS_LIMIT'|'MAX_OPEN_POSITIONS'|'MAX_TOTAL_EXPOSURE'|'MAX_STRATEGY_EXPOSURE'|'DUPLICATE_INTENT'|'COOLDOWN_OR_RATE_LIMIT'|'SESSION_NOT_TRADABLE'|'EOD_BLOCK'|'RUNTIME_DEGRADED'|'UNKNOWN_RISK_STATE'|'EXECUTION_NOT_READY'|'RECONCILIATION_REQUIRED';
 
 export interface RuntimeRiskQuote { ltp?: number | null; bid?: number | null; ask?: number | null; ageMs?: number | null; crossed?: boolean; }
 export interface RuntimeRiskPosition { strategyId: string; underlying: string; notional: number; }
@@ -17,17 +18,17 @@ export interface RuntimeRiskIntent {
 }
 export interface RiskDecision { decisionId: string; runtimeId: string; strategyId: string; sessionDate: string; timestamp: string; instrument: string; intentId: string; decision: RiskDecisionType; denialReasons: RiskDenialReason[]; riskSnapshot: Record<string, unknown>; correlationId: string; }
 export interface RuntimeRiskGateOptions {
-  killSwitch?: boolean; requireFreshQuote?: boolean; maxQuoteAgeMs?: number; maxOpenPositions?: number; maxOpenPositionsPerStrategy?: number; maxOpenPositionsPerUnderlying?: number; maxTotalNotional?: number; maxStrategyNotional?: number; dailyLossLimit?: number; artifactRoot?: string; persist?: boolean; now?: () => Date; getOpenPositions?: () => readonly RuntimeRiskPosition[] | undefined; getPortfolioSnapshot?: (sessionDate: string) => PortfolioSnapshot | undefined;
+  killSwitch?: boolean; requireFreshQuote?: boolean; maxQuoteAgeMs?: number; maxOpenPositions?: number; maxOpenPositionsPerStrategy?: number; maxOpenPositionsPerUnderlying?: number; maxTotalNotional?: number; maxStrategyNotional?: number; dailyLossLimit?: number; artifactRoot?: string; persist?: boolean; now?: () => Date; getOpenPositions?: () => readonly RuntimeRiskPosition[] | undefined; getPortfolioSnapshot?: (sessionDate: string) => PortfolioSnapshot | undefined; getExecutionHealth?: (sessionDate: string) => ExecutionHealth | undefined;
 }
 
 /** Fail-closed boundary for intent-to-execution. It has no broker capability. */
 export default class RuntimeRiskGateService {
   private state: RiskTradingState = 'ACTIVE'; private readonly approvedIds = new Set<string>(); private readonly realizedPnl = new Map<string, number>(); private readonly openedOrderIds = new Map<string, Set<string>>();
   private readonly configuredKillSwitch: boolean | undefined;
-  private readonly options: Required<Omit<RuntimeRiskGateOptions, 'getOpenPositions'|'getPortfolioSnapshot'>> & Pick<RuntimeRiskGateOptions, 'getOpenPositions'|'getPortfolioSnapshot'>;
+  private readonly options: Required<Omit<RuntimeRiskGateOptions, 'getOpenPositions'|'getPortfolioSnapshot'|'getExecutionHealth'>> & Pick<RuntimeRiskGateOptions, 'getOpenPositions'|'getPortfolioSnapshot'|'getExecutionHealth'>;
   constructor(options: RuntimeRiskGateOptions = {}) {
     this.configuredKillSwitch = options.killSwitch;
-    this.options = { killSwitch: options.killSwitch ?? process.env.TRADING_KILL_SWITCH !== 'false', requireFreshQuote: options.requireFreshQuote ?? process.env.RISK_REQUIRE_FRESH_OPTION_QUOTE !== 'false', maxQuoteAgeMs: options.maxQuoteAgeMs ?? Number(process.env.RISK_MAX_QUOTE_AGE_MS ?? 2_000), maxOpenPositions: options.maxOpenPositions ?? Number(process.env.RISK_MAX_OPEN_POSITIONS ?? 1), maxOpenPositionsPerStrategy: options.maxOpenPositionsPerStrategy ?? Number(process.env.RISK_MAX_OPEN_POSITIONS_PER_STRATEGY ?? 1), maxOpenPositionsPerUnderlying: options.maxOpenPositionsPerUnderlying ?? Number(process.env.RISK_MAX_OPEN_POSITIONS_PER_UNDERLYING ?? 1), maxTotalNotional: options.maxTotalNotional ?? Number(process.env.RISK_MAX_TOTAL_NOTIONAL ?? 100_000), maxStrategyNotional: options.maxStrategyNotional ?? Number(process.env.RISK_MAX_STRATEGY_NOTIONAL ?? 100_000), dailyLossLimit: options.dailyLossLimit ?? Number(process.env.RISK_DAILY_LOSS_LIMIT ?? 5_000), artifactRoot: options.artifactRoot ?? 'artifacts/runtime-risk', persist: options.persist ?? true, now: options.now ?? (() => new Date()), getOpenPositions: options.getOpenPositions, getPortfolioSnapshot: options.getPortfolioSnapshot };
+    this.options = { killSwitch: options.killSwitch ?? process.env.TRADING_KILL_SWITCH !== 'false', requireFreshQuote: options.requireFreshQuote ?? process.env.RISK_REQUIRE_FRESH_OPTION_QUOTE !== 'false', maxQuoteAgeMs: options.maxQuoteAgeMs ?? Number(process.env.RISK_MAX_QUOTE_AGE_MS ?? 2_000), maxOpenPositions: options.maxOpenPositions ?? Number(process.env.RISK_MAX_OPEN_POSITIONS ?? 1), maxOpenPositionsPerStrategy: options.maxOpenPositionsPerStrategy ?? Number(process.env.RISK_MAX_OPEN_POSITIONS_PER_STRATEGY ?? 1), maxOpenPositionsPerUnderlying: options.maxOpenPositionsPerUnderlying ?? Number(process.env.RISK_MAX_OPEN_POSITIONS_PER_UNDERLYING ?? 1), maxTotalNotional: options.maxTotalNotional ?? Number(process.env.RISK_MAX_TOTAL_NOTIONAL ?? 100_000), maxStrategyNotional: options.maxStrategyNotional ?? Number(process.env.RISK_MAX_STRATEGY_NOTIONAL ?? 100_000), dailyLossLimit: options.dailyLossLimit ?? Number(process.env.RISK_DAILY_LOSS_LIMIT ?? 5_000), artifactRoot: options.artifactRoot ?? 'artifacts/runtime-risk', persist: options.persist ?? true, now: options.now ?? (() => new Date()), getOpenPositions: options.getOpenPositions, getPortfolioSnapshot: options.getPortfolioSnapshot, getExecutionHealth: options.getExecutionHealth };
   }
   static intentId(intent: Pick<RuntimeRiskIntent, 'strategyId'|'timestamp'|'instrument'|'side'|'sessionDate'>): string { return createHash('sha256').update([intent.strategyId, intent.timestamp.toISOString(), intent.instrument, intent.side, intent.sessionDate].join('|')).digest('hex').slice(0, 24); }
   getTradingState(): RiskTradingState { return this.state; }
@@ -40,11 +41,14 @@ export default class RuntimeRiskGateService {
     const now = this.options.now(); const id = RuntimeRiskGateService.intentId(intent); const reasons: RiskDenialReason[] = [];
     const corrupt = !intent || !(intent.timestamp instanceof Date) || Number.isNaN(intent.timestamp.getTime()) || !intent.runtimeId || !intent.strategyId || !intent.sessionDate || !intent.instrument || !intent.underlying || !Number.isFinite(intent.entryPremium) || intent.entryPremium <= 0 || !Number.isInteger(intent.quantity) || intent.quantity <= 0;
     const portfolioConfigured = this.options.getPortfolioSnapshot !== undefined;
+    const executionHealth = this.options.getExecutionHealth?.(intent.sessionDate);
     const portfolio = this.options.getPortfolioSnapshot?.(intent.sessionDate);
     const positions = portfolioConfigured ? [] : this.options.getOpenPositions?.();
     // In portfolio mode, persisted paper positions are authoritative. The legacy
     // risk journal remains an audit/dedupe trail only and cannot override it.
     if (corrupt || (portfolioConfigured && (!portfolio || portfolio.dataQuality === 'INCONSISTENT')) || (!portfolioConfigured && !positions) || !['ACTIVE','HALTED','REDUCING'].includes(this.state) || (!portfolioConfigured && this.hasUnresolvedPersistedOrder(intent.sessionDate))) reasons.push('UNKNOWN_RISK_STATE');
+    if (intent.action === 'OPEN' && this.options.getExecutionHealth && !executionHealth) reasons.push('EXECUTION_NOT_READY');
+    if (intent.action === 'OPEN' && executionHealth && !executionHealth.ready) reasons.push(executionHealth.reconciliationRequired ? 'RECONCILIATION_REQUIRED' : 'EXECUTION_NOT_READY');
     if (this.isKillSwitchActive()) reasons.push('KILL_SWITCH_ACTIVE');
     if (intent.action === 'OPEN' && this.state !== 'ACTIVE') reasons.push('RUNTIME_DEGRADED');
     if (intent.action === 'OPEN' && (!intent.sessionTradable || !isWithinIstMarketSession(intent.timestamp))) reasons.push('SESSION_NOT_TRADABLE');
@@ -65,7 +69,7 @@ export default class RuntimeRiskGateService {
     if (intent.action === 'OPEN' && totalNotional + projectedNotional > this.options.maxTotalNotional) reasons.push('MAX_TOTAL_EXPOSURE');
     if (intent.action === 'OPEN' && strategyNotional + projectedNotional > this.options.maxStrategyNotional) reasons.push('MAX_STRATEGY_EXPOSURE');
     const pnl = portfolio?.totalRealizedPnl ?? this.sessionPnl(intent.sessionDate); if (intent.action === 'OPEN' && pnl <= -Math.abs(this.options.dailyLossLimit)) reasons.push('DAILY_LOSS_LIMIT');
-    const decision: RiskDecision = { decisionId: randomUUID(), runtimeId:intent.runtimeId, strategyId:intent.strategyId, sessionDate:intent.sessionDate, timestamp:now.toISOString(), instrument:intent.instrument, intentId:id, decision:reasons.length ? 'DENIED' : 'APPROVED', denialReasons:[...new Set(reasons)], riskSnapshot:{ tradingState:this.state, marketDataState:intent.marketDataState ?? null, quoteAgeMs:intent.quote?.ageMs ?? null, openPositions:openCount, totalNotional, strategyNotional, projectedNotional, realizedDailyPnl:pnl, killSwitch:this.isKillSwitchActive(), portfolioStateVersion:portfolio?.stateVersion ?? null }, correlationId:intent.correlationId ?? id };
+    const decision: RiskDecision = { decisionId: randomUUID(), runtimeId:intent.runtimeId, strategyId:intent.strategyId, sessionDate:intent.sessionDate, timestamp:now.toISOString(), instrument:intent.instrument, intentId:id, decision:reasons.length ? 'DENIED' : 'APPROVED', denialReasons:[...new Set(reasons)], riskSnapshot:{ tradingState:this.state, marketDataState:intent.marketDataState ?? null, quoteAgeMs:intent.quote?.ageMs ?? null, openPositions:openCount, totalNotional, strategyNotional, projectedNotional, realizedDailyPnl:pnl, killSwitch:this.isKillSwitchActive(), portfolioStateVersion:portfolio?.stateVersion ?? null, executionHealth:executionHealth ?? null }, correlationId:intent.correlationId ?? id };
     if (decision.decision === 'APPROVED') this.approvedIds.add(id); this.persist(decision); return decision;
   }
   denyExternal(intent: Omit<RuntimeRiskIntent, 'entryPremium' | 'quantity'>, reason: RiskDenialReason): RiskDecision {

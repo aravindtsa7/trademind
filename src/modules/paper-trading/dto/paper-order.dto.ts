@@ -9,6 +9,7 @@ import {
 import { PaperExecutionFillSummary } from './paper-fill-model.dto';
 
 export interface CreatePaperOrderDto {
+  executionOrderId?: string;
   signalTimestamp: Date;
   signalType: PaperOrderSignalType;
   contract: PaperOrderContract;

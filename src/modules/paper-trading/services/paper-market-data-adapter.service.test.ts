@@ -8,6 +8,7 @@ import PaperMarketDataAdapterService from './paper-market-data-adapter.service';
 import PaperOrderManagerService from './paper-order-manager.service';
 import PaperPositionMonitorService from './paper-position-monitor.service';
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
+import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 
 const entryTimestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -27,6 +28,7 @@ function setup() {
 
 function open(manager: PaperOrderManagerService, key = 'NSE_FO|one') { const order = manager.create(input(key)); return manager.markOpen(order.id); }
 function tick(instrumentKey: string, ltp: number, minute = 1) { return { instrumentKey, timestamp: new Date(entryTimestamp.getTime() + minute * 60_000).toISOString(), ltp }; }
+function durableFill(): PaperExecutionFillSummary { return { status:'FILLED', requestedQuantity:75, filledQuantity:75, averageFillPrice:129, worstFillPrice:129, quotedBestPrice:129, fillQuality:'TOP_OF_BOOK_ESTIMATE', slippageVsBestQuote:0, slippageVsLtp:-1, spreadCost:1, depthSlippage:0, totalExecutionSlippage:1, slippagePercent:0.77, sourceTimestamp:entryTimestamp.toISOString(), quoteDataQuality:'FRESH_TOP_OF_BOOK' }; }
 
 test('start registers one market.tick listener', () => {
   const { bus, adapter } = setup(); const before = bus.listenerCount('market.tick'); adapter.start();
@@ -107,4 +109,35 @@ test('canonical execution quote snapshot preserves supplied depth and never inve
   adapter.start(); bus.emit('market.tick', tick('NSE_FO|one', 100)); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp, generationId:7, quotes:[{ bidPrice:99, bidQuantity:'25', askPrice:101, askQuantity:'20' }, { bidPrice:98, bidQuantity:'50', askPrice:102, askQuantity:'40' }] });
   const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
   assert.equal(snapshot?.dataQuality, 'FRESH_DEPTH'); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.depthLevels.length, 2); assert.equal(snapshot?.depthLevels[1].askSize, 40); assert.equal(snapshot?.connectionGenerationId, 7);
+});
+
+test('serializes durable exit work: duplicate ticks produce one committed action', async () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
+  const created = manager.create({ ...input(), executionOrderId:'exec-adapter-durable' }); const order = manager.markOpen(created.id);
+  let calls = 0; let resolveCommit!: () => void; const commit = new Promise<void>((resolve) => { resolveCommit = resolve; });
+  const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', () => durableFill(), undefined, async () => { calls++; await commit; });
+  const adapter = new PaperMarketDataAdapterService(monitor, bus); const actions: unknown[] = [];
+  bus.on('paper.order.action', (action) => actions.push(action)); adapter.start();
+  bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
+  bus.emit('market.tick', tick(order.contract.instrumentKey, 130, 2));
+  await Promise.resolve(); resolveCommit();
+  assert.equal(await adapter.drainDurableExitQueue(1_000), true);
+  assert.equal(calls, 1);
+  assert.equal(actions.length, 1);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TARGET_EXIT);
+});
+
+test('shutdown drain times out safely while a durable exit is pending, then settles deterministically', async () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
+  const created = manager.create({ ...input(), executionOrderId:'exec-adapter-shutdown' }); const order = manager.markOpen(created.id);
+  let resolveCommit!: () => void; const commit = new Promise<void>((resolve) => { resolveCommit = resolve; });
+  const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', () => durableFill(), undefined, async () => { await commit; });
+  const adapter = new PaperMarketDataAdapterService(monitor, bus); adapter.start();
+  bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
+  await Promise.resolve();
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.EXIT_PENDING);
+  assert.equal(await adapter.drainDurableExitQueue(0), false);
+  resolveCommit();
+  assert.equal(await adapter.drainDurableExitQueue(1_000), true);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TARGET_EXIT);
 });

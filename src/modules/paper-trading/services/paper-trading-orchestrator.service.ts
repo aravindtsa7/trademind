@@ -2,6 +2,7 @@ import { MarketDataSubscriptionMode } from '../../market-data/managers/subscript
 import OptionContractSelectorService from '../../options/services/option-contract-selector.service';
 import { OptionContract, OptionContractSelectionResult } from '../../options/types';
 import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
+import { PaperOrderStatus } from '../types/paper-trading.types';
 import {
   PaperEntryPremiumProvider,
   PaperExecutionQuoteProvider,
@@ -15,6 +16,8 @@ import logger from '../../../core/logger/logger';
 import { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
 import PaperPortfolioService from './paper-portfolio.service';
 import PaperFillModelService, { PaperFillUnavailableError } from './paper-fill-model.service';
+import ExecutionEngineService, { DuplicateExecutionIntentError } from '../../execution/execution-engine.service';
+import PrismaExecutionRepository from '../../execution/prisma-execution.repository';
 
 interface OptionContractSelector {
   select(request: {
@@ -46,6 +49,8 @@ export default class PaperTradingOrchestratorService {
     private readonly portfolio?: PaperPortfolioService,
     private readonly fillModel?: PaperFillModelService,
     private readonly executionQuoteProvider?: PaperExecutionQuoteProvider,
+    private readonly executionEngine?: ExecutionEngineService,
+    private readonly prismaExecution?: PrismaExecutionRepository,
   ) {}
 
   async createFromSignal(request: PaperTradingOrchestrationRequest): Promise<PaperTradingOrchestrationResult> {
@@ -93,6 +98,14 @@ export default class PaperTradingOrchestratorService {
     let executionFill;
     let filledQuantity = selectedContract.lotSize as number;
     let simulatedEntryPremium = observedEntryPremium;
+    let executionOrderId: string | undefined;
+    let riskContext: RuntimeRiskIntent | undefined;
+    if (this.executionEngine && !this.prismaExecution) {
+      if (!approvedDecision || !this.riskContextProvider) throw new Error('Durable execution requires an approved risk decision and risk context.');
+      riskContext = this.riskContextProvider.buildIntent({ signal, contract: selectedContract, observedEntryPremium });
+      if (this.executionEngine.getByIntent(approvedDecision.intentId, riskContext.sessionDate)) throw new DuplicateExecutionIntentError(approvedDecision.intentId);
+      executionOrderId = this.executionEngine.createRiskApprovedOrder({ intentId:approvedDecision.intentId, strategyId:riskContext.strategyId, runtimeId:riskContext.runtimeId, sessionDate:riskContext.sessionDate, instrumentKey:riskContext.instrument, side:riskContext.side, quantity:riskContext.quantity, requestedPrice:observedEntryPremium, executionMode:'PAPER', timestamp:riskContext.timestamp.toISOString(), correlationId:approvedDecision.correlationId }).executionOrderId;
+    }
     if (this.fillModel) {
       if (!this.executionQuoteProvider) throw new Error('Paper fill model is configured without an execution quote provider.');
       const eligibleAt = new Date(signal.signalTimestamp.getTime() + this.fillModel.executionLatencyMs);
@@ -100,11 +113,18 @@ export default class PaperTradingOrchestratorService {
       if (this.fillModel.executionLatencyMs > 0) quote = await this.executionQuoteProvider.waitForExecutionQuote?.(selectedContract.instrumentKey, eligibleAt, Number(process.env.PAPER_FILL_WAIT_MS ?? 2_000)) ?? quote;
       const fill = this.fillModel.fill({ side:'BUY', requestedQuantity:selectedContract.lotSize as number, quote, intentTimestamp:signal.signalTimestamp });
       executionFill = this.fillModel.toSummary(fill);
-      if (!executionFill) { logger.warn('PAPER_FILL_UNAVAILABLE', { strategyId: approvedDecision?.strategyId, instrument: selectedContract.instrumentKey, status:fill.status, reason:fill.reason, fillQuality:fill.fillQuality }); throw new PaperFillUnavailableError(fill); }
+      if (!executionFill) { if (executionOrderId && riskContext) this.executionEngine?.reject(executionOrderId, riskContext.sessionDate, `PAPER_FILL_${fill.status}`); logger.warn('PAPER_FILL_UNAVAILABLE', { strategyId: approvedDecision?.strategyId, instrument: selectedContract.instrumentKey, status:fill.status, reason:fill.reason, fillQuality:fill.fillQuality }); throw new PaperFillUnavailableError(fill); }
       filledQuantity = executionFill.filledQuantity;
       simulatedEntryPremium = executionFill.averageFillPrice;
+      if (executionOrderId && riskContext) this.executionEngine?.recordEntryFill(executionOrderId, riskContext.sessionDate, executionFill, signal.signalTimestamp);
+    }
+    if (this.prismaExecution) {
+      if (!approvedDecision || !this.riskContextProvider || !executionFill) throw new Error('Prisma execution requires an approved decision, risk context, and executable fill.');
+      riskContext = this.riskContextProvider.buildIntent({ signal, contract:selectedContract, observedEntryPremium });
+      executionOrderId = PrismaExecutionRepository.executionOrderId(approvedDecision.intentId);
     }
     const pending = this.orderManager.create({
+      executionOrderId,
       signalTimestamp: signal.signalTimestamp,
       signalType: signal.signalType as StrategySignal.BUY_CE | StrategySignal.BUY_PE,
       contract: {
@@ -124,7 +144,16 @@ export default class PaperTradingOrchestratorService {
       },
       exitConfiguration: { ...request.exitPolicy },
     });
+    if (this.prismaExecution && approvedDecision && riskContext && executionFill) {
+      try {
+        await this.prismaExecution.createPaperEntry({ intent:{ intentId:approvedDecision.intentId, strategyId:riskContext.strategyId, runtimeId:riskContext.runtimeId, sessionDate:riskContext.sessionDate, instrumentKey:riskContext.instrument, side:riskContext.side, quantity:riskContext.quantity, requestedPrice:observedEntryPremium, executionMode:'PAPER', timestamp:riskContext.timestamp.toISOString(), correlationId:approvedDecision.correlationId }, order:pending, underlying:riskContext.underlying, fill:executionFill });
+      } catch (error) {
+        this.orderManager.updateStatus(pending.id, PaperOrderStatus.CANCELLED);
+        throw error;
+      }
+    }
     const order = this.orderManager.markOpen(pending.id);
+    if (executionOrderId && riskContext) this.executionEngine?.attachPaperOrder(executionOrderId, riskContext.sessionDate, order.id);
     if (this.portfolio) {
       const context = this.riskContextProvider?.buildIntent({ signal, contract: selectedContract, observedEntryPremium });
       if (!context) throw new Error('Paper portfolio is configured without a risk context provider.');

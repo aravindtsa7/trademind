@@ -13,6 +13,8 @@ import PaperEntryQuoteWaiterService, { PaperEntryQuoteWaitError } from './paper-
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
 import PaperFillModelService, { PaperFillUnavailableError } from './paper-fill-model.service';
 import { ExecutionQuoteSnapshot } from '../dto/paper-fill-model.dto';
+import ExecutionEngineService from '../../execution/execution-engine.service';
+import { InMemoryExecutionRepository } from '../../execution/execution.repository';
 
 const timestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -156,6 +158,16 @@ test('a depth partial entry creates exposure and P&L only for filled quantity', 
   const result = await orchestrator.createFromSignal(request());
   assert.equal(result.order.contract.quantity, 50); assert.equal(result.order.entry.simulatedEntryPremium, 101); assert.equal(result.order.entry.executionFill?.status, 'PARTIALLY_FILLED');
   assert.equal(portfolio.getSnapshot('2026-08-10')?.totalNotional, 5050);
+});
+
+test('a V2-approved intent creates exactly one durable execution order before one paper order', async () => {
+  const manager=new PaperOrderManagerService(); const subscriptions=new SubscriptionGateway(); const premiums=new PremiumProvider(); const portfolio=new PaperPortfolioService(new InMemoryPaperPortfolioRepository(),()=>timestamp); const executions=new ExecutionEngineService(new InMemoryExecutionRepository(),()=>timestamp); executions.reconcile('2026-08-10',[]);
+  const risk=new RuntimeRiskGateService({persist:false,killSwitch:false,getPortfolioSnapshot:(date)=>portfolio.getSnapshot(date),getExecutionHealth:(date)=>executions.getHealth(date)});
+  const context={buildIntent:({signal,contract,observedEntryPremium}:any)=>({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:100,bid:99,ask:101,ageMs:0}})};
+  const provider={getExecutionQuoteSnapshot:():ExecutionQuoteSnapshot=>({instrumentKey:'NSE_FO|ce-24600',sourceTimestamp:timestamp.toISOString(),receivedTimestamp:timestamp.toISOString(),quoteAgeMs:0,ltp:100,bestBid:99,bestAsk:101,bidSize:75,askSize:75,depthLevels:[],spreadAbsolute:2,spreadPercent:2,connectionGenerationId:1,dataQuality:'FRESH_TOP_OF_BOOK'})};
+  const orchestrator=new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context,portfolio,new PaperFillModelService(),provider,executions);
+  const result=await orchestrator.createFromSignal(request()); assert.ok(result.order.executionOrderId); const durable=executions.getById(result.order.executionOrderId as string,'2026-08-10'); assert.equal(durable?.paperOrderId,result.order.id); assert.equal(durable?.status,'FILLED');
+  await assert.rejects(()=>orchestrator.createFromSignal(request()),RiskDeniedError); assert.equal(manager.getActiveOrders().length,1);
 });
 
 test('quote wait timeout, stale quote, reconnect and EOD deny with no order', async () => {

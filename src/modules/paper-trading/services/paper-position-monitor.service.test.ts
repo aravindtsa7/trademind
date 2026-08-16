@@ -7,6 +7,7 @@ import PaperOrderManagerService from './paper-order-manager.service';
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
 import PaperFillModelService from './paper-fill-model.service';
 import PaperPositionMonitorService from './paper-position-monitor.service';
+import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 
 const entryTime = new Date('2026-08-10T04:00:00.000Z');
 
@@ -27,6 +28,14 @@ function update(instrumentKey: string, premium: number, minutes = 1): PaperPremi
 function open(manager: PaperOrderManagerService, instrumentKey = 'NSE_FO|first') {
   const order = manager.create(orderInput(instrumentKey));
   return manager.markOpen(order.id);
+}
+function durableOpen(manager: PaperOrderManagerService, instrumentKey = 'NSE_FO|first') {
+  const order = manager.create({ ...orderInput(instrumentKey), executionOrderId: `exec-${instrumentKey}` });
+  return manager.markOpen(order.id);
+}
+
+function durableFill(): PaperExecutionFillSummary {
+  return { status:'FILLED', requestedQuantity:75, filledQuantity:75, averageFillPrice:129, worstFillPrice:129, quotedBestPrice:129, fillQuality:'TOP_OF_BOOK_ESTIMATE', slippageVsBestQuote:0, slippageVsLtp:-1, spreadCost:1, depthSlippage:0, totalExecutionSlippage:1, slippagePercent:0.77, sourceTimestamp:entryTime.toISOString(), quoteDataQuality:'FRESH_TOP_OF_BOOK' };
 }
 
 test('returns NONE when premium is between target and stop', () => {
@@ -108,7 +117,7 @@ test('V2 EOD uses the existing TIME_EXIT close path exactly once for an open pap
 });
 
 test('V2 target and EOD monitor callbacks update the authoritative portfolio exactly once', () => {
-  const manager = new PaperOrderManagerService(); const order = open(manager);
+  const manager = new PaperOrderManagerService(); const order = durableOpen(manager);
   const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => entryTime);
   portfolio.open({ order, strategyId: 'V2_TREND_DOWN_PE', underlying: 'NIFTY 50', correlationId: 'corr', intentId: 'intent', sessionDate: '2026-08-10' });
   const monitor = new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10');
@@ -137,4 +146,58 @@ test('partial exit depth never closes a full V2 paper position at an invented re
   });
   const result = monitor.monitor(update(order.contract.instrumentKey, 130));
   assert.equal(result[0].action, 'NONE'); assert.equal(result[0].executionUnavailable, true); assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.OPEN);
+});
+
+test('durable target close remains EXIT_PENDING until Prisma-equivalent commit succeeds', async () => {
+  const manager = new PaperOrderManagerService(); const order = durableOpen(manager);
+  let resolveCommit!: () => void; const commit = new Promise<void>((resolve) => { resolveCommit = resolve; });
+  let calls = 0;
+  const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', () => durableFill(), undefined, async () => { calls++; await commit; });
+  const pending = monitor.monitorDurably(update(order.contract.instrumentKey, 130));
+  await Promise.resolve();
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.EXIT_PENDING);
+  assert.equal(calls, 1);
+  resolveCommit();
+  const result = await pending;
+  assert.equal(result[0].action, PaperOrderStatus.TARGET_EXIT);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TARGET_EXIT);
+});
+
+test('durable transaction failure never locally closes or realizes the exit', async () => {
+  const manager = new PaperOrderManagerService(); const order = durableOpen(manager);
+  const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => entryTime);
+  portfolio.open({ order, strategyId:'V2_TREND_DOWN_PE', underlying:'NIFTY 50', correlationId:'corr', intentId:'intent', sessionDate:'2026-08-10' });
+  const failures: unknown[] = [];
+  const monitor = new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10', () => durableFill(), undefined, async () => { throw new Error('transaction rolled back'); }, (_order, error) => { failures.push(error); });
+  const result = await monitor.monitorDurably(update(order.contract.instrumentKey, 130));
+  assert.equal(result[0].action, 'NONE');
+  assert.equal(result[0].executionUnavailable, true);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.RECONCILIATION_REQUIRED);
+  assert.equal(manager.getById(order.id)?.exit, undefined);
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.totalRealizedPnl, 0);
+  assert.equal(failures.length, 1);
+});
+
+test('duplicate target and EOD callbacks while EXIT_PENDING submit one durable transaction', async () => {
+  const manager = new PaperOrderManagerService(); const order = durableOpen(manager);
+  let resolveCommit!: () => void; const commit = new Promise<void>((resolve) => { resolveCommit = resolve; }); let calls = 0;
+  const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', () => durableFill(), undefined, async () => { calls++; await commit; });
+  const target = monitor.monitorDurably(update(order.contract.instrumentKey, 130));
+  await Promise.resolve();
+  const eod = monitor.closeAtSessionEndDurably(update(order.contract.instrumentKey, 130).timestamp, () => 130);
+  resolveCommit();
+  const [targetResults, eodResults] = await Promise.all([target, eod]);
+  assert.equal(calls, 1);
+  assert.equal(targetResults[0].action, PaperOrderStatus.TARGET_EXIT);
+  assert.deepEqual(eodResults, []);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TARGET_EXIT);
+});
+
+test('durable EOD uses TIME_EXIT only after its durable transaction commits', async () => {
+  const manager = new PaperOrderManagerService(); const order = durableOpen(manager); let calls = 0;
+  const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', () => durableFill(), undefined, async () => { calls++; });
+  const result = await monitor.closeAtSessionEndDurably(new Date('2026-08-10T10:00:00.000Z'), () => 101);
+  assert.equal(calls, 1);
+  assert.equal(result[0].action, PaperOrderStatus.TIME_EXIT);
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TIME_EXIT);
 });

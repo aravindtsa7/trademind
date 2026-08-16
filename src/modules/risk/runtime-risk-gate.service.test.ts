@@ -36,3 +36,8 @@ test('restart reloads realized P&L and fails closed for an unresolved persisted 
   const root=mkdtempSync(join(tmpdir(),'trademind-risk-')); const first=gate({persist:true,artifactRoot:root}); const approved=first.evaluate(base()); assert.equal(approved.decision,'APPROVED'); first.recordOpenedOrder(approved,'paper-1'); first.recordRealizedPnl('2026-08-17',-200);
   const restarted=gate({persist:true,artifactRoot:root,dailyLossLimit:100}); const decision=restarted.evaluate(base({instrument:'NSE_FO|2|17-08-2026'})); assert.ok(decision.denialReasons.includes('UNKNOWN_RISK_STATE')); assert.ok(decision.denialReasons.includes('DAILY_LOSS_LIMIT'));
 });
+test('execution reconciliation health blocks new exposure but exits remain allowed',()=>{
+  const blocked=gate({getExecutionHealth:()=>({ready:false,reconciliationRequired:true,status:'RECONCILIATION_REQUIRED'})});assert.ok(blocked.evaluate(base()).denialReasons.includes('RECONCILIATION_REQUIRED'));
+  const ready=gate({getExecutionHealth:()=>({ready:true,reconciliationRequired:false,status:'CONSISTENT'})});assert.equal(ready.evaluate(base()).decision,'APPROVED');
+  const close=gate({getExecutionHealth:()=>({ready:false,reconciliationRequired:true,status:'IRRECONCILABLE'})});close.transition('HALTED');assert.equal(close.evaluate(base({action:'CLOSE'})).decision,'APPROVED');
+});

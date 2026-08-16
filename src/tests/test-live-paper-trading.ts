@@ -29,8 +29,10 @@ import CandleTimeframeAggregatorService from '../modules/indicators/services/can
 import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
 import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
 import PaperEntryQuoteWaiterService from '../modules/paper-trading/services/paper-entry-quote-waiter.service';
-import PaperPortfolioService from '../modules/paper-trading/services/paper-portfolio.service';
+import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from '../modules/paper-trading/services/paper-portfolio.service';
 import PaperFillModelService from '../modules/paper-trading/services/paper-fill-model.service';
+import PrismaExecutionRepository from '../modules/execution/prisma-execution.repository';
+import { PaperOrderStatus } from '../modules/paper-trading/types/paper-trading.types';
 
 const niftyInstrumentKey = 'NSE_INDEX|Nifty 50';
 const tickPrintIntervalMs = 30_000;
@@ -174,15 +176,29 @@ async function run(): Promise<void> {
   const liveCandleEventAdapter = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus);
 
   const orderManager = new PaperOrderManagerService();
-  const portfolio = new PaperPortfolioService();
+  // Prisma/MySQL is authoritative. The in-memory portfolio retains existing
+  // same-process monitoring APIs only; it is never used for restart recovery.
+  const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository());
   const fillModel = new PaperFillModelService();
-  portfolio.reconcileOpenOrders(istDate(new Date()), orderManager.getActiveOrders().map((order) => order.id));
+  const prismaExecution = new PrismaExecutionRepository();
+  const executionSessionDate = istDate(new Date());
+  portfolio.reconcileOpenOrders(executionSessionDate, orderManager.getActiveOrders().map((order) => order.id));
+  await prismaExecution.initialize(executionSessionDate);
   let paperMarketDataAdapter: PaperMarketDataAdapterService;
   const positionMonitor = new PaperPositionMonitorService(orderManager, portfolio, istDate, (order) => {
     const fill = fillModel.fill({ side:'SELL', requestedQuantity:order.contract.quantity, quote:paperMarketDataAdapter.getExecutionQuoteSnapshot(order.contract.instrumentKey), intentTimestamp:order.entry.entryTimestamp });
     // The existing V2 lifecycle has no residual-exit state; a partial SELL may
     // be observed but cannot close the whole paper position at a fabricated size.
     return fill.status === 'FILLED' ? fillModel.toSummary(fill) : undefined;
+  }, undefined, async (order, update, reason, fill) => {
+    if (!order.executionOrderId) throw new Error(`Paper order ${order.id} is missing its durable execution order id.`);
+    await prismaExecution.recordPaperExit(order.executionOrderId, istDate(update.timestamp), fill, update.timestamp, reason);
+  }, async (order, error) => {
+    riskGate.transition('HALTED');
+    console.error(`[PAPER_EXECUTION_DURABILITY_FAILURE] orderId=${order.id} error=${error instanceof Error ? error.message : 'unknown'}`);
+    if (order.executionOrderId) {
+      await prismaExecution.markReconciliationRequired(order.executionOrderId, istDate(order.entry.entryTimestamp), new Date(), 'LOCAL_DURABLE_EXIT_UNCERTAIN');
+    }
   });
   paperMarketDataAdapter = new PaperMarketDataAdapterService(positionMonitor, eventBus, portfolio);
   const latestPremiumByInstrument = new Map<string, number>();
@@ -190,7 +206,7 @@ async function run(): Promise<void> {
   const latestOptionQuotes = new Map<string, { ltp?: number; bid?: number; ask?: number; receivedAtMs?: number; crossed?: boolean }>();
   let recovery: MarketDataRecoveryCoordinatorService | undefined;
   let eodRequestedForRisk = false;
-  const riskGate = new RuntimeRiskGateService({ getPortfolioSnapshot: (sessionDate) => portfolio.getSnapshot(sessionDate) });
+  const riskGate = new RuntimeRiskGateService({ getPortfolioSnapshot: (sessionDate) => prismaExecution.getCachedSnapshot(sessionDate), getExecutionHealth: (sessionDate) => prismaExecution.getHealth(sessionDate) });
   const orchestration = new PaperTradingOrchestratorService(
     undefined,
     orderManager,
@@ -213,6 +229,8 @@ async function run(): Promise<void> {
     portfolio,
     fillModel,
     paperMarketDataAdapter,
+    undefined,
+    prismaExecution,
   );
   const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0);
   const forwardJournal = new ForwardValidationJournal('V2_TREND_DOWN_PE', forwardFingerprint);
@@ -359,9 +377,17 @@ async function run(): Promise<void> {
     if (shuttingDown) return;
     shuttingDown = true; eodRequestedForRisk = true; riskGate.transition('HALTED');
     health.stop(); recovery.stop();
+    const durableExitDrained = await paperMarketDataAdapter.drainDurableExitQueue(Number(process.env.PAPER_EXECUTION_SHUTDOWN_WAIT_MS ?? 5_000));
+    if (!durableExitDrained) {
+      riskGate.transition('HALTED');
+      forwardJournal.appendEvent(istDate(new Date()), 'EXECUTION_RECONCILIATION_REQUIRED', ['EXECUTION_RECONCILIATION_REQUIRED'], { reason: 'EXIT_TRANSACTION_DRAIN_TIMEOUT' });
+      console.error('[PAPER_EXECUTION_DURABILITY_FAILURE] pending durable exit transaction did not settle before shutdown timeout; reconciliation is required.');
+    }
+    const reconciliationRequired = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING);
+    const shutdownStatus = durableExitDrained && !reconciliationRequired ? 'COMPLETED' : 'RECONCILIATION_REQUIRED';
     const portfolioSnapshot = portfolio.logSessionSummary(istDate(new Date()));
-    forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: true, eodReason: reason, status: 'COMPLETED', indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null, portfolioUnrealizedPnl: portfolioSnapshot?.totalUnrealizedPnl ?? null } });
-    forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
+    forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: shutdownStatus === 'COMPLETED', eodReason: reason, status: shutdownStatus, indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null } });
+    if (shutdownStatus === 'COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     console.log(`\nGraceful shutdown requested (${reason}).`);
     clearInterval(statusTimer);
     if (eodTimer) clearTimeout(eodTimer);
@@ -405,14 +431,22 @@ async function run(): Promise<void> {
       liveCandleEventAdapter.finishSession(niftyInstrumentKey);
       const eodAt = new Date();
       forwardJournal.appendEvent(istDate(eodAt), 'EOD_FORCED_EXIT', ['EOD_FORCED_EXIT']);
-      const actions = positionMonitor.closeAtSessionEnd(eodAt, (instrumentKey, entryPremium) => latestPremiumByInstrument.get(instrumentKey) ?? entryPremium);
+      // Drain an already-triggered target/stop/timeout transaction first, then
+      // route remaining EOD exits through the exact same durable pipeline.
+      const preEodDrained = await paperMarketDataAdapter.drainDurableExitQueue(Number(process.env.PAPER_EXECUTION_SHUTDOWN_WAIT_MS ?? 5_000));
+      if (!preEodDrained) {
+        riskGate.transition('HALTED');
+        forwardJournal.appendEvent(istDate(eodAt), 'EXECUTION_RECONCILIATION_REQUIRED', ['EXECUTION_RECONCILIATION_REQUIRED'], { reason: 'PRE_EOD_EXIT_TRANSACTION_DRAIN_TIMEOUT' });
+      }
+      const actions = await positionMonitor.closeAtSessionEndDurably(eodAt, (instrumentKey, entryPremium) => latestPremiumByInstrument.get(instrumentKey) ?? entryPremium);
       actions.forEach((action) => {
         eventBus.emit('paper.order.action', action);
         console.log(`[V2_EOD_EXIT] order=${action.orderId} reason=TIME_EXIT premium=${action.observedPremium.toFixed(2)} timestamp=${formatIst(action.timestamp)}`);
       });
       await shutdown('EOD_15_30_IST');
       const status = runtime.getStatus();
-      console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=COMPLETED`);
+      const eodStatus = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING) ? 'RECONCILIATION_REQUIRED' : 'COMPLETED';
+      console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=${eodStatus}`);
     });
   };
   connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => {
