@@ -24,6 +24,7 @@ import { LivePaperCompletedCandleInput, LivePaperStrategyResult } from '../modul
 import { PaperTradingRuntimeState } from '../modules/paper-trading/dto/paper-trading-runtime.dto';
 import { IstSessionEodCoordinator, isAtOrAfterIstSessionEnd } from '../modules/market-data/services/ist-market-session-eod.service';
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
+import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
 import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
 
@@ -243,23 +244,32 @@ async function run(): Promise<void> {
       console.log(`[MARKET_DATA_BACKFILL] event=${eventType} state=${recovery.getState()}`);
     },
   });
+  const health = new MarketDataHealthMonitorService(connectionManager, {
+    onStall: (snapshot) => {
+      recovery.handleUnexpectedDisconnect({ generationId: snapshot.generationId, reason: 'STALL', lastMessageAgeMs: snapshot.lastRawMessageAgeMs, lastTickAgeMs: snapshot.lastNiftyTickAgeMs });
+      paperMarketDataAdapter.setMarketDataAvailable(false); paperRuntimeCandleAdapter.stop(); liveCandleEventAdapter.stop();
+      forwardJournal.appendEvent(forwardDate, 'MARKET_DATA_DEGRADED', ['MARKET_DATA_DEGRADED'], { ...snapshot });
+    },
+  });
   recovery.on('stateChanged', (state) => { if (state === 'READY' && !shuttingDown) { paperMarketDataAdapter.setMarketDataAvailable(true); paperRuntimeCandleAdapter.start(); } });
   const cleanupEpochTimestampNormalizer = installEpochTimestampNormalizer(eventBus);
 
-  const onWebSocketMessage = (buffer: Buffer): void => {
+  const onWebSocketMessage = (buffer: Buffer, details: { generationId: number }): void => {
     try {
-      tickProcessor.process(protobufDecoder.decode(buffer));
+      tickProcessor.process(protobufDecoder.decode(buffer), details.generationId);
     } catch (error) {
       console.error('[market-data decode/process error]', safeMessage(error));
     }
   };
   const onMarketTick = (event: unknown): void => {
     const tick = event as Partial<MarketTickEvent>;
+    if (tick.generationId !== undefined && tick.generationId !== connectionManager.getGenerationId()) return;
     if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || !Number.isFinite(tick.ltp) || tick.ltp <= 0 || typeof tick.timestamp !== 'string') return;
     const timestamp = new Date(tick.timestamp);
     if (Number.isNaN(timestamp.getTime())) return;
     if (isAtOrAfterIstSessionEnd(timestamp)) { eodRequested = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
-    if (tick.instrumentKey === niftyInstrumentKey) recovery.handleLiveTick(timestamp);
+    health.noteValidMarketEvent(tick.generationId ?? connectionManager.getGenerationId());
+    if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId ?? connectionManager.getGenerationId()); recovery.handleLiveTick(timestamp, tick.generationId); }
     latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp);
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();
@@ -297,7 +307,7 @@ async function run(): Promise<void> {
     console.error(`[paper.strategy.error] ${error.instrumentKey ?? 'unknown'} | ${error.candleTimestamp instanceof Date ? formatIst(error.candleTimestamp) : 'unknown time'} | ${error.message ?? 'Unknown paper-strategy error.'}`);
   };
 
-  webSocketClient.on('message', onWebSocketMessage);
+  connectionManager.on('message', onWebSocketMessage);
   eventBus.on('market.tick', onMarketTick);
   eventBus.on('market.depth', onMarketDepth);
   eventBus.on('market.candle.completed', onCompletedCandle);
@@ -315,6 +325,7 @@ async function run(): Promise<void> {
   const shutdown = async (reason: string): Promise<void> => {
     if (shuttingDown) return;
     shuttingDown = true;
+    health.stop(); recovery.stop();
     forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: true, eodReason: reason, status: 'COMPLETED' });
     forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     console.log(`\nGraceful shutdown requested (${reason}).`);
@@ -342,7 +353,7 @@ async function run(): Promise<void> {
       });
     }
 
-    webSocketClient.off('message', onWebSocketMessage);
+    connectionManager.off('message', onWebSocketMessage);
     eventBus.off('market.tick', onMarketTick);
     eventBus.off('market.depth', onMarketDepth);
     eventBus.off('market.candle.completed', onCompletedCandle);
@@ -370,19 +381,19 @@ async function run(): Promise<void> {
       console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=COMPLETED`);
     });
   };
-  connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string }) => {
-    recovery.handleUnexpectedDisconnect();
+  connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => {
+    recovery.handleUnexpectedDisconnect(details);
     paperMarketDataAdapter.setMarketDataAvailable(false);
     paperRuntimeCandleAdapter.stop(); liveCandleEventAdapter.stop();
     forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_DISCONNECTED', ['WEBSOCKET_DISCONNECTED'], { code: details.code ?? null, reason: details.reason ?? null });
   });
-  connectionManager.on('reconnected', (details: { downtimeMs?: number }) => {
+  connectionManager.on('reconnected', (details: { downtimeMs?: number; generationId?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_RECONNECTED', ['WEBSOCKET_RECONNECTED'], { downtimeMs: details.downtimeMs ?? null });
-    recovery.handleReconnected();
+    recovery.handleReconnected(details);
   });
   connectionManager.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null });
-    void shutdown('RECONNECT_FAILED');
+    recovery.fault('RECONNECT_FAILED'); void shutdown('RECONNECT_FAILED');
   });
   requestEod = () => { void finishEod(); };
   eodTimer = eodCoordinator.schedule(finishEod);
@@ -393,6 +404,7 @@ async function run(): Promise<void> {
   process.once('SIGTERM', () => { clearTimeout(eodTimer); void shutdown('SIGTERM'); });
 
   liveCandleEventAdapter.start();
+  health.start();
   runtime.start(); // Starts PaperMarketDataAdapterService as part of the runtime lifecycle.
   paperRuntimeCandleAdapter.start();
   await subscriptionManager.subscribe(niftyInstrumentKey, MarketDataSubscriptionMode.FULL);

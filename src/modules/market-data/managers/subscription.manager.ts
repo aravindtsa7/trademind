@@ -26,6 +26,7 @@ interface SubscriptionRequest {
 export default class SubscriptionManager {
   private connectionManager: ConnectionManager;
   private subscriptions = new Map<string, MarketDataSubscriptionMode>();
+  private restoredGenerationId?: number;
 
   constructor(accessToken: string, connectionManager = new ConnectionManager(accessToken)) {
     this.connectionManager = connectionManager;
@@ -128,9 +129,9 @@ export default class SubscriptionManager {
   private registerConnectionListeners(): void {
     this.connectionManager.on(
       'stateChanged',
-      ({ previousState, state }: { previousState: ConnectionState; state: ConnectionState }) => {
+      ({ previousState, state, generationId }: { previousState: ConnectionState; state: ConnectionState; generationId?: number }) => {
         if (state === ConnectionState.CONNECTED && previousState !== ConnectionState.CONNECTED) {
-          this.restoreSubscriptions();
+          this.restoreSubscriptions(generationId ?? this.connectionManager.getGenerationId());
         }
       }
     );
@@ -144,7 +145,9 @@ export default class SubscriptionManager {
     return Array.from(uniqueKeys).filter((instrumentKey) => !this.subscriptions.has(instrumentKey));
   }
 
-  private restoreSubscriptions(): void {
+  private restoreSubscriptions(generationId: number): void {
+    if (this.restoredGenerationId === generationId) return;
+    this.restoredGenerationId = generationId;
     if (this.subscriptions.size === 0) {
       return;
     }
@@ -163,8 +166,11 @@ export default class SubscriptionManager {
 
       logger.info('Restored market data subscriptions after reconnection', {
         instrumentCount: this.subscriptions.size,
+        generationId,
       });
+      this.connectionManager.emit('subscriptionsRestored', { generationId, instrumentCount: this.subscriptions.size });
     } catch (error) {
+      this.restoredGenerationId = undefined;
       logger.error('Failed to restore market data subscriptions after reconnection', { error });
     }
   }

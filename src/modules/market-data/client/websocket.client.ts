@@ -53,6 +53,7 @@ export default class MarketDataWebSocketClient extends EventEmitter {
         });
 
         socket.addEventListener('message', (event: MessageEvent) => {
+          if (this.socket !== socket) return;
           if (!(event.data instanceof ArrayBuffer)) {
             logger.warn('Received a non-binary Upstox market data WebSocket message');
             return;
@@ -66,6 +67,7 @@ export default class MarketDataWebSocketClient extends EventEmitter {
         });
 
         socket.addEventListener('error', () => {
+          if (this.socket !== socket) return;
           const error = new Error('Upstox market data WebSocket connection failed.');
           if (this.intentionalDisconnect) {
             logger.debug('Ignoring expected WebSocket error during intentional disconnect');
@@ -107,6 +109,14 @@ export default class MarketDataWebSocketClient extends EventEmitter {
     }
 
     logger.info('Disconnecting from Upstox market data WebSocket');
+    this.socket.close();
+  }
+
+  /** Close a stalled transport while allowing ConnectionManager to recover it. */
+  disconnectForRecovery(): void {
+    if (!this.socket) return;
+    this.intentionalDisconnect = false;
+    logger.warn('Closing stalled Upstox market data WebSocket for recovery');
     this.socket.close();
   }
 

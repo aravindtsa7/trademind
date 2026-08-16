@@ -18,6 +18,7 @@ export interface MarketTickEvent {
   lastTradedTime?: string;
   lastTradedQuantity?: string;
   closePrice?: number;
+  generationId?: number;
 }
 
 export interface MarketGreeksEvent {
@@ -28,6 +29,7 @@ export interface MarketGreeksEvent {
   gamma?: number;
   vega?: number;
   rho?: number;
+  generationId?: number;
 }
 
 export interface MarketDepthQuote {
@@ -41,10 +43,11 @@ export interface MarketDepthEvent {
   instrumentKey: string;
   timestamp?: string;
   quotes: MarketDepthQuote[];
+  generationId?: number;
 }
 
 export default class TickProcessor {
-  process(message: MarketDataFeedResponseDto): void {
+  process(message: MarketDataFeedResponseDto, generationId?: number): void {
     if (!this.isValidMessage(message)) {
       logger.warn('Ignoring invalid decoded market data message');
       return;
@@ -57,9 +60,9 @@ export default class TickProcessor {
     }
 
     Object.entries(message.feeds).forEach(([instrumentKey, feed]) => {
-      this.publishTick(instrumentKey, message.currentTs, feed);
-      this.publishGreeks(instrumentKey, message.currentTs, feed);
-      this.publishDepth(instrumentKey, message.currentTs, feed);
+      this.publishTick(instrumentKey, message.currentTs, feed, generationId);
+      this.publishGreeks(instrumentKey, message.currentTs, feed, generationId);
+      this.publishDepth(instrumentKey, message.currentTs, feed, generationId);
     });
   }
 
@@ -75,7 +78,7 @@ export default class TickProcessor {
   private publishTick(
     instrumentKey: string,
     timestamp: string | undefined,
-    feed: MarketDataFeedDto
+    feed: MarketDataFeedDto, generationId?: number
   ): void {
     const ltpc = this.getLtpc(feed);
     if (!ltpc || !this.hasLtpcValue(ltpc)) {
@@ -89,6 +92,7 @@ export default class TickProcessor {
       lastTradedTime: ltpc.ltt,
       lastTradedQuantity: ltpc.ltq,
       closePrice: ltpc.cp,
+      generationId,
     };
 
     eventBus.emit('market.tick', event);
@@ -97,7 +101,7 @@ export default class TickProcessor {
   private publishGreeks(
     instrumentKey: string,
     timestamp: string | undefined,
-    feed: MarketDataFeedDto
+    feed: MarketDataFeedDto, generationId?: number
   ): void {
     const greeks = feed.fullFeed?.marketFF?.optionGreeks ?? feed.firstLevelWithGreeks?.optionGreeks;
     if (!greeks || !this.hasGreekValue(greeks)) {
@@ -112,6 +116,7 @@ export default class TickProcessor {
       gamma: greeks.gamma,
       vega: greeks.vega,
       rho: greeks.rho,
+      generationId,
     };
 
     eventBus.emit('market.greeks', event);
@@ -120,7 +125,7 @@ export default class TickProcessor {
   private publishDepth(
     instrumentKey: string,
     timestamp: string | undefined,
-    feed: MarketDataFeedDto
+    feed: MarketDataFeedDto, generationId?: number
   ): void {
     const depthQuotes = feed.fullFeed?.marketFF?.marketLevel?.bidAskQuote;
     const firstDepth = feed.firstLevelWithGreeks?.firstDepth;
@@ -135,6 +140,7 @@ export default class TickProcessor {
       instrumentKey,
       timestamp,
       quotes,
+      generationId,
     };
 
     eventBus.emit('market.depth', event);

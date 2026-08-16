@@ -2,6 +2,12 @@ const formatter = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
 });
 const sessionEndMinute = 15 * 60 + 30;
+const sessionStartMinute = 9 * 60 + 15;
+
+export function isWithinIstMarketSession(value: Date): boolean {
+  const parts = istParts(value);
+  return parts.weekday !== 'Sat' && parts.weekday !== 'Sun' && parts.minute >= sessionStartMinute && parts.minute < sessionEndMinute;
+}
 
 export function isAtOrAfterIstSessionEnd(value: Date): boolean {
   const parts = istParts(value);
