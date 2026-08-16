@@ -6,6 +6,7 @@ import {
   PaperOrderExitReason,
   PaperOrderSignalType,
 } from '../types/paper-trading.types';
+import { PaperExecutionFillSummary } from './paper-fill-model.dto';
 
 export interface CreatePaperOrderDto {
   signalTimestamp: Date;
@@ -23,5 +24,6 @@ export interface ClosePaperOrderDto {
   grossPnl?: number;
   charges?: OptionTradeCharges;
   netPnl?: number;
+  executionFill?: PaperExecutionFillSummary;
 }
 

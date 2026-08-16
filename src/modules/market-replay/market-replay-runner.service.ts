@@ -82,6 +82,7 @@ export default class MarketReplayRunnerService {
       if (value.paperOutcome) paperOutcomes += 1;
       if (value.shadowOutcome) shadowOutcomes += 1;
       if (value.portfolioDigest) output.push(`portfolio:${value.portfolioDigest}`);
+      if (value.paperFill) output.push(`fill:${stableReplayJson(value.paperFill)}`);
       output.push(`strategy:${stableReplayJson(value)}`);
     };
 

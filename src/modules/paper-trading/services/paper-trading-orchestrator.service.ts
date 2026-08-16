@@ -4,6 +4,7 @@ import { OptionContract, OptionContractSelectionResult } from '../../options/typ
 import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
 import {
   PaperEntryPremiumProvider,
+  PaperExecutionQuoteProvider,
   PaperMarketDataSubscriptionGateway,
   PaperTradingOrchestrationRequest,
   PaperTradingOrchestrationResult,
@@ -13,6 +14,7 @@ import RuntimeRiskGateService, { RiskDeniedError, RuntimeRiskIntent } from '../.
 import logger from '../../../core/logger/logger';
 import { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
 import PaperPortfolioService from './paper-portfolio.service';
+import PaperFillModelService, { PaperFillUnavailableError } from './paper-fill-model.service';
 
 interface OptionContractSelector {
   select(request: {
@@ -42,6 +44,8 @@ export default class PaperTradingOrchestratorService {
     private readonly riskGate?: RuntimeRiskGateService,
     private readonly riskContextProvider?: PaperTradeRiskContextProvider,
     private readonly portfolio?: PaperPortfolioService,
+    private readonly fillModel?: PaperFillModelService,
+    private readonly executionQuoteProvider?: PaperExecutionQuoteProvider,
   ) {}
 
   async createFromSignal(request: PaperTradingOrchestrationRequest): Promise<PaperTradingOrchestrationResult> {
@@ -86,6 +90,20 @@ export default class PaperTradingOrchestratorService {
       if (approvedDecision.decision === 'DENIED') throw new RiskDeniedError(approvedDecision);
     }
 
+    let executionFill;
+    let filledQuantity = selectedContract.lotSize as number;
+    let simulatedEntryPremium = observedEntryPremium;
+    if (this.fillModel) {
+      if (!this.executionQuoteProvider) throw new Error('Paper fill model is configured without an execution quote provider.');
+      const eligibleAt = new Date(signal.signalTimestamp.getTime() + this.fillModel.executionLatencyMs);
+      let quote = this.executionQuoteProvider.getExecutionQuoteSnapshot(selectedContract.instrumentKey);
+      if (this.fillModel.executionLatencyMs > 0) quote = await this.executionQuoteProvider.waitForExecutionQuote?.(selectedContract.instrumentKey, eligibleAt, Number(process.env.PAPER_FILL_WAIT_MS ?? 2_000)) ?? quote;
+      const fill = this.fillModel.fill({ side:'BUY', requestedQuantity:selectedContract.lotSize as number, quote, intentTimestamp:signal.signalTimestamp });
+      executionFill = this.fillModel.toSummary(fill);
+      if (!executionFill) { logger.warn('PAPER_FILL_UNAVAILABLE', { strategyId: approvedDecision?.strategyId, instrument: selectedContract.instrumentKey, status:fill.status, reason:fill.reason, fillQuality:fill.fillQuality }); throw new PaperFillUnavailableError(fill); }
+      filledQuantity = executionFill.filledQuantity;
+      simulatedEntryPremium = executionFill.averageFillPrice;
+    }
     const pending = this.orderManager.create({
       signalTimestamp: signal.signalTimestamp,
       signalType: signal.signalType as StrategySignal.BUY_CE | StrategySignal.BUY_PE,
@@ -96,12 +114,13 @@ export default class PaperTradingOrchestratorService {
         strikePrice: selectedContract.strikePrice,
         expiry: selectedContract.expiry,
         lotSize: selectedContract.lotSize as number,
-        quantity: selectedContract.lotSize as number,
+        quantity: filledQuantity,
       },
       entry: {
         entryTimestamp: signal.signalTimestamp,
         observedEntryPremium,
-        simulatedEntryPremium: observedEntryPremium,
+        simulatedEntryPremium,
+        executionFill,
       },
       exitConfiguration: { ...request.exitPolicy },
     });

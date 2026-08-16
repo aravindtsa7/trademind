@@ -2,6 +2,7 @@ import { MarketDataSubscription, MarketDataSubscriptionMode } from '../../market
 import { OptionContract, OptionContractSelectionResult } from '../../options/types';
 import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
 import { PaperOrder } from '../types/paper-trading.types';
+import { ExecutionQuoteSnapshot } from './paper-fill-model.dto';
 
 export interface PaperTradingSignalInput {
   signalTimestamp: Date;
@@ -18,6 +19,11 @@ export interface PaperTradingExitPolicyInput {
 
 export interface PaperEntryPremiumProvider {
   getObservedPremium(instrumentKey: string): Promise<number>;
+}
+
+export interface PaperExecutionQuoteProvider {
+  getExecutionQuoteSnapshot(instrumentKey: string): ExecutionQuoteSnapshot | undefined;
+  waitForExecutionQuote?(instrumentKey: string, eligibleAt: Date, timeoutMs: number): Promise<ExecutionQuoteSnapshot | undefined>;
 }
 
 /** Structural boundary satisfied by the existing SubscriptionManager. */

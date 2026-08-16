@@ -3,6 +3,7 @@ import test from 'node:test';
 import MarketReplayRunnerService from './market-replay-runner.service';
 import { replayEventId } from './market-replay-recorder.service';
 import { marketReplaySchemaVersion, MarketReplayEventEnvelope, MarketReplayEventType } from './market-replay.types';
+import PaperFillModelService from '../paper-trading/services/paper-fill-model.service';
 
 const nifty = 'NSE_INDEX|Nifty 50';
 function event(type: MarketReplayEventType, receivedTimestamp: string, payload: Record<string, unknown> = {}, overrides: Partial<MarketReplayEventEnvelope> = {}): MarketReplayEventEnvelope {
@@ -36,6 +37,13 @@ test('an in-memory portfolio digest is included deterministically in replay outp
   const runner = new MarketReplayRunnerService();
   const first = await runner.run(events, { onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1, portfolioDigest: 'portfolio-state-v1' }) });
   const second = await runner.run(events, { onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1, portfolioDigest: 'portfolio-state-v1' }) });
+  assert.equal(first.outputDigest, second.outputDigest);
+});
+
+test('recorded replay quote input produces identical shared fill results and output digest', async () => {
+  const events = [event('TICK', '2026-08-17T03:45:00.000Z', { ltp: 25000 })]; const fillModel = new PaperFillModelService();
+  const evaluate = () => ({ strategy:'V2' as const, evaluated:1, paperFill:fillModel.fill({ side:'BUY', requestedQuantity:10, intentTimestamp:new Date('2026-08-17T03:44:00.000Z'), quote:{ instrumentKey:'NSE_FO|1', sourceTimestamp:'2026-08-17T03:45:00.000Z', receivedTimestamp:'2026-08-17T03:45:00.000Z', quoteAgeMs:0, ltp:100, bestBid:99, bestAsk:101, bidSize:20, askSize:20, depthLevels:[{ bid:99,bidSize:20,ask:101,askSize:20 }], spreadAbsolute:2, spreadPercent:2, connectionGenerationId:1, dataQuality:'FRESH_DEPTH' } }) });
+  const runner = new MarketReplayRunnerService(); const first = await runner.run(events, { onReadyEvaluation:evaluate }); const second = await runner.run(events, { onReadyEvaluation:evaluate });
   assert.equal(first.outputDigest, second.outputDigest);
 });
 

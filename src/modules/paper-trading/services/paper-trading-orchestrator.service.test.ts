@@ -11,6 +11,8 @@ import PaperTradingOrchestratorService from './paper-trading-orchestrator.servic
 import RuntimeRiskGateService, { RiskDeniedError } from '../../risk/runtime-risk-gate.service';
 import PaperEntryQuoteWaiterService, { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
+import PaperFillModelService, { PaperFillUnavailableError } from './paper-fill-model.service';
+import { ExecutionQuoteSnapshot } from '../dto/paper-fill-model.dto';
 
 const timestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -133,6 +135,27 @@ test('approved V2 intent creates one authoritative paper portfolio position', as
   await assert.rejects(() => orchestrator.createFromSignal(request()), RiskDeniedError);
   assert.equal(portfolio.getSnapshot('2026-08-10')?.openPositionCount, 1);
   assert.equal(manager.getActiveOrders().length, 1);
+});
+
+test('risk approval followed by unavailable execution quote creates zero paper position or order', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const premiums = new PremiumProvider(); const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => timestamp);
+  const risk = new RuntimeRiskGateService({ persist:false, killSwitch:false, getPortfolioSnapshot:(date)=>portfolio.getSnapshot(date) });
+  const context = { buildIntent: ({signal,contract,observedEntryPremium}: any) => ({ runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:100,bid:99,ask:101,ageMs:0} }) };
+  const provider = { getExecutionQuoteSnapshot: (): ExecutionQuoteSnapshot => ({ instrumentKey:'NSE_FO|ce-24600', sourceTimestamp:timestamp.toISOString(), receivedTimestamp:timestamp.toISOString(), quoteAgeMs:0, ltp:100, bestBid:null, bestAsk:null, bidSize:null, askSize:null, depthLevels:[], spreadAbsolute:null, spreadPercent:null, connectionGenerationId:1, dataQuality:'LTP_ONLY' }) };
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(), manager, subscriptions, premiums, MarketDataSubscriptionMode.FULL, risk, context, portfolio, new PaperFillModelService(), provider);
+  await assert.rejects(() => orchestrator.createFromSignal(request()), PaperFillUnavailableError);
+  assert.equal(manager.getActiveOrders().length, 0); assert.equal(portfolio.getSnapshot('2026-08-10')?.openPositionCount, 0);
+});
+
+test('a depth partial entry creates exposure and P&L only for filled quantity', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const premiums = new PremiumProvider(); const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => timestamp);
+  const risk = new RuntimeRiskGateService({ persist:false, killSwitch:false, maxOpenPositions:2, getPortfolioSnapshot:(date)=>portfolio.getSnapshot(date) });
+  const context = { buildIntent: ({signal,contract,observedEntryPremium}: any) => ({ runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:100,bid:99,ask:101,ageMs:0} }) };
+  const provider = { getExecutionQuoteSnapshot: (): ExecutionQuoteSnapshot => ({ instrumentKey:'NSE_FO|ce-24600', sourceTimestamp:timestamp.toISOString(), receivedTimestamp:timestamp.toISOString(), quoteAgeMs:0, ltp:100, bestBid:99, bestAsk:101, bidSize:75, askSize:50, depthLevels:[{ bid:99,bidSize:75,ask:101,askSize:50 }], spreadAbsolute:2, spreadPercent:2, connectionGenerationId:1, dataQuality:'FRESH_DEPTH' }) };
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(), manager, subscriptions, premiums, MarketDataSubscriptionMode.FULL, risk, context, portfolio, new PaperFillModelService(), provider);
+  const result = await orchestrator.createFromSignal(request());
+  assert.equal(result.order.contract.quantity, 50); assert.equal(result.order.entry.simulatedEntryPremium, 101); assert.equal(result.order.entry.executionFill?.status, 'PARTIALLY_FILLED');
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.totalNotional, 5050);
 });
 
 test('quote wait timeout, stale quote, reconnect and EOD deny with no order', async () => {

@@ -100,3 +100,11 @@ test('fresh depth marks the authoritative portfolio at executable long-option bi
   bus.emit('market.depth', { instrumentKey: order.contract.instrumentKey, timestamp: tick(order.contract.instrumentKey, 101).timestamp, quotes: [{ bidPrice:100.5, askPrice:101.5 }] });
   assert.equal(portfolio.getSnapshot('2026-08-10')?.totalUnrealizedPnl, 37.5);
 });
+
+test('canonical execution quote snapshot preserves supplied depth and never invents book sides', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const timestamp = tick('NSE_FO|one', 100).timestamp;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => new Date(timestamp));
+  adapter.start(); bus.emit('market.tick', tick('NSE_FO|one', 100)); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp, generationId:7, quotes:[{ bidPrice:99, bidQuantity:'25', askPrice:101, askQuantity:'20' }, { bidPrice:98, bidQuantity:'50', askPrice:102, askQuantity:'40' }] });
+  const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(snapshot?.dataQuality, 'FRESH_DEPTH'); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.depthLevels.length, 2); assert.equal(snapshot?.depthLevels[1].askSize, 40); assert.equal(snapshot?.connectionGenerationId, 7);
+});

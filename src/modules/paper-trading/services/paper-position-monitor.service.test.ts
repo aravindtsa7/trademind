@@ -5,6 +5,7 @@ import { CreatePaperOrderDto } from '../dto/paper-order.dto';
 import { PaperOrderStatus, PaperPremiumUpdate } from '../types/paper-trading.types';
 import PaperOrderManagerService from './paper-order-manager.service';
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
+import PaperFillModelService from './paper-fill-model.service';
 import PaperPositionMonitorService from './paper-position-monitor.service';
 
 const entryTime = new Date('2026-08-10T04:00:00.000Z');
@@ -116,4 +117,24 @@ test('V2 target and EOD monitor callbacks update the authoritative portfolio exa
   assert.equal(portfolio.getSnapshot('2026-08-10')?.totalRealizedPnl, 2250);
   assert.equal(portfolio.getSnapshot('2026-08-10')?.closedPositionCount, 1);
   assert.equal(portfolio.getSnapshot('2026-08-10')?.openPositionCount, 0);
+});
+
+test('a triggered V2 exit uses executable BID fill for P&L while retaining frozen target trigger semantics', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => entryTime);
+  portfolio.open({ order, strategyId:'V2_TREND_DOWN_PE', underlying:'NIFTY 50', correlationId:'corr', intentId:'intent', sessionDate:'2026-08-10' });
+  const fills = new PaperFillModelService();
+  const monitor = new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10', (active, tick) => fills.toSummary(fills.fill({ side:'SELL', requestedQuantity:active.contract.quantity, intentTimestamp:active.entry.entryTimestamp, quote:{ instrumentKey:active.contract.instrumentKey, sourceTimestamp:tick.timestamp.toISOString(), receivedTimestamp:tick.timestamp.toISOString(), quoteAgeMs:0, ltp:130, bestBid:129, bestAsk:131, bidSize:null, askSize:null, depthLevels:[], spreadAbsolute:2, spreadPercent:2, connectionGenerationId:1, dataQuality:'FRESH_TOP_OF_BOOK' } })));
+  const result = monitor.monitor(update(order.contract.instrumentKey, 130));
+  assert.equal(result[0].action, PaperOrderStatus.TARGET_EXIT); assert.equal(manager.getById(order.id)?.exit?.simulatedExitPremium, 129);
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.totalRealizedPnl, 2175);
+});
+
+test('partial exit depth never closes a full V2 paper position at an invented residual quantity', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager); const fills = new PaperFillModelService();
+  const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', (active, tick) => {
+    const result = fills.fill({ side:'SELL', requestedQuantity:active.contract.quantity, intentTimestamp:active.entry.entryTimestamp, quote:{ instrumentKey:active.contract.instrumentKey, sourceTimestamp:tick.timestamp.toISOString(), receivedTimestamp:tick.timestamp.toISOString(), quoteAgeMs:0, ltp:130, bestBid:129, bestAsk:131, bidSize:10, askSize:10, depthLevels:[{ bid:129,bidSize:10,ask:131,askSize:10 }], spreadAbsolute:2, spreadPercent:2, connectionGenerationId:1, dataQuality:'FRESH_DEPTH' } });
+    return result.status === 'FILLED' ? fills.toSummary(result) : undefined;
+  });
+  const result = monitor.monitor(update(order.contract.instrumentKey, 130));
+  assert.equal(result[0].action, 'NONE'); assert.equal(result[0].executionUnavailable, true); assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.OPEN);
 });

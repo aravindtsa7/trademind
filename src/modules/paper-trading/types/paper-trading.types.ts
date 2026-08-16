@@ -1,5 +1,6 @@
 import { OptionTradeCharges } from '../../options/dto/option-trade-pnl.dto';
 import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
+import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 
 export enum PaperOrderStatus {
   PENDING = 'PENDING',
@@ -28,6 +29,8 @@ export interface PaperOrderEntry {
   entryTimestamp: Date;
   observedEntryPremium: number;
   simulatedEntryPremium: number;
+  /** Observed/reference price remains separate from executable-estimated fill. */
+  executionFill?: PaperExecutionFillSummary;
 }
 
 export interface PaperOrderExitConfiguration {
@@ -44,6 +47,7 @@ export interface PaperOrderExit {
   grossPnl?: number;
   charges?: OptionTradeCharges;
   netPnl?: number;
+  executionFill?: PaperExecutionFillSummary;
 }
 
 export interface PaperOrder {
@@ -77,4 +81,5 @@ export interface PaperPositionMonitoringResult {
   timestamp: Date;
   observedPremium: number;
   action: PaperPositionMonitorAction;
+  executionUnavailable?: boolean;
 }

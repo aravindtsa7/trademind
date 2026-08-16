@@ -13,4 +13,7 @@ export interface MarketReplayStrategyOutput {
   shadowOutcome?: boolean;
   subscriptionIntent?: string;
   portfolioDigest?: string;
+  /** Optional result from the shared PaperFillModel; runner only records it. */
+  paperFill?: PaperExecutionFillResult;
 }
+import type { PaperExecutionFillResult } from '../paper-trading/dto/paper-fill-model.dto';

@@ -38,6 +38,7 @@ export default class PaperOrderManagerService implements PaperOrderManager {
       entry: {
         ...input.entry,
         entryTimestamp: new Date(input.entry.entryTimestamp.getTime()),
+        ...(input.entry.executionFill ? { executionFill: { ...input.entry.executionFill } } : {}),
       },
       exitConfiguration: { ...input.exitConfiguration },
       targetPremium,
@@ -85,6 +86,7 @@ export default class PaperOrderManagerService implements PaperOrderManager {
       ...input,
       exitTimestamp: new Date(input.exitTimestamp.getTime()),
       charges: input.charges ? { ...input.charges } : undefined,
+      ...(input.executionFill ? { executionFill: { ...input.executionFill } } : {}),
     };
     const updated: PaperOrder = { ...order, status: input.exitReason, exit };
     this.orders.set(id, updated);
@@ -145,9 +147,9 @@ function cloneOrder(order: PaperOrder): PaperOrder {
     ...order,
     signalTimestamp: new Date(order.signalTimestamp.getTime()),
     contract: { ...order.contract, expiry: new Date(order.contract.expiry.getTime()) },
-    entry: { ...order.entry, entryTimestamp: new Date(order.entry.entryTimestamp.getTime()) },
+    entry: { ...order.entry, entryTimestamp: new Date(order.entry.entryTimestamp.getTime()), ...(order.entry.executionFill ? { executionFill: { ...order.entry.executionFill } } : {}) },
     exitConfiguration: { ...order.exitConfiguration },
-    exit: order.exit ? { ...order.exit, exitTimestamp: new Date(order.exit.exitTimestamp.getTime()), charges: order.exit.charges ? { ...order.exit.charges } : undefined } : undefined,
+    exit: order.exit ? { ...order.exit, exitTimestamp: new Date(order.exit.exitTimestamp.getTime()), charges: order.exit.charges ? { ...order.exit.charges } : undefined, ...(order.exit.executionFill ? { executionFill: { ...order.exit.executionFill } } : {}) } : undefined,
   };
 }
 

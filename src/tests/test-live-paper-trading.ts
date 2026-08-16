@@ -30,6 +30,7 @@ import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '.
 import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
 import PaperEntryQuoteWaiterService from '../modules/paper-trading/services/paper-entry-quote-waiter.service';
 import PaperPortfolioService from '../modules/paper-trading/services/paper-portfolio.service';
+import PaperFillModelService from '../modules/paper-trading/services/paper-fill-model.service';
 
 const niftyInstrumentKey = 'NSE_INDEX|Nifty 50';
 const tickPrintIntervalMs = 30_000;
@@ -174,9 +175,16 @@ async function run(): Promise<void> {
 
   const orderManager = new PaperOrderManagerService();
   const portfolio = new PaperPortfolioService();
+  const fillModel = new PaperFillModelService();
   portfolio.reconcileOpenOrders(istDate(new Date()), orderManager.getActiveOrders().map((order) => order.id));
-  const positionMonitor = new PaperPositionMonitorService(orderManager, portfolio, istDate);
-  const paperMarketDataAdapter = new PaperMarketDataAdapterService(positionMonitor, eventBus, portfolio);
+  let paperMarketDataAdapter: PaperMarketDataAdapterService;
+  const positionMonitor = new PaperPositionMonitorService(orderManager, portfolio, istDate, (order) => {
+    const fill = fillModel.fill({ side:'SELL', requestedQuantity:order.contract.quantity, quote:paperMarketDataAdapter.getExecutionQuoteSnapshot(order.contract.instrumentKey), intentTimestamp:order.entry.entryTimestamp });
+    // The existing V2 lifecycle has no residual-exit state; a partial SELL may
+    // be observed but cannot close the whole paper position at a fabricated size.
+    return fill.status === 'FILLED' ? fillModel.toSummary(fill) : undefined;
+  });
+  paperMarketDataAdapter = new PaperMarketDataAdapterService(positionMonitor, eventBus, portfolio);
   const latestPremiumByInstrument = new Map<string, number>();
   const latestDepthByInstrument = new Map<string, MarketDepthEvent>();
   const latestOptionQuotes = new Map<string, { ltp?: number; bid?: number; ask?: number; receivedAtMs?: number; crossed?: boolean }>();
@@ -203,6 +211,8 @@ async function run(): Promise<void> {
       return { runtimeId: 'paper:v2', strategyId: 'V2_TREND_DOWN_PE', sessionDate: istDate(signal.signalTimestamp), timestamp: signal.signalTimestamp, instrument: contract.instrumentKey, underlying: 'NIFTY 50', side: 'BUY_PE', action: 'OPEN', entryPremium: observedEntryPremium, quantity: contract.lotSize as number, marketDataState: recovery?.getState(), sessionTradable: !eodRequestedForRisk && !shuttingDown, quote: { ltp: quote?.ltp ?? observedEntryPremium, bid: quote?.bid, ask: quote?.ask, ageMs, crossed: quote?.crossed } };
     } },
     portfolio,
+    fillModel,
+    paperMarketDataAdapter,
   );
   const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0);
   const forwardJournal = new ForwardValidationJournal('V2_TREND_DOWN_PE', forwardFingerprint);
@@ -305,6 +315,10 @@ async function run(): Promise<void> {
     const indicatorValues = strategyResults.get(evaluation.candleTimestamp.getTime());
     if (evaluation.paperOrderId) createdOrderIds.add(evaluation.paperOrderId);
     if (evaluation.finalSignal === 'BUY_PE') forwardJournal.append({ recordType: 'SIGNAL', tradingDate: istDate(evaluation.candleTimestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: `V2-${evaluation.candleTimestamp.getTime()}`, signalTimestampIst: formatIst(evaluation.candleTimestamp), signalTimestampUtc: evaluation.candleTimestamp.toISOString(), underlyingInstrument: niftyInstrumentKey, underlyingClose: evaluation.spotPrice, regime: 'TREND_DOWN', indicators: { ema15: indicatorValues?.ema15 ?? null, ema35: indicatorValues?.ema35 ?? null, rsi14: indicatorValues?.rsi14 ?? null }, signalReason: evaluation.reasons.join('|'), flags: ['FORWARD_EVALUATION_ONLY'] });
+    if (evaluation.paperOrderId) {
+      const order = orderManager.getById(evaluation.paperOrderId); const fill = order?.entry.executionFill;
+      forwardJournal.append({ recordType:'ENTRY', tradingDate:istDate(evaluation.candleTimestamp), strategyId:'V2_TREND_DOWN_PE', fingerprint:forwardFingerprint, signalId:evaluation.paperOrderId, signalTimestampIst:formatIst(evaluation.candleTimestamp), selectedOptionInstrument:order?.contract.instrumentKey, optionType:order?.contract.optionType, strike:order?.contract.strikePrice, expiry:order?.contract.expiry.toISOString(), theoreticalEntryPrice:order?.entry.observedEntryPremium ?? null, executableEntryPrice:fill?.averageFillPrice ?? null, entryPriceSource:fill?.fillQuality === 'LTP_ONLY_ESTIMATE' ? 'ESTIMATED_LTP' : fill ? 'ASK' : 'UNAVAILABLE', indicators:{ fillStatus:fill?.status ?? 'UNAVAILABLE', fillQuality:fill?.fillQuality ?? 'UNAVAILABLE', requestedQuantity:fill?.requestedQuantity ?? null, filledQuantity:fill?.filledQuantity ?? null, quotedBestPrice:fill?.quotedBestPrice ?? null, totalExecutionSlippage:fill?.totalExecutionSlippage ?? null, slippagePercent:fill?.slippagePercent ?? null }, flags:['FORWARD_EVALUATION_ONLY', ...(fill ? [] : ['EXECUTION_ESTIMATE_UNAVAILABLE'])] });
+    }
     console.log(`[paper.strategy.evaluated] ${formatIst(evaluation.candleTimestamp)} | EMA15 ${formatIndicator(indicatorValues?.ema15)} | EMA35 ${formatIndicator(indicatorValues?.ema35)} | RSI14 ${formatIndicator(indicatorValues?.rsi14)} | raw ${evaluation.rawSignal} | final ${evaluation.finalSignal} | time filter ${evaluation.timeFilterAllowed ? 'ALLOWED' : 'BLOCKED'}${evaluation.paperOrderId ? ` | order ${evaluation.paperOrderId}` : ''}`);
     if (evaluation.reasons.length > 0) console.log(`  reasons: ${evaluation.reasons.join(' | ')}`);
     if (process.env.TRADING_STRATEGY_VERSION === 'V2') console.log(formatV2TradingLine(evaluation, indicatorValues));
@@ -315,7 +329,9 @@ async function run(): Promise<void> {
     const settledOrder = orderManager.getById(action.orderId); if (settledOrder?.exit) riskGate.recordClosedOrder(istDate(action.timestamp), action.orderId);
     const recordType = action.action.toUpperCase().includes('EXIT') || action.action.toUpperCase().includes('CLOSE') ? 'EXIT' : 'ENTRY';
     const depth = latestDepthByInstrument.get(action.instrumentKey); const best = depth?.quotes?.[0]; const staleThreshold = Number(process.env.FORWARD_STALE_QUOTE_MS ?? '2000'); const quote = normalizeQuote({ ltp: action.observedPremium, bid: best?.bidPrice, ask: best?.askPrice, bidQuantity: best?.bidQuantity ? Number(best.bidQuantity) : undefined, askQuantity: best?.askQuantity ? Number(best.askQuantity) : undefined, timestamp: depth?.timestamp }, action.timestamp, Number.isFinite(staleThreshold) ? staleThreshold : 2000);
-    forwardJournal.append({ recordType, tradingDate: istDate(action.timestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: action.orderId, signalTimestampIst: formatIst(action.timestamp), selectedOptionInstrument: action.instrumentKey, executableEntryPrice: recordType === 'ENTRY' ? (quote.ask ?? quote.ltp) : undefined, executableExitPrice: recordType === 'EXIT' ? (quote.bid ?? quote.ltp) : undefined, entryPriceSource: recordType === 'ENTRY' ? (quote.ask !== null ? 'ASK' : quote.ltp !== null ? 'ESTIMATED_LTP' : 'UNAVAILABLE') : undefined, exitPriceSource: recordType === 'EXIT' ? (quote.bid !== null ? 'BID' : quote.ltp !== null ? 'ESTIMATED_LTP' : 'UNAVAILABLE') : undefined, executionQuoteQuality: quote.quality, quote, flags: ['FORWARD_EVALUATION_ONLY', ...(quote.quality === 'LTP_ONLY' ? ['LTP_ONLY'] : quote.quality === 'STALE_QUOTE' ? ['STALE_OPTION_QUOTE'] : quote.quality === 'UNAVAILABLE' ? ['EXECUTION_ESTIMATE_UNAVAILABLE'] : [])] });
+    const fill = recordType === 'ENTRY' ? settledOrder?.entry.executionFill : settledOrder?.exit?.executionFill;
+    const entryFill = settledOrder?.entry.executionFill; const theoreticalReturn = settledOrder?.exit ? (settledOrder.exit.observedExitPremium - settledOrder.entry.observedEntryPremium) / settledOrder.entry.observedEntryPremium * 100 : null; const executableReturn = settledOrder?.exit && entryFill && fill ? (fill.averageFillPrice - entryFill.averageFillPrice) / entryFill.averageFillPrice * 100 : null;
+    forwardJournal.append({ recordType, tradingDate: istDate(action.timestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: action.orderId, signalTimestampIst: formatIst(action.timestamp), selectedOptionInstrument: action.instrumentKey, theoreticalEntryPrice: recordType === 'ENTRY' ? settledOrder?.entry.observedEntryPremium ?? action.observedPremium : undefined, theoreticalExitPrice: recordType === 'EXIT' ? action.observedPremium : undefined, executableEntryPrice: recordType === 'ENTRY' ? (fill?.averageFillPrice ?? null) : undefined, executableExitPrice: recordType === 'EXIT' ? (fill?.averageFillPrice ?? null) : undefined, entryPriceSource: recordType === 'ENTRY' ? (fill ? 'ASK' : 'UNAVAILABLE') : undefined, exitPriceSource: recordType === 'EXIT' ? (fill ? 'BID' : 'UNAVAILABLE') : undefined, theoreticalReturn:recordType === 'EXIT' ? theoreticalReturn : undefined, executableEstimatedReturn:recordType === 'EXIT' ? executableReturn : undefined, totalEstimatedSlippage:recordType === 'EXIT' && entryFill && fill ? (entryFill.totalExecutionSlippage + fill.totalExecutionSlippage) : undefined, totalExecutionFrictionPercent:recordType === 'EXIT' && theoreticalReturn !== null && executableReturn !== null ? theoreticalReturn - executableReturn : undefined, executionQuoteQuality: quote.quality, quote, indicators: { fillStatus: fill?.status ?? 'UNAVAILABLE', fillQuality: fill?.fillQuality ?? 'UNAVAILABLE', requestedQuantity: fill?.requestedQuantity ?? null, filledQuantity: fill?.filledQuantity ?? null, quotedBestPrice: fill?.quotedBestPrice ?? null, totalExecutionSlippage: fill?.totalExecutionSlippage ?? null, slippagePercent: fill?.slippagePercent ?? null }, flags: ['FORWARD_EVALUATION_ONLY', ...(fill ? [] : ['EXECUTION_ESTIMATE_UNAVAILABLE']), ...(quote.quality === 'STALE_QUOTE' ? ['STALE_OPTION_QUOTE'] : [])] });
     console.log(`[paper.order.action] ${action.action} | order ${action.orderId} | ${action.instrumentKey} | premium ${action.observedPremium.toFixed(2)} | ${formatIst(action.timestamp)}`);
   };
   const onMarketDepth = (event: unknown): void => { const depth = event as MarketDepthEvent; if (depth && typeof depth.instrumentKey === 'string') { latestDepthByInstrument.set(depth.instrumentKey, depth); const top = depth.quotes?.[0]; const prior = latestOptionQuotes.get(depth.instrumentKey) ?? {}; latestOptionQuotes.set(depth.instrumentKey, { ...prior, bid: top?.bidPrice, ask: top?.askPrice, receivedAtMs: Date.now(), crossed: top?.bidPrice !== undefined && top?.askPrice !== undefined && top.bidPrice > top.askPrice }); } };

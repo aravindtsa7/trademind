@@ -11,6 +11,15 @@ export interface PaperFill {
   quantity: number;
   source: 'SIMULATED_ENTRY' | 'SIMULATED_EXIT';
   exitReason?: string;
+  requestedQuantity?: number;
+  fillQuality?: string;
+  quotedBestPrice?: number;
+  slippageVsBestQuote?: number;
+  slippageVsLtp?: number | null;
+  spreadCost?: number | null;
+  depthSlippage?: number;
+  totalExecutionSlippage?: number;
+  slippagePercent?: number;
 }
 
 export interface PaperPositionTransition {

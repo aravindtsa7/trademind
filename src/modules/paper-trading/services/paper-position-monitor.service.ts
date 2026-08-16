@@ -1,7 +1,9 @@
 import PaperOrderManagerService from './paper-order-manager.service';
 import PaperPortfolioService from './paper-portfolio.service';
+import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 import {
   PaperOrderStatus,
+  PaperOrder,
   PaperPositionMonitoringResult,
   PaperPremiumUpdate,
 } from '../types/paper-trading.types';
@@ -11,7 +13,7 @@ import {
  * market connection and intentionally leaves slippage, charges, and P&L unset.
  */
 export default class PaperPositionMonitorService {
-  constructor(private readonly orderManager: PaperOrderManagerService, private readonly portfolio?: PaperPortfolioService, private readonly sessionDateFor = istDate) {}
+  constructor(private readonly orderManager: PaperOrderManagerService, private readonly portfolio?: PaperPortfolioService, private readonly sessionDateFor = istDate, private readonly exitExecution?: (order: PaperOrder, update: PaperPremiumUpdate, reason: Exclude<PaperPositionMonitoringResult['action'], 'NONE'>) => PaperExecutionFillSummary | undefined) {}
 
   monitor(update: PaperPremiumUpdate): PaperPositionMonitoringResult[] {
     this.validateUpdate(update);
@@ -31,11 +33,16 @@ export default class PaperPositionMonitorService {
         }
 
         if (action !== 'NONE') {
+          const executionFill = this.exitExecution?.(order, update, action);
+          if (this.exitExecution && !executionFill) {
+            return { orderId: order.id, instrumentKey: order.contract.instrumentKey, timestamp: new Date(update.timestamp.getTime()), observedPremium: update.premium, action: 'NONE', executionUnavailable: true };
+          }
           this.orderManager.close(order.id, {
             exitReason: action,
             exitTimestamp: new Date(update.timestamp.getTime()),
             observedExitPremium: update.premium,
-            simulatedExitPremium: update.premium,
+            simulatedExitPremium: executionFill?.averageFillPrice ?? update.premium,
+            executionFill,
           });
           const closedOrder = this.orderManager.getById(order.id);
           if (closedOrder) this.portfolio?.close(closedOrder, this.sessionDateFor(update.timestamp));
@@ -59,7 +66,10 @@ export default class PaperPositionMonitorService {
       .map((order) => {
         const premium = premiumFor(order.contract.instrumentKey, order.entry.observedEntryPremium);
         if (!Number.isFinite(premium) || (premium as number) <= 0) throw new Error(`No valid EOD premium is available for active paper order ${order.id}.`);
-        this.orderManager.close(order.id, { exitReason: PaperOrderStatus.TIME_EXIT, exitTimestamp: new Date(timestamp.getTime()), observedExitPremium: premium as number, simulatedExitPremium: premium as number });
+        const update = { instrumentKey: order.contract.instrumentKey, premium: premium as number, timestamp };
+        const executionFill = this.exitExecution?.(order, update, PaperOrderStatus.TIME_EXIT);
+        if (this.exitExecution && !executionFill) return { orderId: order.id, instrumentKey: order.contract.instrumentKey, timestamp: new Date(timestamp.getTime()), observedPremium: premium as number, action: 'NONE', executionUnavailable: true };
+        this.orderManager.close(order.id, { exitReason: PaperOrderStatus.TIME_EXIT, exitTimestamp: new Date(timestamp.getTime()), observedExitPremium: premium as number, simulatedExitPremium: executionFill?.averageFillPrice ?? premium as number, executionFill });
         const closedOrder = this.orderManager.getById(order.id);
         if (closedOrder) this.portfolio?.close(closedOrder, this.sessionDateFor(timestamp));
         return { orderId: order.id, instrumentKey: order.contract.instrumentKey, timestamp: new Date(timestamp.getTime()), observedPremium: premium as number, action: PaperOrderStatus.TIME_EXIT };

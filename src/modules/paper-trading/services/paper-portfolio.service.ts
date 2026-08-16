@@ -60,7 +60,8 @@ export default class PaperPortfolioService {
     const existing = state.positions.find((position) => position.originatingOrderId === input.order.id);
     if (existing) return clonePosition(existing);
     const positionId = deterministicId('position', input.order.id);
-    const entryFill: PaperFill = { fillId: deterministicId('fill-entry', input.order.id), positionId, type: 'ENTRY', timestamp: input.order.entry.entryTimestamp.toISOString(), price: input.order.entry.simulatedEntryPremium, quantity: input.order.contract.quantity, source: 'SIMULATED_ENTRY' };
+    const execution = input.order.entry.executionFill;
+    const entryFill: PaperFill = { fillId: deterministicId('fill-entry', input.order.id), positionId, type: 'ENTRY', timestamp: input.order.entry.entryTimestamp.toISOString(), price: input.order.entry.simulatedEntryPremium, quantity: input.order.contract.quantity, source: 'SIMULATED_ENTRY', requestedQuantity: execution?.requestedQuantity, fillQuality: execution?.fillQuality, quotedBestPrice: execution?.quotedBestPrice, slippageVsBestQuote: execution?.slippageVsBestQuote, slippageVsLtp: execution?.slippageVsLtp, spreadCost: execution?.spreadCost, depthSlippage: execution?.depthSlippage, totalExecutionSlippage: execution?.totalExecutionSlippage, slippagePercent: execution?.slippagePercent };
     const position: PaperPosition = {
       positionId, strategyId: input.strategyId, instrumentKey: input.order.contract.instrumentKey, underlying: input.underlying,
       side: input.order.signalType, quantity: input.order.contract.quantity, entryTimestamp: input.order.entry.entryTimestamp.toISOString(), entryPrice: input.order.entry.simulatedEntryPremium,
@@ -97,7 +98,8 @@ export default class PaperPortfolioService {
     if (!position) { this.markInconsistent(state, `MISSING_POSITION:${order.id}`); return undefined; }
     if (position.status === 'CLOSED') return clonePosition(position);
     const exitPrice = order.exit.simulatedExitPremium;
-    const exitFill: PaperFill = { fillId: deterministicId('fill-exit', order.id), positionId: position.positionId, type: 'EXIT', timestamp: order.exit.exitTimestamp.toISOString(), price: exitPrice, quantity: position.quantity, source: 'SIMULATED_EXIT', exitReason: order.exit.exitReason };
+    const execution = order.exit.executionFill;
+    const exitFill: PaperFill = { fillId: deterministicId('fill-exit', order.id), positionId: position.positionId, type: 'EXIT', timestamp: order.exit.exitTimestamp.toISOString(), price: exitPrice, quantity: position.quantity, source: 'SIMULATED_EXIT', exitReason: order.exit.exitReason, requestedQuantity: execution?.requestedQuantity, fillQuality: execution?.fillQuality, quotedBestPrice: execution?.quotedBestPrice, slippageVsBestQuote: execution?.slippageVsBestQuote, slippageVsLtp: execution?.slippageVsLtp, spreadCost: execution?.spreadCost, depthSlippage: execution?.depthSlippage, totalExecutionSlippage: execution?.totalExecutionSlippage, slippagePercent: execution?.slippagePercent };
     position.transitions.push(
       { status: 'EXIT_REQUESTED', timestamp: exitFill.timestamp },
       { status: 'EXIT_FILLED', timestamp: exitFill.timestamp },
