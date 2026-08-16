@@ -11,7 +11,7 @@ interface ActiveCandle extends LiveCandleDto {
 
 const sessionStartMinute = 9 * 60 + 15;
 const sessionEndMinuteExclusive = 15 * 60 + 30;
-const timeframeMinutes: Record<LiveCandleTimeframe, number> = { '1m': 1, '3m': 3, '5m': 5 };
+const timeframeMinutes: Record<LiveCandleTimeframe, number> = { '1m': 1, '2m': 2, '3m': 3, '5m': 5 };
 
 /**
  * Builds IST session-anchored candles from chronological ticks. Ticks outside

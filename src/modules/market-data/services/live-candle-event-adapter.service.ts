@@ -4,7 +4,7 @@ import { LiveCandleDto, LiveCandleTimeframe, NormalizedLiveTickDto } from '../dt
 import { MarketTickEvent } from '../processors/tick.processor';
 import LiveCandleBuilderService from './live-candle-builder.service';
 
-const supportedTimeframes: readonly LiveCandleTimeframe[] = ['1m', '3m', '5m'];
+const supportedTimeframes: readonly LiveCandleTimeframe[] = ['1m', '2m', '3m', '5m'];
 
 /** Bridges shared market ticks into completed in-memory candle events. */
 export default class LiveCandleEventAdapterService {

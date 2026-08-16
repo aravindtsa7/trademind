@@ -1,6 +1,8 @@
 import eventBus from '../../../core/events';
+import { EventEmitter } from 'events';
 import logger from '../../../core/logger/logger';
 import { shouldEmitTradingLog } from '../../../core/logger/trading-log-mode';
+import { recordMarketReplayEvent } from '../../market-replay/market-replay-recorder.service';
 import {
   LtpcDto,
   MarketDataFeedDto,
@@ -47,6 +49,7 @@ export interface MarketDepthEvent {
 }
 
 export default class TickProcessor {
+  constructor(private readonly bus: EventEmitter = eventBus) {}
   process(message: MarketDataFeedResponseDto, generationId?: number): void {
     if (!this.isValidMessage(message)) {
       logger.warn('Ignoring invalid decoded market data message');
@@ -95,7 +98,20 @@ export default class TickProcessor {
       generationId,
     };
 
-    eventBus.emit('market.tick', event);
+    this.bus.emit('market.tick', event);
+    recordMarketReplayEvent('TICK', {
+      instrumentKey,
+      sourceTimestamp: timestamp ?? null,
+      receivedTimestamp: new Date().toISOString(),
+      sequenceNumber: null,
+      connectionGenerationId: generationId ?? null,
+      payload: {
+        ltp: event.ltp ?? null,
+        lastTradedTime: event.lastTradedTime ?? null,
+        lastTradedQuantity: event.lastTradedQuantity ?? null,
+        closePrice: event.closePrice ?? null,
+      },
+    });
   }
 
   private publishGreeks(
@@ -119,7 +135,7 @@ export default class TickProcessor {
       generationId,
     };
 
-    eventBus.emit('market.greeks', event);
+    this.bus.emit('market.greeks', event);
   }
 
   private publishDepth(
@@ -143,7 +159,15 @@ export default class TickProcessor {
       generationId,
     };
 
-    eventBus.emit('market.depth', event);
+    this.bus.emit('market.depth', event);
+    recordMarketReplayEvent('DEPTH', {
+      instrumentKey,
+      sourceTimestamp: timestamp ?? null,
+      receivedTimestamp: new Date().toISOString(),
+      sequenceNumber: null,
+      connectionGenerationId: generationId ?? null,
+      payload: { quotes: event.quotes },
+    });
   }
 
   private getLtpc(feed: MarketDataFeedDto): LtpcDto | undefined {

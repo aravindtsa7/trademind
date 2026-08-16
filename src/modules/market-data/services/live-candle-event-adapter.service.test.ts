@@ -25,9 +25,9 @@ test('duplicate stop is safe', () => {
   const { bus, adapter } = setup(); adapter.stop(); adapter.stop(); assert.equal(bus.listenerCount('market.tick'), 0);
 });
 
-test('forwards valid tick to both candle-builder timeframes', () => {
+test('forwards valid tick to all shared candle-builder timeframes', () => {
   const { bus, builder, adapter } = setup(); adapter.start(); bus.emit('market.tick', tick('NIFTY', 9, 15, 100));
-  assert.equal(builder.getActiveCandle('NIFTY', '1m')?.close, 100); assert.equal(builder.getActiveCandle('NIFTY', '5m')?.close, 100);
+  assert.equal(builder.getActiveCandle('NIFTY', '1m')?.close, 100); assert.equal(builder.getActiveCandle('NIFTY', '2m')?.close, 100); assert.equal(builder.getActiveCandle('NIFTY', '5m')?.close, 100);
 });
 
 test('emits completed 1m candle', () => {

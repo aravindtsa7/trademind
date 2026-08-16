@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import logger from '../../../core/logger/logger';
 import ConnectionManager, { ConnectionState } from './connection.manager';
+import { recordMarketReplayEvent } from '../../market-replay/market-replay-recorder.service';
 
 export enum MarketDataSubscriptionMode {
   LTPC = 'ltpc',
@@ -56,6 +57,14 @@ export default class SubscriptionManager {
     }
 
     keysToSubscribe.forEach((instrumentKey) => this.subscriptions.set(instrumentKey, mode));
+    keysToSubscribe.forEach((instrumentKey) => recordMarketReplayEvent('SUBSCRIPTION_INTENT', {
+      instrumentKey,
+      sourceTimestamp: null,
+      receivedTimestamp: new Date().toISOString(),
+      sequenceNumber: null,
+      connectionGenerationId: this.connectionManager.getGenerationId(),
+      payload: { mode },
+    }));
     const wasConnected = this.connectionManager.getState() === ConnectionState.CONNECTED;
 
     try {
@@ -169,6 +178,14 @@ export default class SubscriptionManager {
         generationId,
       });
       this.connectionManager.emit('subscriptionsRestored', { generationId, instrumentCount: this.subscriptions.size });
+      this.subscriptions.forEach((mode, instrumentKey) => recordMarketReplayEvent('SUBSCRIPTION_RESTORED', {
+        instrumentKey,
+        sourceTimestamp: null,
+        receivedTimestamp: new Date().toISOString(),
+        sequenceNumber: null,
+        connectionGenerationId: generationId,
+        payload: { mode },
+      }));
     } catch (error) {
       this.restoredGenerationId = undefined;
       logger.error('Failed to restore market data subscriptions after reconnection', { error });

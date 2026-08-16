@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import logger from '../../../core/logger/logger';
 import MarketDataWebSocketClient from '../client/websocket.client';
+import { recordMarketReplayEvent } from '../../market-replay/market-replay-recorder.service';
 
 const initialReconnectDelayMs = 1_000;
 const maximumReconnectDelayMs = 30_000;
@@ -111,6 +112,14 @@ export default class ConnectionManager extends EventEmitter {
       const details: ConnectionEventDetails = { generationId: this.generationId, downtimeMs, reason: this.recoveryReason };
       this.emit('connected', details);
       if (wasReconnecting) {
+        recordMarketReplayEvent('RECONNECT', {
+          instrumentKey: null,
+          sourceTimestamp: null,
+          receivedTimestamp: new Date().toISOString(),
+          sequenceNumber: null,
+          connectionGenerationId: this.generationId,
+          payload: details as unknown as Record<string, unknown>,
+        });
         logger.info('MARKET_DATA_RECONNECTED', details);
         this.emit('reconnected', details);
       }
@@ -153,6 +162,14 @@ export default class ConnectionManager extends EventEmitter {
     this.reconnectEpisodeActive = true; this.reconnectStartedAt ??= Date.now();
     const event: ConnectionEventDetails = { generationId: this.generationId, ...details };
     logger.warn('MARKET_DATA_DEGRADED', event); this.emit('unexpectedDisconnect', event);
+    recordMarketReplayEvent('DISCONNECT', {
+      instrumentKey: null,
+      sourceTimestamp: null,
+      receivedTimestamp: new Date().toISOString(),
+      sequenceNumber: null,
+      connectionGenerationId: this.generationId,
+      payload: event as unknown as Record<string, unknown>,
+    });
     this.setState(ConnectionState.RECONNECTING); this.scheduleReconnect();
   }
   private clearReconnectTimer(): void { if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = undefined; } }
@@ -160,6 +177,14 @@ export default class ConnectionManager extends EventEmitter {
     if (this.state === state) return;
     const previousState = this.state; this.state = state;
     logger.info('Market data WebSocket connection state changed', { previousState, state, generationId: this.generationId });
+    recordMarketReplayEvent('CONNECTION_STATE', {
+      instrumentKey: null,
+      sourceTimestamp: null,
+      receivedTimestamp: new Date().toISOString(),
+      sequenceNumber: null,
+      connectionGenerationId: this.generationId,
+      payload: { previousState, state },
+    });
     this.emit('stateChanged', { previousState, state, generationId: this.generationId });
   }
 }
