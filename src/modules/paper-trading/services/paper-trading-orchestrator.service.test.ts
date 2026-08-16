@@ -8,6 +8,8 @@ import { PaperTradingOrchestrationRequest } from '../dto/paper-trading-orchestra
 import { PaperOrderStatus } from '../types/paper-trading.types';
 import PaperOrderManagerService from './paper-order-manager.service';
 import PaperTradingOrchestratorService from './paper-trading-orchestrator.service';
+import RuntimeRiskGateService, { RiskDeniedError } from '../../risk/runtime-risk-gate.service';
+import PaperEntryQuoteWaiterService, { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
 
 const timestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -102,4 +104,29 @@ test('does not mutate caller input', async () => {
   const { orchestrator } = setup(); const input = request(); const original = structuredClone(input); const result = await orchestrator.createFromSignal(input);
   assert.deepEqual(input, original); result.selectedContract.tradingSymbol = 'MUTATED'; result.order.contract.tradingSymbol = 'MUTATED';
   assert.equal(input.contracts[0].tradingSymbol, original.contracts[0].tradingSymbol);
+});
+
+test('a central risk denial creates zero paper orders', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const premiums = new PremiumProvider();
+  const risk = new RuntimeRiskGateService({ persist:false, killSwitch:true, getOpenPositions:()=>[] });
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(), manager, subscriptions, premiums, MarketDataSubscriptionMode.FULL, risk, { buildIntent: ({ signal, contract, observedEntryPremium }) => ({ runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE',action:'OPEN',entryPremium:observedEntryPremium,quantity:contract.lotSize as number,marketDataState:'READY',sessionTradable:true,quote:{ltp:observedEntryPremium,ageMs:0} }) });
+  await assert.rejects(() => orchestrator.createFromSignal(request()), RiskDeniedError); assert.equal(manager.getActiveOrders().length, 0);
+});
+
+test('first actionable intent subscribes, waits for fresh bid/ask, then creates exactly one order', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); let quote: {ltp:number;bid:number;ask:number;receivedAtMs:number}|undefined; let now=0;
+  const premiums = { getObservedPremium: async (instrumentKey:string) => new PaperEntryQuoteWaiterService({ timeoutMs:10,pollMs:1,now:()=>now,sleep:async()=>{now+=1;if(now===1)quote={ltp:100,bid:99,ask:101,receivedAtMs:now};},abortReason:()=>undefined,getSnapshot:()=>quote }).waitForFreshQuote(instrumentKey).then((value)=>value.ltp) };
+  const risk = new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
+  const context = { buildIntent: ({signal,contract,observedEntryPremium}: any) => ({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:quote?.ltp,bid:quote?.bid,ask:quote?.ask,ageMs:0}}) };
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context);
+  const first=orchestrator.createFromSignal(request()); const duplicate=orchestrator.createFromSignal(request()); const result=await first; await assert.rejects(()=>duplicate,RiskDeniedError);
+  assert.equal(subscriptions.subscribed.length,1); assert.equal(result.order.status,PaperOrderStatus.OPEN); assert.equal(manager.getActiveOrders().length,1);
+});
+
+test('quote wait timeout, stale quote, reconnect and EOD deny with no order', async () => {
+  for (const reason of ['QUOTE_UNAVAILABLE','STALE_QUOTE','MARKET_DATA_NOT_READY','EOD_BLOCK'] as const) {
+    const manager=new PaperOrderManagerService(); const subscriptions=new SubscriptionGateway(); const premiums={getObservedPremium:async()=>{throw new PaperEntryQuoteWaitError(reason);}}; const risk=new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
+    const orchestrator=new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,{buildIntent:({signal,contract}:any)=>({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE',action:'OPEN',entryPremium:NaN,quantity:75,marketDataState:'READY',sessionTradable:true})});
+    await assert.rejects(()=>orchestrator.createFromSignal(request()),(error:unknown)=>error instanceof RiskDeniedError&&error.decision.denialReasons.includes(reason)); assert.equal(manager.getActiveOrders().length,0);
+  }
 });

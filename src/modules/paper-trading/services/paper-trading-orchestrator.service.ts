@@ -9,6 +9,9 @@ import {
   PaperTradingOrchestrationResult,
 } from '../dto/paper-trading-orchestrator.dto';
 import PaperOrderManagerService from './paper-order-manager.service';
+import RuntimeRiskGateService, { RiskDeniedError, RuntimeRiskIntent } from '../../risk/runtime-risk-gate.service';
+import logger from '../../../core/logger/logger';
+import { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
 
 interface OptionContractSelector {
   select(request: {
@@ -18,6 +21,10 @@ interface OptionContractSelector {
     timestamp: Date;
     contracts: readonly OptionContract[];
   }): OptionContractSelectionResult;
+}
+
+export interface PaperTradeRiskContextProvider {
+  buildIntent(input: { signal: PaperTradingOrchestrationRequest['signal']; contract: OptionContract; observedEntryPremium: number }): RuntimeRiskIntent;
 }
 
 /**
@@ -30,7 +37,9 @@ export default class PaperTradingOrchestratorService {
     private readonly orderManager: PaperOrderManagerService,
     private readonly subscriptionManager: PaperMarketDataSubscriptionGateway,
     private readonly premiumProvider: PaperEntryPremiumProvider,
-    private readonly subscriptionMode: MarketDataSubscriptionMode = MarketDataSubscriptionMode.FULL
+    private readonly subscriptionMode: MarketDataSubscriptionMode = MarketDataSubscriptionMode.FULL,
+    private readonly riskGate?: RuntimeRiskGateService,
+    private readonly riskContextProvider?: PaperTradeRiskContextProvider,
   ) {}
 
   async createFromSignal(request: PaperTradingOrchestrationRequest): Promise<PaperTradingOrchestrationResult> {
@@ -53,9 +62,26 @@ export default class PaperTradingOrchestratorService {
       .some((subscription) => subscription.instrumentKey === selectedContract.instrumentKey);
     if (!isSubscribed) await this.subscriptionManager.subscribe(selectedContract.instrumentKey, this.subscriptionMode);
 
-    const observedEntryPremium = request.observedEntryPremium ?? await this.premiumProvider.getObservedPremium(selectedContract.instrumentKey);
+    let observedEntryPremium: number;
+    try { observedEntryPremium = request.observedEntryPremium ?? await this.premiumProvider.getObservedPremium(selectedContract.instrumentKey); }
+    catch (error) {
+      if (error instanceof PaperEntryQuoteWaitError && this.riskGate && this.riskContextProvider) {
+        const context = this.riskContextProvider.buildIntent({ signal, contract: selectedContract, observedEntryPremium: Number.NaN });
+        const { entryPremium: _entryPremium, quantity: _quantity, ...external } = context;
+        const decision = this.riskGate.denyExternal(external, error.reason);
+        logger.info('RISK_DECISION', decision); throw new RiskDeniedError(decision);
+      }
+      throw error;
+    }
     if (!Number.isFinite(observedEntryPremium) || observedEntryPremium <= 0) {
       throw new Error('Observed entry premium must be positive and finite.');
+    }
+    let approvedDecision: ReturnType<RuntimeRiskGateService['evaluate']> | undefined;
+    if (this.riskGate) {
+      if (!this.riskContextProvider) throw new Error('Risk gate is configured without a risk context provider.');
+      approvedDecision = this.riskGate.evaluate(this.riskContextProvider.buildIntent({ signal, contract: selectedContract, observedEntryPremium }));
+      logger.info('RISK_DECISION', approvedDecision);
+      if (approvedDecision.decision === 'DENIED') throw new RiskDeniedError(approvedDecision);
     }
 
     const pending = this.orderManager.create({
@@ -78,6 +104,7 @@ export default class PaperTradingOrchestratorService {
       exitConfiguration: { ...request.exitPolicy },
     });
     const order = this.orderManager.markOpen(pending.id);
+    if (approvedDecision) this.riskGate?.recordOpenedOrder(approvedDecision, order.id);
 
     return {
       order,

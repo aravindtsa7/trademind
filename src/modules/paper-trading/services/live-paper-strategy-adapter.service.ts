@@ -8,6 +8,7 @@ import EmaCrossStrategy from '../../strategies/strategies/ema-cross.strategy';
 import AdaptiveMarketRegimeService from '../../adaptive-intraday/services/adaptive-market-regime.service';
 import { AdaptivePrimaryMarketRegime } from '../../adaptive-intraday/types/adaptive-market-regime.types';
 import V2TrendDownEntryEvaluatorService from '../../adaptive-intraday/services/v2-trend-down-entry-evaluator.service';
+import { RiskDeniedError } from '../../risk/runtime-risk-gate.service';
 import {
   LivePaperCompletedCandleInput,
   LivePaperEmaCrossStrategy,
@@ -171,7 +172,8 @@ export default class LivePaperStrategyAdapterService {
     const decision = this.v2Evaluator.evaluate({ completedCandleTimestamp: completedAt, regime, close: candle.close, high: candle.high, ema35, rsi14 }); const reasons = [`V2 ${decision.reason}: completedAt=${completedAt.toISOString()} regime=${regime ?? 'NOT_READY'} close=${candle.close} ema35=${ema35} proximity=${decision.proximityPercent ?? 'N/A'} rsi14=${rsi14} cooldownEligible=${decision.cooldownEligible}.`];
     if (!decision.entry) return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.NO_TRADE, timeFilterAllowed: true, finalSignal: StrategySignal.NO_TRADE, reasons, processed: true };
     if (this.isV2PositionOpen()) { reasons.push('V2_BLOCKED_POSITION_OPEN.'); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.NO_TRADE, timeFilterAllowed: true, finalSignal: StrategySignal.NO_TRADE, reasons, processed: true }; }
-    const orchestration = await this.orchestrator.createFromSignal({ signal: { signalTimestamp: completedAt, signalType: StrategySignal.BUY_PE, underlying: frozenUnderlying, spotPrice: candle.close }, contracts: input.contracts, exitPolicy: { ...v2ExitPolicy } }); reasons.push(`Paper order ${orchestration.order.id} opened for V2 BUY_PE.`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, orchestration, reasons, processed: true };
+    try { const orchestration = await this.orchestrator.createFromSignal({ signal: { signalTimestamp: completedAt, signalType: StrategySignal.BUY_PE, underlying: frozenUnderlying, spotPrice: candle.close }, contracts: input.contracts, exitPolicy: { ...v2ExitPolicy } }); reasons.push(`Paper order ${orchestration.order.id} opened for V2 BUY_PE.`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, orchestration, reasons, processed: true }; }
+    catch (error) { if (error instanceof RiskDeniedError) { reasons.push(`V2_RISK_DENIED:${error.decision.denialReasons.join('|')}`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, reasons, processed: true }; } throw error; }
   }
 
   private getEma(indicators: ReturnType<IndicatorEngineService['calculate']>, period: number): EmaResult {

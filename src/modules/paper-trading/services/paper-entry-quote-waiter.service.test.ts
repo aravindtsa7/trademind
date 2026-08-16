@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import PaperEntryQuoteWaiterService, { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
+
+test('waits for a fresh bid/ask snapshot after subscription', async()=>{ let now=0; let calls=0; const waiter=new PaperEntryQuoteWaiterService({timeoutMs:100,pollMs:1,now:()=>now,sleep:async()=>{now+=1;},abortReason:()=>undefined,getSnapshot:()=>++calls<2?undefined:{ltp:100,bid:99,ask:101,receivedAtMs:now}}); const quote=await waiter.waitForFreshQuote('OPT');assert.equal(quote.ask,101); });
+test('quote timeout fails closed and stale snapshots are never accepted', async()=>{ let now=0; const waiter=new PaperEntryQuoteWaiterService({timeoutMs:2,pollMs:1,maxQuoteAgeMs:2,now:()=>now,sleep:async()=>{now+=1;},abortReason:()=>undefined,getSnapshot:()=>({ltp:100,bid:99,ask:101,receivedAtMs:-10})}); await assert.rejects(()=>waiter.waitForFreshQuote('OPT'),(error:unknown)=>error instanceof PaperEntryQuoteWaitError&&error.reason==='STALE_QUOTE'); });
+test('reconnect, EOD, kill switch and halt abort quote waiting immediately', async()=>{ for(const reason of ['MARKET_DATA_NOT_READY','EOD_BLOCK','KILL_SWITCH_ACTIVE','RUNTIME_DEGRADED'] as const){const waiter=new PaperEntryQuoteWaiterService({abortReason:()=>reason,getSnapshot:()=>undefined});await assert.rejects(()=>waiter.waitForFreshQuote('OPT'),(error:unknown)=>error instanceof PaperEntryQuoteWaitError&&error.reason===reason);}});

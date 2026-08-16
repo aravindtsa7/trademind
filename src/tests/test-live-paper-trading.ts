@@ -27,6 +27,8 @@ import MarketDataRecoveryCoordinatorService from '../modules/market-data/service
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
 import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
+import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
+import PaperEntryQuoteWaiterService from '../modules/paper-trading/services/paper-entry-quote-waiter.service';
 
 const niftyInstrumentKey = 'NSE_INDEX|Nifty 50';
 const tickPrintIntervalMs = 30_000;
@@ -174,19 +176,29 @@ async function run(): Promise<void> {
   const paperMarketDataAdapter = new PaperMarketDataAdapterService(positionMonitor, eventBus);
   const latestPremiumByInstrument = new Map<string, number>();
   const latestDepthByInstrument = new Map<string, MarketDepthEvent>();
+  const latestOptionQuotes = new Map<string, { ltp?: number; bid?: number; ask?: number; receivedAtMs?: number; crossed?: boolean }>();
+  let recovery: MarketDataRecoveryCoordinatorService | undefined;
+  let eodRequestedForRisk = false;
+  const riskGate = new RuntimeRiskGateService({ getOpenPositions: () => orderManager.getActiveOrders().map((order) => ({ strategyId: 'V2_TREND_DOWN_PE', underlying: 'NIFTY 50', notional: order.entry.simulatedEntryPremium * order.contract.quantity })) });
   const orchestration = new PaperTradingOrchestratorService(
     undefined,
     orderManager,
     subscriptionManager,
     {
       async getObservedPremium(instrumentKey: string): Promise<number> {
-        const premium = latestPremiumByInstrument.get(instrumentKey);
-        if (!Number.isFinite(premium) || (premium as number) <= 0) {
-          throw new Error(`No live option premium is available yet for ${instrumentKey}; wait for its first market tick before creating a paper order.`);
-        }
-        return premium as number;
+        const quote = await new PaperEntryQuoteWaiterService({
+          getSnapshot: (key) => latestOptionQuotes.get(key),
+          abortReason: () => riskGate.isKillSwitchActive() ? 'KILL_SWITCH_ACTIVE' : shuttingDown || eodRequestedForRisk ? 'EOD_BLOCK' : recovery?.getState() !== 'READY' ? 'MARKET_DATA_NOT_READY' : riskGate.getTradingState() !== 'ACTIVE' ? 'RUNTIME_DEGRADED' : undefined,
+        }).waitForFreshQuote(instrumentKey);
+        return quote.ltp;
       },
-    }
+    },
+    MarketDataSubscriptionMode.FULL,
+    riskGate,
+    { buildIntent: ({ signal, contract, observedEntryPremium }) => {
+      const quote = latestOptionQuotes.get(contract.instrumentKey); const ageMs = quote?.receivedAtMs === undefined ? null : Date.now() - quote.receivedAtMs;
+      return { runtimeId: 'paper:v2', strategyId: 'V2_TREND_DOWN_PE', sessionDate: istDate(signal.signalTimestamp), timestamp: signal.signalTimestamp, instrument: contract.instrumentKey, underlying: 'NIFTY 50', side: 'BUY_PE', action: 'OPEN', entryPremium: observedEntryPremium, quantity: contract.lotSize as number, marketDataState: recovery?.getState(), sessionTradable: !eodRequestedForRisk && !shuttingDown, quote: { ltp: quote?.ltp ?? observedEntryPremium, bid: quote?.bid, ask: quote?.ask, ageMs, crossed: quote?.crossed } };
+    } }
   );
   const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0);
   const forwardJournal = new ForwardValidationJournal('V2_TREND_DOWN_PE', forwardFingerprint);
@@ -227,7 +239,7 @@ async function run(): Promise<void> {
   let eodWatchdog: NodeJS.Timeout | undefined;
   let latestRecoveryWarmup: Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>> | undefined;
   const recoveryWarmupTarget = { count: 0, seedHistoricalCandles(candles: readonly import('../modules/indicators/types').Candle[]): void { this.count = candles.length; }, isWarmupReady(): boolean { return this.count >= 36; } };
-  const recovery = new MarketDataRecoveryCoordinatorService({
+  recovery = new MarketDataRecoveryCoordinatorService({
     backfill: async () => {
       latestRecoveryWarmup = await new LivePaperFreshWarmupService(new HistoricalCandleRepository(), recoveryWarmupTarget).warmUp();
       return { ready: latestRecoveryWarmup.ready, reason: latestRecoveryWarmup.freshnessReason, missingMinutes: latestRecoveryWarmup.currentDayMissingMinuteCount, duplicateMinutes: latestRecoveryWarmup.currentDayDuplicateCount };
@@ -241,7 +253,7 @@ async function run(): Promise<void> {
     onEvent: (eventType, details) => {
       const unrecovered = eventType === 'DATA_GAP_UNRECOVERABLE';
       forwardJournal.appendEvent(forwardDate, eventType, [eventType, ...(unrecovered ? ['CRITICAL_DATA_QUALITY'] : [])], details);
-      console.log(`[MARKET_DATA_BACKFILL] event=${eventType} state=${recovery.getState()}`);
+      console.log(`[MARKET_DATA_BACKFILL] event=${eventType} state=${recovery?.getState()}`);
     },
   });
   const health = new MarketDataHealthMonitorService(connectionManager, {
@@ -267,10 +279,10 @@ async function run(): Promise<void> {
     if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || !Number.isFinite(tick.ltp) || tick.ltp <= 0 || typeof tick.timestamp !== 'string') return;
     const timestamp = new Date(tick.timestamp);
     if (Number.isNaN(timestamp.getTime())) return;
-    if (isAtOrAfterIstSessionEnd(timestamp)) { eodRequested = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
+    if (isAtOrAfterIstSessionEnd(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
     health.noteValidMarketEvent(tick.generationId ?? connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId ?? connectionManager.getGenerationId()); recovery.handleLiveTick(timestamp, tick.generationId); }
-    latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp);
+    latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp); latestOptionQuotes.set(tick.instrumentKey, { ...(latestOptionQuotes.get(tick.instrumentKey) ?? {}), ltp: tick.ltp, receivedAtMs: Date.now() });
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();
       console.log(`[market.tick] NIFTY ${formatIst(timestamp)} | LTP ${tick.ltp.toFixed(2)}`);
@@ -296,12 +308,13 @@ async function run(): Promise<void> {
   const onOrderAction = (event: unknown): void => {
     const action = event as PaperOrderActionEvent;
     if (typeof action.orderId !== 'string' || !(action.timestamp instanceof Date)) return;
+    const settledOrder = orderManager.getById(action.orderId); if (settledOrder?.exit) { riskGate.recordRealizedPnl(istDate(action.timestamp), (settledOrder.exit.simulatedExitPremium - settledOrder.entry.simulatedEntryPremium) * settledOrder.contract.quantity); riskGate.recordClosedOrder(istDate(action.timestamp), action.orderId); }
     const recordType = action.action.toUpperCase().includes('EXIT') || action.action.toUpperCase().includes('CLOSE') ? 'EXIT' : 'ENTRY';
     const depth = latestDepthByInstrument.get(action.instrumentKey); const best = depth?.quotes?.[0]; const staleThreshold = Number(process.env.FORWARD_STALE_QUOTE_MS ?? '2000'); const quote = normalizeQuote({ ltp: action.observedPremium, bid: best?.bidPrice, ask: best?.askPrice, bidQuantity: best?.bidQuantity ? Number(best.bidQuantity) : undefined, askQuantity: best?.askQuantity ? Number(best.askQuantity) : undefined, timestamp: depth?.timestamp }, action.timestamp, Number.isFinite(staleThreshold) ? staleThreshold : 2000);
     forwardJournal.append({ recordType, tradingDate: istDate(action.timestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: action.orderId, signalTimestampIst: formatIst(action.timestamp), selectedOptionInstrument: action.instrumentKey, executableEntryPrice: recordType === 'ENTRY' ? (quote.ask ?? quote.ltp) : undefined, executableExitPrice: recordType === 'EXIT' ? (quote.bid ?? quote.ltp) : undefined, entryPriceSource: recordType === 'ENTRY' ? (quote.ask !== null ? 'ASK' : quote.ltp !== null ? 'ESTIMATED_LTP' : 'UNAVAILABLE') : undefined, exitPriceSource: recordType === 'EXIT' ? (quote.bid !== null ? 'BID' : quote.ltp !== null ? 'ESTIMATED_LTP' : 'UNAVAILABLE') : undefined, executionQuoteQuality: quote.quality, quote, flags: ['FORWARD_EVALUATION_ONLY', ...(quote.quality === 'LTP_ONLY' ? ['LTP_ONLY'] : quote.quality === 'STALE_QUOTE' ? ['STALE_OPTION_QUOTE'] : quote.quality === 'UNAVAILABLE' ? ['EXECUTION_ESTIMATE_UNAVAILABLE'] : [])] });
     console.log(`[paper.order.action] ${action.action} | order ${action.orderId} | ${action.instrumentKey} | premium ${action.observedPremium.toFixed(2)} | ${formatIst(action.timestamp)}`);
   };
-  const onMarketDepth = (event: unknown): void => { const depth = event as MarketDepthEvent; if (depth && typeof depth.instrumentKey === 'string') latestDepthByInstrument.set(depth.instrumentKey, depth); };
+  const onMarketDepth = (event: unknown): void => { const depth = event as MarketDepthEvent; if (depth && typeof depth.instrumentKey === 'string') { latestDepthByInstrument.set(depth.instrumentKey, depth); const top = depth.quotes?.[0]; const prior = latestOptionQuotes.get(depth.instrumentKey) ?? {}; latestOptionQuotes.set(depth.instrumentKey, { ...prior, bid: top?.bidPrice, ask: top?.askPrice, receivedAtMs: Date.now(), crossed: top?.bidPrice !== undefined && top?.askPrice !== undefined && top.bidPrice > top.askPrice }); } };
   const onStrategyError = (event: unknown): void => {
     const error = event as { instrumentKey?: string; candleTimestamp?: Date; message?: string };
     console.error(`[paper.strategy.error] ${error.instrumentKey ?? 'unknown'} | ${error.candleTimestamp instanceof Date ? formatIst(error.candleTimestamp) : 'unknown time'} | ${error.message ?? 'Unknown paper-strategy error.'}`);
@@ -324,7 +337,7 @@ async function run(): Promise<void> {
 
   const shutdown = async (reason: string): Promise<void> => {
     if (shuttingDown) return;
-    shuttingDown = true;
+    shuttingDown = true; eodRequestedForRisk = true; riskGate.transition('HALTED');
     health.stop(); recovery.stop();
     forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: true, eodReason: reason, status: 'COMPLETED' });
     forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
