@@ -10,6 +10,7 @@ import PaperOrderManagerService from './paper-order-manager.service';
 import PaperTradingOrchestratorService from './paper-trading-orchestrator.service';
 import RuntimeRiskGateService, { RiskDeniedError } from '../../risk/runtime-risk-gate.service';
 import PaperEntryQuoteWaiterService, { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
+import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
 
 const timestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -121,6 +122,17 @@ test('first actionable intent subscribes, waits for fresh bid/ask, then creates 
   const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context);
   const first=orchestrator.createFromSignal(request()); const duplicate=orchestrator.createFromSignal(request()); const result=await first; await assert.rejects(()=>duplicate,RiskDeniedError);
   assert.equal(subscriptions.subscribed.length,1); assert.equal(result.order.status,PaperOrderStatus.OPEN); assert.equal(manager.getActiveOrders().length,1);
+});
+
+test('approved V2 intent creates one authoritative paper portfolio position', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const premiums = new PremiumProvider(); const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => timestamp);
+  const risk = new RuntimeRiskGateService({ persist:false, killSwitch:false, getPortfolioSnapshot:(date)=>portfolio.getSnapshot(date) });
+  const context = { buildIntent: ({signal,contract,observedEntryPremium}: any) => ({ runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:observedEntryPremium,bid:99,ask:101,ageMs:0} }) };
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(), manager, subscriptions, premiums, MarketDataSubscriptionMode.FULL, risk, context, portfolio);
+  await orchestrator.createFromSignal(request());
+  await assert.rejects(() => orchestrator.createFromSignal(request()), RiskDeniedError);
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.openPositionCount, 1);
+  assert.equal(manager.getActiveOrders().length, 1);
 });
 
 test('quote wait timeout, stale quote, reconnect and EOD deny with no order', async () => {

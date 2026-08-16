@@ -29,6 +29,7 @@ import CandleTimeframeAggregatorService from '../modules/indicators/services/can
 import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
 import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
 import PaperEntryQuoteWaiterService from '../modules/paper-trading/services/paper-entry-quote-waiter.service';
+import PaperPortfolioService from '../modules/paper-trading/services/paper-portfolio.service';
 
 const niftyInstrumentKey = 'NSE_INDEX|Nifty 50';
 const tickPrintIntervalMs = 30_000;
@@ -172,14 +173,16 @@ async function run(): Promise<void> {
   const liveCandleEventAdapter = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus);
 
   const orderManager = new PaperOrderManagerService();
-  const positionMonitor = new PaperPositionMonitorService(orderManager);
-  const paperMarketDataAdapter = new PaperMarketDataAdapterService(positionMonitor, eventBus);
+  const portfolio = new PaperPortfolioService();
+  portfolio.reconcileOpenOrders(istDate(new Date()), orderManager.getActiveOrders().map((order) => order.id));
+  const positionMonitor = new PaperPositionMonitorService(orderManager, portfolio, istDate);
+  const paperMarketDataAdapter = new PaperMarketDataAdapterService(positionMonitor, eventBus, portfolio);
   const latestPremiumByInstrument = new Map<string, number>();
   const latestDepthByInstrument = new Map<string, MarketDepthEvent>();
   const latestOptionQuotes = new Map<string, { ltp?: number; bid?: number; ask?: number; receivedAtMs?: number; crossed?: boolean }>();
   let recovery: MarketDataRecoveryCoordinatorService | undefined;
   let eodRequestedForRisk = false;
-  const riskGate = new RuntimeRiskGateService({ getOpenPositions: () => orderManager.getActiveOrders().map((order) => ({ strategyId: 'V2_TREND_DOWN_PE', underlying: 'NIFTY 50', notional: order.entry.simulatedEntryPremium * order.contract.quantity })) });
+  const riskGate = new RuntimeRiskGateService({ getPortfolioSnapshot: (sessionDate) => portfolio.getSnapshot(sessionDate) });
   const orchestration = new PaperTradingOrchestratorService(
     undefined,
     orderManager,
@@ -198,7 +201,8 @@ async function run(): Promise<void> {
     { buildIntent: ({ signal, contract, observedEntryPremium }) => {
       const quote = latestOptionQuotes.get(contract.instrumentKey); const ageMs = quote?.receivedAtMs === undefined ? null : Date.now() - quote.receivedAtMs;
       return { runtimeId: 'paper:v2', strategyId: 'V2_TREND_DOWN_PE', sessionDate: istDate(signal.signalTimestamp), timestamp: signal.signalTimestamp, instrument: contract.instrumentKey, underlying: 'NIFTY 50', side: 'BUY_PE', action: 'OPEN', entryPremium: observedEntryPremium, quantity: contract.lotSize as number, marketDataState: recovery?.getState(), sessionTradable: !eodRequestedForRisk && !shuttingDown, quote: { ltp: quote?.ltp ?? observedEntryPremium, bid: quote?.bid, ask: quote?.ask, ageMs, crossed: quote?.crossed } };
-    } }
+    } },
+    portfolio,
   );
   const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0);
   const forwardJournal = new ForwardValidationJournal('V2_TREND_DOWN_PE', forwardFingerprint);
@@ -308,7 +312,7 @@ async function run(): Promise<void> {
   const onOrderAction = (event: unknown): void => {
     const action = event as PaperOrderActionEvent;
     if (typeof action.orderId !== 'string' || !(action.timestamp instanceof Date)) return;
-    const settledOrder = orderManager.getById(action.orderId); if (settledOrder?.exit) { riskGate.recordRealizedPnl(istDate(action.timestamp), (settledOrder.exit.simulatedExitPremium - settledOrder.entry.simulatedEntryPremium) * settledOrder.contract.quantity); riskGate.recordClosedOrder(istDate(action.timestamp), action.orderId); }
+    const settledOrder = orderManager.getById(action.orderId); if (settledOrder?.exit) riskGate.recordClosedOrder(istDate(action.timestamp), action.orderId);
     const recordType = action.action.toUpperCase().includes('EXIT') || action.action.toUpperCase().includes('CLOSE') ? 'EXIT' : 'ENTRY';
     const depth = latestDepthByInstrument.get(action.instrumentKey); const best = depth?.quotes?.[0]; const staleThreshold = Number(process.env.FORWARD_STALE_QUOTE_MS ?? '2000'); const quote = normalizeQuote({ ltp: action.observedPremium, bid: best?.bidPrice, ask: best?.askPrice, bidQuantity: best?.bidQuantity ? Number(best.bidQuantity) : undefined, askQuantity: best?.askQuantity ? Number(best.askQuantity) : undefined, timestamp: depth?.timestamp }, action.timestamp, Number.isFinite(staleThreshold) ? staleThreshold : 2000);
     forwardJournal.append({ recordType, tradingDate: istDate(action.timestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: action.orderId, signalTimestampIst: formatIst(action.timestamp), selectedOptionInstrument: action.instrumentKey, executableEntryPrice: recordType === 'ENTRY' ? (quote.ask ?? quote.ltp) : undefined, executableExitPrice: recordType === 'EXIT' ? (quote.bid ?? quote.ltp) : undefined, entryPriceSource: recordType === 'ENTRY' ? (quote.ask !== null ? 'ASK' : quote.ltp !== null ? 'ESTIMATED_LTP' : 'UNAVAILABLE') : undefined, exitPriceSource: recordType === 'EXIT' ? (quote.bid !== null ? 'BID' : quote.ltp !== null ? 'ESTIMATED_LTP' : 'UNAVAILABLE') : undefined, executionQuoteQuality: quote.quality, quote, flags: ['FORWARD_EVALUATION_ONLY', ...(quote.quality === 'LTP_ONLY' ? ['LTP_ONLY'] : quote.quality === 'STALE_QUOTE' ? ['STALE_OPTION_QUOTE'] : quote.quality === 'UNAVAILABLE' ? ['EXECUTION_ESTIMATE_UNAVAILABLE'] : [])] });
@@ -339,7 +343,8 @@ async function run(): Promise<void> {
     if (shuttingDown) return;
     shuttingDown = true; eodRequestedForRisk = true; riskGate.transition('HALTED');
     health.stop(); recovery.stop();
-    forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: true, eodReason: reason, status: 'COMPLETED' });
+    const portfolioSnapshot = portfolio.logSessionSummary(istDate(new Date()));
+    forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: true, eodReason: reason, status: 'COMPLETED', indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null, portfolioUnrealizedPnl: portfolioSnapshot?.totalUnrealizedPnl ?? null } });
     forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     console.log(`\nGraceful shutdown requested (${reason}).`);
     clearInterval(statusTimer);

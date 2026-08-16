@@ -12,6 +12,7 @@ import PaperOrderManagerService from './paper-order-manager.service';
 import RuntimeRiskGateService, { RiskDeniedError, RuntimeRiskIntent } from '../../risk/runtime-risk-gate.service';
 import logger from '../../../core/logger/logger';
 import { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
+import PaperPortfolioService from './paper-portfolio.service';
 
 interface OptionContractSelector {
   select(request: {
@@ -40,6 +41,7 @@ export default class PaperTradingOrchestratorService {
     private readonly subscriptionMode: MarketDataSubscriptionMode = MarketDataSubscriptionMode.FULL,
     private readonly riskGate?: RuntimeRiskGateService,
     private readonly riskContextProvider?: PaperTradeRiskContextProvider,
+    private readonly portfolio?: PaperPortfolioService,
   ) {}
 
   async createFromSignal(request: PaperTradingOrchestrationRequest): Promise<PaperTradingOrchestrationResult> {
@@ -104,6 +106,11 @@ export default class PaperTradingOrchestratorService {
       exitConfiguration: { ...request.exitPolicy },
     });
     const order = this.orderManager.markOpen(pending.id);
+    if (this.portfolio) {
+      const context = this.riskContextProvider?.buildIntent({ signal, contract: selectedContract, observedEntryPremium });
+      if (!context) throw new Error('Paper portfolio is configured without a risk context provider.');
+      this.portfolio.open({ order, strategyId: context.strategyId, underlying: context.underlying, correlationId: approvedDecision?.correlationId ?? context.correlationId ?? RuntimeRiskGateService.intentId(context), intentId: approvedDecision?.intentId ?? RuntimeRiskGateService.intentId(context), sessionDate: context.sessionDate });
+    }
     if (approvedDecision) this.riskGate?.recordOpenedOrder(approvedDecision, order.id);
 
     return {

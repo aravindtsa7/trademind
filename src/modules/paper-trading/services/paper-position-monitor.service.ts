@@ -1,4 +1,5 @@
 import PaperOrderManagerService from './paper-order-manager.service';
+import PaperPortfolioService from './paper-portfolio.service';
 import {
   PaperOrderStatus,
   PaperPositionMonitoringResult,
@@ -10,7 +11,7 @@ import {
  * market connection and intentionally leaves slippage, charges, and P&L unset.
  */
 export default class PaperPositionMonitorService {
-  constructor(private readonly orderManager: PaperOrderManagerService) {}
+  constructor(private readonly orderManager: PaperOrderManagerService, private readonly portfolio?: PaperPortfolioService, private readonly sessionDateFor = istDate) {}
 
   monitor(update: PaperPremiumUpdate): PaperPositionMonitoringResult[] {
     this.validateUpdate(update);
@@ -36,6 +37,8 @@ export default class PaperPositionMonitorService {
             observedExitPremium: update.premium,
             simulatedExitPremium: update.premium,
           });
+          const closedOrder = this.orderManager.getById(order.id);
+          if (closedOrder) this.portfolio?.close(closedOrder, this.sessionDateFor(update.timestamp));
         }
 
         return {
@@ -57,6 +60,8 @@ export default class PaperPositionMonitorService {
         const premium = premiumFor(order.contract.instrumentKey, order.entry.observedEntryPremium);
         if (!Number.isFinite(premium) || (premium as number) <= 0) throw new Error(`No valid EOD premium is available for active paper order ${order.id}.`);
         this.orderManager.close(order.id, { exitReason: PaperOrderStatus.TIME_EXIT, exitTimestamp: new Date(timestamp.getTime()), observedExitPremium: premium as number, simulatedExitPremium: premium as number });
+        const closedOrder = this.orderManager.getById(order.id);
+        if (closedOrder) this.portfolio?.close(closedOrder, this.sessionDateFor(timestamp));
         return { orderId: order.id, instrumentKey: order.contract.instrumentKey, timestamp: new Date(timestamp.getTime()), observedPremium: premium as number, action: PaperOrderStatus.TIME_EXIT };
       });
   }
@@ -67,4 +72,9 @@ export default class PaperPositionMonitorService {
     if (!(update.timestamp instanceof Date) || Number.isNaN(update.timestamp.getTime())) throw new Error('timestamp must be a valid Date.');
     if (!Number.isFinite(update.premium) || update.premium < 0) throw new Error('premium must be non-negative and finite.');
   }
+}
+
+function istDate(timestamp: Date): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .format(timestamp);
 }

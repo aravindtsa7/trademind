@@ -81,6 +81,7 @@ export default class MarketReplayRunnerService {
       if (value.riskDecision === 'DENIED') riskDenials += 1;
       if (value.paperOutcome) paperOutcomes += 1;
       if (value.shadowOutcome) shadowOutcomes += 1;
+      if (value.portfolioDigest) output.push(`portfolio:${value.portfolioDigest}`);
       output.push(`strategy:${stableReplayJson(value)}`);
     };
 

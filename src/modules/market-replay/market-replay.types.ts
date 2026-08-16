@@ -12,4 +12,5 @@ export interface MarketReplayStrategyOutput {
   paperOutcome?: boolean;
   shadowOutcome?: boolean;
   subscriptionIntent?: string;
+  portfolioDigest?: string;
 }

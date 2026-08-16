@@ -7,6 +7,7 @@ import { PaperOrderStatus } from '../types/paper-trading.types';
 import PaperMarketDataAdapterService from './paper-market-data-adapter.service';
 import PaperOrderManagerService from './paper-order-manager.service';
 import PaperPositionMonitorService from './paper-position-monitor.service';
+import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
 
 const entryTimestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -87,4 +88,15 @@ test('handles multiple instruments and stopped adapters', () => {
   assert.equal(manager.getById(first.id)?.status, PaperOrderStatus.TARGET_EXIT); assert.equal(manager.getById(second.id)?.status, PaperOrderStatus.OPEN);
   adapter.stop(); bus.emit('market.tick', tick(second.contract.instrumentKey, 130));
   assert.equal(manager.getById(second.id)?.status, PaperOrderStatus.OPEN);
+});
+
+test('fresh depth marks the authoritative portfolio at executable long-option bid without changing exit rules', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const order = open(manager);
+  const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => entryTimestamp);
+  portfolio.open({ order, strategyId:'V2_TREND_DOWN_PE', underlying:'NIFTY 50', correlationId:'corr', intentId:'intent', sessionDate:'2026-08-10' });
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'), bus, portfolio);
+  adapter.start();
+  bus.emit('market.tick', tick(order.contract.instrumentKey, 101));
+  bus.emit('market.depth', { instrumentKey: order.contract.instrumentKey, timestamp: tick(order.contract.instrumentKey, 101).timestamp, quotes: [{ bidPrice:100.5, askPrice:101.5 }] });
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.totalUnrealizedPnl, 37.5);
 });

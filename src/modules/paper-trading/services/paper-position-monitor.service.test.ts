@@ -4,6 +4,7 @@ import { StrategySignal } from '../../strategies/dto/strategy-signal.dto';
 import { CreatePaperOrderDto } from '../dto/paper-order.dto';
 import { PaperOrderStatus, PaperPremiumUpdate } from '../types/paper-trading.types';
 import PaperOrderManagerService from './paper-order-manager.service';
+import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
 import PaperPositionMonitorService from './paper-position-monitor.service';
 
 const entryTime = new Date('2026-08-10T04:00:00.000Z');
@@ -103,4 +104,16 @@ test('V2 EOD uses the existing TIME_EXIT close path exactly once for an open pap
   const manager = new PaperOrderManagerService(); const order = open(manager); const monitor = new PaperPositionMonitorService(manager); const eod = new Date('2026-08-10T10:00:00.000Z');
   const first = monitor.closeAtSessionEnd(eod, () => 101); const second = monitor.closeAtSessionEnd(eod, () => 101);
   assert.equal(first[0].action, PaperOrderStatus.TIME_EXIT); assert.equal(first[0].observedPremium, 101); assert.deepEqual(second, []); assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TIME_EXIT);
+});
+
+test('V2 target and EOD monitor callbacks update the authoritative portfolio exactly once', () => {
+  const manager = new PaperOrderManagerService(); const order = open(manager);
+  const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => entryTime);
+  portfolio.open({ order, strategyId: 'V2_TREND_DOWN_PE', underlying: 'NIFTY 50', correlationId: 'corr', intentId: 'intent', sessionDate: '2026-08-10' });
+  const monitor = new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10');
+  monitor.monitor(update(order.contract.instrumentKey, 130));
+  monitor.monitor(update(order.contract.instrumentKey, 140));
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.totalRealizedPnl, 2250);
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.closedPositionCount, 1);
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.openPositionCount, 0);
 });

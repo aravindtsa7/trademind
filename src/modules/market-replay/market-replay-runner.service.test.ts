@@ -31,6 +31,14 @@ test('identical full-session input produces the same digest, with no network sur
   assert.equal(evaluations, 2);
 });
 
+test('an in-memory portfolio digest is included deterministically in replay output', async () => {
+  const events = [event('TICK', '2026-08-17T03:45:00.000Z', { ltp: 25000 })];
+  const runner = new MarketReplayRunnerService();
+  const first = await runner.run(events, { onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1, portfolioDigest: 'portfolio-state-v1' }) });
+  const second = await runner.run(events, { onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1, portfolioDigest: 'portfolio-state-v1' }) });
+  assert.equal(first.outputDigest, second.outputDigest);
+});
+
 test('FULL_SESSION refuses to fabricate warm-up state and accepts an explicit local fixture', async () => {
   const events = [event('TICK', '2026-08-17T03:45:00.000Z', { ltp: 25000 })];
   const runner = new MarketReplayRunnerService();
