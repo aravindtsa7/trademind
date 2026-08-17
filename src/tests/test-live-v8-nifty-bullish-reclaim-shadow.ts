@@ -23,6 +23,7 @@ import {
   isAtOrAfterNseSessionClose,
   isWithinNseSession,
 } from '../modules/market-data/services/nse-session-calendar.service';
+import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
 import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-paper-fresh-warmup.service';
 import { PaperStrategyWarmupTarget } from '../modules/paper-trading/dto/paper-strategy-warmup.dto';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
@@ -147,7 +148,8 @@ async function run(): Promise<void> {
     counters = new V8ShadowRuntimeCounters();
   let closing = false,
     eod = false;
-  let eodCoordinator: NseSessionEodCoordinator | undefined;
+  const eodCoordinator = new NseSessionEodCoordinator();
+  let host: StrategyHostLifecycle | undefined;
   const latest = new Map<
     string,
     { ltp?: number; bid?: number; ask?: number; timestamp?: string }
@@ -205,7 +207,7 @@ async function run(): Promise<void> {
     const at = new Date(t.timestamp);
     health.noteValidMarketEvent(t.generationId ?? connection.getGenerationId());
     if (isAtOrAfterNseSessionClose(at)) {
-      void eodCoordinator?.runOnce(at, () => shutdown('EOD'));
+      void host?.eod('MARKET_EOD');
       return;
     }
     latest.set(t.instrumentKey, {
@@ -274,7 +276,7 @@ async function run(): Promise<void> {
   };
   const handleCandle = async (x: unknown) => {
     const c = x as any;
-    if (eod || !recovery.isEvaluationReady() || !isV8CompletedUnderlyingCandleEvent(c, NIFTY))
+    if (eod || !host?.canEvaluate() || !recovery.isEvaluationReady() || !isV8CompletedUnderlyingCandleEvent(c, NIFTY))
       return;
     const candle = {
       timestamp: new Date(c.candleTime),
@@ -374,7 +376,6 @@ async function run(): Promise<void> {
     if (closing) return;
     closing = true;
     eod = true;
-    eodCoordinator?.cancelScheduled();
     if (statusTimer) clearInterval(statusTimer);
     health.stop();
     recovery.stop();
@@ -423,17 +424,25 @@ async function run(): Promise<void> {
       'DATA_GAP_UNRECOVERABLE',
       'CRITICAL_DATA_QUALITY',
     ]);
-    void shutdown('RECONNECT_FAILED');
+    void host?.fault(new Error('RECONNECT_FAILED'));
   });
-  eodCoordinator = new NseSessionEodCoordinator();
-  eodCoordinator.schedule(() => shutdown('EOD'));
+  host = new StrategyHostLifecycle({
+    strategyId: STRATEGY,
+    runtimeId: 'shadow:v8:reclaim',
+    eodCoordinator,
+    hooks: { warmup: () => undefined, onEod: () => shutdown('EOD'), onShutdown: () => shutdown('SIGINT'), onFault: () => shutdown('FAULTED') },
+    log: (value) => console.log(`[STRATEGY_HOST_STATE] strategyId=${value.strategyId} runtimeId=${value.runtimeId} previous=${value.previous} state=${value.state} reason=${value.reason}`),
+  });
+  recovery.on('stateChanged', (state) => {
+    if (state === 'DEGRADED') void host?.degrade('MARKET_DATA_DEGRADED');
+    if (state === 'READY') void host?.recovered('MARKET_DATA_READY');
+  });
+  await host.start();
   process.once('SIGINT', () => {
-    eodCoordinator?.cancelScheduled();
-    void shutdown('SIGINT');
+    void host?.shutdown('SIGINT');
   });
   process.once('SIGTERM', () => {
-    eodCoordinator?.cancelScheduled();
-    void shutdown('SIGTERM');
+    void host?.shutdown('SIGTERM');
   });
   connection.on('message', (b: Buffer, d: { generationId: number }) => {
     try {
