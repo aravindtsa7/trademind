@@ -25,6 +25,7 @@ import { PaperTradingRuntimeState } from '../modules/paper-trading/dto/paper-tra
 import { NseSessionEodCoordinator, isAtOrAfterNseSessionClose, isWithinNseSession } from '../modules/market-data/services/nse-session-calendar.service';
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
+import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
 import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
 import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
@@ -261,6 +262,7 @@ async function run(): Promise<void> {
   }
   const strategyResults = new Map<number, LivePaperStrategyResult>();
   const forwardDate = istDate(new Date());
+  let host: StrategyHostLifecycle | undefined;
   if (forwardJournal.hasRecordsForDate(forwardDate)) forwardJournal.appendEvent(forwardDate, 'MANUAL_RESTART', ['MANUAL_RESTART'], { reason: 'existing_session_journal' });
   forwardJournal.append({ recordType: 'SESSION', tradingDate: forwardDate, strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, runtimeStartedAt: new Date().toISOString(), marketDataHealthy: true, sessionCompleted: false, flags: ['FORWARD_EVALUATION_ONLY'] });
   const instrumentedStrategyAdapter = {
@@ -275,16 +277,18 @@ async function run(): Promise<void> {
   };
   const runtime = new PaperTradingRuntimeService(instrumentedStrategyAdapter, paperMarketDataAdapter, orderManager, eventBus);
   const contractsProvider = new CurrentNiftyOptionContractsProvider(new InstrumentRepository());
-  const paperRuntimeCandleAdapter = new PaperRuntimeCandleAdapterService(runtime, contractsProvider, eventBus);
+  const hostGatedRuntime = {
+    getState: (): PaperTradingRuntimeState => host?.canEvaluate() ? runtime.getState() : PaperTradingRuntimeState.STOPPED,
+    processCompletedCandle: (input: LivePaperCompletedCandleInput): Promise<LivePaperStrategyResult> => runtime.processCompletedCandle(input),
+  };
+  const paperRuntimeCandleAdapter = new PaperRuntimeCandleAdapterService(hostGatedRuntime, contractsProvider, eventBus);
 
   const createdOrderIds = new Set<string>();
   const eodCoordinator = new NseSessionEodCoordinator();
   let lastNiftyTickPrintedAt = 0;
   let shuttingDown = false;
   let eodRequested = false;
-  let requestEod: (() => void) | undefined;
-  let eodTimer: NodeJS.Timeout | undefined;
-  let eodWatchdog: NodeJS.Timeout | undefined;
+  let requestedShutdownReason = 'SESSION_END';
   let latestRecoveryWarmup: Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>> | undefined;
   const recoveryWarmupTarget = { count: 0, seedHistoricalCandles(candles: readonly import('../modules/indicators/types').Candle[]): void { this.count = candles.length; }, isWarmupReady(): boolean { return this.count >= 36; } };
 
@@ -310,9 +314,13 @@ async function run(): Promise<void> {
     console.log(`[MARKET_DATA_BACKFILL] event=${eventType} state=${recovery?.getState()}`);
   };
   const handleRecoveryState = (state: string): void => {
+    if (state === 'DEGRADED') {
+      void host?.degrade('MARKET_DATA_DEGRADED');
+    }
     if (state === 'READY' && !shuttingDown) {
       paperMarketDataAdapter.setMarketDataAvailable(true);
       paperRuntimeCandleAdapter.start();
+      void host?.recovered('MARKET_DATA_READY');
     }
   };
   recovery = new MarketDataRecoveryCoordinatorService({
@@ -343,7 +351,7 @@ async function run(): Promise<void> {
     if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || !Number.isFinite(tick.ltp) || tick.ltp <= 0 || typeof tick.timestamp !== 'string') return;
     const timestamp = new Date(tick.timestamp);
     if (Number.isNaN(timestamp.getTime())) return;
-    if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
+    if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); void host?.eod('MARKET_EOD'); return; }
     health.noteValidMarketEvent(tick.generationId ?? connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId ?? connectionManager.getGenerationId()); recovery!.handleLiveTick(timestamp, tick.generationId); }
     latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp);
@@ -425,8 +433,6 @@ async function run(): Promise<void> {
     if (shutdownStatus === 'COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     console.log(`\nGraceful shutdown requested (${reason}).`);
     clearInterval(statusTimer);
-    if (eodTimer) clearTimeout(eodTimer);
-    if (eodWatchdog) clearInterval(eodWatchdog);
 
     paperRuntimeCandleAdapter.stop();
     const stopResult = runtime.stop(); // Runtime stops PaperMarketDataAdapterService.
@@ -467,30 +473,30 @@ async function run(): Promise<void> {
   };
 
   const performDurableEodExit = async (): Promise<void> => {
-    await eodCoordinator.runOnce(new Date(), async () => {
-      // Only genuinely observed completed candles are flushed; EOD never fabricates one.
-      eodRequested = true;
-      paperRuntimeCandleAdapter.stop();
-      liveCandleEventAdapter.finishSession(niftyInstrumentKey);
-      const eodAt = new Date();
-      forwardJournal.appendEvent(istDate(eodAt), 'EOD_FORCED_EXIT', ['EOD_FORCED_EXIT']);
-      // Drain an already-triggered target/stop/timeout transaction first, then
-      // route remaining EOD exits through the exact same durable pipeline.
-      const preEodDrained = await drainPendingDurableExit();
-      if (!preEodDrained) {
-        riskGate.transition('HALTED');
-        forwardJournal.appendEvent(istDate(eodAt), 'EXECUTION_RECONCILIATION_REQUIRED', ['EXECUTION_RECONCILIATION_REQUIRED'], { reason: 'PRE_EOD_EXIT_TRANSACTION_DRAIN_TIMEOUT' });
-      }
-      const actions = await positionMonitor.closeAtSessionEndDurably(eodAt, (instrumentKey, entryPremium) => latestPremiumByInstrument.get(instrumentKey) ?? entryPremium);
-      actions.forEach((action) => {
-        eventBus.emit('paper.order.action', action);
-        console.log(`[V2_EOD_EXIT] order=${action.orderId} reason=TIME_EXIT premium=${action.observedPremium.toFixed(2)} timestamp=${formatIst(action.timestamp)}`);
-      });
-      await shutdown('EOD_NSE_SESSION_CLOSE');
-      const status = runtime.getStatus();
-      const eodStatus = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING) ? 'RECONCILIATION_REQUIRED' : 'COMPLETED';
-      console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=${eodStatus}`);
+    // StrategyHostLifecycle owns the exactly-once EOD latch. Its wall-clock
+    // path is already inside the shared coordinator callback; re-entering
+    // runOnce here would make that callback wait on itself.
+    eodRequested = true;
+    paperRuntimeCandleAdapter.stop();
+    liveCandleEventAdapter.finishSession(niftyInstrumentKey);
+    const eodAt = new Date();
+    forwardJournal.appendEvent(istDate(eodAt), 'EOD_FORCED_EXIT', ['EOD_FORCED_EXIT']);
+    // Drain an already-triggered target/stop/timeout transaction first, then
+    // route remaining EOD exits through the exact same durable pipeline.
+    const preEodDrained = await drainPendingDurableExit();
+    if (!preEodDrained) {
+      riskGate.transition('HALTED');
+      forwardJournal.appendEvent(istDate(eodAt), 'EXECUTION_RECONCILIATION_REQUIRED', ['EXECUTION_RECONCILIATION_REQUIRED'], { reason: 'PRE_EOD_EXIT_TRANSACTION_DRAIN_TIMEOUT' });
+    }
+    const actions = await positionMonitor.closeAtSessionEndDurably(eodAt, (instrumentKey, entryPremium) => latestPremiumByInstrument.get(instrumentKey) ?? entryPremium);
+    actions.forEach((action) => {
+      eventBus.emit('paper.order.action', action);
+      console.log(`[V2_EOD_EXIT] order=${action.orderId} reason=TIME_EXIT premium=${action.observedPremium.toFixed(2)} timestamp=${formatIst(action.timestamp)}`);
     });
+    await shutdown('EOD_NSE_SESSION_CLOSE');
+    const status = runtime.getStatus();
+    const eodStatus = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING) ? 'RECONCILIATION_REQUIRED' : 'COMPLETED';
+    console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=${eodStatus}`);
   };
   connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => {
     recovery.handleUnexpectedDisconnect(details);
@@ -504,22 +510,45 @@ async function run(): Promise<void> {
   });
   connectionManager.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null });
-    recovery.fault('RECONNECT_FAILED'); void shutdown('RECONNECT_FAILED');
+    recovery.fault('RECONNECT_FAILED');
+    void host?.fault(new Error('RECONNECT_FAILED'));
   });
-  requestEod = () => { void performDurableEodExit(); };
-  eodTimer = eodCoordinator.schedule(performDurableEodExit);
-  eodWatchdog = setInterval(() => { if (isAtOrAfterNseSessionClose(new Date())) void performDurableEodExit(); }, 1_000);
-  eodWatchdog.unref();
 
-  process.once('SIGINT', () => { clearTimeout(eodTimer); void shutdown('SIGINT'); });
-  process.once('SIGTERM', () => { clearTimeout(eodTimer); void shutdown('SIGTERM'); });
+  host = new StrategyHostLifecycle({
+    strategyId: 'V2_TREND_DOWN_PE',
+    runtimeId: 'paper:v2',
+    eodCoordinator,
+    hooks: {
+      // Durable initialization and current-day warmup deliberately completed
+      // before the host is constructed, preserving their established order.
+      // The host verifies those gates before allowing RUNNING.
+      warmup: (): void => {
+        const executionHealth = prismaExecution.getHealth(executionSessionDate);
+        if (!warmupResult.ready) throw new Error('V2_WARMUP_NOT_READY');
+        if (!executionHealth.ready || executionHealth.reconciliationRequired) {
+          throw new Error(`V2_EXECUTION_NOT_READY:${executionHealth.status}`);
+        }
+      },
+      onEod: performDurableEodExit,
+      onShutdown: (): Promise<void> => shutdown(requestedShutdownReason),
+      onFault: (): Promise<void> => shutdown('FAULTED'),
+    },
+    log: (event): void => {
+      console.log(`[STRATEGY_HOST_STATE] strategyId=${event.strategyId} runtimeId=${event.runtimeId} previous=${event.previous} state=${event.state} reason=${event.reason}`);
+    },
+  });
+
+  process.once('SIGINT', () => { requestedShutdownReason = 'SIGINT'; void host?.shutdown('SIGINT'); });
+  process.once('SIGTERM', () => { requestedShutdownReason = 'SIGTERM'; void host?.shutdown('SIGTERM'); });
 
   liveCandleEventAdapter.start();
   health.start();
   runtime.start(); // Starts PaperMarketDataAdapterService as part of the runtime lifecycle.
   paperRuntimeCandleAdapter.start();
   await subscriptionManager.subscribe(niftyInstrumentKey, MarketDataSubscriptionMode.FULL);
+  await host.start();
 
+  if (host.getState() !== 'RUNNING') return;
   console.log('Live paper-trading harness is RUNNING. It is subscribed to NIFTY only and will subscribe to an option only after an actionable signal. Press Ctrl+C to stop.');
   printStatus();
 }
