@@ -2,7 +2,50 @@ import { OptionContract } from '../../options/types/option-contract.types';
 
 export interface V12UniverseContract extends OptionContract { readonly optionType: 'CE' | 'PE'; }
 export interface V12OptionUniverse { expiry: Date; atmStrike: number; contracts: readonly V12UniverseContract[]; identity: string; missingLegs: string[]; }
+export interface V12OptionUniverseRotation {
+  readonly changed: boolean;
+  readonly universe?: V12OptionUniverse;
+  readonly addedInstrumentKeys: readonly string[];
+  readonly removedInstrumentKeys: readonly string[];
+  readonly nextInstrumentKeys: ReadonlySet<string>;
+}
 const dateOnly = (date: Date): string => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+
+/** Active instrument metadata uses both NIFTY and NIFTY 50 aliases. */
+export function isV12NiftyUnderlying(value: string | null | undefined): boolean {
+  const normalized = value?.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return normalized === 'NIFTY' || normalized === 'NIFTY50';
+}
+
+/**
+ * Computes a deterministic subscription delta. The caller owns subscription
+ * I/O, which keeps selection testable and prevents a second websocket path.
+ */
+export function planV12OptionUniverseRotation(
+  contracts: readonly V12UniverseContract[],
+  spot: number,
+  at: Date,
+  currentIdentity: string | undefined,
+  currentInstrumentKeys: ReadonlySet<string>,
+): V12OptionUniverseRotation {
+  const universe = resolveV12OptionUniverse(contracts, spot, at);
+  if (!universe || universe.identity === currentIdentity) {
+    return { changed: false, addedInstrumentKeys: [], removedInstrumentKeys: [], nextInstrumentKeys: new Set(currentInstrumentKeys) };
+  }
+  const nextInstrumentKeys = new Set(universe.contracts.map((contract) => contract.instrumentKey));
+  return {
+    changed: true,
+    universe,
+    addedInstrumentKeys: [...nextInstrumentKeys].filter((key) => !currentInstrumentKeys.has(key)),
+    removedInstrumentKeys: [...currentInstrumentKeys].filter((key) => !nextInstrumentKeys.has(key)),
+    nextInstrumentKeys,
+  };
+}
+
+/** Ignore an event from a retired websocket generation before it reaches V12 storage. */
+export function isV12CurrentGeneration(eventGenerationId: number | undefined, activeGenerationId: number): boolean {
+  return eventGenerationId === undefined || eventGenerationId === activeGenerationId;
+}
 /** Same expiry/nearest-strike ordering as the canonical selector; the adjacent strikes are metadata ladder positions. */
 export function resolveV12OptionUniverse(contracts: readonly V12UniverseContract[], spot: number, at: Date): V12OptionUniverse | null {
   const sessionDate = dateOnly(at); const eligible = contracts.filter((contract) => dateOnly(contract.expiry) >= sessionDate && Number.isFinite(contract.strikePrice) && contract.strikePrice > 0);
