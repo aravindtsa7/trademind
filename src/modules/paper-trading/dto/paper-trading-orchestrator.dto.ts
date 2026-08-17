@@ -18,7 +18,13 @@ export interface PaperTradingExitPolicyInput {
 }
 
 export interface PaperEntryPremiumProvider {
-  getObservedPremium(instrumentKey: string): Promise<number>;
+  getObservedPremium(instrumentKey: string): Promise<number | PaperEntryQuoteObservation>;
+}
+
+/** A captured entry observation; execution uses this exact quote when supplied. */
+export interface PaperEntryQuoteObservation {
+  observedEntryPremium: number;
+  executionQuote?: ExecutionQuoteSnapshot;
 }
 
 export interface PaperExecutionQuoteProvider {

@@ -12,10 +12,24 @@ export interface ExecutionDepthLevel {
 
 /** Immutable observation of exchange data; it contains no inferred prices. */
 export interface ExecutionQuoteSnapshot {
+  /** Deterministic identifier for this immutable market observation. */
+  snapshotId?: string;
   instrumentKey: string;
   sourceTimestamp: string | null;
   receivedTimestamp: string;
   quoteAgeMs: number | null;
+  ltpSourceTimestamp?: string | null;
+  ltpReceivedTimestamp?: string | null;
+  ltpAgeMs?: number | null;
+  bidSourceTimestamp?: string | null;
+  bidReceivedTimestamp?: string | null;
+  bidAgeMs?: number | null;
+  askSourceTimestamp?: string | null;
+  askReceivedTimestamp?: string | null;
+  askAgeMs?: number | null;
+  depthSourceTimestamp?: string | null;
+  depthReceivedTimestamp?: string | null;
+  depthAgeMs?: number | null;
   ltp: number | null;
   bestBid: number | null;
   bestAsk: number | null;

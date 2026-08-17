@@ -111,6 +111,41 @@ test('canonical execution quote snapshot preserves supplied depth and never inve
   assert.equal(snapshot?.dataQuality, 'FRESH_DEPTH'); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.depthLevels.length, 2); assert.equal(snapshot?.depthLevels[1].askSize, 40); assert.equal(snapshot?.connectionGenerationId, 7);
 });
 
+test('fresh LTP cannot mask stale bid/ask depth in the canonical executable snapshot', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z'); let now = new Date(base);
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
+  adapter.start(); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 }); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, bidQuantity:'10', askPrice:101, askQuantity:'10' }] });
+  now = new Date(base.getTime() + 2_001); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:now.toISOString(), ltp:102 });
+  const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(snapshot?.ltpAgeMs, 0); assert.equal(snapshot?.bidAgeMs, 2_001); assert.equal(snapshot?.askAgeMs, 2_001); assert.equal(snapshot?.quoteAgeMs, 2_001); assert.equal(snapshot?.dataQuality, 'STALE');
+});
+
+test('captured executable snapshots are immutable and later cache updates cannot change an attempt', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z'); let now = new Date(base);
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
+  adapter.start(); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 }); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+  const first = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!; const firstRepeat = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!; now = new Date(base.getTime() + 1_000); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:now.toISOString(), quotes:[{ bidPrice:98, askPrice:102 }] });
+  const second = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!;
+  assert.equal(first.snapshotId, firstRepeat.snapshotId); assert.notEqual(first, firstRepeat); assert.equal(first.bestAsk, 101); assert.equal(second.bestAsk, 102); assert.notEqual(first.snapshotId, second.snapshotId); assert.ok(Object.isFrozen(first)); assert.ok(Object.isFrozen(first.depthLevels));
+});
+
+test('an old WebSocket generation cannot qualify an executable quote or mix with a current depth book', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z'); let activeGeneration = 2;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => base, () => activeGeneration);
+  adapter.start();
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100, generationId:1 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), generationId:1, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), generationId:2, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.ltp, null);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100, generationId:2 });
+  const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(snapshot?.dataQuality, 'FRESH_TOP_OF_BOOK'); assert.equal(snapshot?.connectionGenerationId, 2);
+  activeGeneration = 3;
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), generationId:2, quotes:[{ bidPrice:98, askPrice:102 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+});
+
 test('serializes durable exit work: duplicate ticks produce one committed action', async () => {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
   const created = manager.create({ ...input(), executionOrderId:'exec-adapter-durable' }); const order = manager.markOpen(created.id);

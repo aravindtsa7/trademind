@@ -197,10 +197,16 @@ async function run(): Promise<void> {
       await prismaExecution.markReconciliationRequired(order.executionOrderId, istDate(order.entry.entryTimestamp), new Date(), 'LOCAL_DURABLE_EXIT_UNCERTAIN');
     }
   });
-  paperMarketDataAdapter = new PaperMarketDataAdapterService(positionMonitor, eventBus, portfolio);
+  paperMarketDataAdapter = new PaperMarketDataAdapterService(
+    positionMonitor,
+    eventBus,
+    portfolio,
+    2_000,
+    () => new Date(),
+    () => connectionManager.getGenerationId(),
+  );
   const latestPremiumByInstrument = new Map<string, number>();
   const latestDepthByInstrument = new Map<string, MarketDepthEvent>();
-  const latestOptionQuotes = new Map<string, { ltp?: number; bid?: number; ask?: number; receivedAtMs?: number; crossed?: boolean }>();
   let recovery: MarketDataRecoveryCoordinatorService | undefined;
   let eodRequestedForRisk = false;
   const riskGate = new RuntimeRiskGateService({ getPortfolioSnapshot: (sessionDate) => prismaExecution.getCachedSnapshot(sessionDate), getExecutionHealth: (sessionDate) => prismaExecution.getHealth(sessionDate) });
@@ -209,19 +215,23 @@ async function run(): Promise<void> {
     orderManager,
     subscriptionManager,
     {
-      async getObservedPremium(instrumentKey: string): Promise<number> {
+      async getObservedPremium(instrumentKey: string) {
         const quote = await new PaperEntryQuoteWaiterService({
-          getSnapshot: (key) => latestOptionQuotes.get(key),
+          // The wait has to satisfy the stricter executable-fill contract, not
+          // merely the general RiskGate quote check. The captured snapshot is
+          // then supplied unchanged to both layers.
+          maxQuoteAgeMs: fillModel.maxQuoteAgeMs,
+          getSnapshot: () => undefined,
+          getExecutionSnapshot: (key) => paperMarketDataAdapter.getExecutionQuoteSnapshot(key),
           abortReason: () => riskGate.isKillSwitchActive() ? 'KILL_SWITCH_ACTIVE' : shuttingDown || eodRequestedForRisk ? 'EOD_BLOCK' : recovery?.getState() !== 'READY' ? 'MARKET_DATA_NOT_READY' : riskGate.getTradingState() !== 'ACTIVE' ? 'RUNTIME_DEGRADED' : undefined,
-        }).waitForFreshQuote(instrumentKey);
-        return quote.ltp;
+        }).waitForFreshExecutionQuote(instrumentKey);
+        return { observedEntryPremium: quote.ltp as number, executionQuote: quote };
       },
     },
     MarketDataSubscriptionMode.FULL,
     riskGate,
-    { buildIntent: ({ signal, contract, observedEntryPremium }) => {
-      const quote = latestOptionQuotes.get(contract.instrumentKey); const ageMs = quote?.receivedAtMs === undefined ? null : Date.now() - quote.receivedAtMs;
-      return { runtimeId: 'paper:v2', strategyId: 'V2_TREND_DOWN_PE', sessionDate: istDate(signal.signalTimestamp), timestamp: signal.signalTimestamp, instrument: contract.instrumentKey, underlying: 'NIFTY 50', side: 'BUY_PE', action: 'OPEN', entryPremium: observedEntryPremium, quantity: contract.lotSize as number, marketDataState: recovery?.getState(), sessionTradable: !eodRequestedForRisk && !shuttingDown, quote: { ltp: quote?.ltp ?? observedEntryPremium, bid: quote?.bid, ask: quote?.ask, ageMs, crossed: quote?.crossed } };
+    { buildIntent: ({ signal, contract, observedEntryPremium, executionQuote }) => {
+      return { runtimeId: 'paper:v2', strategyId: 'V2_TREND_DOWN_PE', sessionDate: istDate(signal.signalTimestamp), timestamp: signal.signalTimestamp, instrument: contract.instrumentKey, underlying: 'NIFTY 50', side: 'BUY_PE', action: 'OPEN', entryPremium: observedEntryPremium, quantity: contract.lotSize as number, marketDataState: recovery?.getState(), sessionTradable: !eodRequestedForRisk && !shuttingDown, quote: { ltp: executionQuote?.ltp ?? null, bid: executionQuote?.bestBid ?? null, ask: executionQuote?.bestAsk ?? null, ageMs: executionQuote?.quoteAgeMs ?? null, crossed: executionQuote?.dataQuality === 'CROSSED' } };
     } },
     portfolio,
     fillModel,
@@ -311,7 +321,7 @@ async function run(): Promise<void> {
     if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
     health.noteValidMarketEvent(tick.generationId ?? connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId ?? connectionManager.getGenerationId()); recovery.handleLiveTick(timestamp, tick.generationId); }
-    latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp); latestOptionQuotes.set(tick.instrumentKey, { ...(latestOptionQuotes.get(tick.instrumentKey) ?? {}), ltp: tick.ltp, receivedAtMs: Date.now() });
+    latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp);
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();
       console.log(`[market.tick] NIFTY ${formatIst(timestamp)} | LTP ${tick.ltp.toFixed(2)}`);
@@ -349,7 +359,7 @@ async function run(): Promise<void> {
     forwardJournal.append({ recordType, tradingDate: istDate(action.timestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: action.orderId, signalTimestampIst: formatIst(action.timestamp), selectedOptionInstrument: action.instrumentKey, theoreticalEntryPrice: recordType === 'ENTRY' ? settledOrder?.entry.observedEntryPremium ?? action.observedPremium : undefined, theoreticalExitPrice: recordType === 'EXIT' ? action.observedPremium : undefined, executableEntryPrice: recordType === 'ENTRY' ? (fill?.averageFillPrice ?? null) : undefined, executableExitPrice: recordType === 'EXIT' ? (fill?.averageFillPrice ?? null) : undefined, entryPriceSource: recordType === 'ENTRY' ? (fill ? 'ASK' : 'UNAVAILABLE') : undefined, exitPriceSource: recordType === 'EXIT' ? (fill ? 'BID' : 'UNAVAILABLE') : undefined, theoreticalReturn:recordType === 'EXIT' ? theoreticalReturn : undefined, executableEstimatedReturn:recordType === 'EXIT' ? executableReturn : undefined, totalEstimatedSlippage:recordType === 'EXIT' && entryFill && fill ? (entryFill.totalExecutionSlippage + fill.totalExecutionSlippage) : undefined, totalExecutionFrictionPercent:recordType === 'EXIT' && theoreticalReturn !== null && executableReturn !== null ? theoreticalReturn - executableReturn : undefined, executionQuoteQuality: quote.quality, quote, indicators: { fillStatus: fill?.status ?? 'UNAVAILABLE', fillQuality: fill?.fillQuality ?? 'UNAVAILABLE', requestedQuantity: fill?.requestedQuantity ?? null, filledQuantity: fill?.filledQuantity ?? null, quotedBestPrice: fill?.quotedBestPrice ?? null, totalExecutionSlippage: fill?.totalExecutionSlippage ?? null, slippagePercent: fill?.slippagePercent ?? null }, flags: ['FORWARD_EVALUATION_ONLY', ...(fill ? [] : ['EXECUTION_ESTIMATE_UNAVAILABLE']), ...(quote.quality === 'STALE_QUOTE' ? ['STALE_OPTION_QUOTE'] : [])] });
     console.log(`[paper.order.action] ${action.action} | order ${action.orderId} | ${action.instrumentKey} | premium ${action.observedPremium.toFixed(2)} | ${formatIst(action.timestamp)}`);
   };
-  const onMarketDepth = (event: unknown): void => { const depth = event as MarketDepthEvent; if (depth && typeof depth.instrumentKey === 'string') { latestDepthByInstrument.set(depth.instrumentKey, depth); const top = depth.quotes?.[0]; const prior = latestOptionQuotes.get(depth.instrumentKey) ?? {}; latestOptionQuotes.set(depth.instrumentKey, { ...prior, bid: top?.bidPrice, ask: top?.askPrice, receivedAtMs: Date.now(), crossed: top?.bidPrice !== undefined && top?.askPrice !== undefined && top.bidPrice > top.askPrice }); } };
+  const onMarketDepth = (event: unknown): void => { const depth = event as MarketDepthEvent; if (depth && typeof depth.instrumentKey === 'string') latestDepthByInstrument.set(depth.instrumentKey, depth); };
   const onStrategyError = (event: unknown): void => {
     const error = event as { instrumentKey?: string; candleTimestamp?: Date; message?: string };
     console.error(`[paper.strategy.error] ${error.instrumentKey ?? 'unknown'} | ${error.candleTimestamp instanceof Date ? formatIst(error.candleTimestamp) : 'unknown time'} | ${error.message ?? 'Unknown paper-strategy error.'}`);

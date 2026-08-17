@@ -43,6 +43,10 @@ class PremiumProvider {
   async getObservedPremium(_instrumentKey: string): Promise<number> { this.calls += 1; return this.premium; }
 }
 
+function executableQuote(overrides: Partial<ExecutionQuoteSnapshot> = {}): ExecutionQuoteSnapshot {
+  return { snapshotId:'quote-fresh', instrumentKey:'NSE_FO|ce-24600', sourceTimestamp:timestamp.toISOString(), receivedTimestamp:timestamp.toISOString(), quoteAgeMs:0, ltpSourceTimestamp:timestamp.toISOString(), ltpReceivedTimestamp:timestamp.toISOString(), ltpAgeMs:0, bidSourceTimestamp:timestamp.toISOString(), bidReceivedTimestamp:timestamp.toISOString(), bidAgeMs:0, askSourceTimestamp:timestamp.toISOString(), askReceivedTimestamp:timestamp.toISOString(), askAgeMs:0, depthSourceTimestamp:timestamp.toISOString(), depthReceivedTimestamp:timestamp.toISOString(), depthAgeMs:0, ltp:100, bestBid:99, bestAsk:101, bidSize:75, askSize:75, depthLevels:[], spreadAbsolute:2, spreadPercent:2, connectionGenerationId:1, dataQuality:'FRESH_TOP_OF_BOOK', ...overrides };
+}
+
 function setup(selector: OptionContractSelectorService | { select: OptionContractSelectorService['select'] } = new OptionContractSelectorService()) {
   const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const premiums = new PremiumProvider();
   return { manager, subscriptions, premiums, orchestrator: new PaperTradingOrchestratorService(selector, manager, subscriptions, premiums) };
@@ -126,6 +130,25 @@ test('first actionable intent subscribes, waits for fresh bid/ask, then creates 
   const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context);
   const first=orchestrator.createFromSignal(request()); const duplicate=orchestrator.createFromSignal(request()); const result=await first; await assert.rejects(()=>duplicate,RiskDeniedError);
   assert.equal(subscriptions.subscribed.length,1); assert.equal(result.order.status,PaperOrderStatus.OPEN); assert.equal(manager.getActiveOrders().length,1);
+});
+
+test('V2 risk and fill consume one captured canonical executable snapshot', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const canonical = Object.freeze(executableQuote({ snapshotId:'canonical-fresh' })); let intentSnapshot: ExecutionQuoteSnapshot | undefined;
+  const premiums = { getObservedPremium: async () => ({ observedEntryPremium:100, executionQuote:canonical }) };
+  const risk = new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
+  const context = { buildIntent: ({signal,contract,observedEntryPremium,executionQuote: quote}: any) => { intentSnapshot=quote; return {runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:quote?.ltp,bid:quote?.bestBid,ask:quote?.bestAsk,ageMs:quote?.quoteAgeMs,crossed:quote?.dataQuality==='CROSSED'}}; } };
+  // If the orchestrator rereads this provider after RiskGate, the attempt would fail.
+  const provider = { getExecutionQuoteSnapshot: () => executableQuote({ snapshotId:'later-stale', quoteAgeMs:2_001, bidAgeMs:2_001, askAgeMs:2_001, depthAgeMs:2_001, dataQuality:'STALE' }) };
+  const result = await new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context,undefined,new PaperFillModelService(),provider).createFromSignal(request());
+  assert.equal(intentSnapshot, canonical); assert.equal(result.order.entry.executionFill?.averageFillPrice,101); assert.equal(manager.getActiveOrders().length,1);
+});
+
+test('fresh LTP with stale executable depth is denied before a paper order is created', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const stale = executableQuote({ snapshotId:'stale-depth', ltpAgeMs:1, bidAgeMs:2_001, askAgeMs:2_001, depthAgeMs:2_001, quoteAgeMs:2_001, dataQuality:'STALE' });
+  const premiums = { getObservedPremium: async () => ({ observedEntryPremium:100, executionQuote:stale }) }; const risk = new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
+  const context = { buildIntent: ({signal,contract,observedEntryPremium,executionQuote: quote}: any) => ({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:quote?.ltp,bid:quote?.bestBid,ask:quote?.bestAsk,ageMs:quote?.quoteAgeMs,crossed:quote?.dataQuality==='CROSSED'}}) };
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context,undefined,new PaperFillModelService(),{getExecutionQuoteSnapshot:()=>stale});
+  await assert.rejects(()=>orchestrator.createFromSignal(request()),(error:unknown)=>error instanceof RiskDeniedError&&error.decision.denialReasons.includes('STALE_QUOTE')); assert.equal(manager.getActiveOrders().length,0);
 });
 
 test('approved V2 intent creates one authoritative paper portfolio position', async () => {

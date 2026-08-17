@@ -35,6 +35,11 @@ test('stale, crossed, wide-spread and invalid quotes fail closed', () => {
   assert.equal(fill('BUY', 1, quote({ bestAsk:0, dataQuality:'EMPTY' })).reason, 'EMPTY_QUOTE');
 });
 
+test('the executable freshness threshold is inclusive at 2000ms and fails closed immediately after', () => {
+  assert.equal(fill('BUY', 1, quote({ quoteAgeMs:2_000 }), { maxQuoteAgeMs:2_000 }).status, 'FILLED');
+  assert.equal(fill('BUY', 1, quote({ quoteAgeMs:2_001 }), { maxQuoteAgeMs:2_000 }).reason, 'STALE_QUOTE');
+});
+
 test('latency accepts only the first quote at or after deterministic eligibility', () => {
   const model = new PaperFillModelService({ executionLatencyMs:500 });
   assert.equal(model.fill({ side:'BUY', requestedQuantity:1, quote:quote(), intentTimestamp:at }).reason, 'LATENCY_NOT_ELIGIBLE');
