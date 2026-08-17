@@ -48,6 +48,53 @@ export interface V8BullishReclaimSignal {
   regimeAvailableAt?: Date;
 }
 
+/**
+ * Read-only explanation of one completed V8 frame.  This mirrors the frozen
+ * signal sequence so live shadow observability can explain a non-signal
+ * without changing signal generation.
+ */
+export type V8BullishReclaimEvaluationReason =
+  | 'ATR_UNAVAILABLE'
+  | 'PDH_UNAVAILABLE'
+  | 'STRUCTURAL_LEVEL_UNAVAILABLE'
+  | 'REGIME_FILTER_BLOCKED'
+  | 'RSI_NOT_ABOVE_THRESHOLD'
+  | 'AWAITING_PDH_INTERACTION'
+  | 'INTERACTION_ARMED_WAITING_FOR_RECLAIM'
+  | 'BULLISH_CLOSE_REQUIRED'
+  | 'RECLAIM_THRESHOLD_NOT_MET'
+  | 'BULLISH_BODY_BELOW_THRESHOLD'
+  | 'COOLDOWN'
+  | 'DUPLICATE_COMPLETED_FRAME_SUPPRESSED'
+  | 'SIGNAL';
+
+export interface V8BullishReclaimEvaluation {
+  date: string;
+  candleTimestamp: Date;
+  timestamp: Date;
+  close: number;
+  structuralLevel: number | null;
+  atr14: number | null;
+  reclaimBufferAtr: number;
+  bullishBodyAtr: number;
+  rsiMinimum: V8RsiMinimum;
+  reclaimThreshold: number | null;
+  interaction: boolean | null;
+  armedBefore: boolean;
+  armedAfter: boolean;
+  reclaim: boolean | null;
+  body: number;
+  bodyAtr: number | null;
+  rsi14: number | null;
+  rsiPass: boolean;
+  regime?: AdaptivePrimaryMarketRegime;
+  regimePass: boolean;
+  cooldownEligible: boolean | null;
+  signal: boolean;
+  reason: V8BullishReclaimEvaluationReason;
+  signalValue?: V8BullishReclaimSignal;
+}
+
 export const V8_TARGET_STOP_COMBINATIONS = [
   { targetPercent: 4, stopPercent: 4 },
   { targetPercent: 5, stopPercent: 5 },
@@ -80,11 +127,25 @@ export function generateV8BullishReclaimSignals(
   config: V8BullishReclaimConfig,
   indicators: V8IndicatorContext,
 ): V8BullishReclaimSignal[] {
+  return evaluateV8BullishReclaimFrames(sessions, config, indicators)
+    .flatMap((evaluation) => evaluation.signalValue ? [evaluation.signalValue] : []);
+}
+
+/**
+ * Evaluates the exact frozen sequence and exposes diagnostic state for every
+ * completed frame.  `generateV8BullishReclaimSignals` remains the canonical
+ * signal API and is derived directly from this result.
+ */
+export function evaluateV8BullishReclaimFrames(
+  sessions: readonly V8PreparedSession[],
+  config: V8BullishReclaimConfig,
+  indicators: V8IndicatorContext,
+): V8BullishReclaimEvaluation[] {
   const atr = indicators.atr14ByFrame.get(config.timeframe);
   if (!atr) throw new Error(`Missing ATR14 map for V8 ${config.timeframe}m frame.`);
   const ordered = [...sessions].sort((left, right) => left.date.localeCompare(right.date));
   const previousDayHigh = buildPreviousDayHighMap(ordered);
-  const signals: V8BullishReclaimSignal[] = [];
+  const evaluations: V8BullishReclaimEvaluation[] = [];
 
   ordered.forEach((session) => {
     const frame = session.frames[config.timeframe];
@@ -97,28 +158,67 @@ export function generateV8BullishReclaimSignals(
       const key = candle.timestamp.getTime();
       const completedAt = key + config.timeframe * 60_000;
       const currentAtr = atr.get(key);
-      if (currentAtr === undefined || currentAtr <= 0) return;
+      const base = {
+        date: session.date,
+        candleTimestamp: new Date(candle.timestamp.getTime()),
+        timestamp: new Date(completedAt),
+        close: candle.close,
+        reclaimBufferAtr: config.reclaimBufferAtr,
+        bullishBodyAtr: config.bullishBodyAtr,
+        rsiMinimum: config.rsiMinimum,
+        body: Math.abs(candle.close - candle.open),
+      };
+      if (currentAtr === undefined || currentAtr <= 0) {
+        evaluations.push({ ...base, structuralLevel: null, atr14: null, reclaimThreshold: null, interaction: null, armedBefore: armed, armedAfter: armed, reclaim: null, bodyAtr: null, rsi14: null, rsiPass: false, regimePass: false, cooldownEligible: null, signal: false, reason: 'ATR_UNAVAILABLE' });
+        return;
+      }
       const level = levels.get(key);
-      if (level === undefined || !Number.isFinite(level)) return;
+      if (level === undefined || !Number.isFinite(level)) {
+        evaluations.push({ ...base, structuralLevel: null, atr14: currentAtr, reclaimThreshold: null, interaction: null, armedBefore: armed, armedAfter: armed, reclaim: null, bodyAtr: base.body / currentAtr, rsi14: null, rsiPass: false, regimePass: false, cooldownEligible: null, signal: false, reason: config.levelFamily === 'PDH' ? 'PDH_UNAVAILABLE' : 'STRUCTURAL_LEVEL_UNAVAILABLE' });
+        return;
+      }
       const regime = latestRegimeAt(session, completedAt);
-      if (!regimeMatches(config.regimeMode, regime?.regime)) return;
+      const regimePass = regimeMatches(config.regimeMode, regime?.regime);
       const rsi = readRsi(session, config.timeframe, key);
-      if (!rsiMatches(config.rsiMinimum, rsi)) return;
-
+      const rsiPass = rsiMatches(config.rsiMinimum, rsi);
       const reclaimThreshold = level + currentAtr * config.reclaimBufferAtr;
-      const interacted = candle.low <= reclaimThreshold && candle.close <= reclaimThreshold;
-      const bullishConfirmation = candle.close > candle.open && candle.close >= reclaimThreshold && Math.abs(candle.close - candle.open) >= currentAtr * config.bullishBodyAtr;
+      const interaction = candle.low <= reclaimThreshold && candle.close <= reclaimThreshold;
+      const reclaim = candle.close > candle.open && candle.close >= reclaimThreshold;
+      const bodyAtr = base.body / currentAtr;
+      const common = { ...base, structuralLevel: level, atr14: currentAtr, reclaimThreshold, interaction, bodyAtr, rsi14: rsi ?? null, rsiPass, regime: regime?.regime, regimePass };
+      if (!regimePass) {
+        evaluations.push({ ...common, armedBefore: armed, armedAfter: armed, reclaim, cooldownEligible: null, signal: false, reason: 'REGIME_FILTER_BLOCKED' });
+        return;
+      }
+      if (!rsiPass) {
+        evaluations.push({ ...common, armedBefore: armed, armedAfter: armed, reclaim, cooldownEligible: null, signal: false, reason: 'RSI_NOT_ABOVE_THRESHOLD' });
+        return;
+      }
+      const bullishConfirmation = reclaim && base.body >= currentAtr * config.bullishBodyAtr;
       const wasArmed = armed;
-      if (interacted && !armed) { armed = true; armedAt = key; }
-      if (!wasArmed || !bullishConfirmation) return;
+      if (interaction && !armed) { armed = true; armedAt = key; }
+      if (!wasArmed) {
+        evaluations.push({ ...common, armedBefore: false, armedAfter: armed, reclaim, cooldownEligible: null, signal: false, reason: interaction ? 'INTERACTION_ARMED_WAITING_FOR_RECLAIM' : (config.levelFamily === 'PDH' ? 'AWAITING_PDH_INTERACTION' : 'STRUCTURAL_LEVEL_UNAVAILABLE') });
+        return;
+      }
+      if (!bullishConfirmation) {
+        const reason: V8BullishReclaimEvaluationReason = candle.close <= candle.open
+          ? 'BULLISH_CLOSE_REQUIRED'
+          : candle.close < reclaimThreshold
+            ? 'RECLAIM_THRESHOLD_NOT_MET'
+            : 'BULLISH_BODY_BELOW_THRESHOLD';
+        evaluations.push({ ...common, armedBefore: true, armedAfter: armed, reclaim, cooldownEligible: null, signal: false, reason });
+        return;
+      }
       if (!isCooldownEligible(lastSignalAt, completedAt, config.cooldownMinutes)) {
         // A cooldown-blocked reclaim consumes the episode; a later signal needs
         // a fresh interaction/re-arm rather than replaying the same reclaim.
         armed = false;
+        evaluations.push({ ...common, armedBefore: true, armedAfter: false, reclaim, cooldownEligible: false, signal: false, reason: 'COOLDOWN' });
         return;
       }
 
-      signals.push({
+      const signal: V8BullishReclaimSignal = {
         strategyId: V8_STRATEGY_ID,
         configKey: v8ConfigKey(config),
         date: session.date,
@@ -135,13 +235,14 @@ export function generateV8BullishReclaimSignals(
         interactionTimestamp: armedAt === undefined ? undefined : new Date(armedAt),
         regime: regime?.regime,
         regimeAvailableAt: regime?.availableAt,
-      });
+      };
       lastSignalAt = completedAt;
       armed = false;
       armedAt = undefined;
+      evaluations.push({ ...common, armedBefore: true, armedAfter: false, reclaim, cooldownEligible: true, signal: true, reason: 'SIGNAL', signalValue: signal });
     });
   });
-  return signals;
+  return evaluations;
 }
 
 export function assertV8NoLookAhead(signals: readonly V8BullishReclaimSignal[]): void {

@@ -7,9 +7,11 @@ import {
   assertV8NoLookAhead,
   buildV8StructuralLevels,
   createV8BullishReclaimConfigs,
+  evaluateV8BullishReclaimFrames,
   generateV8BullishReclaimSignals,
   V8PreparedSession,
 } from './v8-bullish-reclaim.signal';
+import { isV8CompletedUnderlyingCandleEvent, V8ShadowRuntimeCounters } from '../../adaptive-intraday/services/v8-bullish-reclaim-shadow.service';
 
 const ist = (date: string, minute: number): Date => new Date(`${date}T09:${String(15 + minute).padStart(2, '0')}:00+05:30`);
 function candle(timestamp: Date, open: number, high: number, low: number, close: number): Candle { return { timestamp, open, high, low, close, volume: 0 }; }
@@ -95,4 +97,93 @@ test('cooldown suppresses a second reclaim while allowing a re-armed episode lat
   assert.ok(config);
   const signals = generateV8BullishReclaimSignals([prior, current], config, { atr14ByFrame: new Map<2 | 3, ReadonlyMap<number, number>>([[2, atr(candles)], [3, atr(candles)]]) });
   assert.deepEqual(signals.map((signal) => signal.timestamp.getTime()), [candles[1], candles[5]].map((value) => value.timestamp.getTime() + 2 * 60_000));
+});
+
+function frozenDiagnosticConfig() {
+  const config = createV8BullishReclaimConfigs().find((value) => value.timeframe === 2 && value.levelFamily === 'PDH' && value.reclaimBufferAtr === .1 && value.bullishBodyAtr === .25 && value.rsiMinimum === 50 && value.regimeMode === 'NO_REGIME_FILTER' && value.cooldownMinutes === 5);
+  assert.ok(config); return config;
+}
+function diagnosticSession(candles: Candle[], rsi: readonly number[]): V8PreparedSession {
+  const frame = { candles, rsi14: new Map(candles.map((value, index) => [value.timestamp.getTime(), rsi[index] ?? 55])) };
+  return { date: '2026-03-02', oneMinute: candles, frames: { 2: frame, 3: frame }, regimePoints: [] };
+}
+function diagnosticPrior(): V8PreparedSession { return session('2026-03-01', [candle(ist('2026-03-01', 0), 99, 100, 98, 99)]); }
+function diagnosticEvaluations(candles: Candle[], rsi = candles.map(() => 55)) {
+  return evaluateV8BullishReclaimFrames([diagnosticPrior(), diagnosticSession(candles, rsi)], frozenDiagnosticConfig(), { atr14ByFrame: new Map<2 | 3, ReadonlyMap<number, number>>([[2, atr(candles)], [3, atr(candles)]]) })
+    .filter((value) => value.date === '2026-03-02');
+}
+function diagnosticSignals(candles: Candle[], rsi = candles.map(() => 55)) {
+  return generateV8BullishReclaimSignals([diagnosticPrior(), diagnosticSession(candles, rsi)], frozenDiagnosticConfig(), { atr14ByFrame: new Map<2 | 3, ReadonlyMap<number, number>>([[2, atr(candles)], [3, atr(candles)]]) });
+}
+
+test('completed V8 2m frames expose frozen primary blocking reasons without changing signal output', () => {
+  const interaction = candle(ist('2026-03-02', 0), 100, 100, 99, 99.8);
+  const reclaimBlocked = candle(ist('2026-03-02', 2), 99.5, 100.05, 99.5, 100.05);
+  const reclaim = diagnosticEvaluations([interaction, reclaimBlocked]);
+  assert.equal(reclaim[0].reason, 'INTERACTION_ARMED_WAITING_FOR_RECLAIM');
+  assert.equal(reclaim[1].reason, 'RECLAIM_THRESHOLD_NOT_MET');
+  assert.equal(reclaim[1].timestamp.getTime(), reclaimBlocked.timestamp.getTime() + 2 * 60_000);
+
+  const bodyBlocked = candle(ist('2026-03-02', 2), 100.1, 100.2, 100.0, 100.2);
+  assert.equal(diagnosticEvaluations([interaction, bodyBlocked]).at(-1)?.reason, 'BULLISH_BODY_BELOW_THRESHOLD');
+
+  const valid = candle(ist('2026-03-02', 2), 99.8, 100.6, 99.8, 100.4);
+  assert.equal(diagnosticEvaluations([interaction, valid], [55, 50]).at(-1)?.reason, 'RSI_NOT_ABOVE_THRESHOLD');
+  assert.equal(diagnosticEvaluations([interaction, valid]).at(-1)?.reason, 'SIGNAL');
+});
+
+test('V8 frozen gate boundaries retain the intended strict and inclusive signal semantics', () => {
+  const interaction = candle(ist('2026-03-02', 0), 100, 100, 99, 99.8);
+  const belowReclaim = candle(ist('2026-03-02', 2), 99.5, 100.099, 99.5, 100.099);
+  const exactReclaim = candle(ist('2026-03-02', 2), 99.8, 100.1, 99.8, 100.1);
+  const belowBody = candle(ist('2026-03-02', 2), 99.851, 100.1, 99.8, 100.1);
+  const exactBody = candle(ist('2026-03-02', 2), 99.85, 100.1, 99.8, 100.1);
+
+  // Frozen PDH is 100, ATR is 1: the reclaim level is exactly 100.10.
+  assert.deepEqual(
+    diagnosticEvaluations([interaction, belowReclaim]).map((value) => [value.signal, value.reason]),
+    [[false, 'INTERACTION_ARMED_WAITING_FOR_RECLAIM'], [false, 'RECLAIM_THRESHOLD_NOT_MET']],
+  );
+  assert.equal(diagnosticSignals([interaction, belowReclaim]).length, 0);
+
+  assert.equal(diagnosticEvaluations([interaction, exactReclaim]).at(-1)?.reason, 'SIGNAL');
+  assert.equal(diagnosticSignals([interaction, exactReclaim]).length, 1);
+
+  assert.equal(diagnosticEvaluations([interaction, belowBody]).at(-1)?.reason, 'BULLISH_BODY_BELOW_THRESHOLD');
+  assert.equal(diagnosticSignals([interaction, belowBody]).length, 0);
+  assert.equal(diagnosticEvaluations([interaction, exactBody]).at(-1)?.reason, 'SIGNAL');
+  assert.equal(diagnosticSignals([interaction, exactBody]).length, 1);
+
+  assert.equal(diagnosticEvaluations([interaction, exactReclaim], [55, 50]).at(-1)?.reason, 'RSI_NOT_ABOVE_THRESHOLD');
+  assert.equal(diagnosticSignals([interaction, exactReclaim], [55, 50]).length, 0);
+  assert.equal(diagnosticEvaluations([interaction, exactReclaim], [55, 50.0001]).at(-1)?.reason, 'SIGNAL');
+  assert.equal(diagnosticSignals([interaction, exactReclaim], [55, 50.0001]).length, 1);
+});
+
+test('V8 diagnostics expose every completed frame, including unavailable PDH and unarmed frames', () => {
+  const currentOnly = diagnosticSession([candle(ist('2026-03-02', 0), 99.8, 100.2, 99.5, 100.1)], [55]);
+  const noPdh = evaluateV8BullishReclaimFrames([currentOnly], frozenDiagnosticConfig(), { atr14ByFrame: new Map<2 | 3, ReadonlyMap<number, number>>([[2, atr(currentOnly.frames[2].candles)], [3, atr(currentOnly.frames[3].candles)]]) });
+  assert.deepEqual(noPdh.map((value) => [value.signal, value.reason]), [[false, 'PDH_UNAVAILABLE']]);
+
+  const noInteraction = candle(ist('2026-03-02', 0), 100.2, 100.6, 100.2, 100.5);
+  const evaluations = diagnosticEvaluations([noInteraction]);
+  assert.equal(evaluations.length, 1);
+  assert.deepEqual(evaluations.map((value) => [value.signal, value.reason]), [[false, 'AWAITING_PDH_INTERACTION']]);
+  assert.equal(diagnosticSignals([noInteraction]).length, 0);
+});
+
+test('V8 diagnostic cooldown and runtime counters are deterministic and orderless', () => {
+  const candles = [
+    candle(ist('2026-03-02', 0), 100, 100, 99, 99.8),
+    candle(ist('2026-03-02', 2), 99.8, 100.6, 99.8, 100.4),
+    candle(ist('2026-03-02', 4), 100, 100, 99, 99.8),
+    candle(ist('2026-03-02', 6), 99.8, 100.6, 99.8, 100.4),
+  ];
+  assert.equal(diagnosticEvaluations(candles).at(-1)?.reason, 'COOLDOWN');
+  const counters = new V8ShadowRuntimeCounters(); counters.markCompleted2m(); counters.markCompleted2m(); counters.markSignal(); counters.markClosed();
+  assert.deepEqual(counters.snapshot(), { completed2m: 2, signals: 1, closed: 1 });
+  assert.equal(Object.isFrozen(counters.snapshot()), true);
+  const completed = { instrumentKey: 'NSE_INDEX|Nifty 50', completed: true, candleTime: new Date('2026-08-17T04:00:00Z'), open: 100, high: 101, low: 99, close: 100 };
+  assert.equal(isV8CompletedUnderlyingCandleEvent(completed, 'NSE_INDEX|Nifty 50'), true);
+  assert.equal(isV8CompletedUnderlyingCandleEvent({ ...completed, completed: false }, 'NSE_INDEX|Nifty 50'), false);
 });

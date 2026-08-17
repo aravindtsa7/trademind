@@ -15,6 +15,7 @@ test('V8 PATH B restricts requested dates and deterministic selection never read
   const winner = selectV8TrainOnlyWinner([{ ...base, id: 'b', netAt040: 1.1 }, { ...base, id: 'a', netAt040: 1.1 }, { ...base, id: 'validation-only-looking', netAt040: .5 }]);
   assert.equal(winner.id, 'a');
   assert.equal(v8FrozenStrategyFingerprint(winner), v8FrozenStrategyFingerprint(winner));
+  assert.equal(v8FrozenStrategyFingerprint(base), 'c815f819acd71e98');
   assert.equal(v8FrozenStrategyInputs(winner).strategyId, 'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW');
 });
 test('bounded underlying preload calls only inclusive requested range and cannot load a final-holdout row', async () => {
