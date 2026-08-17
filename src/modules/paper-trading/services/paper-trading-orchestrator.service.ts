@@ -18,6 +18,7 @@ import PaperPortfolioService from './paper-portfolio.service';
 import PaperFillModelService, { PaperFillUnavailableError } from './paper-fill-model.service';
 import ExecutionEngineService, { DuplicateExecutionIntentError } from '../../execution/execution-engine.service';
 import PrismaExecutionRepository from '../../execution/prisma-execution.repository';
+import { ExecutionFaultInjector, noExecutionFaults } from '../../execution/execution-fault-injection';
 import { ExecutionQuoteSnapshot, PaperExecutionFillResult } from '../dto/paper-fill-model.dto';
 
 interface OptionContractSelector {
@@ -52,10 +53,12 @@ export default class PaperTradingOrchestratorService {
     private readonly executionQuoteProvider?: PaperExecutionQuoteProvider,
     private readonly executionEngine?: ExecutionEngineService,
     private readonly prismaExecution?: PrismaExecutionRepository,
+    private readonly faultInjector: ExecutionFaultInjector = noExecutionFaults,
   ) {}
 
   async createFromSignal(request: PaperTradingOrchestrationRequest): Promise<PaperTradingOrchestrationResult> {
     this.validateRequest(request);
+    await this.faultInjector.hit('AFTER_SIGNAL_BEFORE_RISK', { strategyId: 'V2_TREND_DOWN_PE' });
     const signal = request.signal;
     const selection = this.contractSelector.select({
       underlying: signal.underlying,
@@ -106,6 +109,7 @@ export default class PaperTradingOrchestratorService {
       logger.info('RISK_DECISION', approvedDecision);
       if (approvedDecision.decision === 'DENIED') { this.logExecutionAttempt(signal, selectedContract.instrumentKey, capturedExecutionQuote, approvedDecision, undefined, 'RISK_DENIED'); throw new RiskDeniedError(approvedDecision); }
     }
+    await this.faultInjector.hit('AFTER_RISK_APPROVAL_BEFORE_EXECUTION', { intentId: approvedDecision?.intentId ?? null });
 
     let executionFill;
     let filledQuantity = selectedContract.lotSize as number;
@@ -127,6 +131,7 @@ export default class PaperTradingOrchestratorService {
       executionFill = this.fillModel.toSummary(fill);
       if (!executionFill) { if (executionOrderId && riskContext) this.executionEngine?.reject(executionOrderId, riskContext.sessionDate, `PAPER_FILL_${fill.status}`); this.logExecutionAttempt(signal, selectedContract.instrumentKey, quote, approvedDecision, fill, 'FILL_UNAVAILABLE'); logger.warn('PAPER_FILL_UNAVAILABLE', { strategyId: approvedDecision?.strategyId, instrument: selectedContract.instrumentKey, snapshotId:quote?.snapshotId ?? null, status:fill.status, reason:fill.reason, fillQuality:fill.fillQuality }); throw new PaperFillUnavailableError(fill); }
       this.logExecutionAttempt(signal, selectedContract.instrumentKey, quote, approvedDecision, fill, 'FILLED');
+      await this.faultInjector.hit('AFTER_FILL_ESTIMATE_BEFORE_DB_TRANSACTION', { intentId: approvedDecision?.intentId ?? null, snapshotId: quote?.snapshotId ?? null });
       filledQuantity = executionFill.filledQuantity;
       simulatedEntryPremium = executionFill.averageFillPrice;
       if (executionOrderId && riskContext) this.executionEngine?.recordEntryFill(executionOrderId, riskContext.sessionDate, executionFill, signal.signalTimestamp);
@@ -164,6 +169,7 @@ export default class PaperTradingOrchestratorService {
         this.orderManager.updateStatus(pending.id, PaperOrderStatus.CANCELLED);
         throw error;
       }
+      await this.faultInjector.hit('AFTER_ENTRY_DB_COMMIT_BEFORE_LOCAL_ACK', { intentId: approvedDecision.intentId, executionOrderId });
     }
     const order = this.orderManager.markOpen(pending.id);
     if (executionOrderId && riskContext) this.executionEngine?.attachPaperOrder(executionOrderId, riskContext.sessionDate, order.id);

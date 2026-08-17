@@ -9,6 +9,7 @@ import PaperOrderManagerService from './paper-order-manager.service';
 import PaperPositionMonitorService from './paper-position-monitor.service';
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
 import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
+import { DeterministicExecutionFaultInjector, InjectedExecutionFault } from '../../execution/execution-fault-injection.test-helper';
 
 const entryTimestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -175,4 +176,10 @@ test('shutdown drain times out safely while a durable exit is pending, then sett
   resolveCommit();
   assert.equal(await adapter.drainDurableExitQueue(1_000), true);
   assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TARGET_EXIT);
+});
+
+test('shutdown-drain failpoint never completes or creates an additional exit',async()=>{
+  const manager=new PaperOrderManagerService();const bus=new EventEmitter();const faults=new DeterministicExecutionFaultInjector();faults.arm('DURING_SHUTDOWN_DRAIN');
+  const adapter=new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager),bus,undefined,2_000,()=>entryTimestamp,undefined,faults);
+  await assert.rejects(()=>adapter.drainDurableExitQueue(1_000),InjectedExecutionFault);assert.equal(manager.getActiveOrders().length,0);assert.ok(faults.hits.includes('DURING_SHUTDOWN_DRAIN'));
 });

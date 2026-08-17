@@ -5,6 +5,7 @@ import { PaperOrder } from '../paper-trading/types/paper-trading.types';
 import { PortfolioSnapshot } from '../paper-trading/dto/paper-portfolio.dto';
 import { ExecutionIntent, ExecutionOrder, ExecutionReconciliationResult } from './execution.types';
 import { ExecutionHealth } from './execution.types';
+import { ExecutionFaultInjector, noExecutionFaults } from './execution-fault-injection';
 
 type Db = PrismaClient | Prisma.TransactionClient;
 export interface DurablePaperEntry {
@@ -22,11 +23,12 @@ export interface DurablePaperEntry {
 export default class PrismaExecutionRepository {
   private readonly snapshots = new Map<string, PortfolioSnapshot>();
   private readonly health = new Map<string, ExecutionHealth>();
-  constructor(private readonly prisma: PrismaClient = new PrismaClient()) {}
+  constructor(private readonly prisma: PrismaClient = new PrismaClient(), private readonly faultInjector: ExecutionFaultInjector = noExecutionFaults) {}
   static executionOrderId(intentId: string): string { return executionId(intentId); }
 
   async createPaperEntry(input: DurablePaperEntry): Promise<ExecutionOrder> {
     const result = await this.prisma.$transaction(async (tx) => {
+      await this.faultInjector.hit('DURING_ENTRY_DB_TRANSACTION', { intentId: input.intent.intentId });
       const existing = await tx.executionOrder.findUnique({ where:{ intentId:input.intent.intentId }, include:{ fills:true, transitions:true } });
       if (existing) return mapOrder(existing);
       const orderId = executionId(input.intent.intentId);
@@ -45,9 +47,11 @@ export default class PrismaExecutionRepository {
   }
 
   async recordPaperExit(executionOrderId: string, sessionDate: string, fill: PaperExecutionFillSummary, timestamp: Date, exitReason: string): Promise<ExecutionOrder> {
+    await this.faultInjector.hit('BEFORE_EXIT_DB_TRANSACTION', { executionOrderId, sessionDate, exitReason });
     const result = await this.prisma.$transaction(async (tx) => {
       const current = await tx.executionOrder.findUnique({ where:{ executionOrderId }, include:{ fills:true, transitions:true, paperPosition:true } });
       if (!current || current.sessionDate !== sessionDate) throw new Error('Execution order was not found for requested session.');
+      await this.faultInjector.hit('DURING_EXIT_DB_TRANSACTION', { executionOrderId, sessionDate, exitReason });
       const entryQuantity = current.cumulativeFilledQuantity; const existingExit = current.cumulativeExitQuantity; const allowed = entryQuantity - existingExit;
       if (fill.filledQuantity <= 0 || fill.filledQuantity > allowed) throw new Error('Exit fill exceeds durable residual quantity.');
       const fillId = executionId(`exit|${executionOrderId}|${fill.filledQuantity}|${fill.averageFillPrice}|${timestamp.toISOString()}`);
@@ -91,6 +95,7 @@ export default class PrismaExecutionRepository {
   async listUnresolved(sessionDate: string): Promise<ExecutionOrder[]> { const rows=await this.prisma.executionOrder.findMany({where:{sessionDate,status:{in:['CREATED','RISK_APPROVED','SUBMISSION_PENDING','SUBMITTED','ACKNOWLEDGED','PARTIALLY_FILLED','FILLED','EXIT_PENDING','RECONCILIATION_REQUIRED','FAULTED']}},include:{fills:true,transitions:true},orderBy:{createdAt:'asc'}});return rows.map(mapOrder); }
 
   async reconcile(sessionDate: string): Promise<ExecutionReconciliationResult> {
+    await this.faultInjector.hit('DURING_RECONCILIATION', { sessionDate });
     const rows=await this.prisma.executionOrder.findMany({where:{sessionDate},include:{fills:true,paperPosition:true}}); const errors:string[]=[];const unresolved:string[]=[];
     for(const row of rows){const entry=row.fills.filter((fill)=>fill.leg==='ENTRY').reduce((sum,fill)=>sum+fill.quantity,0);const exit=row.fills.filter((fill)=>fill.leg==='EXIT').reduce((sum,fill)=>sum+fill.quantity,0);if(entry!==row.cumulativeFilledQuantity||exit!==row.cumulativeExitQuantity||exit>entry||!row.paperPosition||row.paperPosition.quantity!==entry-exit){errors.push(`MISMATCH:${row.executionOrderId}`);unresolved.push(row.executionOrderId);}}
     const snapshot=await this.snapshot(sessionDate); if(snapshot.openPositionCount>0){errors.push('OPEN_POSITION_REQUIRES_RUNTIME_REHYDRATION');unresolved.push(...positionsOrderIds(rows));}

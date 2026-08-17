@@ -8,6 +8,7 @@ import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper
 import PaperFillModelService from './paper-fill-model.service';
 import PaperPositionMonitorService from './paper-position-monitor.service';
 import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
+import { DeterministicExecutionFaultInjector } from '../../execution/execution-fault-injection.test-helper';
 
 const entryTime = new Date('2026-08-10T04:00:00.000Z');
 
@@ -200,4 +201,20 @@ test('durable EOD uses TIME_EXIT only after its durable transaction commits', as
   assert.equal(calls, 1);
   assert.equal(result[0].action, PaperOrderStatus.TIME_EXIT);
   assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TIME_EXIT);
+});
+
+test('durable exit commit before local acknowledgement remains fail-closed and does not book local P&L twice',async()=>{
+  const manager=new PaperOrderManagerService();const order=durableOpen(manager);const portfolio=new PaperPortfolioService(new InMemoryPaperPortfolioRepository(),()=>entryTime);
+  portfolio.open({order,strategyId:'V2_TREND_DOWN_PE',underlying:'NIFTY 50',correlationId:'corr',intentId:'intent',sessionDate:'2026-08-10'});
+  const faults=new DeterministicExecutionFaultInjector();faults.arm('AFTER_EXIT_DB_COMMIT_BEFORE_LOCAL_ACK');let commits=0;
+  const monitor=new PaperPositionMonitorService(manager,portfolio,()=> '2026-08-10',()=>durableFill(),undefined,async()=>{commits++;},undefined,faults);
+  const result=await monitor.monitorDurably(update(order.contract.instrumentKey,130));
+  assert.equal(commits,1);assert.equal(result[0].action,'NONE');assert.equal(manager.getById(order.id)?.status,PaperOrderStatus.RECONCILIATION_REQUIRED);assert.equal(portfolio.getSnapshot('2026-08-10')?.totalRealizedPnl,0);assert.ok(faults.hits.includes('AFTER_EXIT_DB_COMMIT_BEFORE_LOCAL_ACK'));
+});
+
+test('injected EOD exit fault reserves and fails closed without a durable closing mutation',async()=>{
+  const manager=new PaperOrderManagerService();const order=durableOpen(manager);const faults=new DeterministicExecutionFaultInjector();faults.arm('DURING_EOD_EXIT');let commits=0;
+  const monitor=new PaperPositionMonitorService(manager,undefined,()=> '2026-08-10',()=>durableFill(),undefined,async()=>{commits++;},undefined,faults);
+  const result=await monitor.closeAtSessionEndDurably(new Date('2026-08-10T10:00:00.000Z'),()=>101);
+  assert.equal(commits,0);assert.equal(result[0].action,'NONE');assert.equal(manager.getById(order.id)?.status,PaperOrderStatus.RECONCILIATION_REQUIRED);assert.ok(faults.hits.includes('DURING_EOD_EXIT'));
 });

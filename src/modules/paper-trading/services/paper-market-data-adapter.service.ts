@@ -6,6 +6,7 @@ import { PaperPositionMonitoringResult } from '../types/paper-trading.types';
 import PaperPositionMonitorService from './paper-position-monitor.service';
 import PaperPortfolioService from './paper-portfolio.service';
 import { ExecutionQuoteSnapshot } from '../dto/paper-fill-model.dto';
+import { ExecutionFaultInjector, noExecutionFaults } from '../../execution/execution-fault-injection';
 
 /**
  * Bridges the shared market.tick stream into paper-position monitoring. This
@@ -30,6 +31,7 @@ export default class PaperMarketDataAdapterService {
     private readonly now = () => new Date(),
     /** Live runtimes provide this so an old socket cannot qualify an entry quote. */
     private readonly getActiveGenerationId?: () => number | undefined,
+    private readonly faultInjector: ExecutionFaultInjector = noExecutionFaults,
   ) {}
 
   start(): void {
@@ -55,6 +57,7 @@ export default class PaperMarketDataAdapterService {
    */
   async drainDurableExitQueue(timeoutMs: number): Promise<boolean> {
     if (!Number.isFinite(timeoutMs) || timeoutMs < 0) throw new Error('timeoutMs must be a non-negative finite number.');
+    await this.faultInjector.hit('DURING_SHUTDOWN_DRAIN', { timeoutMs });
     let timer: NodeJS.Timeout | undefined;
     try {
       return await Promise.race([

@@ -2,6 +2,7 @@ import PaperOrderManagerService from './paper-order-manager.service';
 import PaperPortfolioService from './paper-portfolio.service';
 import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 import ExecutionEngineService from '../../execution/execution-engine.service';
+import { ExecutionFaultInjector, noExecutionFaults } from '../../execution/execution-fault-injection';
 import {
   PaperOrderStatus,
   PaperOrder,
@@ -26,6 +27,7 @@ export default class PaperPositionMonitorService {
      */
     private readonly persistDurableExit?: (order: PaperOrder, update: PaperPremiumUpdate, reason: Exclude<PaperPositionMonitoringResult['action'], 'NONE'>, fill: PaperExecutionFillSummary) => Promise<void>,
     private readonly onDurableExitFailure?: (order: PaperOrder, error: unknown) => void | Promise<void>,
+    private readonly faultInjector: ExecutionFaultInjector = noExecutionFaults,
   ) {}
 
   hasDurableExitPersistence(): boolean {
@@ -160,7 +162,9 @@ export default class PaperPositionMonitorService {
       return { ...resultBase, action: 'NONE', executionUnavailable: true };
     }
     try {
+      if (action === PaperOrderStatus.TIME_EXIT) await this.faultInjector.hit('DURING_EOD_EXIT', { executionOrderId: pending.executionOrderId ?? null, orderId: pending.id });
       await this.persistDurableExit!(pending, update, action, executionFill);
+      await this.faultInjector.hit('AFTER_EXIT_DB_COMMIT_BEFORE_LOCAL_ACK', { executionOrderId: pending.executionOrderId ?? null, orderId: pending.id, exitReason: action });
       // The durable transaction has committed. Local telemetry may now become
       // CLOSED and emit its existing action/log downstream.
       this.orderManager.close(order.id, {

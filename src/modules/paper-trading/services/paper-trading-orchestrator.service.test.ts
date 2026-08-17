@@ -15,6 +15,8 @@ import PaperFillModelService, { PaperFillUnavailableError } from './paper-fill-m
 import { ExecutionQuoteSnapshot } from '../dto/paper-fill-model.dto';
 import ExecutionEngineService from '../../execution/execution-engine.service';
 import { InMemoryExecutionRepository } from '../../execution/execution.repository';
+import { noExecutionFaults } from '../../execution/execution-fault-injection';
+import { DeterministicExecutionFaultInjector, InjectedExecutionFault } from '../../execution/execution-fault-injection.test-helper';
 
 const timestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -199,4 +201,28 @@ test('quote wait timeout, stale quote, reconnect and EOD deny with no order', as
     const orchestrator=new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,{buildIntent:({signal,contract}:any)=>({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE',action:'OPEN',entryPremium:NaN,quantity:75,marketDataState:'READY',sessionTradable:true})});
     await assert.rejects(()=>orchestrator.createFromSignal(request()),(error:unknown)=>error instanceof RiskDeniedError&&error.decision.denialReasons.includes(reason)); assert.equal(manager.getActiveOrders().length,0);
   }
+});
+
+test('fault after V2 signal but before RiskGate creates no local execution state',async()=>{
+  const manager=new PaperOrderManagerService();const subscriptions=new SubscriptionGateway();const premiums=new PremiumProvider();const faults=new DeterministicExecutionFaultInjector();faults.arm('AFTER_SIGNAL_BEFORE_RISK');
+  const orchestrator=new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,undefined,undefined,undefined,undefined,undefined,undefined,undefined,faults);
+  await assert.rejects(()=>orchestrator.createFromSignal(request()),InjectedExecutionFault);assert.equal(manager.getActiveOrders().length,0);assert.equal(subscriptions.subscribed.length,0);
+});
+
+test('risk approval and fill estimate are not durable orders when a fault occurs before execution',async()=>{
+  const manager=new PaperOrderManagerService();const subscriptions=new SubscriptionGateway();const premiums={getObservedPremium:async()=>({observedEntryPremium:100,executionQuote:executableQuote()})};const risk=new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
+  const context={buildIntent:({signal,contract,observedEntryPremium,executionQuote:quote}:any)=>({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:quote?.ltp,bid:quote?.bestBid,ask:quote?.bestAsk,ageMs:quote?.quoteAgeMs}})};
+  const faults=new DeterministicExecutionFaultInjector();faults.arm('AFTER_RISK_APPROVAL_BEFORE_EXECUTION');const provider={getExecutionQuoteSnapshot:()=>executableQuote()};
+  const first=new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context,undefined,new PaperFillModelService(),provider,undefined,undefined,faults);
+  await assert.rejects(()=>first.createFromSignal(request()),InjectedExecutionFault);assert.equal(manager.getActiveOrders().length,0);
+  faults.arm('AFTER_FILL_ESTIMATE_BEFORE_DB_TRANSACTION');const secondRisk=new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});const second=new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,secondRisk,context,undefined,new PaperFillModelService(),provider,undefined,undefined,faults);
+  await assert.rejects(()=>second.createFromSignal(request()),InjectedExecutionFault);assert.equal(manager.getActiveOrders().length,0);assert.notEqual(noExecutionFaults,faults);
+});
+
+test('durable entry committed before local acknowledgement never creates a phantom local OPEN order',async()=>{
+  const manager=new PaperOrderManagerService();const subscriptions=new SubscriptionGateway();const premiums={getObservedPremium:async()=>({observedEntryPremium:100,executionQuote:executableQuote()})};const risk=new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});const committed:any[]=[];
+  const context={buildIntent:({signal,contract,observedEntryPremium,executionQuote:quote}:any)=>({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:quote?.ltp,bid:quote?.bestBid,ask:quote?.bestAsk,ageMs:quote?.quoteAgeMs}})};
+  const faults=new DeterministicExecutionFaultInjector();faults.arm('AFTER_ENTRY_DB_COMMIT_BEFORE_LOCAL_ACK');const durable={createPaperEntry:async(input:any)=>{committed.push(input);return {executionOrderId:'durable-order'};}};
+  const orchestrator=new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context,undefined,new PaperFillModelService(),{getExecutionQuoteSnapshot:()=>executableQuote()},undefined,durable as any,faults);
+  await assert.rejects(()=>orchestrator.createFromSignal(request()),InjectedExecutionFault);assert.equal(committed.length,1);assert.equal(manager.getActiveOrders().length,1);assert.equal(manager.getActiveOrders()[0].status,PaperOrderStatus.PENDING);
 });
