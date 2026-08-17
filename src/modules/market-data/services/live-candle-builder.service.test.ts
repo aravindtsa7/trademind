@@ -56,9 +56,9 @@ test('ignores out-of-order ticks without rewriting active or completed candles',
   assert.equal(result.ignoreReason, 'OUT_OF_ORDER_TICK'); assert.equal(builder.getActiveCandle('NIFTY', '1m')?.candleTime.getTime(), ist(9, 16).getTime());
 });
 
-test('ignores ticks outside the 09:15-15:30 IST market session', () => {
-  const builder = new LiveCandleBuilderService(); const before = builder.processTick(tick('NIFTY', 9, 14, 100), '1m'); const after = builder.processTick(tick('NIFTY', 15, 30, 100), '1m');
-  assert.equal(before.ignoreReason, 'OUTSIDE_MARKET_SESSION'); assert.equal(after.ignoreReason, 'OUTSIDE_MARKET_SESSION');
+test('uses the shared 09:15-15:40 IST derivatives boundary for live candle acceptance', () => {
+  const builder = new LiveCandleBuilderService(); const before = builder.processTick(tick('NIFTY', 9, 14, 100), '1m'); const within = builder.processTick(tick('NIFTY', 15, 39, 100), '1m'); const after = builder.processTick(tick('NIFTY', 15, 40, 101), '1m');
+  assert.equal(before.ignoreReason, 'OUTSIDE_MARKET_SESSION'); assert.equal(within.ignored, false); assert.equal(after.ignoreReason, 'OUTSIDE_MARKET_SESSION');
 });
 
 test('active candles are never reported as completed', () => {

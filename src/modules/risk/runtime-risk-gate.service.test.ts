@@ -30,7 +30,7 @@ test('halted state blocks new entries but allows a close intent and a new sessio
 test('bad state, pre-session and EOD fail closed',()=>{
   assert.ok(gate({getOpenPositions:()=>undefined}).evaluate(base()).denialReasons.includes('UNKNOWN_RISK_STATE'));
   assert.ok(gate().evaluate(base({timestamp:new Date('2026-08-17T03:30:00.000Z')})).denialReasons.includes('SESSION_NOT_TRADABLE'));
-  assert.ok(gate().evaluate(base({timestamp:new Date('2026-08-17T10:00:00.000Z')})).denialReasons.includes('EOD_BLOCK'));
+  assert.ok(gate().evaluate(base({timestamp:new Date('2026-08-17T10:10:00.000Z')})).denialReasons.includes('EOD_BLOCK'));
 });
 test('restart reloads realized P&L and fails closed for an unresolved persisted paper order',()=>{
   const root=mkdtempSync(join(tmpdir(),'trademind-risk-')); const first=gate({persist:true,artifactRoot:root}); const approved=first.evaluate(base()); assert.equal(approved.decision,'APPROVED'); first.recordOpenedOrder(approved,'paper-1'); first.recordRealizedPnl('2026-08-17',-200);

@@ -4,18 +4,17 @@ import {
   LiveCandleTimeframe,
   NormalizedLiveTickDto,
 } from '../dto/live-candle.dto';
+import { nseSessionCalendar } from './nse-session-calendar.service';
 
 interface ActiveCandle extends LiveCandleDto {
   lastTickTimestamp: number;
 }
 
-const sessionStartMinute = 9 * 60 + 15;
-const sessionEndMinuteExclusive = 15 * 60 + 30;
 const timeframeMinutes: Record<LiveCandleTimeframe, number> = { '1m': 1, '2m': 2, '3m': 3, '5m': 5 };
 
 /**
  * Builds IST session-anchored candles from chronological ticks. Ticks outside
- * [09:15, 15:30) IST and ticks at/before the last accepted timestamp for an
+ * the shared NSE session boundary and ticks at/before the last accepted timestamp for an
  * instrument/timeframe are ignored. The first received value wins a duplicate.
  */
 export default class LiveCandleBuilderService {
@@ -27,7 +26,8 @@ export default class LiveCandleBuilderService {
     const interval = timeframeMinutes[timeframe];
     if (!interval) throw new Error(`Unsupported live candle timeframe: ${String(timeframe)}.`);
     const market = getIstMarketTime(tick.timestamp);
-    if (market.minute < sessionStartMinute || market.minute >= sessionEndMinuteExclusive) {
+    const session = nseSessionCalendar.boundaryFor(tick.timestamp);
+    if (!session.isTradingDay || market.minute < session.openMinute || market.minute >= session.closeMinute) {
       return { ignored: true, ignoreReason: 'OUTSIDE_MARKET_SESSION' };
     }
 
@@ -38,7 +38,7 @@ export default class LiveCandleBuilderService {
       return { ignored: true, ignoreReason: tickTimestamp === previousTickTimestamp ? 'DUPLICATE_TICK' : 'OUT_OF_ORDER_TICK' };
     }
 
-    const candleTime = getBucketStart(market, interval);
+    const candleTime = getBucketStart(market, interval, session.openMinute);
     const active = this.activeCandles.get(key);
     this.lastAcceptedTickTimestamps.set(key, tickTimestamp);
 
@@ -118,7 +118,7 @@ function getIstMarketTime(timestamp: Date): { year: number; month: number; day: 
   return { year: Number(parts.year), month: Number(parts.month), day: Number(parts.day), minute: Number(parts.hour) * 60 + Number(parts.minute) };
 }
 
-function getBucketStart(market: ReturnType<typeof getIstMarketTime>, interval: number): Date {
+function getBucketStart(market: ReturnType<typeof getIstMarketTime>, interval: number, sessionStartMinute: number): Date {
   const minute = sessionStartMinute + Math.floor((market.minute - sessionStartMinute) / interval) * interval;
   const hour = Math.floor(minute / 60); const minuteOfHour = minute % 60;
   // India has a fixed +05:30 offset and no daylight-saving transition.

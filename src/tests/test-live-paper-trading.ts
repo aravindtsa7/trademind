@@ -22,7 +22,7 @@ import LivePaperStrategyAdapterService from '../modules/paper-trading/services/l
 import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-paper-fresh-warmup.service';
 import { LivePaperCompletedCandleInput, LivePaperStrategyResult } from '../modules/paper-trading/dto/live-paper-strategy.dto';
 import { PaperTradingRuntimeState } from '../modules/paper-trading/dto/paper-trading-runtime.dto';
-import { IstSessionEodCoordinator, isAtOrAfterIstSessionEnd } from '../modules/market-data/services/ist-market-session-eod.service';
+import { NseSessionEodCoordinator, isAtOrAfterNseSessionClose, isWithinNseSession } from '../modules/market-data/services/nse-session-calendar.service';
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
@@ -123,10 +123,7 @@ function formatIst(timestamp: Date): string {
 }
 
 function isLikelyMarketSession(timestamp: Date): boolean {
-  const parts = getIstParts(timestamp);
-  if (parts.weekday === 'Sat' || parts.weekday === 'Sun') return false;
-  const minute = Number(parts.hour) * 60 + Number(parts.minute);
-  return minute >= 9 * 60 + 15 && minute < 15 * 60 + 30;
+  return isWithinNseSession(timestamp);
 }
 
 /**
@@ -162,7 +159,7 @@ async function run(): Promise<void> {
   console.log(`[V2_FORWARD_FINGERPRINT] strategyId=V2_TREND_DOWN_PE fingerprint=${forwardFingerprint}`);
 
   if (!isLikelyMarketSession(new Date())) {
-    console.log('Live paper-trading harness was not started because the current IST time is outside the regular weekday market session (09:15-15:30).');
+    console.log('Live paper-trading harness was not started because the current IST time is outside the configured NSE derivatives session.');
     console.log('No market data was fabricated. Run `npm run test:live-paper-trading` during the next live market session.');
     return;
   }
@@ -262,7 +259,7 @@ async function run(): Promise<void> {
   const paperRuntimeCandleAdapter = new PaperRuntimeCandleAdapterService(runtime, contractsProvider, eventBus);
 
   const createdOrderIds = new Set<string>();
-  const eodCoordinator = new IstSessionEodCoordinator();
+  const eodCoordinator = new NseSessionEodCoordinator();
   let lastNiftyTickPrintedAt = 0;
   let shuttingDown = false;
   let eodRequested = false;
@@ -311,7 +308,7 @@ async function run(): Promise<void> {
     if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || !Number.isFinite(tick.ltp) || tick.ltp <= 0 || typeof tick.timestamp !== 'string') return;
     const timestamp = new Date(tick.timestamp);
     if (Number.isNaN(timestamp.getTime())) return;
-    if (isAtOrAfterIstSessionEnd(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
+    if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); requestEod?.(); return; }
     health.noteValidMarketEvent(tick.generationId ?? connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId ?? connectionManager.getGenerationId()); recovery.handleLiveTick(timestamp, tick.generationId); }
     latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp); latestOptionQuotes.set(tick.instrumentKey, { ...(latestOptionQuotes.get(tick.instrumentKey) ?? {}), ltp: tick.ltp, receivedAtMs: Date.now() });
@@ -425,7 +422,7 @@ async function run(): Promise<void> {
 
   const finishEod = async (): Promise<void> => {
     await eodCoordinator.runOnce(new Date(), async () => {
-      // A candle completing exactly at 15:30 is observable, but cannot create a new entry.
+      // Only genuinely observed completed candles are flushed; EOD never fabricates one.
       eodRequested = true;
       paperRuntimeCandleAdapter.stop();
       liveCandleEventAdapter.finishSession(niftyInstrumentKey);
@@ -443,7 +440,7 @@ async function run(): Promise<void> {
         eventBus.emit('paper.order.action', action);
         console.log(`[V2_EOD_EXIT] order=${action.orderId} reason=TIME_EXIT premium=${action.observedPremium.toFixed(2)} timestamp=${formatIst(action.timestamp)}`);
       });
-      await shutdown('EOD_15_30_IST');
+      await shutdown('EOD_NSE_SESSION_CLOSE');
       const status = runtime.getStatus();
       const eodStatus = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING) ? 'RECONCILIATION_REQUIRED' : 'COMPLETED';
       console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=${eodStatus}`);
@@ -465,7 +462,7 @@ async function run(): Promise<void> {
   });
   requestEod = () => { void finishEod(); };
   eodTimer = eodCoordinator.schedule(finishEod);
-  eodWatchdog = setInterval(() => { if (isAtOrAfterIstSessionEnd(new Date())) void finishEod(); }, 1_000);
+  eodWatchdog = setInterval(() => { if (isAtOrAfterNseSessionClose(new Date())) void finishEod(); }, 1_000);
   eodWatchdog.unref();
 
   process.once('SIGINT', () => { clearTimeout(eodTimer); void shutdown('SIGINT'); });
