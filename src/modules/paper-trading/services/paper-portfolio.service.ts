@@ -84,9 +84,29 @@ export default class PaperPortfolioService {
     const freshBid = Number.isFinite(input.bid) && (input.bid as number) > 0 && Number.isFinite(input.ageMs) && (input.ageMs as number) <= (input.maxAgeMs ?? 2_000);
     let changed = 0;
     for (const state of this.states.values()) for (const position of state.positions.filter((value) => value.status === 'OPEN' && value.instrumentKey === input.instrumentKey)) {
-      if (!freshBid) { position.quoteQuality = Number.isFinite(input.ltp) ? 'LTP_ONLY' : Number.isFinite(input.ageMs) ? 'STALE_QUOTE' : 'UNAVAILABLE'; continue; }
+      if (!freshBid) {
+        const quoteQuality = Number.isFinite(input.ltp) ? 'LTP_ONLY' : Number.isFinite(input.ageMs) ? 'STALE_QUOTE' : 'UNAVAILABLE';
+        if (position.currentMarkPrice !== null || position.unrealizedPnl !== null || position.quoteQuality !== quoteQuality) {
+          position.currentMarkPrice = null; position.unrealizedPnl = null; position.quoteQuality = quoteQuality; changed += 1; this.persist(state);
+        }
+        continue;
+      }
       position.currentMarkPrice = input.bid as number; position.quoteQuality = 'BID_ASK'; position.unrealizedPnl = ((input.bid as number) - position.entryPrice) * position.quantity; changed += 1; this.persist(state);
       logger.debug('PAPER_PORTFOLIO_MARK_UPDATED', this.positionLog(position, state));
+    }
+    return changed;
+  }
+
+  /** Retires only feed-derived marks; durable position and accounting identity remain authoritative. */
+  invalidateMarketMarks(): number {
+    let changed = 0;
+    for (const state of this.states.values()) {
+      let stateChanged = false;
+      for (const position of state.positions.filter((value) => value.status === 'OPEN')) {
+        if (position.currentMarkPrice === null && position.unrealizedPnl === null && position.quoteQuality === 'UNAVAILABLE') continue;
+        position.currentMarkPrice = null; position.unrealizedPnl = null; position.quoteQuality = 'UNAVAILABLE'; changed += 1; stateChanged = true;
+      }
+      if (stateChanged) this.persist(state);
     }
     return changed;
   }

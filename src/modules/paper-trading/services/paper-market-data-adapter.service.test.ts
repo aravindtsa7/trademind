@@ -32,6 +32,16 @@ function open(manager: PaperOrderManagerService, key = 'NSE_FO|one') { const ord
 function tick(instrumentKey: string, ltp: number, minute = 1) { return { instrumentKey, timestamp: new Date(entryTimestamp.getTime() + minute * 60_000).toISOString(), ltp }; }
 function durableFill(): PaperExecutionFillSummary { return { status:'FILLED', requestedQuantity:75, filledQuantity:75, averageFillPrice:129, worstFillPrice:129, quotedBestPrice:129, fillQuality:'TOP_OF_BOOK_ESTIMATE', slippageVsBestQuote:0, slippageVsLtp:-1, spreadCost:1, depthSlippage:0, totalExecutionSlippage:1, slippagePercent:0.77, sourceTimestamp:entryTimestamp.toISOString(), quoteDataQuality:'FRESH_TOP_OF_BOOK' }; }
 
+function setupGenerationMarkedPortfolio() {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const order = open(manager);
+  const repository = new InMemoryPaperPortfolioRepository(); const portfolio = new PaperPortfolioService(repository, () => entryTimestamp);
+  portfolio.open({ order, strategyId:'V2_TREND_DOWN_PE', underlying:'NIFTY 50', correlationId:'corr-generation', intentId:'intent-generation', sessionDate:'2026-08-10' });
+  let activeGeneration = 1;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
+  adapter.start();
+  return { adapter, bus, order, portfolio, repository, setActiveGeneration:(generationId: number) => { activeGeneration = generationId; } };
+}
+
 test('start registers one market.tick listener', () => {
   const { bus, adapter } = setup(); const before = bus.listenerCount('market.tick'); adapter.start();
   assert.equal(bus.listenerCount('market.tick'), before + 1);
@@ -155,6 +165,104 @@ test('an old WebSocket generation cannot qualify an executable quote or mix with
   activeGeneration = 3;
   bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), generationId:2, quotes:[{ bidPrice:98, askPrice:102 }] });
   assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+});
+
+test('missing or stale generations fail closed when the active generation is known', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z');
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => base, () => 7);
+  adapter.start();
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100, generationId:6 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), generationId:6, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100, generationId:7 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), generationId:7, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.connectionGenerationId, 7);
+});
+
+test('portfolio marking never combines generation-one depth with a generation-two tick', () => {
+  const bus = new EventEmitter(); const marks: Array<{ bid?: number; ask?: number; ltp?: number }> = []; let activeGeneration = 1;
+  const portfolio = { mark: (mark: { bid?: number; ask?: number; ltp?: number }) => { marks.push(mark); return 0; }, invalidateMarketMarks:() => 0 } as unknown as PaperPortfolioService;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
+  adapter.start();
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:1, quotes:[{ bidPrice:99, askPrice:101 }] });
+  activeGeneration = 2;
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, ltp:105 });
+  assert.deepEqual(marks.at(-1), { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp, bid:undefined, ask:undefined, ltp:105, ageMs:undefined, maxAgeMs:2_000 });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+});
+
+test('portfolio marking never combines generation-one LTP with generation-two depth', () => {
+  const bus = new EventEmitter(); const marks: Array<{ bid?: number; ask?: number; ltp?: number }> = []; let activeGeneration = 1;
+  const portfolio = { mark: (mark: { bid?: number; ask?: number; ltp?: number }) => { marks.push(mark); return 0; }, invalidateMarketMarks:() => 0 } as unknown as PaperPortfolioService;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
+  adapter.start();
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:1, ltp:100 });
+  const beforeRotation = marks.length; activeGeneration = 2;
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, quotes:[{ bidPrice:104, askPrice:106 }] });
+  assert.equal(marks.length, beforeRotation);
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.ltp, null);
+});
+
+test('same-generation paper quote fields merge while a late old event cannot clear or overwrite them', () => {
+  const bus = new EventEmitter(); const marks: Array<{ bid?: number; ask?: number; ltp?: number }> = []; const activeGeneration = 2;
+  const portfolio = { mark: (mark: { bid?: number; ask?: number; ltp?: number }) => { marks.push(mark); return 0; }, invalidateMarketMarks:() => 0 } as unknown as PaperPortfolioService;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
+  adapter.start();
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, ltp:105 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, quotes:[{ bidPrice:104, askPrice:106 }] });
+  assert.equal(marks.at(-1)?.ltp, 105); assert.equal(marks.at(-1)?.bid, 104);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:1, ltp:1 });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.ltp, 105);
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.bestBid, 104);
+});
+
+test('a disconnect retires the authoritative generation-one portfolio mark before any generation-two event', () => {
+  const { adapter, bus, order, portfolio, repository, setActiveGeneration } = setupGenerationMarkedPortfolio();
+  bus.emit('market.tick', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:1, ltp:100 });
+  bus.emit('market.depth', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:1, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(repository.load('2026-08-10')?.positions[0]?.currentMarkPrice, 99);
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.totalUnrealizedPnl, -75);
+
+  // The live runtime invokes this existing boundary on disconnect/stall before
+  // a reconnect can advance the socket generation.
+  adapter.setMarketDataAvailable(false); setActiveGeneration(2);
+  const retired = repository.load('2026-08-10')?.positions[0];
+  assert.equal(retired?.currentMarkPrice, null); assert.equal(retired?.unrealizedPnl, null); assert.equal(retired?.quoteQuality, 'UNAVAILABLE');
+  assert.equal(portfolio.getSnapshot('2026-08-10')?.totalUnrealizedPnl, null);
+  assert.equal(adapter.getExecutionQuoteSnapshot(order.contract.instrumentKey), undefined);
+});
+
+test('generation-two partial and complete quotes invalidate then restore the real persisted portfolio mark', () => {
+  const { adapter, bus, order, repository, setActiveGeneration } = setupGenerationMarkedPortfolio();
+  bus.emit('market.tick', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:1, ltp:100 });
+  bus.emit('market.depth', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:1, quotes:[{ bidPrice:99, askPrice:101 }] });
+  adapter.setMarketDataAvailable(false); setActiveGeneration(2); adapter.setMarketDataAvailable(true);
+
+  bus.emit('market.tick', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:2, ltp:105 });
+  const partial = repository.load('2026-08-10')?.positions[0];
+  assert.equal(partial?.currentMarkPrice, null); assert.equal(partial?.unrealizedPnl, null); assert.equal(partial?.quoteQuality, 'LTP_ONLY');
+
+  bus.emit('market.depth', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:2, quotes:[{ bidPrice:104, askPrice:106 }] });
+  const current = repository.load('2026-08-10')?.positions[0];
+  assert.equal(current?.currentMarkPrice, 104); assert.equal(current?.unrealizedPnl, 300); assert.equal(current?.quoteQuality, 'BID_ASK');
+
+  bus.emit('market.tick', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:1, ltp:1 });
+  bus.emit('market.depth', { instrumentKey:order.contract.instrumentKey, timestamp:entryTimestamp.toISOString(), generationId:1, quotes:[{ bidPrice:1, askPrice:2 }] });
+  const afterLateGenerationOne = repository.load('2026-08-10')?.positions[0];
+  assert.equal(afterLateGenerationOne?.currentMarkPrice, 104); assert.equal(afterLateGenerationOne?.unrealizedPnl, 300); assert.equal(afterLateGenerationOne?.quoteQuality, 'BID_ASK');
+});
+
+test('a queued durable monitor revalidates generation before mutating exit state', async () => {
+  const manager=new PaperOrderManagerService();const bus=new EventEmitter();const created=manager.create({...input(),executionOrderId:'exec-generation-queue'});const order=manager.markOpen(created.id);let activeGeneration=1;let persistenceCalls=0;
+  const monitor=new PaperPositionMonitorService(manager,undefined,()=> '2026-08-10',()=>durableFill(),undefined,async()=>{persistenceCalls++;});
+  const adapter=new PaperMarketDataAdapterService(monitor,bus,undefined,2_000,()=>entryTimestamp,()=>activeGeneration);adapter.start();
+  bus.emit('market.tick',{instrumentKey:order.contract.instrumentKey,timestamp:entryTimestamp.toISOString(),ltp:130,generationId:1});
+  activeGeneration=2;
+  assert.equal(await adapter.drainDurableExitQueue(1_000),true);
+  assert.equal(persistenceCalls,0);assert.equal(manager.getById(order.id)?.status,PaperOrderStatus.OPEN);
 });
 
 test('serializes durable exit work: duplicate ticks produce one committed action', async () => {

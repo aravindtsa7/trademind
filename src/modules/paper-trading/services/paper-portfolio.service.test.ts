@@ -30,12 +30,24 @@ test('one approved paper order opens exactly one deterministic portfolio positio
   const position = portfolio.getRiskPositions(session); assert.equal(position?.length, 1);
 });
 
-test('fresh bid marks unrealized P&L while stale quotes never invent a mark', () => {
-  const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => at); open(portfolio);
+test('fresh bid marks unrealized P&L while an unusable quote durably invalidates the mark', () => {
+  const repository = new InMemoryPaperPortfolioRepository(); const portfolio = new PaperPortfolioService(repository, () => at); open(portfolio);
   assert.equal(portfolio.mark({ instrumentKey: 'NSE_FO|1', timestamp: at, bid: 103, ask: 104, ltp: 103.5, ageMs: 100 }), 1);
   assert.equal(portfolio.getSnapshot(session)?.totalUnrealizedPnl, 150);
-  portfolio.mark({ instrumentKey: 'NSE_FO|1', timestamp: at, ltp: 150, ageMs: 5_000 });
-  assert.equal(portfolio.getSnapshot(session)?.totalUnrealizedPnl, 150);
+  assert.equal(portfolio.mark({ instrumentKey: 'NSE_FO|1', timestamp: at, ltp: 150, ageMs: 5_000 }), 1);
+  assert.equal(portfolio.getSnapshot(session)?.totalUnrealizedPnl, null);
+  const persisted = repository.load(session)?.positions[0];
+  assert.equal(persisted?.currentMarkPrice, null); assert.equal(persisted?.unrealizedPnl, null); assert.equal(persisted?.quoteQuality, 'LTP_ONLY');
+});
+
+test('explicit market-mark invalidation persists nulls without changing durable trade state', () => {
+  const repository = new InMemoryPaperPortfolioRepository(); const portfolio = new PaperPortfolioService(repository, () => at); const paperOrder = open(portfolio);
+  portfolio.mark({ instrumentKey:'NSE_FO|1', timestamp:at, bid:99, ask:101, ltp:100, ageMs:0 });
+  assert.equal(portfolio.invalidateMarketMarks(), 1); assert.equal(portfolio.invalidateMarketMarks(), 0);
+  const persisted = repository.load(session)?.positions[0];
+  assert.equal(persisted?.currentMarkPrice, null); assert.equal(persisted?.unrealizedPnl, null); assert.equal(persisted?.quoteQuality, 'UNAVAILABLE');
+  assert.equal(persisted?.entryPrice, 100); assert.equal(persisted?.quantity, 50); assert.equal(persisted?.realizedPnl, 0);
+  assert.equal(persisted?.originatingOrderId, paperOrder.id); assert.equal(persisted?.fills.length, 1); assert.equal(persisted?.status, 'OPEN');
 });
 
 test('target, stop, timeout and EOD closes use existing premium-difference P&L exactly once', () => {

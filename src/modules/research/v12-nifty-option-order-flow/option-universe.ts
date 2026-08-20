@@ -1,4 +1,5 @@
 import { OptionContract } from '../../options/types/option-contract.types';
+import { isCurrentLiveGeneration } from '../../market-data/utils/live-generation';
 
 export interface V12UniverseContract extends OptionContract { readonly optionType: 'CE' | 'PE'; }
 export interface V12OptionUniverse { expiry: Date; atmStrike: number; contracts: readonly V12UniverseContract[]; identity: string; missingLegs: string[]; }
@@ -43,8 +44,8 @@ export function planV12OptionUniverseRotation(
 }
 
 /** Ignore an event from a retired websocket generation before it reaches V12 storage. */
-export function isV12CurrentGeneration(eventGenerationId: number | undefined, activeGenerationId: number): boolean {
-  return eventGenerationId === undefined || eventGenerationId === activeGenerationId;
+export function isV12CurrentGeneration(eventGenerationId: number | undefined, activeGenerationId: number): eventGenerationId is number {
+  return isCurrentLiveGeneration(eventGenerationId, activeGenerationId);
 }
 /** Same expiry/nearest-strike ordering as the canonical selector; the adjacent strikes are metadata ladder positions. */
 export function resolveV12OptionUniverse(contracts: readonly V12UniverseContract[], spot: number, at: Date): V12OptionUniverse | null {

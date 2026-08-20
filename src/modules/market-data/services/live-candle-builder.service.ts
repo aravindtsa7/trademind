@@ -91,7 +91,10 @@ export default class LiveCandleBuilderService {
       this.lastAcceptedTickTimestamps.delete(key);
       return;
     }
-    for (const key of this.activeCandles.keys()) {
+    // Include chronological watermarks whose active candle was already flushed
+    // by finishSession; a live generation rotation must retire both stores.
+    const keys = new Set([...this.activeCandles.keys(), ...this.lastAcceptedTickTimestamps.keys()]);
+    for (const key of keys) {
       if ((instrumentKey === undefined || key.startsWith(`${instrumentKey}|`)) && (timeframe === undefined || key.endsWith(`|${timeframe}`))) {
         this.activeCandles.delete(key);
         this.lastAcceptedTickTimestamps.delete(key);

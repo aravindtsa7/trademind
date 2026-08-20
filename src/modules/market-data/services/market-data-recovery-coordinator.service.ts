@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { recordMarketReplayEvent } from '../../market-replay/market-replay-recorder.service';
+import { isCurrentLiveGeneration } from '../utils/live-generation';
 
 export type MarketDataRecoveryState = 'DISCONNECTED'|'CONNECTING'|'CONNECTED'|'DEGRADED'|'RECONNECTING'|'BACKFILLING'|'WAITING_FOR_FRESH_TICK'|'READY'|'STOPPING'|'STOPPED'|'FAULTED'|'AWAITING_LIVE_TICK'|'FAIL_CLOSED';
 export interface MarketDataRecoveryResult { ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number; }
@@ -41,7 +42,7 @@ export default class MarketDataRecoveryCoordinatorService extends EventEmitter {
     this.recoveryPromise = this.recover().finally(() => { this.recoveryPromise = undefined; });
   }
   handleLiveTick(timestamp: Date, generationId?: number): void {
-    if (this.stopping || (generationId !== undefined && generationId !== this.activeGenerationId)) return;
+    if (this.stopping || !isCurrentLiveGeneration(generationId, this.activeGenerationId)) return;
     if ((this.state === 'WAITING_FOR_FRESH_TICK' || this.state === 'AWAITING_LIVE_TICK') && timestamp.getTime() >= this.recoveryStartedAt) {
       this.freshLiveTick = true;
       recordMarketReplayEvent('FRESH_TICK_READY', { instrumentKey:null, sourceTimestamp:timestamp.toISOString(), receivedTimestamp:new Date().toISOString(), sequenceNumber:null, connectionGenerationId:this.activeGenerationId, payload:{} });

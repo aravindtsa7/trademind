@@ -25,6 +25,9 @@ import { NseSessionEodCoordinator, isAtOrAfterNseSessionClose, isWithinNseSessio
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
+import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-generation';
+import { cacheCurrentLiveDepth, getCurrentLiveDepth } from '../modules/market-data/utils/live-depth-cache';
+import { cacheCurrentLiveInstrumentValue, getCurrentLiveInstrumentValue, LiveInstrumentValue } from '../modules/market-data/utils/live-instrument-value-cache';
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
 import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
 import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
@@ -144,7 +147,7 @@ async function run(): Promise<void> {
   const protobufDecoder = new ProtobufDecoder();
   const tickProcessor = new TickProcessor();
   const liveCandleBuilder = new LiveCandleBuilderService();
-  const liveCandleEventAdapter = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus);
+  const liveCandleEventAdapter = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connectionManager.getGenerationId());
 
   const orderManager = new PaperOrderManagerService();
   // Prisma/MySQL is authoritative. The in-memory portfolio retains existing
@@ -185,7 +188,7 @@ async function run(): Promise<void> {
     () => new Date(),
     () => connectionManager.getGenerationId(),
   );
-  const latestPremiumByInstrument = new Map<string, number>();
+  const latestPremiumByInstrument = new Map<string, LiveInstrumentValue<number>>();
   const latestDepthByInstrument = new Map<string, MarketDepthEvent>();
   let recovery: MarketDataRecoveryCoordinatorService | undefined;
   let eodRequestedForRisk = false;
@@ -319,14 +322,14 @@ async function run(): Promise<void> {
   }
   function handleMarketTick(event: unknown): void {
     const tick = event as Partial<MarketTickEvent>;
-    if (tick.generationId !== undefined && tick.generationId !== connectionManager.getGenerationId()) return;
+    if (!isCurrentLiveGeneration(tick.generationId, connectionManager.getGenerationId())) return;
     if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || !Number.isFinite(tick.ltp) || tick.ltp <= 0 || typeof tick.timestamp !== 'string') return;
     const timestamp = new Date(tick.timestamp);
     if (Number.isNaN(timestamp.getTime())) return;
     if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); void host?.eod('MARKET_EOD'); return; }
-    health.noteValidMarketEvent(tick.generationId ?? connectionManager.getGenerationId());
-    if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId ?? connectionManager.getGenerationId()); recovery!.handleLiveTick(timestamp, tick.generationId); }
-    latestPremiumByInstrument.set(tick.instrumentKey, tick.ltp);
+    health.noteValidMarketEvent(tick.generationId);
+    if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId); recovery!.handleLiveTick(timestamp, tick.generationId); }
+    cacheCurrentLiveInstrumentValue(latestPremiumByInstrument, tick.instrumentKey, tick.ltp, tick.generationId, connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();
       console.log(`[market.tick] NIFTY ${formatIst(timestamp)} | LTP ${tick.ltp.toFixed(2)}`);
@@ -358,15 +361,14 @@ async function run(): Promise<void> {
     if (typeof action.orderId !== 'string' || !(action.timestamp instanceof Date)) return;
     const settledOrder = orderManager.getById(action.orderId); if (settledOrder?.exit) riskGate.recordClosedOrder(istDate(action.timestamp), action.orderId);
     const recordType = action.action.toUpperCase().includes('EXIT') || action.action.toUpperCase().includes('CLOSE') ? 'EXIT' : 'ENTRY';
-    const depth = latestDepthByInstrument.get(action.instrumentKey); const best = depth?.quotes?.[0]; const staleThreshold = Number(process.env.FORWARD_STALE_QUOTE_MS ?? '2000'); const quote = normalizeQuote({ ltp: action.observedPremium, bid: best?.bidPrice, ask: best?.askPrice, bidQuantity: best?.bidQuantity ? Number(best.bidQuantity) : undefined, askQuantity: best?.askQuantity ? Number(best.askQuantity) : undefined, timestamp: depth?.timestamp }, action.timestamp, Number.isFinite(staleThreshold) ? staleThreshold : 2000);
+    const depth = getCurrentLiveDepth(latestDepthByInstrument, action.instrumentKey, connectionManager.getGenerationId()); const best = depth?.quotes?.[0]; const staleThreshold = Number(process.env.FORWARD_STALE_QUOTE_MS ?? '2000'); const quote = normalizeQuote({ ltp: action.observedPremium, bid: best?.bidPrice, ask: best?.askPrice, bidQuantity: best?.bidQuantity ? Number(best.bidQuantity) : undefined, askQuantity: best?.askQuantity ? Number(best.askQuantity) : undefined, timestamp: depth?.timestamp }, action.timestamp, Number.isFinite(staleThreshold) ? staleThreshold : 2000);
     const fill = recordType === 'ENTRY' ? settledOrder?.entry.executionFill : settledOrder?.exit?.executionFill;
     const entryFill = settledOrder?.entry.executionFill; const theoreticalReturn = settledOrder?.exit ? (settledOrder.exit.observedExitPremium - settledOrder.entry.observedEntryPremium) / settledOrder.entry.observedEntryPremium * 100 : null; const executableReturn = settledOrder?.exit && entryFill && fill ? (fill.averageFillPrice - entryFill.averageFillPrice) / entryFill.averageFillPrice * 100 : null;
     forwardJournal.append({ recordType, tradingDate: istDate(action.timestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: action.orderId, signalTimestampIst: formatIst(action.timestamp), selectedOptionInstrument: action.instrumentKey, theoreticalEntryPrice: recordType === 'ENTRY' ? settledOrder?.entry.observedEntryPremium ?? action.observedPremium : undefined, theoreticalExitPrice: recordType === 'EXIT' ? action.observedPremium : undefined, executableEntryPrice: recordType === 'ENTRY' ? (fill?.averageFillPrice ?? null) : undefined, executableExitPrice: recordType === 'EXIT' ? (fill?.averageFillPrice ?? null) : undefined, entryPriceSource: recordType === 'ENTRY' ? (fill ? 'ASK' : 'UNAVAILABLE') : undefined, exitPriceSource: recordType === 'EXIT' ? (fill ? 'BID' : 'UNAVAILABLE') : undefined, theoreticalReturn:recordType === 'EXIT' ? theoreticalReturn : undefined, executableEstimatedReturn:recordType === 'EXIT' ? executableReturn : undefined, totalEstimatedSlippage:recordType === 'EXIT' && entryFill && fill ? (entryFill.totalExecutionSlippage + fill.totalExecutionSlippage) : undefined, totalExecutionFrictionPercent:recordType === 'EXIT' && theoreticalReturn !== null && executableReturn !== null ? theoreticalReturn - executableReturn : undefined, executionQuoteQuality: quote.quality, quote, indicators: { fillStatus: fill?.status ?? 'UNAVAILABLE', fillQuality: fill?.fillQuality ?? 'UNAVAILABLE', requestedQuantity: fill?.requestedQuantity ?? null, filledQuantity: fill?.filledQuantity ?? null, quotedBestPrice: fill?.quotedBestPrice ?? null, totalExecutionSlippage: fill?.totalExecutionSlippage ?? null, slippagePercent: fill?.slippagePercent ?? null }, flags: ['FORWARD_EVALUATION_ONLY', ...(fill ? [] : ['EXECUTION_ESTIMATE_UNAVAILABLE']), ...(quote.quality === 'STALE_QUOTE' ? ['STALE_OPTION_QUOTE'] : [])] });
     console.log(`[paper.order.action] ${action.action} | order ${action.orderId} | ${action.instrumentKey} | premium ${action.observedPremium.toFixed(2)} | ${formatIst(action.timestamp)}`);
   }
   function handleMarketDepth(event: unknown): void {
-    const depth = event as MarketDepthEvent;
-    if (depth && typeof depth.instrumentKey === 'string') latestDepthByInstrument.set(depth.instrumentKey, depth);
+    cacheCurrentLiveDepth(latestDepthByInstrument, event, connectionManager.getGenerationId());
   }
   function handleStrategyError(event: unknown): void {
     const error = event as { instrumentKey?: string; candleTimestamp?: Date; message?: string };
@@ -459,7 +461,7 @@ async function run(): Promise<void> {
       riskGate.transition('HALTED');
       forwardJournal.appendEvent(istDate(eodAt), 'EXECUTION_RECONCILIATION_REQUIRED', ['EXECUTION_RECONCILIATION_REQUIRED'], { reason: 'PRE_EOD_EXIT_TRANSACTION_DRAIN_TIMEOUT' });
     }
-    const actions = await positionMonitor.closeAtSessionEndDurably(eodAt, (instrumentKey, entryPremium) => latestPremiumByInstrument.get(instrumentKey) ?? entryPremium);
+    const actions = await positionMonitor.closeAtSessionEndDurably(eodAt, (instrumentKey, entryPremium) => getCurrentLiveInstrumentValue(latestPremiumByInstrument, instrumentKey, connectionManager.getGenerationId()) ?? entryPremium);
     actions.forEach((action) => {
       eventBus.emit('paper.order.action', action);
       console.log(`[V2_EOD_EXIT] order=${action.orderId} reason=TIME_EXIT premium=${action.observedPremium.toFixed(2)} timestamp=${formatIst(action.timestamp)}`);

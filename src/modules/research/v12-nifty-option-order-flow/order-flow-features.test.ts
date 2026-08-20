@@ -61,7 +61,7 @@ test('V12 receives option LTPC and depth from the canonical full-feed processor 
   assert.deepEqual(ticks,[{instrumentKey:'NSE_FO|45102',timestamp:'2024-08-14T06:50:00.000Z',ltp:123.45,lastTradedTime:undefined,lastTradedQuantity:undefined,closePrice:undefined,generationId:7}]);
   assert.equal(depths.length,1);assert.equal(depths[0].instrumentKey,'NSE_FO|45102');assert.equal(depths[0].generationId,7);assert.deepEqual(depths[0].quotes,[{bidPrice:123,bidQuantity:'10',askPrice:124,askQuantity:'12'}]);
 });
-test('V12 accepts only active-generation option LTPC and depth events',()=>{assert.equal(isV12CurrentGeneration(7,7),true);assert.equal(isV12CurrentGeneration(undefined,7),true);const staleLtpc={generationId:6};const staleDepth={generationId:6};assert.equal(isV12CurrentGeneration(staleLtpc.generationId,7),false);assert.equal(isV12CurrentGeneration(staleDepth.generationId,7),false);});
+test('V12 accepts only present active-generation option LTPC and depth events',()=>{assert.equal(isV12CurrentGeneration(7,7),true);assert.equal(isV12CurrentGeneration(undefined,7),false);const staleLtpc={generationId:6};const staleDepth={generationId:6};assert.equal(isV12CurrentGeneration(staleLtpc.generationId,7),false);assert.equal(isV12CurrentGeneration(staleDepth.generationId,7),false);});
 test('V12 journal append/restart deduplicates recent deterministic events and finalizes once safely', () => {
   const root = mkdtempSync(join(tmpdir(), 'v12-'));
   try {

@@ -7,6 +7,8 @@ import PaperPositionMonitorService from './paper-position-monitor.service';
 import PaperPortfolioService from './paper-portfolio.service';
 import { ExecutionQuoteSnapshot } from '../dto/paper-fill-model.dto';
 import { ExecutionFaultInjector, noExecutionFaults } from '../../execution/execution-fault-injection';
+import { LiveGenerationCacheScope } from '../../market-data/utils/live-generation-cache';
+import { isCurrentLiveGeneration } from '../../market-data/utils/live-generation';
 
 /**
  * Bridges the shared market.tick stream into paper-position monitoring. This
@@ -22,6 +24,7 @@ export default class PaperMarketDataAdapterService {
   private readonly depthByInstrument = new Map<string, { bid?: number; ask?: number; bidSize?: number; askSize?: number; sourceTimestamp?: string; receivedTimestamp: Date; levels: readonly { bid?: number; ask?: number; bidSize?: number; askSize?: number }[]; generationId?: number }>();
   private readonly latestPremiumByInstrument = new Map<string, { premium: number; sourceTimestamp: Date; receivedTimestamp: Date; generationId?: number }>();
   private readonly executionQuotes = new Map<string, ExecutionQuoteSnapshot>();
+  private readonly liveGenerationScope = new LiveGenerationCacheScope();
 
   constructor(
     private readonly positionMonitor: PaperPositionMonitorService,
@@ -49,7 +52,10 @@ export default class PaperMarketDataAdapterService {
   }
 
   /** Reconnect safety gate; retains listeners but never advances paper exits over an unknown market-data interval. */
-  setMarketDataAvailable(available: boolean): void { this.marketDataAvailable = available; }
+  setMarketDataAvailable(available: boolean): void {
+    this.marketDataAvailable = available;
+    if (!available) this.retireLiveMarketState();
+  }
 
   /**
    * Shutdown/EOD waits only for already acknowledged durable mutations. The
@@ -72,7 +78,7 @@ export default class PaperMarketDataAdapterService {
   private handleTick(tick: unknown): void {
     if (!this.marketDataAvailable) return;
     const update = this.normalizeTick(tick);
-    if (!update || !this.isActiveGeneration(update.generationId)) return;
+    if (!update || !this.acceptLiveCacheGeneration(update.generationId)) return;
     this.latestPremiumByInstrument.set(update.instrumentKey, { premium: update.premium, sourceTimestamp: new Date(update.timestamp.getTime()), receivedTimestamp: new Date(this.now().getTime()), generationId:update.generationId });
     const depth = this.depthByInstrument.get(update.instrumentKey);
     const quoteTimestamp = depth?.sourceTimestamp ? new Date(depth.sourceTimestamp) : undefined;
@@ -85,6 +91,10 @@ export default class PaperMarketDataAdapterService {
       // then observe a non-OPEN order and cannot create another exit.
       this.durableExitQueue = this.durableExitQueue
         .then(async () => {
+          // The event was current when queued, but a reconnect may occur before
+          // this serialized callback starts. Revalidate before any exit state
+          // mutation; an already-started durable transaction remains atomic.
+          if (!this.isActiveGeneration(update.generationId)) return;
           const actions = await this.positionMonitor.monitorDurably(update);
           this.emitActions(actions);
         })
@@ -106,7 +116,7 @@ export default class PaperMarketDataAdapterService {
     if (!depth || typeof depth !== 'object') return;
     const candidate = depth as { instrumentKey?: unknown; timestamp?: unknown; generationId?: unknown; quotes?: Array<{ bidPrice?: unknown; askPrice?: unknown; bidQuantity?: unknown; askQuantity?: unknown }> };
     const generationId = typeof candidate.generationId === 'number' ? candidate.generationId : undefined;
-    if (typeof candidate.instrumentKey !== 'string' || !this.isActiveGeneration(generationId)) return;
+    if (typeof candidate.instrumentKey !== 'string' || !this.acceptLiveCacheGeneration(generationId)) return;
     const top = candidate.quotes?.[0];
     const sourceTimestamp = typeof candidate.timestamp === 'string' ? candidate.timestamp : undefined;
     const levels = candidate.quotes?.map((value) => ({ bid: finite(value.bidPrice), ask: finite(value.askPrice), bidSize: numeric(value.bidQuantity), askSize: numeric(value.askQuantity) })) ?? [];
@@ -177,8 +187,26 @@ export default class PaperMarketDataAdapterService {
   }
 
   private isActiveGeneration(generationId: number | undefined): boolean {
-    const activeGenerationId = this.getActiveGenerationId?.();
-    return activeGenerationId === undefined || generationId === activeGenerationId;
+    if (!this.getActiveGenerationId) return true;
+    return isCurrentLiveGeneration(generationId, this.getActiveGenerationId());
+  }
+
+  private acceptLiveCacheGeneration(generationId: number | undefined): boolean {
+    if (!this.getActiveGenerationId) return true;
+    const activeGenerationId = this.getActiveGenerationId();
+    return this.liveGenerationScope.accept(generationId, activeGenerationId, () => {
+      // LTP, book and derived execution snapshots form one atomic live quote
+      // cache. The first accepted event for a new socket generation retires all
+      // counterpart fields before portfolio marking or snapshot construction.
+      this.retireLiveMarketState();
+    });
+  }
+
+  private retireLiveMarketState(): void {
+    this.latestPremiumByInstrument.clear();
+    this.depthByInstrument.clear();
+    this.executionQuotes.clear();
+    this.portfolio?.invalidateMarketMarks();
   }
 }
 

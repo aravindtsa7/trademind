@@ -24,6 +24,8 @@ import {
   isWithinNseSession,
 } from '../modules/market-data/services/nse-session-calendar.service';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
+import { LiveGenerationCacheScope } from '../modules/market-data/utils/live-generation-cache';
+import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-generation';
 import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-paper-fresh-warmup.service';
 import { PaperStrategyWarmupTarget } from '../modules/paper-trading/dto/paper-strategy-warmup.dto';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
@@ -142,7 +144,7 @@ async function run(): Promise<void> {
     subscriptions = new SubscriptionManager(token, connection),
     decoder = new ProtobufDecoder(),
     ticks = new TickProcessor(),
-    candles = new LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus),
+    candles = new LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus, () => connection.getGenerationId()),
     tracker = new V8ShadowObservationTracker(frozen.candidate.policy),
     contracts = new CurrentNiftyCeContracts(),
     counters = new V8ShadowRuntimeCounters();
@@ -154,6 +156,7 @@ async function run(): Promise<void> {
     string,
     { ltp?: number; bid?: number; ask?: number; timestamp?: string }
   >();
+  const latestGenerationScope = new LiveGenerationCacheScope();
   let signals = 0;
   let statusTimer: NodeJS.Timeout | undefined;
   const writeExit = (entry: V8ShadowResolution) => {
@@ -202,10 +205,10 @@ async function run(): Promise<void> {
   };
   const handleTick = (x: unknown) => {
     const t = x as MarketTickEvent;
-    if (t.generationId !== undefined && t.generationId !== connection.getGenerationId()) return;
     if (!t.instrumentKey || typeof t.ltp !== 'number' || !t.timestamp) return;
+    if (!latestGenerationScope.accept(t.generationId, connection.getGenerationId(), () => latest.clear())) return;
     const at = new Date(t.timestamp);
-    health.noteValidMarketEvent(t.generationId ?? connection.getGenerationId());
+    health.noteValidMarketEvent(t.generationId);
     if (isAtOrAfterNseSessionClose(at)) {
       void host?.eod('MARKET_EOD');
       return;
@@ -216,7 +219,7 @@ async function run(): Promise<void> {
       timestamp: t.timestamp,
     });
     if (t.instrumentKey === NIFTY) {
-      health.noteNiftyTick(t.generationId ?? connection.getGenerationId());
+      health.noteNiftyTick(t.generationId);
       recovery.handleLiveTick(at, t.generationId);
     }
     if (!recovery.isEvaluationReady()) return;
@@ -225,6 +228,7 @@ async function run(): Promise<void> {
   const handleDepth = (x: unknown) => {
     const d = x as MarketDepthEvent;
     if (!d.instrumentKey || !d.timestamp) return;
+    if (!latestGenerationScope.accept(d.generationId, connection.getGenerationId(), () => latest.clear())) return;
     const q = d.quotes[0];
     latest.set(d.instrumentKey, {
       ...(latest.get(d.instrumentKey) ?? {}),
@@ -319,11 +323,14 @@ async function run(): Promise<void> {
       signalReason: 'FROZEN_BULLISH_RECLAIM',
       flags: ['FORWARD_EVALUATION_ONLY', 'ZERO_ORDER'],
     });
+    const signalGenerationId = connection.getGenerationId();
     try {
       const contract = await contracts.resolve(signal.spotPrice, signal.timestamp);
+      if (!isCurrentLiveGeneration(signalGenerationId, connection.getGenerationId()) || !host?.canEvaluate() || !recovery.isEvaluationReady()) return;
       tracker.register(id, signal.timestamp, contract);
       activeIds.add(id);
       await subscriptions.subscribe(contract.instrumentKey, MarketDataSubscriptionMode.FULL);
+      if (!isCurrentLiveGeneration(signalGenerationId, connection.getGenerationId()) || !host?.canEvaluate() || !recovery.isEvaluationReady()) return;
       const quote = normalizeQuote(latest.get(contract.instrumentKey) ?? {}, signal.timestamp);
       console.log(
         `[V8_FORWARD_SIGNAL] timestamp=${istTimestamp(signal.timestamp)} close=${number(signal.spotPrice)} option=${contract.instrumentKey} reason=FROZEN_BULLISH_RECLAIM ltp=${number(quote.ltp)} bid=${number(quote.bid)} ask=${number(quote.ask)} quality=${quote.quality} shadowEntry=PENDING_OPTION_QUOTE`,

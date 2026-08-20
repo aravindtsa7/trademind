@@ -8,7 +8,7 @@ import TickProcessor from '../processors/tick.processor';
 
 function ist(hour: number, minute: number, second = 0): Date { return new Date(Date.UTC(2026, 7, 10, hour, minute, second) - (5 * 60 + 30) * 60_000); }
 function tick(instrumentKey: string, hour: number, minute: number, ltp: number, second = 0) { return { instrumentKey, timestamp: ist(hour, minute, second).toISOString(), ltp }; }
-function setup() { const bus = new EventEmitter(); const builder = new LiveCandleBuilderService(); const adapter = new LiveCandleEventAdapterService(builder, bus); return { bus, builder, adapter }; }
+function setup(activeGeneration?: () => number | undefined) { const bus = new EventEmitter(); const builder = new LiveCandleBuilderService(); const adapter = new LiveCandleEventAdapterService(builder, bus, activeGeneration); return { bus, builder, adapter }; }
 
 test('start registers one market.tick listener', () => {
   const { bus, adapter } = setup(); adapter.start(); assert.equal(bus.listenerCount('market.tick'), 1);
@@ -71,6 +71,83 @@ test('production-shaped epoch source timestamps pass through TickProcessor and c
   processor.process({ type:'live_feed', currentTs:String(ist(9, 15).getTime()), feeds:{ NIFTY:{ ltpc:{ ltp:100 } } } }, 3);
   processor.process({ type:'live_feed', currentTs:String(ist(9, 16).getTime()), feeds:{ NIFTY:{ ltpc:{ ltp:101 } } } }, 3);
   assert.equal(events.filter((event) => event.timeframe === '1m').length, 1);
+});
+
+test('a live active-generation provider rejects stale and missing ticks before candle mutation or completion', () => {
+  let activeGeneration = 7;
+  const { bus, builder, adapter } = setup(() => activeGeneration); const events: LiveCandleDto[] = [];
+  bus.on('market.candle.completed', (event) => events.push(event)); adapter.start();
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 99), generationId:6 });
+  bus.emit('market.tick', tick('NIFTY', 9, 15, 98));
+  assert.equal(builder.getActiveCandle('NIFTY', '1m'), undefined);
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 100), generationId:7 });
+  assert.equal(builder.getActiveCandle('NIFTY', '1m')?.close, 100);
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 16, 99), generationId:6 });
+  bus.emit('market.tick', tick('NIFTY', 9, 16, 98));
+  assert.equal(events.filter((event) => event.timeframe === '1m').length, 0);
+  assert.equal(builder.getActiveCandle('NIFTY', '1m')?.close, 100);
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 16, 101), generationId:7 });
+  assert.equal(events.filter((event) => event.timeframe === '1m').length, 1);
+  assert.equal(builder.getActiveCandle('NIFTY', '1m')?.close, 101);
+  activeGeneration = 8;
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 17, 102), generationId:7 });
+  assert.equal(builder.getActiveCandle('NIFTY', '1m')?.close, 101);
+});
+
+test('first current tick after a generation change retires active candles and timestamp watermarks before processing', () => {
+  let activeGeneration = 1;
+  const { bus, builder, adapter } = setup(() => activeGeneration); const completed: LiveCandleDto[] = [];
+  bus.on('market.candle.completed', (event) => completed.push(event)); adapter.start();
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 100), generationId:1 });
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 101, 30), generationId:1 });
+  assert.deepEqual(builder.getActiveCandle('NIFTY', '1m'), {
+    instrumentKey:'NIFTY', timeframe:'1m', candleTime:ist(9,15), open:100, high:101, low:100, close:101, completed:false,
+  });
+
+  activeGeneration = 2;
+  // Earlier than G1's final tick: acceptance proves its chronological
+  // watermark was retired along with the active candle.
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 200, 10), generationId:2 });
+  assert.equal(completed.length, 0);
+  assert.deepEqual(builder.getActiveCandle('NIFTY', '1m'), {
+    instrumentKey:'NIFTY', timeframe:'1m', candleTime:ist(9,15), open:200, high:200, low:200, close:200, completed:false,
+  });
+});
+
+test('late retired-generation ticks cannot rebuild state after rotation and same-generation aggregation remains normal', () => {
+  let activeGeneration = 1;
+  const { bus, builder, adapter } = setup(() => activeGeneration); adapter.start();
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 100), generationId:1 });
+  activeGeneration = 3;
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 999, 30), generationId:1 });
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 200, 10), generationId:3 });
+  bus.emit('market.tick', { ...tick('NIFTY', 9, 15, 201, 20), generationId:3 });
+  assert.deepEqual(builder.getActiveCandle('NIFTY', '1m'), {
+    instrumentKey:'NIFTY', timeframe:'1m', candleTime:ist(9,15), open:200, high:201, low:200, close:201, completed:false,
+  });
+});
+
+test('generation rotation retires a watermark left behind by a previously flushed candle', () => {
+  let activeGeneration=1;const {bus,builder,adapter}=setup(()=>activeGeneration);adapter.start();
+  bus.emit('market.tick',{...tick('NIFTY',9,16,100,30),generationId:1});adapter.finishSession('NIFTY');
+  assert.equal(builder.getActiveCandle('NIFTY','1m'),undefined);
+  activeGeneration=2;bus.emit('market.tick',{...tick('NIFTY',9,16,200,10),generationId:2});
+  assert.equal(builder.getActiveCandle('NIFTY','1m')?.close,200);
+});
+
+test('wall-clock finish cannot flush a retired-generation candle before the first new-generation tick', () => {
+  let activeGeneration=1;const {bus,builder,adapter}=setup(()=>activeGeneration);const completed:LiveCandleDto[]=[];
+  bus.on('market.candle.completed',(event)=>completed.push(event));adapter.start();
+  bus.emit('market.tick',{...tick('NIFTY',15,39,100),generationId:1});
+  activeGeneration=2;adapter.finishSession('NIFTY');
+  assert.equal(completed.length,0);
+  assert.equal(builder.getActiveCandle('NIFTY','1m'),undefined);
+});
+
+test('an adapter without a live-generation provider preserves replay and offline generation-optional behavior', () => {
+  const { bus, builder, adapter } = setup(); adapter.start();
+  bus.emit('market.tick', tick('NIFTY', 9, 15, 100));
+  assert.equal(builder.getActiveCandle('NIFTY', '1m')?.close, 100);
 });
 
 test('EOD flushes the final observed in-session candle once and repeated post-market ticks create no candle', () => {
