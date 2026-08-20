@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import { EventEmitter } from 'events';
 import eventBus from '../core/events';
 import HistoricalCandleRepository from '../modules/historical-candles/repositories/historical-candle.repository';
 import InstrumentRepository from '../modules/instruments/repositories/instrument.repository';
@@ -125,32 +124,6 @@ function formatIst(timestamp: Date): string {
 
 function isLikelyMarketSession(timestamp: Date): boolean {
   return isWithinNseSession(timestamp);
-}
-
-/**
- * Upstox protobuf timestamps are epoch milliseconds represented as strings.
- * Existing market adapters expect a Date-parseable string, so this listener
- * re-emits a cloned normalized tick only when that conversion is necessary.
- */
-function installEpochTimestampNormalizer(bus: EventEmitter): () => void {
-  const listener = (event: unknown): void => {
-    if (!event || typeof event !== 'object') return;
-    const tick = event as Partial<MarketTickEvent>;
-    if (typeof tick.timestamp !== 'string' || !/^\d+$/.test(tick.timestamp)) return;
-    const timestamp = new Date(Number(tick.timestamp));
-    if (Number.isNaN(timestamp.getTime())) return;
-    if (typeof tick.instrumentKey !== 'string') return;
-    bus.emit('market.tick', {
-      instrumentKey: tick.instrumentKey,
-      timestamp: timestamp.toISOString(),
-      ltp: tick.ltp,
-      lastTradedTime: tick.lastTradedTime,
-      lastTradedQuantity: tick.lastTradedQuantity,
-      closePrice: tick.closePrice,
-    } satisfies MarketTickEvent);
-  };
-  bus.prependListener('market.tick', listener);
-  return () => bus.off('market.tick', listener);
 }
 
 async function run(): Promise<void> {
@@ -336,7 +309,6 @@ async function run(): Promise<void> {
     },
   });
   recovery.on('stateChanged', handleRecoveryState);
-  const cleanupEpochTimestampNormalizer = installEpochTimestampNormalizer(eventBus);
 
   function handleWebSocketMessage(buffer: Buffer, details: { generationId: number }): void {
     try {
@@ -461,7 +433,6 @@ async function run(): Promise<void> {
     eventBus.off('paper.strategy.evaluated', handleStrategyEvaluated);
     eventBus.off('paper.order.action', handlePaperOrderAction);
     eventBus.off('paper.strategy.error', handleStrategyError);
-    cleanupEpochTimestampNormalizer();
   };
 
   const shutdown = async (reason: string): Promise<void> => {

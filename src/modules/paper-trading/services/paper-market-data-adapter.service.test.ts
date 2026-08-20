@@ -10,6 +10,7 @@ import PaperPositionMonitorService from './paper-position-monitor.service';
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper-portfolio.service';
 import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 import { DeterministicExecutionFaultInjector, InjectedExecutionFault } from '../../execution/execution-fault-injection.test-helper';
+import TickProcessor from '../../market-data/processors/tick.processor';
 
 const entryTimestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -110,6 +111,15 @@ test('canonical execution quote snapshot preserves supplied depth and never inve
   adapter.start(); bus.emit('market.tick', tick('NSE_FO|one', 100)); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp, generationId:7, quotes:[{ bidPrice:99, bidQuantity:'25', askPrice:101, askQuantity:'20' }, { bidPrice:98, bidQuantity:'50', askPrice:102, askQuantity:'40' }] });
   const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
   assert.equal(snapshot?.dataQuality, 'FRESH_DEPTH'); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.depthLevels.length, 2); assert.equal(snapshot?.depthLevels[1].askSize, 40); assert.equal(snapshot?.connectionGenerationId, 7);
+});
+
+test('production-shaped epoch packet creates a finite active-generation executable quote snapshot', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const source = new Date('2026-08-10T04:01:00.000Z'); const activeGeneration = 7;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => source, () => activeGeneration);
+  adapter.start();
+  new TickProcessor(bus).process({ type:'live_feed', currentTs:String(source.getTime()), feeds:{ 'NSE_FO|one':{ fullFeed:{ marketFF:{ ltpc:{ ltp:100 }, marketLevel:{ bidAskQuote:[{ bidP:99, bidQ:'10', askP:101, askQ:'10' }] } } } } } }, activeGeneration);
+  const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(snapshot?.ltp, 100); assert.equal(snapshot?.bestBid, 99); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.connectionGenerationId, activeGeneration); assert.equal(snapshot?.quoteAgeMs, 0); assert.ok(Number.isFinite(snapshot?.quoteAgeMs)); assert.equal(snapshot?.dataQuality, 'FRESH_DEPTH');
 });
 
 test('fresh LTP cannot mask stale bid/ask depth in the canonical executable snapshot', () => {

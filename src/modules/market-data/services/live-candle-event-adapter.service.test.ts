@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import { LiveCandleDto } from '../dto/live-candle.dto';
 import LiveCandleBuilderService from './live-candle-builder.service';
 import LiveCandleEventAdapterService from './live-candle-event-adapter.service';
+import TickProcessor from '../processors/tick.processor';
 
 function ist(hour: number, minute: number, second = 0): Date { return new Date(Date.UTC(2026, 7, 10, hour, minute, second) - (5 * 60 + 30) * 60_000); }
 function tick(instrumentKey: string, hour: number, minute: number, ltp: number, second = 0) { return { instrumentKey, timestamp: ist(hour, minute, second).toISOString(), ltp }; }
@@ -63,6 +64,13 @@ test('stopped adapter ignores ticks', () => {
 test('does not mutate incoming tick events', () => {
   const { bus, adapter } = setup(); const event = tick('NIFTY', 9, 15, 100); const original = structuredClone(event); adapter.start(); bus.emit('market.tick', event);
   assert.deepEqual(event, original);
+});
+
+test('production-shaped epoch source timestamps pass through TickProcessor and complete candles', () => {
+  const { bus, adapter } = setup(); const events: LiveCandleDto[] = []; const processor = new TickProcessor(bus); adapter.start(); bus.on('market.candle.completed', (event) => events.push(event));
+  processor.process({ type:'live_feed', currentTs:String(ist(9, 15).getTime()), feeds:{ NIFTY:{ ltpc:{ ltp:100 } } } }, 3);
+  processor.process({ type:'live_feed', currentTs:String(ist(9, 16).getTime()), feeds:{ NIFTY:{ ltpc:{ ltp:101 } } } }, 3);
+  assert.equal(events.filter((event) => event.timeframe === '1m').length, 1);
 });
 
 test('EOD flushes the final observed in-session candle once and repeated post-market ticks create no candle', () => {

@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import logger from '../../../core/logger/logger';
 import { shouldEmitTradingLog } from '../../../core/logger/trading-log-mode';
 import { recordMarketReplayEvent } from '../../market-replay/market-replay-recorder.service';
+import { normalizeMarketDataTimestamp } from '../utils/market-data-timestamp';
 import {
   LtpcDto,
   MarketDataFeedDto,
@@ -62,10 +63,16 @@ export default class TickProcessor {
       return;
     }
 
+    const timestamp = normalizeMarketDataTimestamp(message.currentTs);
+    if (!timestamp) {
+      logger.warn('Ignoring market data message with invalid source timestamp');
+      return;
+    }
+
     Object.entries(message.feeds).forEach(([instrumentKey, feed]) => {
-      this.publishTick(instrumentKey, message.currentTs, feed, generationId);
-      this.publishGreeks(instrumentKey, message.currentTs, feed, generationId);
-      this.publishDepth(instrumentKey, message.currentTs, feed, generationId);
+      this.publishTick(instrumentKey, timestamp, feed, generationId);
+      this.publishGreeks(instrumentKey, timestamp, feed, generationId);
+      this.publishDepth(instrumentKey, timestamp, feed, generationId);
     });
   }
 
@@ -92,7 +99,7 @@ export default class TickProcessor {
       instrumentKey,
       timestamp,
       ltp: ltpc.ltp,
-      lastTradedTime: ltpc.ltt,
+      lastTradedTime: normalizeMarketDataTimestamp(ltpc.ltt),
       lastTradedQuantity: ltpc.ltq,
       closePrice: ltpc.cp,
       generationId,
