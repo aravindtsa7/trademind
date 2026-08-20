@@ -190,7 +190,7 @@ async function run(): Promise<void> {
   );
   const latestPremiumByInstrument = new Map<string, LiveInstrumentValue<number>>();
   const latestDepthByInstrument = new Map<string, MarketDepthEvent>();
-  let recovery: MarketDataRecoveryCoordinatorService | undefined;
+  let recovery: MarketDataRecoveryCoordinatorService<Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>> | undefined;
   let eodRequestedForRisk = false;
   const riskGate = new RuntimeRiskGateService({ getPortfolioSnapshot: (sessionDate) => prismaExecution.getCachedSnapshot(sessionDate), getExecutionHealth: (sessionDate) => prismaExecution.getHealth(sessionDate) });
   const orchestration = new PaperTradingOrchestratorService(
@@ -265,24 +265,25 @@ async function run(): Promise<void> {
   let shuttingDown = false;
   let eodRequested = false;
   let requestedShutdownReason = 'SESSION_END';
-  let latestRecoveryWarmup: Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>> | undefined;
-  const recoveryWarmupTarget = { count: 0, seedHistoricalCandles(candles: readonly import('../modules/indicators/types').Candle[]): void { this.count = candles.length; }, isWarmupReady(): boolean { return this.count >= 36; } };
-
-  const performRecoveryBackfill = async (): Promise<{ ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number }> => {
-    latestRecoveryWarmup = await new LivePaperFreshWarmupService(new HistoricalCandleRepository(), recoveryWarmupTarget).warmUp();
+  type RecoveryWarmup = Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>;
+  const performRecoveryBackfill = async (): Promise<{ ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number; recoveryData: RecoveryWarmup }> => {
+    const recoveryWarmupTarget = { count: 0, seedHistoricalCandles(candles: readonly import('../modules/indicators/types').Candle[]): void { this.count = candles.length; }, isWarmupReady(): boolean { return this.count >= 36; } };
+    const recoveryWarmup = await new LivePaperFreshWarmupService(new HistoricalCandleRepository(), recoveryWarmupTarget).warmUp();
     return {
-      ready: latestRecoveryWarmup.ready,
-      reason: latestRecoveryWarmup.freshnessReason,
-      missingMinutes: latestRecoveryWarmup.currentDayMissingMinuteCount,
-      duplicateMinutes: latestRecoveryWarmup.currentDayDuplicateCount,
+      ready: recoveryWarmup.ready,
+      reason: recoveryWarmup.freshnessReason,
+      missingMinutes: recoveryWarmup.currentDayMissingMinuteCount,
+      duplicateMinutes: recoveryWarmup.currentDayDuplicateCount,
+      recoveryData: recoveryWarmup,
     };
   };
-  const applyRecoveredHistoricalCandles = (): void => {
-    if (!latestRecoveryWarmup) return;
-    const completed = new CandleTimeframeAggregatorService().aggregate(latestRecoveryWarmup.seededOneMinuteCandles, '5m', { incompleteLeadingBucket: 'discard', incompleteTrailingBucket: 'discard' });
+  const applyRecoveredHistoricalCandles = (_generationId: number, recoveryWarmup: RecoveryWarmup | undefined): undefined => {
+    if (!recoveryWarmup) return undefined;
+    const completed = new CandleTimeframeAggregatorService().aggregate(recoveryWarmup.seededOneMinuteCandles, '5m', { incompleteLeadingBucket: 'discard', incompleteTrailingBucket: 'discard' });
     strategyAdapter.recoverHistoricalCandles(completed);
     liveCandleBuilder.reset(niftyInstrumentKey);
     liveCandleEventAdapter.start();
+    return undefined;
   };
   const handleRecoveryEvent = (eventType: string, details: Record<string, string | number | boolean | null>): void => {
     const unrecovered = eventType === 'DATA_GAP_UNRECOVERABLE';
@@ -294,12 +295,17 @@ async function run(): Promise<void> {
       void host?.degrade('MARKET_DATA_DEGRADED');
     }
     if (state === 'READY' && !shuttingDown) {
+      if (!health.confirmRecoveryReady(recovery!.getGenerationId())) {
+        connectionManager.failRecovery(recovery!.getGenerationId(), 'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');
+        return;
+      }
       paperMarketDataAdapter.setMarketDataAvailable(true);
       paperRuntimeCandleAdapter.start();
       void host?.recovered('MARKET_DATA_READY');
     }
+    if (state === 'FAULTED') connectionManager.failRecovery(recovery!.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   };
-  recovery = new MarketDataRecoveryCoordinatorService({
+  recovery = new MarketDataRecoveryCoordinatorService<RecoveryWarmup>({
     backfill: performRecoveryBackfill,
     onRecovered: applyRecoveredHistoricalCandles,
     onEvent: handleRecoveryEvent,
@@ -328,7 +334,7 @@ async function run(): Promise<void> {
     if (Number.isNaN(timestamp.getTime())) return;
     if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); void host?.eod('MARKET_EOD'); return; }
     health.noteValidMarketEvent(tick.generationId);
-    if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId); recovery!.handleLiveTick(timestamp, tick.generationId); }
+    if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId); recovery!.handleLiveTick(timestamp, tick.generationId); if (recovery!.isEvaluationReady()) health.confirmRecoveryReady(tick.generationId); }
     cacheCurrentLiveInstrumentValue(latestPremiumByInstrument, tick.instrumentKey, tick.ltp, tick.generationId, connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();

@@ -221,6 +221,7 @@ async function run(): Promise<void> {
     if (t.instrumentKey === NIFTY) {
       health.noteNiftyTick(t.generationId);
       recovery.handleLiveTick(at, t.generationId);
+      if (recovery.isEvaluationReady()) health.confirmRecoveryReady(t.generationId);
     }
     if (!recovery.isEvaluationReady()) return;
     for (const id of activeIds) writeExitList(id, t.instrumentKey, t.ltp, t.ltp, at);
@@ -344,21 +345,22 @@ async function run(): Promise<void> {
       );
     }
   };
-  const recovery = new MarketDataRecoveryCoordinatorService({
+  type RecoveryWarmup = Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>;
+  const recovery = new MarketDataRecoveryCoordinatorService<RecoveryWarmup>({
     backfill: async () => {
       const r = await new LivePaperFreshWarmupService(
         new HistoricalCandleRepository(),
         new WarmupTarget(),
       ).warmUp();
-      if (r.ready) evaluator.recoverHistoricalOneMinute(r.seededOneMinuteCandles);
       return {
         ready: r.ready,
         reason: r.freshnessReason,
         missingMinutes: r.currentDayMissingMinuteCount,
         duplicateMinutes: r.currentDayDuplicateCount,
+        recoveryData: r,
       };
     },
-    onRecovered: () => candles.start(),
+    onRecovered: (_generationId,recoveryWarmup) => { if (recoveryWarmup?.ready) evaluator.recoverHistoricalOneMinute(recoveryWarmup.seededOneMinuteCandles); candles.start(); return undefined; },
     onEvent: (type, details) => journal.appendEvent(date, type, [type], details),
   });
   const health = new MarketDataHealthMonitorService(connection, {
@@ -442,7 +444,11 @@ async function run(): Promise<void> {
   });
   recovery.on('stateChanged', (state) => {
     if (state === 'DEGRADED') void host?.degrade('MARKET_DATA_DEGRADED');
-    if (state === 'READY') void host?.recovered('MARKET_DATA_READY');
+    if (state === 'READY') {
+      if (health.confirmRecoveryReady(recovery.getGenerationId())) void host?.recovered('MARKET_DATA_READY');
+      else connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');
+    }
+    if (state === 'FAULTED') connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   });
   await host.start();
   process.once('SIGINT', () => {

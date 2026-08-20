@@ -33,3 +33,13 @@ test('V8 and V12 rotate live-only cache state on an accepted new connection gene
   assert.ok(v12.includes('()=>{ticks.clear();previousBook.clear();latestOptions.clear();rotation.beginGeneration(generationId);}'));
   assert.ok(v12.includes('new V12UniverseRotationCoordinator'));
 });
+
+test('live runtimes reset reconnect history only through current-generation health confirmation', () => {
+  const v2 = source('src/tests/test-live-paper-trading.ts');
+  const v4 = source('src/tests/test-live-v4-nifty-momentum-shadow.ts');
+  const v8 = source('src/tests/test-live-v8-nifty-bullish-reclaim-shadow.ts');
+  const v12 = source('src/tests/collect-v12-nifty-option-order-flow.ts');
+  for (const runtime of [v2,v4,v8,v12]) assert.ok(runtime.includes('health.confirmRecoveryReady('));
+  for (const runtime of [v2,v4,v8]) assert.ok(runtime.includes('connection') && runtime.includes('.failRecovery('));
+  assert.ok(v12.includes("connection.on('reconnectFailed'"));
+});
