@@ -8,12 +8,18 @@ export default class HistoricalCandleController {
 
   async sync(req: Request, res: Response, next: NextFunction) {
     try {
-      const { instrumentKey, fromDate, toDate } = req.body as {
+      const { instrumentKey, fromDate, toDate, tradingDates } = req.body as {
         instrumentKey: string;
         fromDate: string;
         toDate: string;
+        tradingDates?: string[];
       };
-      const summary = await this.service.sync(instrumentKey, fromDate, toDate);
+      const summary = await this.service.sync(
+        instrumentKey,
+        fromDate,
+        toDate,
+        tradingDates && tradingDates.length > 0 ? { tradingDates } : undefined
+      );
 
       return successResponse(res, summary);
     } catch (error) {
