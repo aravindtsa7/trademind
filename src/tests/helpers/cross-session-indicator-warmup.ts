@@ -8,7 +8,17 @@ import { AdaptivePrimaryMarketRegime } from '../../modules/adaptive-intraday/typ
 export const crossSessionWarmupFiveMinuteBars = 50;
 export type CrossSessionEntryTimeframe = 1 | 2 | 3 | 5;
 
-export interface CrossSessionSourceSession { date: string; candles: readonly Candle[]; }
+export interface CrossSessionSourceSession {
+  date: string;
+  candles: readonly Candle[];
+  /**
+   * Opt-in only. When true, this session's trailing 5-minute bucket is
+   * discarded instead of throwing when naturally incomplete (the current/
+   * forming target session). Every existing caller omits this field, so
+   * default behaviour (strict 5m aggregation) is unchanged.
+   */
+  allowIncompleteTrailingFiveMinuteBucket?: boolean;
+}
 export interface CrossSessionEntryFrame { minutes: CrossSessionEntryTimeframe; candles: Candle[]; allCandles: Candle[]; ema15: Map<number, number>; ema35: Map<number, number>; rsi14: Map<number, number>; }
 export interface CrossSessionRegimePoint { availableAt: Date; regime: AdaptivePrimaryMarketRegime | undefined; }
 export interface CrossSessionReadiness { at0915: boolean; at0920: boolean; at0930: boolean; }
@@ -22,7 +32,7 @@ export function prepareCrossSessionIndicatorWarmup(
   engine: IndicatorEngineService,
   regimeService: AdaptiveMarketRegimeService,
 ): CrossSessionPreparedSession[] {
-  const sessions = source.map((entry) => ({ date: entry.date, frames: createBaseFrames(entry.candles, aggregator) }));
+  const sessions = source.map((entry) => ({ date: entry.date, frames: createBaseFrames(entry.candles, aggregator, entry.allowIncompleteTrailingFiveMinuteBucket === true) }));
   return sessions.map((target, targetIndex) => {
     const prior = sessions.slice(0, targetIndex);
     const frames = ([1, 2, 3, 5] as const).reduce((result, minutes) => {
@@ -79,9 +89,10 @@ export function sameIstTradingDate<T extends { candleTime: Date }>(candles: read
   return candles.filter((candle) => marketDate(candle.candleTime) === date);
 }
 
-function createBaseFrames(candles: readonly Candle[], aggregator: CandleTimeframeAggregatorService): Record<CrossSessionEntryTimeframe, Candle[]> {
+function createBaseFrames(candles: readonly Candle[], aggregator: CandleTimeframeAggregatorService, allowIncompleteTrailingFiveMinuteBucket = false): Record<CrossSessionEntryTimeframe, Candle[]> {
   const oneMinute = cloneCandles(candles).sort((left, right) => left.timestamp.getTime() - right.timestamp.getTime());
-  return { 1: oneMinute, 2: aggregateAnchored(oneMinute, 2), 3: aggregateAnchored(oneMinute, 3), 5: aggregator.aggregate(oneMinute, '5m') };
+  const fiveMinuteOptions = allowIncompleteTrailingFiveMinuteBucket ? { incompleteTrailingBucket: 'discard' as const } : {};
+  return { 1: oneMinute, 2: aggregateAnchored(oneMinute, 2), 3: aggregateAnchored(oneMinute, 3), 5: aggregator.aggregate(oneMinute, '5m', fiveMinuteOptions) };
 }
 function aggregateAnchored(oneMinute: readonly Candle[], minutes: 2 | 3): Candle[] { const result: Candle[] = []; for (let index = 0; index + minutes <= oneMinute.length; index += minutes) { const slice = oneMinute.slice(index, index + minutes); result.push({ timestamp: new Date(slice[0].timestamp.getTime()), open: slice[0].open, high: Math.max(...slice.map((candle) => candle.high)), low: Math.min(...slice.map((candle) => candle.low)), close: slice[slice.length - 1].close, volume: slice.reduce((total, candle) => total + candle.volume, 0), openInterest: slice[slice.length - 1].openInterest }); } return result; }
 function createEntryFrame(allCandles: Candle[], targetCandles: Candle[], minutes: CrossSessionEntryTimeframe, engine: IndicatorEngineService): CrossSessionEntryFrame { const results = engine.calculate(allCandles, { indicators: [{ type: IndicatorType.EMA, period: 15 }, { type: IndicatorType.EMA, period: 35 }, { type: IndicatorType.RSI, period: 14 }] }); return { minutes, candles: cloneCandles(targetCandles), allCandles: cloneCandles(allCandles), ema15: scalarMap(results, IndicatorType.EMA, 15), ema35: scalarMap(results, IndicatorType.EMA, 35), rsi14: scalarMap(results, IndicatorType.RSI, 14) }; }

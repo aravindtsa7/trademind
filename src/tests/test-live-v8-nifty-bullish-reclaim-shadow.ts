@@ -30,7 +30,10 @@ import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-
 import { PaperStrategyWarmupTarget } from '../modules/paper-trading/dto/paper-strategy-warmup.dto';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import V8BullishReclaimShadowEvaluatorService, {
+  describeV8ErrorSafely,
   isV8CompletedUnderlyingCandleEvent,
+  routeV8CompletedCandleFailure,
+  v8ObserveTerminalFailure,
   V8ShadowRuntimeCounters,
 } from '../modules/adaptive-intraday/services/v8-bullish-reclaim-shadow.service';
 import V8ShadowObservationTracker, {
@@ -127,6 +130,11 @@ async function run(): Promise<void> {
   }
   const evaluator = new V8BullishReclaimShadowEvaluatorService(frozen.candidate.config);
   evaluator.seedHistoricalOneMinute(warmup.seededOneMinuteCandles);
+  const startupReadiness = evaluator.checkStartupReadiness(date);
+  if (!startupReadiness.ready) {
+    console.log(`[V8_STARTUP] BLOCKED_NOT_READY reason=${startupReadiness.reason}`);
+    return;
+  }
   journal.append({
     recordType: 'SESSION',
     tradingDate: date,
@@ -280,70 +288,95 @@ async function run(): Promise<void> {
     });
   };
   const handleCandle = async (x: unknown) => {
-    const c = x as any;
-    if (eod || !host?.canEvaluate() || !recovery.isEvaluationReady() || !isV8CompletedUnderlyingCandleEvent(c, NIFTY))
-      return;
-    const candle = {
-      timestamp: new Date(c.candleTime),
-      open: c.open,
-      high: c.high,
-      low: c.low,
-      close: c.close,
-      volume: 0,
-    };
-    if (c.timeframe === '1m') evaluator.processCompletedOneMinute(candle);
-    if (c.timeframe !== `${frozen.candidate.config.timeframe}m`) return;
-    counters.markCompleted2m();
-    const result = evaluator.evaluateCompletedFrameWithDiagnostics(candle);
-    console.log(v8EvaluationLog(result.evaluation));
-    const signal = result.signal;
-    if (!signal) return;
-    signals++;
-    counters.markSignal();
-    const id = `V8-${signal.timestamp.getTime()}`;
-    journal.append({
-      recordType: 'SIGNAL',
-      tradingDate: signal.date,
-      strategyId: STRATEGY,
-      fingerprint,
-      signalId: id,
-      signalTimestampIst: signal.timestamp.toISOString(),
-      signalTimestampUtc: signal.timestamp.toISOString(),
-      underlyingInstrument: NIFTY,
-      underlyingClose: signal.spotPrice,
-      regime: signal.regime,
-      indicators: {
-        atr: signal.atr14,
-        body: signal.body,
-        bodyAtr: signal.bodyAtr,
-        structuralLevel: signal.structuralLevel,
-        rsi14: signal.rsi14 ?? null,
-        reclaimBufferAtr: signal.reclaimBufferAtr,
-      },
-      optionType: 'CE',
-      signalReason: 'FROZEN_BULLISH_RECLAIM',
-      flags: ['FORWARD_EVALUATION_ONLY', 'ZERO_ORDER'],
-    });
-    const signalGenerationId = connection.getGenerationId();
     try {
-      const contract = await contracts.resolve(signal.spotPrice, signal.timestamp);
-      if (!isCurrentLiveGeneration(signalGenerationId, connection.getGenerationId()) || !host?.canEvaluate() || !recovery.isEvaluationReady()) return;
-      tracker.register(id, signal.timestamp, contract);
-      activeIds.add(id);
-      await subscriptions.subscribe(contract.instrumentKey, MarketDataSubscriptionMode.FULL);
-      if (!isCurrentLiveGeneration(signalGenerationId, connection.getGenerationId()) || !host?.canEvaluate() || !recovery.isEvaluationReady()) return;
-      const quote = normalizeQuote(latest.get(contract.instrumentKey) ?? {}, signal.timestamp);
-      console.log(
-        `[V8_FORWARD_SIGNAL] timestamp=${istTimestamp(signal.timestamp)} close=${number(signal.spotPrice)} option=${contract.instrumentKey} reason=FROZEN_BULLISH_RECLAIM ltp=${number(quote.ltp)} bid=${number(quote.bid)} ask=${number(quote.ask)} quality=${quote.quality} shadowEntry=PENDING_OPTION_QUOTE`,
-      );
+      const c = x as any;
+      if (eod || !host?.canEvaluate() || !recovery.isEvaluationReady() || !isV8CompletedUnderlyingCandleEvent(c, NIFTY))
+        return;
+      const candle = {
+        timestamp: new Date(c.candleTime),
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+        volume: 0,
+      };
+      if (c.timeframe === '1m') evaluator.processCompletedOneMinute(candle);
+      if (c.timeframe !== `${frozen.candidate.config.timeframe}m`) return;
+      counters.markCompleted2m();
+      const result = evaluator.evaluateCompletedFrameWithDiagnostics(candle);
+      console.log(v8EvaluationLog(result.evaluation));
+      const signal = result.signal;
+      if (!signal) return;
+      signals++;
+      counters.markSignal();
+      const id = `V8-${signal.timestamp.getTime()}`;
+      journal.append({
+        recordType: 'SIGNAL',
+        tradingDate: signal.date,
+        strategyId: STRATEGY,
+        fingerprint,
+        signalId: id,
+        signalTimestampIst: signal.timestamp.toISOString(),
+        signalTimestampUtc: signal.timestamp.toISOString(),
+        underlyingInstrument: NIFTY,
+        underlyingClose: signal.spotPrice,
+        regime: signal.regime,
+        indicators: {
+          atr: signal.atr14,
+          body: signal.body,
+          bodyAtr: signal.bodyAtr,
+          structuralLevel: signal.structuralLevel,
+          rsi14: signal.rsi14 ?? null,
+          reclaimBufferAtr: signal.reclaimBufferAtr,
+        },
+        optionType: 'CE',
+        signalReason: 'FROZEN_BULLISH_RECLAIM',
+        flags: ['FORWARD_EVALUATION_ONLY', 'ZERO_ORDER'],
+      });
+      const signalGenerationId = connection.getGenerationId();
+      try {
+        const contract = await contracts.resolve(signal.spotPrice, signal.timestamp);
+        if (!isCurrentLiveGeneration(signalGenerationId, connection.getGenerationId()) || !host?.canEvaluate() || !recovery.isEvaluationReady()) return;
+        tracker.register(id, signal.timestamp, contract);
+        activeIds.add(id);
+        await subscriptions.subscribe(contract.instrumentKey, MarketDataSubscriptionMode.FULL);
+        if (!isCurrentLiveGeneration(signalGenerationId, connection.getGenerationId()) || !host?.canEvaluate() || !recovery.isEvaluationReady()) return;
+        const quote = normalizeQuote(latest.get(contract.instrumentKey) ?? {}, signal.timestamp);
+        console.log(
+          `[V8_FORWARD_SIGNAL] timestamp=${istTimestamp(signal.timestamp)} close=${number(signal.spotPrice)} option=${contract.instrumentKey} reason=FROZEN_BULLISH_RECLAIM ltp=${number(quote.ltp)} bid=${number(quote.bid)} ask=${number(quote.ask)} quality=${quote.quality} shadowEntry=PENDING_OPTION_QUOTE`,
+        );
+      } catch (error) {
+        journal.appendEvent(
+          signal.date,
+          'OPTION_RESOLUTION_FAILED',
+          ['EXECUTION_ESTIMATE_UNAVAILABLE'],
+          { error: error instanceof Error ? error.message : 'unknown' },
+        );
+      }
     } catch (error) {
-      journal.appendEvent(
-        signal.date,
-        'OPTION_RESOLUTION_FAILED',
-        ['EXECUTION_ESTIMATE_UNAVAILABLE'],
-        { error: error instanceof Error ? error.message : 'unknown' },
-      );
+      // Any exception in the completed-candle path (e.g. an incomplete or
+      // structurally corrupted required historical session detected
+      // mid-session) must not escape this async EventEmitter listener as an
+      // unhandled rejection, AND the host fault attempt must be the FIRST
+      // thing that happens -- no observability operation (logging,
+      // journaling, error formatting) may run beforehand or be able to
+      // prevent it. A live host is guaranteed to exist here: the guard at
+      // the top of this function already required host?.canEvaluate() to
+      // be true to reach this point, so an undefined host during an active
+      // failure is treated as a defect (thrown, not silently no-op'd) rather
+      // than silently resolving without faulting.
+      await routeV8CompletedCandleFailure(error, {
+        fault: (faultError) => {
+          if (!host) throw new Error('V8_HOST_UNAVAILABLE_DURING_ACTIVE_FAULT');
+          return host.fault(faultError);
+        },
+        journal: () => journal.appendEvent(date, 'V8_EVALUATOR_FAULT', ['V8_EVALUATOR_FAULT', 'CRITICAL_DATA_QUALITY'], { error: describeV8ErrorSafely(error) }),
+        log: (message) => console.error(message),
+      });
     }
+  };
+  const onCompletedCandle = (x: unknown): void => {
+    handleCandle(x).catch((error) => v8ObserveTerminalFailure(error, console.error));
   };
   type RecoveryWarmup = Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>;
   const recovery = new MarketDataRecoveryCoordinatorService<RecoveryWarmup>({
@@ -407,7 +440,7 @@ async function run(): Promise<void> {
     candles.stop();
     eventBus.off('market.tick', handleTick);
     eventBus.off('market.depth', handleDepth);
-    eventBus.off('market.candle.completed', handleCandle);
+    eventBus.off('market.candle.completed', onCompletedCandle);
     await subscriptions.unsubscribeMany(
       subscriptions.getSubscriptions().map((s) => s.instrumentKey),
     );
@@ -464,7 +497,7 @@ async function run(): Promise<void> {
   });
   eventBus.on('market.tick', handleTick);
   eventBus.on('market.depth', handleDepth);
-  eventBus.on('market.candle.completed', handleCandle);
+  eventBus.on('market.candle.completed', onCompletedCandle);
   candles.start();
   health.start();
   statusTimer = setInterval(emitStatus, 60_000);

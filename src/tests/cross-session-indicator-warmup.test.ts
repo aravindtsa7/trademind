@@ -6,13 +6,16 @@ import IndicatorEngineService from '../modules/indicators/services/indicator-eng
 import { Candle } from '../modules/indicators/types';
 import { assertNoFutureWarmup, filterCrossSessionResearchTargets, isCooldownEligible, prepareCrossSessionIndicatorWarmup, sameIstTradingDate } from './helpers/cross-session-indicator-warmup';
 
-function session(date: string, base: number): Candle[] {
+function session(date: string, base: number, length = 375): Candle[] {
   const start = new Date(`${date}T09:15:00+05:30`).getTime();
-  return Array.from({ length: 375 }, (_, index) => ({ timestamp: new Date(start + index * 60_000), open: base + index / 10, high: base + index / 10 + 2, low: base + index / 10 - 2, close: base + index / 10 + 0.5, volume: 1 }));
+  return Array.from({ length }, (_, index) => ({ timestamp: new Date(start + index * 60_000), open: base + index / 10, high: base + index / 10 + 2, low: base + index / 10 - 2, close: base + index / 10 + 0.5, volume: 1 }));
 }
 
 function prepare(days: Array<[string, Candle[]]>) {
   return prepareCrossSessionIndicatorWarmup(days.map(([date, candles]) => ({ date, candles })), new CandleTimeframeAggregatorService(), new IndicatorEngineService(), new AdaptiveMarketRegimeService({ trendStrengthThreshold: 20, emaProximityPercent: 0.05, highVolatilityThreshold: 0.10, lowVolatilityThreshold: 0.05 }));
+}
+function prepareWithFlags(days: Array<[string, Candle[], boolean?]>) {
+  return prepareCrossSessionIndicatorWarmup(days.map(([date, candles, allowIncompleteTrailingFiveMinuteBucket]) => ({ date, candles, allowIncompleteTrailingFiveMinuteBucket })), new CandleTimeframeAggregatorService(), new IndicatorEngineService(), new AdaptiveMarketRegimeService({ trendStrengthThreshold: 20, emaProximityPercent: 0.05, highVolatilityThreshold: 0.10, lowVolatilityThreshold: 0.05 }));
 }
 
 test('prior-session candles seed EMA/RSI and ADX/ATR-derived regime state before the target open', () => {
@@ -89,4 +92,36 @@ test('cooldown state resets when the next target session starts', () => {
 test('outcome paths remain bounded to the signal IST trading session', () => {
   const signal = new Date('2026-07-15T15:29:00+05:30'); const rows = [{ candleTime: signal }, { candleTime: new Date('2026-07-16T09:15:00+05:30') }];
   assert.deepEqual(sameIstTradingDate(rows, signal), [rows[0]]);
+});
+
+test('a complete 375-row source session aggregates to the exact frozen bar counts across every timeframe', () => {
+  const prepared = prepare([['2026-07-14', session('2026-07-14', 24_000)], ['2026-07-15', session('2026-07-15', 24_100)]]);
+  const target = prepared[1];
+  assert.equal(target.frames[1].candles.length, 375);
+  assert.equal(target.frames[2].candles.length, 187);
+  assert.equal(target.frames[3].candles.length, 125);
+  assert.equal(target.frames[5].candles.length, 75);
+});
+
+test('default (omitted) trailing-5m tolerance is unchanged: a naturally incomplete trailing 5m bucket still throws', () => {
+  const partial = session('2026-07-15', 24_100, 42); // 42 minutes: 8 complete 5m buckets + 2 leftover minutes
+  assert.throws(
+    () => prepare([['2026-07-14', session('2026-07-14', 24_000)], ['2026-07-15', partial]]),
+    /Incomplete trailing 5m candle bucket/,
+  );
+});
+
+test('allowIncompleteTrailingFiveMinuteBucket is opt-in and scoped only to the flagged session', () => {
+  const partial = session('2026-07-15', 24_100, 42);
+  // Only the target (current/forming) session opts in; the prior session keeps strict default behaviour.
+  const prepared = prepareWithFlags([['2026-07-14', session('2026-07-14', 24_000), false], ['2026-07-15', partial, true]]);
+  const target = prepared[1];
+  assert.equal(target.frames[5].candles.length, 8); // trailing incomplete bucket discarded, not fabricated
+  assert.equal(target.frames[1].candles.length, 42);
+
+  // The same partial shape without the flag on the PRIOR session still throws if it were the target instead.
+  assert.throws(
+    () => prepareWithFlags([['2026-07-14', session('2026-07-14', 24_000)], ['2026-07-15', partial, false]]),
+    /Incomplete trailing 5m candle bucket/,
+  );
 });
