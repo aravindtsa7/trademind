@@ -248,6 +248,47 @@ function assertPlainNullableBigInt(field: string, value: unknown): bigint | numb
   return value;
 }
 
+/**
+ * `HistoricalCandleSyncLog.errorMessage` is `VARCHAR(191)` (see
+ * prisma/migrations/20260805102657_add_historical_candle_models/
+ * migration.sql:38). This database runs with STRICT_TRANS_TABLES
+ * (confirmed against the local MySQL server in
+ * historical-candle.repository.test.ts's "genuinely unrelated database
+ * error" test), so MySQL REJECTS an over-length value at write time
+ * (error 1406, surfaced by Prisma as P2000) rather than silently
+ * truncating it -- a longer-than-191-character error message therefore
+ * makes the write that was supposed to record the failure itself fail,
+ * leaving the sync log row stuck at whatever status it already had
+ * (RUNNING, if this happens on the FAILED transition) instead of durably
+ * recording FAILED.
+ */
+export const HISTORICAL_CANDLE_SYNC_LOG_ERROR_MESSAGE_MAX_LENGTH = 191;
+
+/**
+ * Truncates a too-long `errorMessage` down to the real column capacity,
+ * keeping as much of the original diagnostic content as fits and adding a
+ * single trailing "…" (counted within the 191-character budget) only when
+ * truncation actually happens, so a reader can tell content was cut
+ * rather than mistaking a message that stops mid-sentence for a complete
+ * one. Never splits a UTF-16 surrogate pair. Only a plain `string` value
+ * is normalized -- `null`/`undefined` pass through unchanged, and so does
+ * any other shape (e.g. a Prisma scalar-update-operator object): no
+ * caller in this codebase has ever needed the latter, and guessing at
+ * truncation semantics for a shape this repository has never seen is out
+ * of scope for this fix.
+ */
+export function normalizeSyncLogErrorMessage<T extends { errorMessage?: unknown }>(data: T): T {
+  if (typeof data.errorMessage !== 'string') return data;
+  const message = data.errorMessage;
+  if (message.length <= HISTORICAL_CANDLE_SYNC_LOG_ERROR_MESSAGE_MAX_LENGTH) return data;
+
+  let head = message.slice(0, HISTORICAL_CANDLE_SYNC_LOG_ERROR_MESSAGE_MAX_LENGTH - 1);
+  const lastCode = head.charCodeAt(head.length - 1);
+  if (lastCode >= 0xd800 && lastCode <= 0xdbff) head = head.slice(0, -1); // never split a surrogate pair
+
+  return { ...data, errorMessage: `${head}…` };
+}
+
 export default class HistoricalCandleRepository {
   /**
    * Defaults to the shared, module-level Prisma client -- every existing
@@ -382,7 +423,9 @@ export default class HistoricalCandleRepository {
   async createSyncLog(
     data: Prisma.HistoricalCandleSyncLogCreateInput
   ): Promise<HistoricalCandleSyncLog> {
-    return this.execute('create sync log', () => this.prisma.historicalCandleSyncLog.create({ data }));
+    return this.execute('create sync log', () =>
+      this.prisma.historicalCandleSyncLog.create({ data: normalizeSyncLogErrorMessage(data) })
+    );
   }
 
   async updateSyncLog(
@@ -392,7 +435,7 @@ export default class HistoricalCandleRepository {
     return this.execute('update sync log', () =>
       this.prisma.historicalCandleSyncLog.update({
         where: { id },
-        data,
+        data: normalizeSyncLogErrorMessage(data),
       })
     );
   }
