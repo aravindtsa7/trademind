@@ -68,6 +68,29 @@ export default class MarketReplayRunnerService {
       onEvent: (type, details) => output.push(`recovery:${type}:${stableReplayJson(details)}`),
     });
     recovery.on('stateChanged', (state, previousState) => output.push(`state:${previousState}:${state}:${recovery.getGenerationId()}`));
+    // Mirrors the live ConnectionManager's very first 'connected' event:
+    // replay has no separate "socket open" event distinct from its first
+    // market event, so the initial generation is derived from that market
+    // event's own recorded connectionGenerationId and receivedTimestamp --
+    // never hard-coded, and never DeterministicReplayClock's default epoch 0.
+    // If the artifact instead opens with a recorded DISCONNECT before any
+    // market event, seeding here would suppress that recorded recovery
+    // episode: the coordinator would reject the (typically generation-0)
+    // DISCONNECT as stale against a pre-seeded generation, and the RECONNECT
+    // that follows it as already-current, silently skipping backfill. So
+    // seeding is skipped entirely in that case and the recorded episode is
+    // left to drive handleUnexpectedDisconnect/handleReconnected exactly as
+    // it would live.
+    const firstMarketEventIndex = frozen.findIndex((event) => event.eventType === 'TICK' || event.eventType === 'DEPTH' || event.eventType === 'FRESH_TICK_READY');
+    const recoveryEpisodeRecordedBeforeFirstMarketEvent = frozen
+      .slice(0, firstMarketEventIndex === -1 ? frozen.length : firstMarketEventIndex)
+      .some((event) => event.eventType === 'DISCONNECT');
+    const firstMarketEvent = firstMarketEventIndex === -1 ? undefined : frozen[firstMarketEventIndex];
+    if (!recoveryEpisodeRecordedBeforeFirstMarketEvent && firstMarketEvent && typeof firstMarketEvent.connectionGenerationId === 'number') {
+      recovery.handleInitialConnected({ generationId: firstMarketEvent.connectionGenerationId, connectedAt: new Date(firstMarketEvent.receivedTimestamp) });
+      // Keeps the runner's own stale-generation filter (below, over `activeGeneration`) consistent with the generation just seeded into the coordinator.
+      activeGeneration = firstMarketEvent.connectionGenerationId;
+    }
 
     const acceptStrategyOutput = (value: MarketReplayStrategyOutput | void): void => {
       if (!value) return;

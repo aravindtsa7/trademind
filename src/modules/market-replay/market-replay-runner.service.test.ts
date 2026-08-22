@@ -126,3 +126,67 @@ test('golden comparison identifies the first deterministic output divergence', (
   const divergence = new MarketReplayRunnerService().findFirstDivergence(['event:0:a:TICK', 'candle:x'], ['event:0:a:TICK', 'risk:APPROVED']);
   assert.deepEqual(divergence, { eventIndex: 1, component: 'candle', expected: 'candle:x', actual: 'risk:APPROVED' });
 });
+
+// ---- A6 correction (HIGH-3): replay must not assume a hard-coded initial generation ----
+
+test('A6 correction: a recorded generation-0 DISCONNECT before any market event is not discarded, and backfill runs exactly once before a generation-1 tick can unlock readiness', async () => {
+  let backfills = 0;
+  const events = [
+    event('DISCONNECT', '2026-08-17T03:45:00.000Z', { code: 1006 }, { connectionGenerationId: 0 }),
+    event('RECONNECT', '2026-08-17T03:45:10.000Z', {}, { connectionGenerationId: 1 }),
+    event('TICK', '2026-08-17T03:45:20.000Z', { ltp: 25000 }, { connectionGenerationId: 1 }),
+  ];
+  const result = await new MarketReplayRunnerService().run(events, {
+    backfill: async () => { backfills += 1; return { ready: true, reason: 'OK', missingMinutes: 0, duplicateMinutes: 0 }; },
+    onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1 }),
+  });
+  const trace = new MarketReplayRunnerService();
+  await trace.run(events, {
+    backfill: async () => ({ ready: true, reason: 'OK', missingMinutes: 0, duplicateMinutes: 0 }),
+    onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1 }),
+  });
+  assert.equal(backfills, 1); // the recorded disconnect forced exactly one backfill before readiness -- it was not discarded as stale
+  assert.equal(result.reconnects, 1);
+  assert.equal(result.v2Evaluations, 1); // the generation-1 tick was accepted only after the true recovery sequence completed
+  const output = trace.getLastOutputTrace();
+  assert.ok(output.includes('recovery:DATA_GAP_DETECTED:{"code":1006,"generationId":0}')); // the generation-0 disconnect was processed, not silently pre-empted
+  assert.ok(output.some((line) => line.startsWith('recovery:MARKET_DATA_BACKFILL_STARTED:')));
+  assert.ok(output.some((line) => line.startsWith('recovery:MARKET_DATA_BACKFILL_COMPLETED:')));
+});
+
+test('A6 correction: a tick recorded at generation 1 alone cannot bypass backfill when a real disconnect/reconnect episode preceded it', async () => {
+  const events = [
+    event('DISCONNECT', '2026-08-17T03:45:00.000Z', { code: 1006 }, { connectionGenerationId: 0 }),
+    event('RECONNECT', '2026-08-17T03:45:10.000Z', {}, { connectionGenerationId: 1 }),
+    event('TICK', '2026-08-17T03:45:20.000Z', { ltp: 25000 }, { connectionGenerationId: 1 }),
+  ];
+  const result = await new MarketReplayRunnerService().run(events, {
+    backfill: async () => ({ ready: false, reason: 'MISSING_MINUTE', missingMinutes: 1, duplicateMinutes: 0 }), // backfill fails
+    onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1 }),
+  });
+  assert.equal(result.v2Evaluations, 0); // the tick could not unlock readiness without a successful backfill
+});
+
+test('A6 correction: a normal full-session replay whose first market event carries a generation other than 1 still reaches readiness -- no dependency on a hard-coded generation', async () => {
+  const events = [
+    event('SUBSCRIPTION_INTENT', '2026-08-17T03:44:59.000Z', {}, { connectionGenerationId: 7 }),
+    event('TICK', '2026-08-17T03:45:00.000Z', { ltp: 25000 }, { connectionGenerationId: 7 }),
+    event('TICK', '2026-08-17T03:46:00.000Z', { ltp: 25010 }, { connectionGenerationId: 7 }),
+  ];
+  const result = await new MarketReplayRunnerService().run(events, {
+    onReadyEvaluation: () => ({ strategy: 'V2', evaluated: 1 }),
+  });
+  assert.equal(result.v2Evaluations, 2); // both ticks were accepted at their own recorded generation, not silently dropped as stale against a hard-coded generation 1
+});
+
+test('A6 correction: replay determinism is preserved for the generation-0-disconnect fixture (two runs produce an identical digest)', async () => {
+  const events = [
+    event('DISCONNECT', '2026-08-17T03:45:00.000Z', { code: 1006 }, { connectionGenerationId: 0 }),
+    event('RECONNECT', '2026-08-17T03:45:10.000Z', {}, { connectionGenerationId: 1 }),
+    event('TICK', '2026-08-17T03:45:20.000Z', { ltp: 25000 }, { connectionGenerationId: 1 }),
+  ];
+  const options = { onReadyEvaluation: () => ({ strategy: 'V2' as const, evaluated: 1 }) };
+  const first = await new MarketReplayRunnerService().run(events, options);
+  const second = await new MarketReplayRunnerService().run(events, options);
+  assert.equal(first.outputDigest, second.outputDigest);
+});

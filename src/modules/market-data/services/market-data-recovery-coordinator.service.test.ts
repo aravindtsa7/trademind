@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import MarketDataRecoveryCoordinatorService from './market-data-recovery-coordinator.service';
+import MarketDataRecoveryCoordinatorService, { MarketDataInitialReadinessTimeoutError, MarketSessionNotActiveError } from './market-data-recovery-coordinator.service';
 
 test('1006 recovery stays gated until backfill continuity and a fresh live tick', async () => {
   const events: string[]=[]; let recovered=0;
@@ -79,4 +79,216 @@ test('a synchronous fault raised by a READY listener suppresses recovered and re
   const events:string[]=[];const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0}),onEvent:(event)=>events.push(event)});
   coordinator.on('stateChanged',(state)=>{if(state==='READY')coordinator.fault('NESTED_READY_FAILURE');});coordinator.handleUnexpectedDisconnect({generationId:1});coordinator.handleReconnected({generationId:2});await new Promise((resolve)=>setImmediate(resolve));coordinator.handleLiveTick(new Date(),2);
   assert.equal(coordinator.getState(),'FAULTED');assert.equal(coordinator.isEvaluationReady(),false);assert.equal(events.includes('DATA_GAP_RECOVERED'),false);assert.equal(events.includes('MARKET_DATA_READY'),false);
+});
+
+// ---- A6: cold-start current-generation readiness ----
+
+test('A6-1: a freshly constructed coordinator is not evaluation-ready',()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  assert.equal(coordinator.isEvaluationReady(),false);
+  assert.equal(coordinator.getState(),'AWAITING_LIVE_TICK');
+  assert.equal(coordinator.getGenerationId(),0);
+});
+
+test('A6-2: handleInitialConnected seeds the real first generation, not 0, and readiness stays false until a tick arrives',()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  coordinator.handleInitialConnected({generationId:1,connectedAt:new Date(1_000)});
+  assert.equal(coordinator.getGenerationId(),1);
+  assert.equal(coordinator.isEvaluationReady(),false);
+});
+
+test('A6-3: socket-open/subscribe alone (handleInitialConnected with no live tick) never satisfies readiness',()=>{
+  const events:string[]=[];const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0}),onEvent:(event)=>events.push(event)});
+  coordinator.handleInitialConnected({generationId:1});
+  assert.equal(coordinator.isEvaluationReady(),false);
+  assert.equal(events.includes('MARKET_DATA_READY'),false);
+});
+
+test('A6-4: an accepted current-generation NIFTY tick after handleInitialConnected unlocks readiness, and cold start never claims a gap was recovered',()=>{
+  const events:string[]=[];const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0}),onEvent:(event)=>events.push(event)});
+  coordinator.handleInitialConnected({generationId:1,connectedAt:new Date(1_000)});
+  coordinator.handleLiveTick(new Date(2_000),1);
+  assert.equal(coordinator.isEvaluationReady(),true);
+  assert.equal(coordinator.getState(),'READY');
+  assert.deepEqual(events,['MARKET_DATA_FRESH_TICK_CONFIRMED','MARKET_DATA_READY']); // no DATA_GAP_RECOVERED -- nothing was ever degraded on cold start
+});
+
+test('A6-5: a stale/previous-generation tick cannot satisfy initial readiness',()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  coordinator.handleInitialConnected({generationId:2,connectedAt:new Date(1_000)});
+  coordinator.handleLiveTick(new Date(2_000),1); // stale generation 1, current is 2
+  assert.equal(coordinator.isEvaluationReady(),false);
+  coordinator.handleLiveTick(new Date(2_000),2);
+  assert.equal(coordinator.isEvaluationReady(),true);
+});
+
+test('A6-6: a malformed/non-numeric-generation event cannot satisfy initial readiness',()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  coordinator.handleInitialConnected({generationId:1,connectedAt:new Date(1_000)});
+  coordinator.handleLiveTick(new Date(2_000),undefined);
+  assert.equal(coordinator.isEvaluationReady(),false);
+  coordinator.handleLiveTick(new Date(2_000),Number.NaN);
+  assert.equal(coordinator.isEvaluationReady(),false);
+});
+
+test('A6-7: handleInitialConnected is idempotent and cannot be re-seeded with a different generation',()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  coordinator.handleInitialConnected({generationId:1,connectedAt:new Date(1_000)});
+  coordinator.handleInitialConnected({generationId:5,connectedAt:new Date(9_000)}); // must be ignored
+  assert.equal(coordinator.getGenerationId(),1);
+  coordinator.handleLiveTick(new Date(2_000),5);
+  assert.equal(coordinator.isEvaluationReady(),false); // generation 5 was never actually established
+  coordinator.handleLiveTick(new Date(2_000),1);
+  assert.equal(coordinator.isEvaluationReady(),true);
+});
+
+test('A6-8: handleInitialConnected cannot corrupt an active reconnect episode (DEGRADED/RECONNECTING/BACKFILLING/WAITING_FOR_FRESH_TICK)',async()=>{
+  type Result={ready:boolean;reason:string;missingMinutes:number;duplicateMinutes:number};
+  let backfillResolve!:(value:Result)=>void;
+  const coordinator=new MarketDataRecoveryCoordinatorService({backfill:async()=>new Promise<Result>((resolve)=>{backfillResolve=resolve;})});
+  coordinator.handleUnexpectedDisconnect({generationId:1});
+  assert.equal(coordinator.getState(),'RECONNECTING');
+  coordinator.handleInitialConnected({generationId:1}); // must no-op: state is not AWAITING_LIVE_TICK
+  assert.equal(coordinator.getState(),'RECONNECTING');
+  coordinator.handleReconnected({generationId:2});
+  assert.equal(coordinator.getState(),'BACKFILLING');
+  coordinator.handleInitialConnected({generationId:2}); // must still no-op mid-backfill
+  assert.equal(coordinator.getState(),'BACKFILLING');
+  backfillResolve({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0});
+  await new Promise((resolve)=>setImmediate(resolve));
+  assert.equal(coordinator.getState(),'WAITING_FOR_FRESH_TICK');
+  coordinator.handleInitialConnected({generationId:2}); // must still no-op while awaiting the fresh tick
+  assert.equal(coordinator.getState(),'WAITING_FOR_FRESH_TICK');
+  coordinator.handleLiveTick(new Date(),2);
+  assert.equal(coordinator.isEvaluationReady(),true); // the real reconnect invariant still requires its own proof
+});
+
+test('A6-9: connected and reconnected both firing for the same reconnect generation does not weaken the reconnect requirement (ConnectionManager always emits connected, even on reconnect)',async()=>{
+  type Result={ready:boolean;reason:string;missingMinutes:number;duplicateMinutes:number};
+  let backfillResolve!:(value:Result)=>void;let backfills=0;let now=1_000;
+  const coordinator=new MarketDataRecoveryCoordinatorService({nowMs:()=>now,backfill:async()=>{backfills+=1;return new Promise<Result>((resolve)=>{backfillResolve=resolve;});}});
+  coordinator.handleInitialConnected({generationId:1,connectedAt:new Date(now)});
+  coordinator.handleLiveTick(new Date(now),1);
+  assert.equal(coordinator.isEvaluationReady(),true); // cold start completed on generation 1
+  now=2_000;
+  coordinator.handleUnexpectedDisconnect({generationId:1}); // recoveryStartedAt is reset to now (2_000)
+  assert.equal(coordinator.isEvaluationReady(),false);
+  // ConnectionManager emits 'connected' before 'reconnected' for every reconnect too.
+  coordinator.handleInitialConnected({generationId:2}); // simulated 'connected' handler call -- must no-op
+  coordinator.handleReconnected({generationId:2}); // simulated 'reconnected' handler call -- must proceed normally
+  assert.equal(coordinator.getState(),'BACKFILLING');
+  assert.equal(backfills,1);
+  coordinator.handleLiveTick(new Date(3_000),2); // a tick before backfill completes still cannot shortcut readiness
+  assert.equal(coordinator.isEvaluationReady(),false);
+  backfillResolve({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0});
+  await new Promise((resolve)=>setImmediate(resolve));
+  assert.equal(coordinator.getState(),'WAITING_FOR_FRESH_TICK');
+  coordinator.handleLiveTick(new Date(4_000),2); // 4_000 >= recoveryStartedAt(2_000)
+  assert.equal(coordinator.isEvaluationReady(),true);
+});
+
+// ---- A6: waitUntilReady() race/timeout behavior ----
+
+test('A6-10: waitUntilReady resolves immediately if already ready',async()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  coordinator.handleInitialConnected({generationId:1});coordinator.handleLiveTick(new Date(),1);
+  assert.equal(coordinator.isEvaluationReady(),true);
+  await coordinator.waitUntilReady(1_000); // must not hang or throw
+  assert.equal(coordinator.listenerCount('stateChanged'),0);
+});
+
+test('A6-11: waitUntilReady resolves once READY is reached via a later tick, and cannot miss the transition or leak its listener',async()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  const waiting=coordinator.waitUntilReady(1_000);
+  assert.equal(coordinator.listenerCount('stateChanged'),1);
+  coordinator.handleInitialConnected({generationId:1});
+  coordinator.handleLiveTick(new Date(),1);
+  await waiting;
+  assert.equal(coordinator.isEvaluationReady(),true);
+  assert.equal(coordinator.listenerCount('stateChanged'),0);
+});
+
+test('A6-12: waitUntilReady rejects when the coordinator faults instead of becoming ready',async()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>({ready:false,reason:'MISSING_MINUTE',missingMinutes:1,duplicateMinutes:0})});
+  const waiting=coordinator.waitUntilReady(1_000);
+  coordinator.handleUnexpectedDisconnect({generationId:1});coordinator.handleReconnected({generationId:2});
+  await assert.rejects(()=>waiting,/FAULTED/);
+  assert.equal(coordinator.listenerCount('stateChanged'),0);
+});
+
+test('A6-13: waitUntilReady rejects when the coordinator stops instead of becoming ready',async()=>{
+  type Result={ready:boolean;reason:string;missingMinutes:number;duplicateMinutes:number};
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>new Promise<Result>(()=>{/* never resolves */})});
+  const waiting=coordinator.waitUntilReady(1_000);
+  coordinator.stop();
+  await assert.rejects(()=>waiting,/STOPPED/);
+  assert.equal(coordinator.listenerCount('stateChanged'),0);
+});
+
+test('A6-14: waitUntilReady fails closed with a clear timeout diagnostic and leaks no listener/timer when nothing ever arrives',async()=>{
+  type Result={ready:boolean;reason:string;missingMinutes:number;duplicateMinutes:number};
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>new Promise<Result>(()=>{/* never resolves */})});
+  const waiting=coordinator.waitUntilReady(15);
+  await assert.rejects(()=>waiting,(error:unknown)=>{
+    assert.ok(error instanceof MarketDataInitialReadinessTimeoutError);
+    assert.equal(error.timeoutMs,15);
+    return true;
+  });
+  assert.equal(coordinator.isEvaluationReady(),false);
+  assert.equal(coordinator.listenerCount('stateChanged'),0);
+});
+
+test('A6-15: waitUntilReady registered before readiness is proven cannot hang and cannot be missed by a synchronous state change',async()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  coordinator.handleInitialConnected({generationId:1});
+  const waiting=coordinator.waitUntilReady(1_000); // registered while still AWAITING_LIVE_TICK
+  coordinator.handleLiveTick(new Date(),1); // synchronous READY transition happens immediately after registration
+  await waiting;
+  assert.equal(coordinator.isEvaluationReady(),true);
+});
+
+// ---- A6 correction (HIGH-2): waitUntilReady() session-awareness ----
+
+test('A6-16: a pre-open (or post-close) launch fails closed immediately with the explicit session-inactive reason, not a market-data-feed timeout',async()=>{
+  type Result={ready:boolean;reason:string;missingMinutes:number;duplicateMinutes:number};
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>false,backfill:async()=>new Promise<Result>(()=>{/* never resolves */})});
+  const started=Date.now();
+  await assert.rejects(()=>coordinator.waitUntilReady(60_000),(error:unknown)=>{
+    assert.ok(error instanceof MarketSessionNotActiveError);
+    assert.ok(!(error instanceof MarketDataInitialReadinessTimeoutError));
+    return true;
+  });
+  assert.ok(Date.now()-started<1_000); // rejected immediately, not after waiting out the 60s bound
+  assert.equal(coordinator.listenerCount('stateChanged'),0);
+});
+
+test('A6-17: an accepted current-generation NIFTY event still unlocks readiness once the session is active, even though the coordinator itself never inspects wall-clock time outside waitUntilReady',async()=>{
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>({ready:true,reason:'OK',missingMinutes:0,duplicateMinutes:0})});
+  const waiting=coordinator.waitUntilReady(1_000);
+  coordinator.handleInitialConnected({generationId:1});
+  coordinator.handleLiveTick(new Date(),1);
+  await waiting; // resolves without ever hitting the session-inactive or timeout path
+  assert.equal(coordinator.isEvaluationReady(),true);
+});
+
+test('A6-18: the session ending while the wait is still pending rejects with the explicit session-inactive reason instead of the generic feed-timeout reason',async()=>{
+  type Result={ready:boolean;reason:string;missingMinutes:number;duplicateMinutes:number};
+  let sessionActive=true;
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>sessionActive,backfill:async()=>new Promise<Result>(()=>{/* never resolves */})});
+  const waiting=coordinator.waitUntilReady(30);
+  setTimeout(()=>{sessionActive=false;},10); // session closes partway through the wait, before the 30ms bound elapses
+  await assert.rejects(()=>waiting,(error:unknown)=>{
+    assert.ok(error instanceof MarketSessionNotActiveError);
+    return true;
+  });
+});
+
+test('A6-19: a genuinely silent feed during an active session still fails closed with the feed-timeout reason, not the session-inactive reason',async()=>{
+  type Result={ready:boolean;reason:string;missingMinutes:number;duplicateMinutes:number};
+  const coordinator=new MarketDataRecoveryCoordinatorService({isMarketSession:()=>true,backfill:async()=>new Promise<Result>(()=>{/* never resolves */})});
+  await assert.rejects(()=>coordinator.waitUntilReady(15),(error:unknown)=>{
+    assert.ok(error instanceof MarketDataInitialReadinessTimeoutError);
+    assert.ok(!(error instanceof MarketSessionNotActiveError));
+    return true;
+  });
 });

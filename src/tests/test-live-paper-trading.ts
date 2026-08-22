@@ -41,6 +41,13 @@ const niftyInstrumentKey = 'NSE_INDEX|Nifty 50';
 const tickPrintIntervalMs = 30_000;
 const runtimeStatusIntervalMs = 60_000;
 
+/** Validates at the environment/config boundary, naming the offending variable, matching the style already used by ConnectionManager/MarketDataHealthMonitorService. */
+function positiveTimeoutMs(name: string, environmentValue: string | undefined, fallback: number): number {
+  const value = environmentValue === undefined ? fallback : Number(environmentValue);
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be a positive finite number.`);
+  return value;
+}
+
 interface StrategyEvaluatedEvent {
   candleTimestamp: Date;
   spotPrice: number;
@@ -260,11 +267,27 @@ async function run(): Promise<void> {
   const paperRuntimeCandleAdapter = new PaperRuntimeCandleAdapterService(hostGatedRuntime, contractsProvider, eventBus);
 
   const createdOrderIds = new Set<string>();
+  // Bounds the wait for the first accepted current-generation NIFTY event
+  // after subscribing on cold start. Reuses the same 45s figure
+  // MarketDataHealthMonitorService already treats as "stalled" for an
+  // established connection (MARKET_DATA_STALL_MS). On a genuinely silent feed
+  // during an active session, this bound (not the health monitor's periodic
+  // stall check, which only starts polling once CONNECTED and fires on a
+  // multiple of its own heartbeat) is what owns and reports the startup
+  // failure.
+  const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000);
   const eodCoordinator = new NseSessionEodCoordinator();
   let lastNiftyTickPrintedAt = 0;
   let shuttingDown = false;
   let eodRequested = false;
   let requestedShutdownReason = 'SESSION_END';
+  // Before host.start() has successfully returned, host.start() itself is the
+  // sole owner of the initial RUNNING transition (via onReady ->
+  // recovery.waitUntilReady()). Calling host.recovered() from the persistent
+  // recovery listener too, while the host is still transiting through
+  // READY/DEGRADED during startup, races start()'s own unconditional RUNNING
+  // transition and produces an illegal RUNNING->RUNNING transition.
+  let startupComplete = false;
   type RecoveryWarmup = Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>;
   const performRecoveryBackfill = async (): Promise<{ ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number; recoveryData: RecoveryWarmup }> => {
     const recoveryWarmupTarget = { count: 0, seedHistoricalCandles(candles: readonly import('../modules/indicators/types').Candle[]): void { this.count = candles.length; }, isWarmupReady(): boolean { return this.count >= 36; } };
@@ -301,7 +324,10 @@ async function run(): Promise<void> {
       }
       paperMarketDataAdapter.setMarketDataAvailable(true);
       paperRuntimeCandleAdapter.start();
-      void host?.recovered('MARKET_DATA_READY');
+      // host.start() itself owns the initial RUNNING transition via its
+      // onReady hook; only a genuine post-startup recovery may call
+      // host.recovered() here. See startupComplete above.
+      if (startupComplete) void host?.recovered('MARKET_DATA_READY');
     }
     if (state === 'FAULTED') connectionManager.failRecovery(recovery!.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   };
@@ -492,6 +518,14 @@ async function run(): Promise<void> {
     recovery.fault('RECONNECT_FAILED');
     void host?.fault(new Error('RECONNECT_FAILED'));
   });
+  // ConnectionManager emits 'connected' on every successful open, cold start
+  // and reconnect alike (and 'reconnected' fires immediately after it on a
+  // reconnect). handleInitialConnected() only has an effect the very first
+  // time it runs, so this cannot reset or race the reconnect state machine
+  // driven by 'unexpectedDisconnect' / 'reconnected' above.
+  connectionManager.on('connected', (details: { generationId: number }) => {
+    recovery.handleInitialConnected({ generationId: details.generationId });
+  });
 
   host = new StrategyHostLifecycle({
     strategyId: 'V2_TREND_DOWN_PE',
@@ -508,6 +542,11 @@ async function run(): Promise<void> {
           throw new Error(`V2_EXECUTION_NOT_READY:${executionHealth.status}`);
         }
       },
+      // Historical + durable-execution warmup is proven above. This is the
+      // LIVE gate: RUNNING (reason=MARKET_DATA_READY) must not be granted
+      // until an accepted, usable, current-generation NIFTY event has
+      // actually been observed -- subscription success alone is not proof.
+      onReady: (): Promise<void> => recovery.waitUntilReady(startupReadyTimeoutMs),
       onEod: performDurableEodExit,
       onShutdown: (): Promise<void> => shutdown(requestedShutdownReason),
       onFault: (): Promise<void> => shutdown('FAULTED'),
@@ -528,6 +567,10 @@ async function run(): Promise<void> {
   await host.start();
 
   if (host.getState() !== 'RUNNING') return;
+  // host.start() has now successfully returned RUNNING: the persistent
+  // recovery listener may take over ownership of DEGRADED -> RUNNING for any
+  // later, genuine reconnect recovery.
+  startupComplete = true;
   console.log('Live paper-trading harness is RUNNING. It is subscribed to NIFTY only and will subscribe to an option only after an actionable signal. Press Ctrl+C to stop.');
   printStatus();
 }

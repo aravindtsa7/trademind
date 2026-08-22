@@ -97,6 +97,12 @@ class CurrentNiftyCeContracts {
     return found;
   }
 }
+/** Validates at the environment/config boundary, naming the offending variable, matching the style already used by ConnectionManager/MarketDataHealthMonitorService. */
+function positiveTimeoutMs(name: string, environmentValue: string | undefined, fallback: number): number {
+  const value = environmentValue === undefined ? fallback : Number(environmentValue);
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be a positive finite number.`);
+  return value;
+}
 async function run(): Promise<void> {
   if (process.env.SHADOW_ONLY !== 'true' || process.env.PAPER_TRADING_ONLY !== 'true')
     throw Error('V8 shadow requires SHADOW_ONLY=true and PAPER_TRADING_ONLY=true.');
@@ -158,6 +164,23 @@ async function run(): Promise<void> {
     counters = new V8ShadowRuntimeCounters();
   let closing = false,
     eod = false;
+  // Bounds the wait for the first accepted current-generation NIFTY event
+  // after subscribing on cold start. Reuses the same 45s figure
+  // MarketDataHealthMonitorService already treats as "stalled" for an
+  // established connection (MARKET_DATA_STALL_MS) -- long enough to absorb
+  // ordinary market-open subscription/auth latency without a false failure,
+  // bounded so a genuinely absent feed fails closed instead of hanging. On a
+  // genuinely silent feed during an active session, this bound -- not the
+  // health monitor's periodic stall check -- is what owns and reports the
+  // startup failure.
+  const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000);
+  // Before host.start() has successfully returned, host.start() itself is the
+  // sole owner of the initial RUNNING transition (via onReady ->
+  // recovery.waitUntilReady()). Calling host.recovered() from the persistent
+  // recovery listener too, while the host is still transiting through
+  // READY/DEGRADED during startup, races start()'s own unconditional RUNNING
+  // transition and produces an illegal RUNNING->RUNNING transition.
+  let startupComplete = false;
   const eodCoordinator = new NseSessionEodCoordinator();
   let host: StrategyHostLifecycle | undefined;
   const latest = new Map<
@@ -468,22 +491,51 @@ async function run(): Promise<void> {
     ]);
     void host?.fault(new Error('RECONNECT_FAILED'));
   });
+  // ConnectionManager emits 'connected' on every successful open, cold start
+  // and reconnect alike (and 'reconnected' fires immediately after it on a
+  // reconnect). handleInitialConnected() only has an effect the very first
+  // time it runs while recovery is still untouched, so this cannot reset or
+  // race the reconnect state machine driven by 'unexpectedDisconnect' /
+  // 'reconnected' above.
+  connection.on('connected', (d: { generationId: number }) => {
+    recovery.handleInitialConnected({ generationId: d.generationId });
+  });
   host = new StrategyHostLifecycle({
     strategyId: STRATEGY,
     runtimeId: 'shadow:v8:reclaim',
     eodCoordinator,
-    hooks: { warmup: () => undefined, onEod: () => shutdown('EOD'), onShutdown: () => shutdown('SIGINT'), onFault: () => shutdown('FAULTED') },
+    hooks: {
+      warmup: () => undefined,
+      // The historical fail-closed gate already ran above
+      // (evaluator.checkStartupReadiness). This is the LIVE gate: RUNNING
+      // (reason=MARKET_DATA_READY) must not be granted until an accepted,
+      // usable, current-generation NIFTY event has actually been observed.
+      onReady: async () => {
+        const ready = recovery.waitUntilReady(startupReadyTimeoutMs);
+        ready.catch(() => undefined); // observed even if subscribe() below throws first
+        await subscriptions.subscribe(NIFTY, MarketDataSubscriptionMode.FULL);
+        await ready;
+      },
+      onEod: () => shutdown('EOD'),
+      onShutdown: () => shutdown('SIGINT'),
+      onFault: () => shutdown('FAULTED'),
+    },
     log: (value) => console.log(`[STRATEGY_HOST_STATE] strategyId=${value.strategyId} runtimeId=${value.runtimeId} previous=${value.previous} state=${value.state} reason=${value.reason}`),
   });
+  // host.start() itself owns the initial RUNNING transition via its onReady
+  // hook; only a genuine post-startup recovery may call host.recovered() here,
+  // gated by startupComplete.
   recovery.on('stateChanged', (state) => {
     if (state === 'DEGRADED') void host?.degrade('MARKET_DATA_DEGRADED');
     if (state === 'READY') {
-      if (health.confirmRecoveryReady(recovery.getGenerationId())) void host?.recovered('MARKET_DATA_READY');
-      else connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');
+      if (!health.confirmRecoveryReady(recovery.getGenerationId())) {
+        connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');
+      } else if (startupComplete) {
+        void host?.recovered('MARKET_DATA_READY');
+      }
     }
     if (state === 'FAULTED') connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   });
-  await host.start();
   process.once('SIGINT', () => {
     void host?.shutdown('SIGINT');
   });
@@ -502,7 +554,9 @@ async function run(): Promise<void> {
   health.start();
   statusTimer = setInterval(emitStatus, 60_000);
   statusTimer.unref();
-  await subscriptions.subscribe(NIFTY, MarketDataSubscriptionMode.FULL);
+  await host.start();
+  if (host.getState() !== 'RUNNING') return;
+  startupComplete = true; // the persistent recovery listener may now own DEGRADED -> RUNNING for any later, genuine reconnect recovery
   console.log(
     `[V8_STARTUP] strategyId=${STRATEGY} shadowOnly=true paperOrders=false brokerOrders=false`,
   );

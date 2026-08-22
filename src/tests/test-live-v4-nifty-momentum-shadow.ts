@@ -30,6 +30,13 @@ const nifty = 'NSE_INDEX|Nifty 50';
 const journalPath = resolve(process.cwd(), process.env.V4_SHADOW_JOURNAL_PATH ?? 'artifacts/v4-nifty-momentum-shadow.jsonl');
 const formatter = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'medium', hourCycle: 'h23' });
 
+/** Validates at the environment/config boundary, naming the offending variable, matching the style already used by ConnectionManager/MarketDataHealthMonitorService. */
+function positiveTimeoutMs(name: string, environmentValue: string | undefined, fallback: number): number {
+  const value = environmentValue === undefined ? fallback : Number(environmentValue);
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be a positive finite number.`);
+  return value;
+}
+
 class ShadowWarmupTarget implements PaperStrategyWarmupTarget {
   private count = 0;
   seedHistoricalCandles(candles: readonly Candle[]): void { this.count = candles.length; }
@@ -65,6 +72,10 @@ async function run(): Promise<void> {
 
   const websocket = new MarketDataWebSocketClient(token); const connection = new ConnectionManager(token, websocket); const subscriptions = new SubscriptionManager(token, connection); const decoder = new ProtobufDecoder(); const ticks = new TickProcessor(); const candleEvents = new LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus, () => connection.getGenerationId()); const tracker = new V4MomentumShadowTrackerService(); const contracts = new CurrentNiftyPeContracts();
   let completed3m = 0; let opportunities = 0; let signals = 0; let closing = false; let eodStarted = false; let eodTimer: NodeJS.Timeout | undefined; let eodWatchdog: NodeJS.Timeout | undefined; let host: StrategyHostLifecycle | undefined;
+  // Bounds the wait for the first accepted current-generation NIFTY event after subscribing on cold start. Reuses the same 45s figure MarketDataHealthMonitorService already treats as "stalled" for an established connection (MARKET_DATA_STALL_MS). On a genuinely silent feed during an active session, this bound -- not the health monitor's periodic stall check -- is what owns and reports the startup failure.
+  const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000);
+  // Before host.start() has successfully returned, host.start() itself is the sole owner of the initial RUNNING transition (via onReady -> recovery.waitUntilReady()). Calling host.recovered() from the persistent recovery listener too, while the host is still transiting through READY/DEGRADED during startup, races start()'s own unconditional RUNNING transition and produces an illegal RUNNING->RUNNING transition.
+  let startupComplete = false;
   type RecoveryWarmup = Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>;
   const recovery = new MarketDataRecoveryCoordinatorService<RecoveryWarmup>({
     backfill: async () => {
@@ -107,10 +118,19 @@ async function run(): Promise<void> {
   connection.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => { recovery.handleUnexpectedDisconnect(details); candleEvents.stop(); forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_DISCONNECTED', ['WEBSOCKET_DISCONNECTED'], { code: details.code ?? null, reason: details.reason ?? null }); });
   connection.on('reconnected', (details: { downtimeMs?: number; generationId?: number }) => { forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_RECONNECTED', ['WEBSOCKET_RECONNECTED'], { downtimeMs: details.downtimeMs ?? null }); recovery.handleReconnected(details); });
   connection.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => { recovery.fault('RECONNECT_FAILED'); forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null }); void host?.fault(new Error('RECONNECT_FAILED')); });
-  host = new StrategyHostLifecycle({ strategyId:v4MomentumShadowStrategyId, runtimeId:'shadow:v4:momentum', eodCoordinator, hooks:{warmup:()=>undefined,onEod:()=>finishEod(),onShutdown:()=>shutdown(),onFault:()=>shutdown('FAULTED')}, log:v=>console.log(`[STRATEGY_HOST_STATE] strategyId=${v.strategyId} runtimeId=${v.runtimeId} previous=${v.previous} state=${v.state} reason=${v.reason}`) });
-  recovery.on('stateChanged',(state)=>{if(state==='DEGRADED')void host?.degrade('MARKET_DATA_DEGRADED');if(state==='READY'){if(health.confirmRecoveryReady(recovery.getGenerationId()))void host?.recovered('MARKET_DATA_READY');else connection.failRecovery(recovery.getGenerationId(),'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');}if(state==='FAULTED')connection.failRecovery(recovery.getGenerationId(),'RECOVERY_COORDINATOR_FAULTED');}); await host.start();
+  // ConnectionManager emits 'connected' on every successful open, cold start and reconnect alike ('reconnected' fires immediately after it on a reconnect). handleInitialConnected() only has an effect the very first time it runs, so this cannot reset or race the reconnect state machine driven by 'unexpectedDisconnect' / 'reconnected' above.
+  connection.on('connected', (details: { generationId: number }) => { recovery.handleInitialConnected({ generationId: details.generationId }); });
+  host = new StrategyHostLifecycle({ strategyId:v4MomentumShadowStrategyId, runtimeId:'shadow:v4:momentum', eodCoordinator, hooks:{warmup:()=>undefined,
+    // Historical warmup already ran above. This is the LIVE gate: RUNNING (reason=MARKET_DATA_READY) must not be granted until an accepted, usable, current-generation NIFTY event has actually been observed.
+    onReady: async () => { const ready = recovery.waitUntilReady(startupReadyTimeoutMs); ready.catch(() => undefined); await subscriptions.subscribe(nifty, MarketDataSubscriptionMode.FULL); await ready; },
+    onEod:()=>finishEod(),onShutdown:()=>shutdown(),onFault:()=>shutdown('FAULTED')}, log:v=>console.log(`[STRATEGY_HOST_STATE] strategyId=${v.strategyId} runtimeId=${v.runtimeId} previous=${v.previous} state=${v.state} reason=${v.reason}`) });
+  // host.start() itself owns the initial RUNNING transition via its onReady hook; only a genuine post-startup recovery may call host.recovered() here, gated by startupComplete.
+  recovery.on('stateChanged',(state)=>{if(state==='DEGRADED')void host?.degrade('MARKET_DATA_DEGRADED');if(state==='READY'){if(!health.confirmRecoveryReady(recovery.getGenerationId()))connection.failRecovery(recovery.getGenerationId(),'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');else if(startupComplete)void host?.recovered('MARKET_DATA_READY');}if(state==='FAULTED')connection.failRecovery(recovery.getGenerationId(),'RECOVERY_COORDINATOR_FAULTED');});
   process.once('SIGINT', () => { void host?.shutdown('SIGINT'); }); process.once('SIGTERM', () => { void host?.shutdown('SIGTERM'); });
-  connection.on('message', onMessage); eventBus.on('market.tick', onTick); eventBus.on('market.candle.completed', onCandle); candleEvents.start(); health.start(); await subscriptions.subscribe(nifty, MarketDataSubscriptionMode.FULL);
+  connection.on('message', onMessage); eventBus.on('market.tick', onTick); eventBus.on('market.candle.completed', onCandle); candleEvents.start(); health.start();
+  await host.start();
+  if (host.getState() !== 'RUNNING') return;
+  startupComplete = true; // the persistent recovery listener may now own DEGRADED -> RUNNING for any later, genuine reconnect recovery
   console.log(`[V4_STARTUP] strategyId=${v4MomentumShadowStrategyId} shadowOnly=true paperOrders=false brokerOrders=false journal=${journalPath}`);
 }
 function isNifty(value: string): boolean { return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === 'NIFTY50' || value.trim().toUpperCase() === 'NIFTY'; }
