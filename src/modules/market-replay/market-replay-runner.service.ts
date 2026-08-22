@@ -58,6 +58,8 @@ export default class MarketReplayRunnerService {
     let outOfOrderEvents = 0;
     let reconnects = 0;
     let eodEvents = 0;
+    let marketEventsEncountered = 0;
+    let marketEventsGenerationMismatch = 0;
     let v2Evaluations = 0, v2Signals = 0, v4Evaluations = 0, v4Signals = 0, v8Evaluations = 0, v8Signals = 0;
     let riskApprovals = 0, riskDenials = 0, paperOutcomes = 0, shadowOutcomes = 0;
     let lastReceivedMs = Number.NEGATIVE_INFINITY;
@@ -73,23 +75,43 @@ export default class MarketReplayRunnerService {
     // market event, so the initial generation is derived from that market
     // event's own recorded connectionGenerationId and receivedTimestamp --
     // never hard-coded, and never DeterministicReplayClock's default epoch 0.
-    // If the artifact instead opens with a recorded DISCONNECT before any
-    // market event, seeding here would suppress that recorded recovery
-    // episode: the coordinator would reject the (typically generation-0)
-    // DISCONNECT as stale against a pre-seeded generation, and the RECONNECT
-    // that follows it as already-current, silently skipping backfill. So
-    // seeding is skipped entirely in that case and the recorded episode is
-    // left to drive handleUnexpectedDisconnect/handleReconnected exactly as
-    // it would live.
+    // If the artifact instead opens with a recorded DISCONNECT and/or
+    // RECONNECT before any market event, seeding here would suppress that
+    // recorded recovery episode: the coordinator would reject the (typically
+    // generation-0) DISCONNECT as stale against a pre-seeded generation, and
+    // treat the RECONNECT that follows it as already-current, silently
+    // skipping backfill -- or, for a RECONNECT-first artifact (e.g. a
+    // MID_SESSION_RECOVERY slice taken after its DISCONNECT), pre-seed the
+    // exact generation the loop's own RECONNECT handler is about to process,
+    // which then advances the generation a second time and strands every
+    // following recorded-generation tick as "stale". So seeding is skipped
+    // entirely whenever either event type precedes the first market event,
+    // and the recorded episode is left to drive
+    // handleUnexpectedDisconnect/handleReconnected exactly as it would live
+    // (see the RECONNECT branch below for the DISCONNECT-less case).
     const firstMarketEventIndex = frozen.findIndex((event) => event.eventType === 'TICK' || event.eventType === 'DEPTH' || event.eventType === 'FRESH_TICK_READY');
     const recoveryEpisodeRecordedBeforeFirstMarketEvent = frozen
       .slice(0, firstMarketEventIndex === -1 ? frozen.length : firstMarketEventIndex)
-      .some((event) => event.eventType === 'DISCONNECT');
+      .some((event) => event.eventType === 'DISCONNECT' || event.eventType === 'RECONNECT');
     const firstMarketEvent = firstMarketEventIndex === -1 ? undefined : frozen[firstMarketEventIndex];
-    if (!recoveryEpisodeRecordedBeforeFirstMarketEvent && firstMarketEvent && typeof firstMarketEvent.connectionGenerationId === 'number') {
-      recovery.handleInitialConnected({ generationId: firstMarketEvent.connectionGenerationId, connectedAt: new Date(firstMarketEvent.receivedTimestamp) });
-      // Keeps the runner's own stale-generation filter (below, over `activeGeneration`) consistent with the generation just seeded into the coordinator.
-      activeGeneration = firstMarketEvent.connectionGenerationId;
+    // A FRESH_TICK_READY is only ever produced (recordMarketReplayEvent inside
+    // MarketDataRecoveryCoordinatorService.handleLiveTick) once the coordinator is already inside
+    // a recovery/readiness episode -- it is never evidence of a genuine first connection. So even
+    // with no recorded DISCONNECT/RECONNECT ahead of it, a leading FRESH_TICK_READY must not
+    // receive the vacuous cold-start continuity below; it drives its own synthetic recovery
+    // episode in the main loop instead (see the leading-FRESH_TICK_READY branch there).
+    const firstMarketEventIsLeadingFreshTickReady = !recoveryEpisodeRecordedBeforeFirstMarketEvent && firstMarketEvent?.eventType === 'FRESH_TICK_READY';
+    const leadingFreshTickReadyIndex = firstMarketEventIsLeadingFreshTickReady ? firstMarketEventIndex : -1;
+    if (!recoveryEpisodeRecordedBeforeFirstMarketEvent && firstMarketEvent && !firstMarketEventIsLeadingFreshTickReady) {
+      if (isValidReplayGenerationId(firstMarketEvent.connectionGenerationId)) {
+        recovery.handleInitialConnected({ generationId: firstMarketEvent.connectionGenerationId, connectedAt: new Date(firstMarketEvent.receivedTimestamp) });
+        // Keeps the runner's own stale-generation filter (below, over `activeGeneration`) consistent with the generation just seeded into the coordinator.
+        activeGeneration = firstMarketEvent.connectionGenerationId;
+      } else {
+        // A missing/invalid/sentinel-0 generation on the very first market event cannot seed a trusted generation.
+        // Left unseeded, the coordinator never reaches READY, so this must be visible rather than reading as a valid empty session.
+        warnings.push(`INVALID_REPLAY_GENERATION:${firstMarketEvent.eventType}:${firstMarketEvent.eventId}`);
+      }
     }
 
     const acceptStrategyOutput = (value: MarketReplayStrategyOutput | void): void => {
@@ -151,6 +173,8 @@ export default class MarketReplayRunnerService {
         continue;
       }
       seenMarketEventKeys.add(marketKey);
+      const isMarketEvent = event.eventType === 'TICK' || event.eventType === 'DEPTH' || event.eventType === 'FRESH_TICK_READY';
+      if (isMarketEvent) marketEventsEncountered += 1;
 
       // EOD is session-scoped rather than socket-generation-scoped.
       if (event.eventType === 'EOD') {
@@ -159,7 +183,54 @@ export default class MarketReplayRunnerService {
         continue;
       }
 
-      if (event.connectionGenerationId !== null && event.connectionGenerationId < activeGeneration) {
+      // A leading FRESH_TICK_READY (see the pre-loop comment above) drives its own synthetic
+      // recovery episode here, exactly like a leading RECONNECT, using its own recorded
+      // generation as the source of truth -- never a guessed/derived one. This must run before
+      // the generation-mismatch check below so that check sees the generation this event just
+      // established, not the pre-loop default of 0.
+      if (index === leadingFreshTickReadyIndex) {
+        if (!isValidReplayGenerationId(event.connectionGenerationId)) {
+          warnings.push(`INVALID_REPLAY_GENERATION:FRESH_TICK_READY:${event.eventId}`);
+          output.push(`ignored:invalid-generation:${event.eventId}`);
+          continue;
+        }
+        reconnects += 1;
+        if (recovery.getState() !== 'RECONNECTING') recovery.handleUnexpectedDisconnect({});
+        activeGeneration = event.connectionGenerationId;
+        recovery.handleReconnected({ generationId: activeGeneration });
+        await yieldToRecovery();
+      }
+
+      // Market events (TICK/DEPTH/FRESH_TICK_READY) must carry an explicitly valid recorded
+      // generation before that generation is trusted for anything -- a null/undefined/fractional/
+      // non-positive connectionGenerationId must never inherit generation ownership through a
+      // `?? activeGeneration` fallback further down. Replay must not fabricate provenance a
+      // recorded event never actually carried, the same way a null/invalid RECONNECT or leading
+      // FRESH_TICK_READY generation is already rejected above rather than defaulted.
+      if (isMarketEvent && !isValidReplayGenerationId(event.connectionGenerationId)) {
+        marketEventsGenerationMismatch += 1;
+        warnings.push(`INVALID_REPLAY_GENERATION:${event.eventType}:${event.eventId}`);
+        output.push(`ignored:invalid-generation:${event.eventId}`);
+        continue;
+      }
+      // Only once the recorded generation is proven valid can it be compared against
+      // activeGeneration under the exact strict-equality contract
+      // MarketDataRecoveryCoordinatorService.handleLiveTick itself enforces via
+      // isCurrentLiveGeneration. A generation-ahead event (no recorded RECONNECT ever established
+      // it) is just as invalid as a generation-behind one, and both must be visible -- not just the
+      // coarser "less than" case the coordinator's own gate ends up rejecting silently for events
+      // this runner's own filter had let through.
+      if (isMarketEvent && event.connectionGenerationId !== activeGeneration) {
+        marketEventsGenerationMismatch += 1;
+        warnings.push(`MARKET_EVENT_GENERATION_MISMATCH:${event.eventType}:${event.eventId}:${event.connectionGenerationId}:${activeGeneration}`);
+        output.push(`ignored:generation-mismatch:${event.eventId}:${event.connectionGenerationId}`);
+        continue;
+      }
+
+      // Non-market, non-RECONNECT events (DISCONNECT/SUBSCRIPTION_*/CONNECTION_STATE/BACKFILL_*)
+      // keep the original coarse "recorded generation behind the active one" rejection; RECONNECT
+      // has its own full generation-relationship handling below, and market events are handled above.
+      if (event.eventType !== 'RECONNECT' && !isMarketEvent && event.connectionGenerationId !== null && event.connectionGenerationId < activeGeneration) {
         output.push(`ignored:stale-generation:${event.eventId}:${event.connectionGenerationId}`);
         continue;
       }
@@ -176,15 +247,49 @@ export default class MarketReplayRunnerService {
         continue;
       }
       if (event.eventType === 'RECONNECT') {
+        if (!isValidReplayGenerationId(event.connectionGenerationId)) {
+          warnings.push(`INVALID_REPLAY_GENERATION:RECONNECT:${event.eventId}`);
+          output.push(`ignored:invalid-generation:${event.eventId}`);
+          continue;
+        }
+        const recordedGeneration = event.connectionGenerationId;
+        // The recorded generation is the source of truth -- never activeGeneration + 1. A real
+        // recorded RECONNECT is always strictly greater than the generation it supersedes (proven
+        // by ConnectionManager's own `generationId += 1` on every successful connect); anything
+        // else can only come from a malformed/duplicated/corrupted artifact and must not be allowed
+        // to fabricate or silently swallow generation ownership.
+        if (recordedGeneration < activeGeneration) {
+          warnings.push(`STALE_RECONNECT_GENERATION:${event.eventId}:${recordedGeneration}:${activeGeneration}`);
+          output.push(`ignored:stale-reconnect:${event.eventId}:${recordedGeneration}`);
+          continue;
+        }
+        if (recordedGeneration === activeGeneration) {
+          warnings.push(`DUPLICATE_RECONNECT_GENERATION:${event.eventId}:${recordedGeneration}`);
+          output.push(`ignored:duplicate-reconnect:${event.eventId}:${recordedGeneration}`);
+          continue;
+        }
         reconnects += 1;
-        activeGeneration = Math.max(activeGeneration + 1, event.connectionGenerationId ?? 0);
+        // A recorded RECONNECT is only ever emitted after a real disconnect
+        // (ConnectionManager derives it from `wasReconnecting`), even when
+        // that DISCONNECT itself is not present in this artifact -- e.g. a
+        // MID_SESSION_RECOVERY slice taken after the disconnect. handleReconnected
+        // only takes effect while the coordinator is RECONNECTING, so when no
+        // DISCONNECT in this run has moved it there yet, synthesize that
+        // transition here so this RECONNECT still starts a real recovery
+        // episode (backfill included) at its own recorded generation instead
+        // of being pre-empted or silently ignored.
+        if (recovery.getState() !== 'RECONNECTING') recovery.handleUnexpectedDisconnect({});
+        activeGeneration = recordedGeneration;
         recovery.handleReconnected({ generationId: activeGeneration });
         await yieldToRecovery();
         continue;
       }
       if (event.eventType === 'BACKFILL_STARTED' || event.eventType === 'BACKFILL_COMPLETED' || event.eventType === 'CONNECTION_STATE') continue;
       if (event.eventType === 'FRESH_TICK_READY') {
-        recovery.handleLiveTick(receivedAt, event.connectionGenerationId ?? activeGeneration);
+        // event.connectionGenerationId is already proven valid and === activeGeneration by the
+        // validation/equality gate above -- activeGeneration is used directly rather than falling
+        // back through `??`, which would let a missing generation silently inherit ownership.
+        recovery.handleLiveTick(receivedAt, activeGeneration);
         continue;
       }
       if (event.eventType === 'TICK') {
@@ -193,13 +298,13 @@ export default class MarketReplayRunnerService {
           output.push(`ignored:unsubscribed:${event.instrumentKey ?? 'unknown'}`);
           continue;
         }
-        const generationId = event.connectionGenerationId ?? activeGeneration;
-        recovery.handleLiveTick(receivedAt, generationId);
+        // See the FRESH_TICK_READY comment above: generation is already proven valid and current.
+        recovery.handleLiveTick(receivedAt, activeGeneration);
         processor.process({
           type: 'live_feed',
           currentTs: event.sourceTimestamp ?? event.receivedTimestamp,
           feeds: { [event.instrumentKey]: { ltpc: { ltp: numberOrUndefined(event.payload.ltp) } } },
-        } as never, generationId);
+        } as never, activeGeneration);
         continue;
       }
       if (event.eventType === 'DEPTH') {
@@ -207,9 +312,18 @@ export default class MarketReplayRunnerService {
           instrumentKey: event.instrumentKey,
           timestamp: event.sourceTimestamp ?? event.receivedTimestamp,
           quotes: structuredClone((event.payload.quotes as unknown[] | undefined) ?? []),
-          generationId: event.connectionGenerationId ?? activeGeneration,
+          // See the FRESH_TICK_READY comment above: generation is already proven valid and current.
+          generationId: activeGeneration,
         });
       }
+    }
+
+    // If every market event this artifact recorded was rejected purely for a stale/mismatched
+    // generation, the result must not be indistinguishable from a genuinely quiet, valid session.
+    // Counts both generation-behind and generation-ahead rejects -- either direction means this
+    // artifact's market data never matched a generation this runner ever actually established.
+    if (marketEventsEncountered > 0 && marketEventsGenerationMismatch === marketEventsEncountered) {
+      warnings.push('ALL_MARKET_EVENTS_DISCARDED_STALE_GENERATION');
     }
 
     candles.finishSession();
@@ -260,6 +374,12 @@ export default class MarketReplayRunnerService {
 }
 
 function numberOrUndefined(value: unknown): number | undefined { return typeof value === 'number' && Number.isFinite(value) ? value : undefined; }
+// A live connection generation is always assigned by ConnectionManager's `generationId += 1` on
+// every successful connect (including the first), so a real RECONNECT/proven-first-market-event
+// generation is always a positive integer greater than the 0 "never connected" sentinel, and never
+// fractional. Treating 0, a fraction, or a non-finite value as trusted here would let a
+// malformed/corrupted artifact silently establish generation ownership.
+function isValidReplayGenerationId(value: unknown): value is number { return typeof value === 'number' && Number.isInteger(value) && value > 0; }
 function yieldToRecovery(): Promise<void> { return new Promise((resolve) => setImmediate(resolve)); }
 function isReplayEventType(value: unknown): boolean { return typeof value === 'string' && ['TICK','DEPTH','CONNECTION_STATE','DISCONNECT','RECONNECT','SUBSCRIPTION_RESTORED','SUBSCRIPTION_INTENT','BACKFILL_STARTED','BACKFILL_COMPLETED','FRESH_TICK_READY','EOD'].includes(value); }
 function traceComponent(trace: string): string { return trace.split(':', 1)[0] || 'unknown'; }
