@@ -433,7 +433,14 @@ async function run(): Promise<void> {
       console.error('[PAPER_EXECUTION_DURABILITY_FAILURE] pending durable exit transaction did not settle before shutdown timeout; reconciliation is required.');
     }
     const reconciliationRequired = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING);
-    const shutdownStatus = durableExitDrained && !reconciliationRequired ? 'COMPLETED' : 'RECONCILIATION_REQUIRED';
+    // Precedence: an unresolved durable-execution problem is real evidence
+    // and must never be overwritten by a generic fault status; a FAULTED
+    // host with otherwise clean durable state must never be journaled as a
+    // normal completed EOD (reason is 'FAULTED' only from host.fault()'s
+    // onFault hook -- see StrategyHostLifecycle.fault(), the sole caller).
+    const shutdownStatus = !durableExitDrained || reconciliationRequired
+      ? 'RECONCILIATION_REQUIRED'
+      : reason === 'FAULTED' ? 'FAULTED' : 'COMPLETED';
     const portfolioSnapshot = portfolio.logSessionSummary(istDate(new Date()));
     forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: shutdownStatus === 'COMPLETED', eodReason: reason, status: shutdownStatus, indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null } });
     if (shutdownStatus === 'COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });

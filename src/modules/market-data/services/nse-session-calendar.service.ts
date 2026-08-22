@@ -109,18 +109,50 @@ export class NseSessionEodCoordinator {
 
   schedule(action: () => Promise<void> | void): ReturnType<typeof setTimeout> {
     this.cancelScheduled();
-    this.timer = this.clock.setTimeout(() => {
-      this.timer = undefined;
-      void this.runOnce(this.clock.now(), action);
-    }, this.calendar.millisecondsUntilClose(this.clock.now()));
-    this.timer.unref?.();
-    return this.timer;
+    return this.armTimer(action, this.calendar.millisecondsUntilClose(this.clock.now()));
   }
 
   cancelScheduled(): void {
     if (!this.timer) return;
     this.clock.clearTimeout(this.timer);
     this.timer = undefined;
+  }
+
+  /** Sole owner of `this.timer`; arms exactly one live timer per call. */
+  private armTimer(action: () => Promise<void> | void, delayMs: number): ReturnType<typeof setTimeout> {
+    let fired = false;
+    const handle = this.clock.setTimeout(() => {
+      // A cleared/replaced timer's captured closure must never act again,
+      // even if a test or a stale platform callback invokes it more than
+      // once -- only the first live firing of this specific timer may run.
+      if (fired) return;
+      fired = true;
+      this.timer = undefined;
+      this.handleFired(action);
+    }, delayMs);
+    handle.unref?.();
+    this.timer = handle;
+    return handle;
+  }
+
+  /**
+   * The wall clock can observe a firing that is a few hundred milliseconds
+   * short of the canonical IST close (clock adjustment, a hostile/replay
+   * clock, or borderline scheduling), which must never silently drop EOD.
+   * Re-arm exactly one follow-up timer for the remaining delay instead.
+   */
+  private handleFired(action: () => Promise<void> | void): void {
+    const now = this.clock.now();
+    if (this.calendar.isAtOrAfterClose(now)) {
+      void this.runOnce(now, action);
+      return;
+    }
+    const remaining = this.calendar.millisecondsUntilClose(now);
+    // millisecondsUntilClose is 0 on a non-trading day (no close boundary
+    // exists there), which would otherwise re-arm at zero delay forever;
+    // only a genuine positive remaining delay may re-arm.
+    if (remaining <= 0) return;
+    this.armTimer(action, remaining);
   }
 }
 

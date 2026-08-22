@@ -20,6 +20,49 @@ test('V8 host EOD settles, summarizes, clears timers, unsubscribes and disconnec
 test('V8 host SIGINT and EOD race retain one cleanup path',async()=>{const {host,counts}=v8HarnessLifecycle();await host.start();await Promise.all([host.eod('EOD'),host.shutdown('SIGINT')]);assert.equal(host.getState(),'STOPPED');assert.equal(counts.summary,1);assert.equal(counts.unsubscribe,1);assert.equal(counts.disconnect,1);});
 test('V8 host fault from reconnect exhaustion blocks evaluation and does not double-clean',async()=>{const {host,counts}=v8HarnessLifecycle();await host.start();await host.fault(new Error('RECONNECT_FAILED'));await host.shutdown('SIGINT');assert.equal(host.getState(),'FAULTED');assert.equal(host.canEvaluate(),false);assert.equal(counts.summary,1);assert.equal(counts.unsubscribe,1);assert.equal(counts.disconnect,1);});
 
+/**
+ * Fix B harness: mirrors src/tests/test-live-v8-nifty-bullish-reclaim-shadow.ts's
+ * shutdown() exactly -- onEod calls shutdown('EOD'), onShutdown calls
+ * shutdown('SIGINT'), onFault calls shutdown('FAULTED')
+ * (StrategyHostLifecycle.fault() is the only caller of onFault, and never
+ * calls onEod/onShutdown for a faulted host, so 'FAULTED' is a reliable
+ * signal, not string-sniffing). ZERO_ORDER/SHADOW_ONLY flags are unrelated
+ * to this fix and are left untouched in production; this harness omits them
+ * since it only proves the status/sessionCompleted branch.
+ */
+function v8WithSummary(){
+  const summaries:Array<{status:string;sessionCompleted:boolean;eodReason:string}>=[];
+  const cleanShutdownEvents:string[]=[];
+  let closing=false;
+  const shutdown=(reason:string):void=>{if(closing)return;closing=true;const faulted=reason==='FAULTED';summaries.push({status:faulted?'FAULTED':'COMPLETED',sessionCompleted:!faulted,eodReason:reason});if(!faulted)cleanShutdownEvents.push(reason);};
+  const host=new StrategyHostLifecycle({strategyId:'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW',runtimeId:'shadow:v8:reclaim',hooks:{warmup:()=>undefined,onEod:()=>shutdown('EOD'),onShutdown:()=>shutdown('SIGINT'),onFault:()=>shutdown('FAULTED')}});
+  return {host,summaries,cleanShutdownEvents};
+}
+
+test('V8 fault-journal truthfulness: FAULTED host journals status FAULTED, sessionCompleted=false, exactly one SUMMARY, no CLEAN_SHUTDOWN',async()=>{
+  const x=v8WithSummary();
+  await x.host.start();
+  await x.host.fault(new Error('RECONNECT_FAILED'));
+  assert.equal(x.host.getState(),'FAULTED');
+  assert.equal(x.summaries.length,1);
+  assert.deepEqual(x.summaries[0],{status:'FAULTED',sessionCompleted:false,eodReason:'FAULTED'});
+  assert.deepEqual(x.cleanShutdownEvents,[]);
+  // No second SUMMARY from a later eod()/shutdown() call.
+  await x.host.eod('LATE_TICK');
+  await x.host.shutdown('SIGINT');
+  assert.equal(x.summaries.length,1);
+});
+
+test('V8 fault-journal truthfulness positive control: normal EOD still journals status COMPLETED, sessionCompleted=true, exactly one SUMMARY plus CLEAN_SHUTDOWN',async()=>{
+  const x=v8WithSummary();
+  await x.host.start();
+  await x.host.eod('EOD');
+  assert.equal(x.host.getState(),'STOPPED');
+  assert.equal(x.summaries.length,1);
+  assert.deepEqual(x.summaries[0],{status:'COMPLETED',sessionCompleted:true,eodReason:'EOD'});
+  assert.deepEqual(x.cleanShutdownEvents,['EOD']);
+});
+
 test('F: an evaluator exception thrown while processing a completed candle is contained by the async listener, causes exactly one FAULTED transition, and blocks all later evaluation without leaking an unhandledRejection', async () => {
   const { host, counts } = v8HarnessLifecycle();
   await host.start();

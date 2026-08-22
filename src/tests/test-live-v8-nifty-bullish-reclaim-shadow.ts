@@ -441,6 +441,10 @@ async function run(): Promise<void> {
     if (closing) return;
     closing = true;
     eod = true;
+    // reason is 'FAULTED' only from host.fault()'s onFault hook (see
+    // StrategyHostLifecycle.fault(), the sole caller) -- a faulted shutdown
+    // must never journal a normal completed EOD summary.
+    const faulted = reason === 'FAULTED';
     if (statusTimer) clearInterval(statusTimer);
     health.stop();
     recovery.stop();
@@ -451,15 +455,15 @@ async function run(): Promise<void> {
       tradingDate: date,
       strategyId: STRATEGY,
       fingerprint,
-      sessionCompleted: true,
+      sessionCompleted: !faulted,
       eodReason: reason,
       signals,
       resolvedTrades: 0,
       unresolvedTrades: tracker.getOpenCount(),
-      status: 'COMPLETED',
+      status: faulted ? 'FAULTED' : 'COMPLETED',
       flags: ['SHADOW_ONLY', 'ZERO_ORDER'],
     });
-    journal.appendEvent(date, 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
+    if (!faulted) journal.appendEvent(date, 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     candles.stop();
     eventBus.off('market.tick', handleTick);
     eventBus.off('market.depth', handleDepth);
