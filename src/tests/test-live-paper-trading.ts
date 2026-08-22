@@ -29,7 +29,7 @@ import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-gener
 import { cacheCurrentLiveDepth, getCurrentLiveDepth } from '../modules/market-data/utils/live-depth-cache';
 import { cacheCurrentLiveInstrumentValue, getCurrentLiveInstrumentValue, LiveInstrumentValue } from '../modules/market-data/utils/live-instrument-value-cache';
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
-import { ForwardValidationJournal, normalizeQuote, strategyFingerprint } from '../modules/research-validation';
+import { ForwardValidationJournal, normalizeQuote, resolveSessionOutcome, strategyFingerprint } from '../modules/research-validation';
 import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
 import PaperEntryQuoteWaiterService from '../modules/paper-trading/services/paper-entry-quote-waiter.service';
 import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from '../modules/paper-trading/services/paper-portfolio.service';
@@ -241,6 +241,21 @@ async function run(): Promise<void> {
   console.log(`[paper.strategy.warmup] source=${warmupResult.currentDaySource} attempts=${warmupResult.intradayBackfillAttempts} lagMinutes=${warmupResult.currentDayLagMinutes ?? 'N/A'} retryReason=${warmupResult.intradayRetryReason ?? 'NONE'} now=${formatIst(warmupResult.currentIstTimestamp)} rowsReturned=${warmupResult.currentDayRowsReturned} firstCurrent=${warmupResult.firstCurrentDayCandle ? formatIst(warmupResult.firstCurrentDayCandle) : 'NONE'} lastCurrent=${warmupResult.lastCurrentDayCandle ? formatIst(warmupResult.lastCurrentDayCandle) : 'NONE'} latest1m=${warmupResult.latestUnderlyingHistoricalCandle ? formatIst(warmupResult.latestUnderlyingHistoricalCandle) : 'NONE'} expected1m=${warmupResult.latestCompletedOneMinuteExpected ? formatIst(warmupResult.latestCompletedOneMinuteExpected) : 'NONE'} latest5m=${warmupResult.latestCompletedFiveMinuteAvailable ? formatIst(warmupResult.latestCompletedFiveMinuteAvailable) : 'NONE'} ageMinutes=${warmupResult.warmupAgeMinutes?.toFixed(2) ?? 'N/A'} missingMinutes=${warmupResult.currentDayMissingMinuteCount} duplicates=${warmupResult.currentDayDuplicateCount} ready=${warmupResult.ready} reason=${warmupResult.freshnessReason}`);
   if (!warmupResult.ready) {
     console.log('[paper.strategy.warmup] Startup blocked: current-day historical warm-up is not fresh. No V1/V2 entries will be evaluated.');
+    const forwardDate = istDate(new Date());
+    const outcome = resolveSessionOutcome({
+      reason: warmupResult.freshnessReason,
+      invalidData: true,
+    });
+    forwardJournal.append({
+      recordType: 'SUMMARY',
+      tradingDate: forwardDate,
+      strategyId: 'V2_TREND_DOWN_PE',
+      fingerprint: forwardFingerprint,
+      sessionCompleted: outcome.sessionCompleted,
+      eodReason: warmupResult.freshnessReason,
+      status: outcome.status,
+      flags: ['FORWARD_EVALUATION_ONLY', 'STARTUP_DATA_BLOCKED'],
+    });
     return;
   }
   const strategyResults = new Map<number, LivePaperStrategyResult>();
@@ -433,17 +448,14 @@ async function run(): Promise<void> {
       console.error('[PAPER_EXECUTION_DURABILITY_FAILURE] pending durable exit transaction did not settle before shutdown timeout; reconciliation is required.');
     }
     const reconciliationRequired = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING);
-    // Precedence: an unresolved durable-execution problem is real evidence
-    // and must never be overwritten by a generic fault status; a FAULTED
-    // host with otherwise clean durable state must never be journaled as a
-    // normal completed EOD (reason is 'FAULTED' only from host.fault()'s
-    // onFault hook -- see StrategyHostLifecycle.fault(), the sole caller).
-    const shutdownStatus = !durableExitDrained || reconciliationRequired
-      ? 'RECONCILIATION_REQUIRED'
-      : reason === 'FAULTED' ? 'FAULTED' : 'COMPLETED';
+    const outcome = resolveSessionOutcome({
+      reason,
+      reconciliationRequired,
+      durableExitDrained,
+    });
     const portfolioSnapshot = portfolio.logSessionSummary(istDate(new Date()));
-    forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: shutdownStatus === 'COMPLETED', eodReason: reason, status: shutdownStatus, indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null } });
-    if (shutdownStatus === 'COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
+    forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: outcome.sessionCompleted, eodReason: reason, status: outcome.status, indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null } });
+    if (outcome.status === 'VALID_COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     console.log(`\nGraceful shutdown requested (${reason}).`);
     clearInterval(statusTimer);
 
@@ -555,7 +567,7 @@ async function run(): Promise<void> {
       // actually been observed -- subscription success alone is not proof.
       onReady: (): Promise<void> => recovery.waitUntilReady(startupReadyTimeoutMs),
       onEod: performDurableEodExit,
-      onShutdown: (): Promise<void> => shutdown(requestedShutdownReason),
+      onShutdown: (reason): Promise<void> => shutdown(reason ?? requestedShutdownReason),
       onFault: (): Promise<void> => shutdown('FAULTED'),
     },
     log: (event): void => {

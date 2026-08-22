@@ -30,12 +30,19 @@ test('V8 host fault from reconnect exhaustion blocks evaluation and does not dou
  * to this fix and are left untouched in production; this harness omits them
  * since it only proves the status/sessionCompleted branch.
  */
+import { resolveSessionOutcome } from '../modules/research-validation';
+
 function v8WithSummary(){
   const summaries:Array<{status:string;sessionCompleted:boolean;eodReason:string}>=[];
   const cleanShutdownEvents:string[]=[];
   let closing=false;
-  const shutdown=(reason:string):void=>{if(closing)return;closing=true;const faulted=reason==='FAULTED';summaries.push({status:faulted?'FAULTED':'COMPLETED',sessionCompleted:!faulted,eodReason:reason});if(!faulted)cleanShutdownEvents.push(reason);};
-  const host=new StrategyHostLifecycle({strategyId:'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW',runtimeId:'shadow:v8:reclaim',hooks:{warmup:()=>undefined,onEod:()=>shutdown('EOD'),onShutdown:()=>shutdown('SIGINT'),onFault:()=>shutdown('FAULTED')}});
+  const shutdown=(reason:string):void=>{
+    if(closing)return;closing=true;
+    const outcome=resolveSessionOutcome({reason});
+    summaries.push({status:outcome.status,sessionCompleted:outcome.sessionCompleted,eodReason:reason});
+    if(outcome.status==='VALID_COMPLETED')cleanShutdownEvents.push(reason);
+  };
+  const host=new StrategyHostLifecycle({strategyId:'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW',runtimeId:'shadow:v8:reclaim',hooks:{warmup:()=>undefined,onEod:(reason)=>shutdown(reason??'EOD'),onShutdown:(reason)=>shutdown(reason??'SIGINT'),onFault:()=>shutdown('FAULTED')}});
   return {host,summaries,cleanShutdownEvents};
 }
 
@@ -53,14 +60,56 @@ test('V8 fault-journal truthfulness: FAULTED host journals status FAULTED, sessi
   assert.equal(x.summaries.length,1);
 });
 
-test('V8 fault-journal truthfulness positive control: normal EOD still journals status COMPLETED, sessionCompleted=true, exactly one SUMMARY plus CLEAN_SHUTDOWN',async()=>{
+test('V8 outcome truthfulness positive control: normal EOD still journals status VALID_COMPLETED, sessionCompleted=true, exactly one SUMMARY plus CLEAN_SHUTDOWN',async()=>{
   const x=v8WithSummary();
   await x.host.start();
   await x.host.eod('EOD');
   assert.equal(x.host.getState(),'STOPPED');
   assert.equal(x.summaries.length,1);
-  assert.deepEqual(x.summaries[0],{status:'COMPLETED',sessionCompleted:true,eodReason:'EOD'});
+  assert.deepEqual(x.summaries[0],{status:'VALID_COMPLETED',sessionCompleted:true,eodReason:'EOD'});
   assert.deepEqual(x.cleanShutdownEvents,['EOD']);
+});
+
+test('V8 manual stop: SIGINT while RUNNING journals status MANUAL_STOP, sessionCompleted=false, no CLEAN_SHUTDOWN',async()=>{
+  const x=v8WithSummary();
+  await x.host.start();
+  assert.equal(x.host.getState(),'RUNNING');
+  await x.host.shutdown('SIGINT');
+  assert.equal(x.host.getState(),'STOPPED');
+  assert.equal(x.summaries.length,1);
+  assert.deepEqual(x.summaries[0],{status:'MANUAL_STOP',sessionCompleted:false,eodReason:'SIGINT'});
+  assert.deepEqual(x.cleanShutdownEvents,[]);
+});
+
+test('V8 manual stop: SIGTERM while RUNNING journals status MANUAL_STOP, sessionCompleted=false, no CLEAN_SHUTDOWN',async()=>{
+  const x=v8WithSummary();
+  await x.host.start();
+  assert.equal(x.host.getState(),'RUNNING');
+  await x.host.shutdown('SIGTERM');
+  assert.equal(x.host.getState(),'STOPPED');
+  assert.equal(x.summaries.length,1);
+  assert.deepEqual(x.summaries[0],{status:'MANUAL_STOP',sessionCompleted:false,eodReason:'SIGTERM'});
+  assert.deepEqual(x.cleanShutdownEvents,[]);
+});
+
+test('V8 late SIGINT after EOD finalization has already started does not replace VALID_COMPLETED with MANUAL_STOP',async()=>{
+  const x=v8WithSummary();
+  await x.host.start();
+  await x.host.eod('EOD');
+  await x.host.shutdown('SIGINT');
+  assert.equal(x.summaries.length,1);
+  assert.equal(x.summaries[0]?.status,'VALID_COMPLETED');
+  assert.equal(x.summaries[0]?.sessionCompleted,true);
+});
+
+test('V8 startup warmup and readiness failures record INVALID_DATA', () => {
+  const warmupFail = resolveSessionOutcome({ reason: 'WARMUP_NOT_READY', invalidData: true });
+  assert.equal(warmupFail.status, 'INVALID_DATA');
+  assert.equal(warmupFail.sessionCompleted, false);
+
+  const readinessFail = resolveSessionOutcome({ reason: 'INCOMPLETE_SERIES', invalidData: true });
+  assert.equal(readinessFail.status, 'INVALID_DATA');
+  assert.equal(readinessFail.sessionCompleted, false);
 });
 
 test('F: an evaluator exception thrown while processing a completed candle is contained by the async listener, causes exactly one FAULTED transition, and blocks all later evaluation without leaking an unhandledRejection', async () => {

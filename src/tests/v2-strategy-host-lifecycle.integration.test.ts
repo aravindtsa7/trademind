@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
-import { strategyFingerprint } from '../modules/research-validation';
+import { resolveSessionOutcome, strategyFingerprint } from '../modules/research-validation';
 
 function createV2Harness(options: { openPosition?: boolean; executableExit?: boolean; warmupFails?: boolean; reconciliationReady?: boolean } = {}) {
   const counters = {
@@ -155,11 +155,13 @@ function v2HarnessWithSummary(options: { openPosition?: boolean; executableExit?
   let reconciliationStuck = (options.openPosition ?? false) && (options.executableExit ?? true) === false;
   const durableExitDrained = true;
   const finalizeShutdown = (reason: string): void => {
-    const status = !durableExitDrained || reconciliationStuck
-      ? 'RECONCILIATION_REQUIRED'
-      : reason === 'FAULTED' ? 'FAULTED' : 'COMPLETED';
-    summaries.push({ status, sessionCompleted: status === 'COMPLETED', eodReason: reason });
-    if (status === 'COMPLETED') cleanShutdownEvents.push(reason);
+    const outcome = resolveSessionOutcome({
+      reason,
+      reconciliationRequired: reconciliationStuck,
+      durableExitDrained,
+    });
+    summaries.push({ status: outcome.status, sessionCompleted: outcome.sessionCompleted, eodReason: reason });
+    if (outcome.status === 'VALID_COMPLETED') cleanShutdownEvents.push(reason);
   };
   const shutdown = (reason: string): void => { if (shuttingDown) return; shuttingDown = true; finalizeShutdown(reason); };
   const host = new StrategyHostLifecycle({
@@ -168,8 +170,8 @@ function v2HarnessWithSummary(options: { openPosition?: boolean; executableExit?
     hooks: {
       warmup: (): void => undefined,
       // performDurableEodExit() closes open positions durably before calling shutdown().
-      onEod: (): void => { reconciliationStuck = false; shutdown('EOD_NSE_SESSION_CLOSE'); },
-      onShutdown: (): void => shutdown('SESSION_END'),
+      onEod: (reason): void => { reconciliationStuck = false; shutdown(reason ?? 'EOD_NSE_SESSION_CLOSE'); },
+      onShutdown: (reason): void => shutdown(reason ?? 'SESSION_END'),
       onFault: (): void => shutdown('FAULTED'),
     },
   });
@@ -193,14 +195,46 @@ test('V2 fault-journal truthfulness: FAULTED host with clean durable state journ
   assert.equal(harness.host.getState(), 'FAULTED');
 });
 
-test('V2 fault-journal truthfulness positive control: normal WALL_CLOCK_EOD still journals status COMPLETED, sessionCompleted=true, exactly one SUMMARY plus CLEAN_SHUTDOWN', async () => {
+test('V2 outcome truthfulness positive control: normal WALL_CLOCK_EOD journals status VALID_COMPLETED, sessionCompleted=true, exactly one SUMMARY plus CLEAN_SHUTDOWN', async () => {
   const harness = v2HarnessWithSummary();
   await harness.host.start();
   await harness.host.eod('WALL_CLOCK_EOD');
   assert.equal(harness.host.getState(), 'STOPPED');
   assert.equal(harness.summaries.length, 1);
-  assert.deepEqual(harness.summaries[0], { status: 'COMPLETED', sessionCompleted: true, eodReason: 'EOD_NSE_SESSION_CLOSE' });
-  assert.deepEqual(harness.cleanShutdownEvents, ['EOD_NSE_SESSION_CLOSE']);
+  assert.deepEqual(harness.summaries[0], { status: 'VALID_COMPLETED', sessionCompleted: true, eodReason: 'WALL_CLOCK_EOD' });
+  assert.deepEqual(harness.cleanShutdownEvents, ['WALL_CLOCK_EOD']);
+});
+
+test('V2 manual stop: SIGINT while RUNNING journals status MANUAL_STOP, sessionCompleted=false, no CLEAN_SHUTDOWN', async () => {
+  const harness = v2HarnessWithSummary();
+  await harness.host.start();
+  assert.equal(harness.host.getState(), 'RUNNING');
+  await harness.host.shutdown('SIGINT');
+  assert.equal(harness.host.getState(), 'STOPPED');
+  assert.equal(harness.summaries.length, 1);
+  assert.deepEqual(harness.summaries[0], { status: 'MANUAL_STOP', sessionCompleted: false, eodReason: 'SIGINT' });
+  assert.deepEqual(harness.cleanShutdownEvents, []);
+});
+
+test('V2 manual stop: SIGTERM while RUNNING journals status MANUAL_STOP, sessionCompleted=false, no CLEAN_SHUTDOWN', async () => {
+  const harness = v2HarnessWithSummary();
+  await harness.host.start();
+  assert.equal(harness.host.getState(), 'RUNNING');
+  await harness.host.shutdown('SIGTERM');
+  assert.equal(harness.host.getState(), 'STOPPED');
+  assert.equal(harness.summaries.length, 1);
+  assert.deepEqual(harness.summaries[0], { status: 'MANUAL_STOP', sessionCompleted: false, eodReason: 'SIGTERM' });
+  assert.deepEqual(harness.cleanShutdownEvents, []);
+});
+
+test('V2 late SIGINT after EOD finalization has already started does not replace VALID_COMPLETED with MANUAL_STOP', async () => {
+  const harness = v2HarnessWithSummary();
+  await harness.host.start();
+  await harness.host.eod('WALL_CLOCK_EOD');
+  await harness.host.shutdown('SIGINT');
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.summaries[0]?.status, 'VALID_COMPLETED');
+  assert.equal(harness.summaries[0]?.sessionCompleted, true);
 });
 
 test('V2 fault-journal truthfulness: a stuck reconciliation-required position is never hidden behind a generic FAULTED status', async () => {
@@ -213,4 +247,21 @@ test('V2 fault-journal truthfulness: a stuck reconciliation-required position is
   assert.equal(harness.summaries[0]?.status, 'RECONCILIATION_REQUIRED');
   assert.equal(harness.summaries[0]?.sessionCompleted, false);
   assert.deepEqual(harness.cleanShutdownEvents, []);
+});
+
+test('V2 manual stop truthfulness: a stuck reconciliation-required position is never hidden behind a MANUAL_STOP status', async () => {
+  const harness = v2HarnessWithSummary({ openPosition: true, executableExit: false });
+  await harness.host.start();
+  await harness.host.shutdown('SIGINT');
+  assert.equal(harness.host.getState(), 'STOPPED');
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.summaries[0]?.status, 'RECONCILIATION_REQUIRED');
+  assert.equal(harness.summaries[0]?.sessionCompleted, false);
+  assert.deepEqual(harness.cleanShutdownEvents, []);
+});
+
+test('V2 startup warmup failure blocks startup and records INVALID_DATA', () => {
+  const outcome = resolveSessionOutcome({ reason: 'WARMUP_NOT_READY', invalidData: true });
+  assert.equal(outcome.status, 'INVALID_DATA');
+  assert.equal(outcome.sessionCompleted, false);
 });

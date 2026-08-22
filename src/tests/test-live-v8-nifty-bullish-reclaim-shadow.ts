@@ -45,6 +45,7 @@ import { StrategySignal } from '../modules/strategies/dto/strategy-signal.dto';
 import {
   ForwardValidationJournal,
   normalizeQuote,
+  resolveSessionOutcome,
   strategyFingerprint,
   executionComparison,
 } from '../modules/research-validation';
@@ -132,6 +133,20 @@ async function run(): Promise<void> {
   ).warmUp();
   if (!warmup.ready) {
     console.log(`[V8_STARTUP] BLOCKED_NOT_READY reason=${warmup.freshnessReason}`);
+    const outcome = resolveSessionOutcome({
+      reason: warmup.freshnessReason,
+      invalidData: true,
+    });
+    journal.append({
+      recordType: 'SUMMARY',
+      tradingDate: date,
+      strategyId: STRATEGY,
+      fingerprint,
+      sessionCompleted: outcome.sessionCompleted,
+      eodReason: warmup.freshnessReason,
+      status: outcome.status,
+      flags: ['FORWARD_EVALUATION_ONLY', 'SHADOW_ONLY', 'ZERO_ORDER', 'STARTUP_DATA_BLOCKED'],
+    });
     return;
   }
   const evaluator = new V8BullishReclaimShadowEvaluatorService(frozen.candidate.config);
@@ -139,6 +154,20 @@ async function run(): Promise<void> {
   const startupReadiness = evaluator.checkStartupReadiness(date);
   if (!startupReadiness.ready) {
     console.log(`[V8_STARTUP] BLOCKED_NOT_READY reason=${startupReadiness.reason}`);
+    const outcome = resolveSessionOutcome({
+      reason: startupReadiness.reason,
+      invalidData: true,
+    });
+    journal.append({
+      recordType: 'SUMMARY',
+      tradingDate: date,
+      strategyId: STRATEGY,
+      fingerprint,
+      sessionCompleted: outcome.sessionCompleted,
+      eodReason: startupReadiness.reason,
+      status: outcome.status,
+      flags: ['FORWARD_EVALUATION_ONLY', 'SHADOW_ONLY', 'ZERO_ORDER', 'STARTUP_DATA_BLOCKED'],
+    });
     return;
   }
   journal.append({
@@ -441,10 +470,7 @@ async function run(): Promise<void> {
     if (closing) return;
     closing = true;
     eod = true;
-    // reason is 'FAULTED' only from host.fault()'s onFault hook (see
-    // StrategyHostLifecycle.fault(), the sole caller) -- a faulted shutdown
-    // must never journal a normal completed EOD summary.
-    const faulted = reason === 'FAULTED';
+    const outcome = resolveSessionOutcome({ reason });
     if (statusTimer) clearInterval(statusTimer);
     health.stop();
     recovery.stop();
@@ -455,15 +481,15 @@ async function run(): Promise<void> {
       tradingDate: date,
       strategyId: STRATEGY,
       fingerprint,
-      sessionCompleted: !faulted,
+      sessionCompleted: outcome.sessionCompleted,
       eodReason: reason,
       signals,
       resolvedTrades: 0,
       unresolvedTrades: tracker.getOpenCount(),
-      status: faulted ? 'FAULTED' : 'COMPLETED',
+      status: outcome.status,
       flags: ['SHADOW_ONLY', 'ZERO_ORDER'],
     });
-    if (!faulted) journal.appendEvent(date, 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
+    if (outcome.status === 'VALID_COMPLETED') journal.appendEvent(date, 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
     candles.stop();
     eventBus.off('market.tick', handleTick);
     eventBus.off('market.depth', handleDepth);
@@ -520,8 +546,8 @@ async function run(): Promise<void> {
         await subscriptions.subscribe(NIFTY, MarketDataSubscriptionMode.FULL);
         await ready;
       },
-      onEod: () => shutdown('EOD'),
-      onShutdown: () => shutdown('SIGINT'),
+      onEod: (reason) => shutdown(reason ?? 'EOD'),
+      onShutdown: (reason) => shutdown(reason ?? 'SIGINT'),
       onFault: () => shutdown('FAULTED'),
     },
     log: (value) => console.log(`[STRATEGY_HOST_STATE] strategyId=${value.strategyId} runtimeId=${value.runtimeId} previous=${value.previous} state=${value.state} reason=${value.reason}`),
