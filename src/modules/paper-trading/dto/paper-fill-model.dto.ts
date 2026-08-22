@@ -44,7 +44,7 @@ export interface ExecutionQuoteSnapshot {
 
 export interface PaperExecutionFillResult {
   status: PaperFillStatus;
-  reason?: 'LATENCY_NOT_ELIGIBLE' | 'STALE_QUOTE' | 'CROSSED_MARKET' | 'EMPTY_QUOTE' | 'LTP_FALLBACK_DISABLED' | 'REJECTED_WIDE_SPREAD' | 'INSUFFICIENT_DEPTH';
+  reason?: 'LATENCY_NOT_ELIGIBLE' | 'STALE_QUOTE' | 'CROSSED_MARKET' | 'EMPTY_QUOTE' | 'LTP_FALLBACK_DISABLED' | 'REJECTED_WIDE_SPREAD' | 'INSUFFICIENT_DEPTH' | 'GENERATION_MISMATCH';
   side: PaperExecutionSide;
   requestedQuantity: number;
   filledQuantity: number;

@@ -52,3 +52,48 @@ test('entry and exit measured friction are explicit and additive', () => {
   assert.equal(entry.totalExecutionSlippage, 1); assert.equal(exit.totalExecutionSlippage, 1);
   assert.equal((entry.totalExecutionSlippage ?? 0) + (exit.totalExecutionSlippage ?? 0), 2);
 });
+
+test('matching active generation preserves normal fill behavior', () => {
+  const result = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:5 }), intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(result.status, 'FILLED'); assert.equal(result.averageFillPrice, 101); assert.equal(result.reason, undefined);
+});
+
+test('a rotated active generation denies the fill with an explicit reason and no fabricated price', () => {
+  const result = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:5 }), intentTimestamp:at, activeGenerationId:6 });
+  assert.equal(result.status, 'UNAVAILABLE'); assert.equal(result.reason, 'GENERATION_MISMATCH'); assert.equal(result.averageFillPrice, null); assert.equal(result.filledQuantity, 0);
+});
+
+test('missing, null or non-positive quote/active generation fails closed once generation validation is requested', () => {
+  assert.equal(new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:null }), intentTimestamp:at, activeGenerationId:5 }).reason, 'GENERATION_MISMATCH');
+  assert.equal(new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:undefined }), intentTimestamp:at, activeGenerationId:5 }).reason, 'GENERATION_MISMATCH');
+  assert.equal(new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:0 }), intentTimestamp:at, activeGenerationId:0 }).reason, 'GENERATION_MISMATCH');
+  assert.equal(new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:-1 }), intentTimestamp:at, activeGenerationId:-1 }).reason, 'GENERATION_MISMATCH');
+});
+
+test('generation validation is skipped when the caller supplies no active generation, preserving replay/backtest behavior', () => {
+  const result = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:null }), intentTimestamp:at });
+  assert.equal(result.status, 'FILLED'); assert.equal(result.reason, undefined);
+});
+
+test('a matched active generation still applies BUY/SELL pricing, stale/crossed/wide-spread/LTP-fallback rules and partial fills unchanged', () => {
+  const buy = fill('BUY', 1, quote({ connectionGenerationId:5 }), {}); const sell = fill('SELL', 1, quote({ connectionGenerationId:5 }), {});
+  const buyGen = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:5 }), intentTimestamp:at, activeGenerationId:5 });
+  const sellGen = new PaperFillModelService().fill({ side:'SELL', requestedQuantity:1, quote:quote({ connectionGenerationId:5 }), intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(buyGen.averageFillPrice, buy.averageFillPrice); assert.equal(sellGen.averageFillPrice, sell.averageFillPrice);
+
+  const stale = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:5, dataQuality:'STALE', quoteAgeMs:3000 }), intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(stale.reason, 'STALE_QUOTE');
+  const crossed = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:5, dataQuality:'CROSSED', bestBid:101, bestAsk:100 }), intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(crossed.reason, 'CROSSED_MARKET');
+  const wideSpread = new PaperFillModelService({ maxSpreadPercent:5 }).fill({ side:'BUY', requestedQuantity:1, quote:quote({ connectionGenerationId:5, spreadPercent:6 }), intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(wideSpread.reason, 'REJECTED_WIDE_SPREAD');
+  const ltpOnly = quote({ connectionGenerationId:5, bestBid:null, bestAsk:null, spreadAbsolute:null, spreadPercent:null, dataQuality:'LTP_ONLY' });
+  const ltpDisabled = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:1, quote:ltpOnly, intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(ltpDisabled.reason, 'LTP_FALLBACK_DISABLED');
+  const ltpAllowed = new PaperFillModelService({ allowLtpFallback:true }).fill({ side:'BUY', requestedQuantity:1, quote:ltpOnly, intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(ltpAllowed.fillQuality, 'LTP_ONLY_ESTIMATE');
+
+  const depth = quote({ connectionGenerationId:5, dataQuality:'FRESH_DEPTH', depthLevels:[{ ask:101, askSize:5, bid:99, bidSize:4 }, { ask:102, askSize:5, bid:98, bidSize:6 }], askSize:5, bidSize:4 });
+  const partial = new PaperFillModelService().fill({ side:'BUY', requestedQuantity:12, quote:depth, intentTimestamp:at, activeGenerationId:5 });
+  assert.equal(partial.status, 'PARTIALLY_FILLED'); assert.equal(partial.filledQuantity, 10); assert.equal(partial.remainingQuantity, 2); assert.equal(partial.reason, 'INSUFFICIENT_DEPTH');
+});

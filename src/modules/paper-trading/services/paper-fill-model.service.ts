@@ -1,7 +1,9 @@
 import { ExecutionQuoteSnapshot, PaperExecutionFillResult, PaperExecutionFillSummary, PaperExecutionSide } from '../dto/paper-fill-model.dto';
+import { isCurrentLiveGeneration } from '../../market-data/utils/live-generation';
 
 export interface PaperFillModelOptions { maxQuoteAgeMs?: number; maxSpreadPercent?: number; allowLtpFallback?: boolean; executionLatencyMs?: number; }
-export interface PaperFillRequest { side: PaperExecutionSide; requestedQuantity: number; quote: ExecutionQuoteSnapshot | undefined; intentTimestamp: Date; }
+/** activeGenerationId is optional: callers with no live-generation concept (replay/backtest) omit it and the generation check is skipped, matching the adapter's own bypass when no generation source is configured. */
+export interface PaperFillRequest { side: PaperExecutionSide; requestedQuantity: number; quote: ExecutionQuoteSnapshot | undefined; intentTimestamp: Date; activeGenerationId?: number; }
 
 /** Deterministic execution-quality model. It never creates a market price. */
 export default class PaperFillModelService {
@@ -21,6 +23,10 @@ export default class PaperFillModelService {
     if (!Number.isInteger(request.requestedQuantity) || request.requestedQuantity <= 0) throw new Error('requestedQuantity must be a positive integer.');
     const quote = request.quote ?? unavailableQuote();
     const base = (overrides: Partial<PaperExecutionFillResult>): PaperExecutionFillResult => ({ status:'UNAVAILABLE', side:request.side, requestedQuantity:request.requestedQuantity, filledQuantity:0, remainingQuantity:request.requestedQuantity, averageFillPrice:null, worstFillPrice:null, quotedBestPrice:null, levelsConsumed:[], slippageVsBestQuote:null, slippageVsLtp:null, spreadCost:null, depthSlippage:null, totalExecutionSlippage:null, slippagePercent:null, fillQuality:'UNAVAILABLE', quote, ...overrides });
+    // A captured quote must never be filled once the live connection has rotated past it. Skipped only when the caller has no generation concept (replay/backtest), mirroring the adapter's own bypass.
+    if (request.activeGenerationId !== undefined && (!(request.activeGenerationId > 0) || !isCurrentLiveGeneration(quote.connectionGenerationId ?? undefined, request.activeGenerationId))) {
+      return base({ reason:'GENERATION_MISMATCH' });
+    }
     const eligibleAt = request.intentTimestamp.getTime() + this.executionLatencyMs;
     const sourceAt = quote.sourceTimestamp ? new Date(quote.sourceTimestamp).getTime() : Number.NaN;
     if (this.executionLatencyMs > 0 && (!Number.isFinite(sourceAt) || sourceAt < eligibleAt)) return base({ reason:'LATENCY_NOT_ELIGIBLE' });

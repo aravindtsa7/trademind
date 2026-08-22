@@ -25,6 +25,7 @@ function input(instrumentKey = 'NSE_FO|one'): CreatePaperOrderDto {
 
 function setup() {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const monitor = new PaperPositionMonitorService(manager); const adapter = new PaperMarketDataAdapterService(monitor, bus);
+  adapter.setMarketDataAvailable(true);
   return { manager, bus, adapter };
 }
 
@@ -38,7 +39,7 @@ function setupGenerationMarkedPortfolio() {
   portfolio.open({ order, strategyId:'V2_TREND_DOWN_PE', underlying:'NIFTY 50', correlationId:'corr-generation', intentId:'intent-generation', sessionDate:'2026-08-10' });
   let activeGeneration = 1;
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   return { adapter, bus, order, portfolio, repository, setActiveGeneration:(generationId: number) => { activeGeneration = generationId; } };
 }
 
@@ -109,7 +110,7 @@ test('fresh depth marks the authoritative portfolio at executable long-option bi
   const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => entryTimestamp);
   portfolio.open({ order, strategyId:'V2_TREND_DOWN_PE', underlying:'NIFTY 50', correlationId:'corr', intentId:'intent', sessionDate:'2026-08-10' });
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'), bus, portfolio);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', tick(order.contract.instrumentKey, 101));
   bus.emit('market.depth', { instrumentKey: order.contract.instrumentKey, timestamp: tick(order.contract.instrumentKey, 101).timestamp, quotes: [{ bidPrice:100.5, askPrice:101.5 }] });
   assert.equal(portfolio.getSnapshot('2026-08-10')?.totalUnrealizedPnl, 37.5);
@@ -118,7 +119,7 @@ test('fresh depth marks the authoritative portfolio at executable long-option bi
 test('canonical execution quote snapshot preserves supplied depth and never invents book sides', () => {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const timestamp = tick('NSE_FO|one', 100).timestamp;
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => new Date(timestamp));
-  adapter.start(); bus.emit('market.tick', tick('NSE_FO|one', 100)); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp, generationId:7, quotes:[{ bidPrice:99, bidQuantity:'25', askPrice:101, askQuantity:'20' }, { bidPrice:98, bidQuantity:'50', askPrice:102, askQuantity:'40' }] });
+  adapter.start(); adapter.setMarketDataAvailable(true); bus.emit('market.tick', tick('NSE_FO|one', 100)); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp, generationId:7, quotes:[{ bidPrice:99, bidQuantity:'25', askPrice:101, askQuantity:'20' }, { bidPrice:98, bidQuantity:'50', askPrice:102, askQuantity:'40' }] });
   const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
   assert.equal(snapshot?.dataQuality, 'FRESH_DEPTH'); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.depthLevels.length, 2); assert.equal(snapshot?.depthLevels[1].askSize, 40); assert.equal(snapshot?.connectionGenerationId, 7);
 });
@@ -126,7 +127,7 @@ test('canonical execution quote snapshot preserves supplied depth and never inve
 test('production-shaped epoch packet creates a finite active-generation executable quote snapshot', () => {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const source = new Date('2026-08-10T04:01:00.000Z'); const activeGeneration = 7;
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => source, () => activeGeneration);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   new TickProcessor(bus).process({ type:'live_feed', currentTs:String(source.getTime()), feeds:{ 'NSE_FO|one':{ fullFeed:{ marketFF:{ ltpc:{ ltp:100 }, marketLevel:{ bidAskQuote:[{ bidP:99, bidQ:'10', askP:101, askQ:'10' }] } } } } } }, activeGeneration);
   const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
   assert.equal(snapshot?.ltp, 100); assert.equal(snapshot?.bestBid, 99); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.connectionGenerationId, activeGeneration); assert.equal(snapshot?.quoteAgeMs, 0); assert.ok(Number.isFinite(snapshot?.quoteAgeMs)); assert.equal(snapshot?.dataQuality, 'FRESH_DEPTH');
@@ -135,7 +136,7 @@ test('production-shaped epoch packet creates a finite active-generation executab
 test('fresh LTP cannot mask stale bid/ask depth in the canonical executable snapshot', () => {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z'); let now = new Date(base);
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
-  adapter.start(); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 }); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, bidQuantity:'10', askPrice:101, askQuantity:'10' }] });
+  adapter.start(); adapter.setMarketDataAvailable(true); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 }); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, bidQuantity:'10', askPrice:101, askQuantity:'10' }] });
   now = new Date(base.getTime() + 2_001); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:now.toISOString(), ltp:102 });
   const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
   assert.equal(snapshot?.ltpAgeMs, 0); assert.equal(snapshot?.bidAgeMs, 2_001); assert.equal(snapshot?.askAgeMs, 2_001); assert.equal(snapshot?.quoteAgeMs, 2_001); assert.equal(snapshot?.dataQuality, 'STALE');
@@ -144,7 +145,7 @@ test('fresh LTP cannot mask stale bid/ask depth in the canonical executable snap
 test('captured executable snapshots are immutable and later cache updates cannot change an attempt', () => {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z'); let now = new Date(base);
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
-  adapter.start(); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 }); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+  adapter.start(); adapter.setMarketDataAvailable(true); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 }); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
   const first = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!; const firstRepeat = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!; now = new Date(base.getTime() + 1_000); bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:now.toISOString(), quotes:[{ bidPrice:98, askPrice:102 }] });
   const second = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!;
   assert.equal(first.snapshotId, firstRepeat.snapshotId); assert.notEqual(first, firstRepeat); assert.equal(first.bestAsk, 101); assert.equal(second.bestAsk, 102); assert.notEqual(first.snapshotId, second.snapshotId); assert.ok(Object.isFrozen(first)); assert.ok(Object.isFrozen(first.depthLevels));
@@ -153,7 +154,7 @@ test('captured executable snapshots are immutable and later cache updates cannot
 test('an old WebSocket generation cannot qualify an executable quote or mix with a current depth book', () => {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z'); let activeGeneration = 2;
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => base, () => activeGeneration);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100, generationId:1 });
   bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), generationId:1, quotes:[{ bidPrice:99, askPrice:101 }] });
   assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
@@ -170,7 +171,7 @@ test('an old WebSocket generation cannot qualify an executable quote or mix with
 test('missing or stale generations fail closed when the active generation is known', () => {
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z');
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => base, () => 7);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 });
   bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
   assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
@@ -186,7 +187,7 @@ test('portfolio marking never combines generation-one depth with a generation-tw
   const bus = new EventEmitter(); const marks: Array<{ bid?: number; ask?: number; ltp?: number }> = []; let activeGeneration = 1;
   const portfolio = { mark: (mark: { bid?: number; ask?: number; ltp?: number }) => { marks.push(mark); return 0; }, invalidateMarketMarks:() => 0 } as unknown as PaperPortfolioService;
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:1, quotes:[{ bidPrice:99, askPrice:101 }] });
   activeGeneration = 2;
   bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, ltp:105 });
@@ -198,7 +199,7 @@ test('portfolio marking never combines generation-one LTP with generation-two de
   const bus = new EventEmitter(); const marks: Array<{ bid?: number; ask?: number; ltp?: number }> = []; let activeGeneration = 1;
   const portfolio = { mark: (mark: { bid?: number; ask?: number; ltp?: number }) => { marks.push(mark); return 0; }, invalidateMarketMarks:() => 0 } as unknown as PaperPortfolioService;
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:1, ltp:100 });
   const beforeRotation = marks.length; activeGeneration = 2;
   bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, quotes:[{ bidPrice:104, askPrice:106 }] });
@@ -210,7 +211,7 @@ test('same-generation paper quote fields merge while a late old event cannot cle
   const bus = new EventEmitter(); const marks: Array<{ bid?: number; ask?: number; ltp?: number }> = []; const activeGeneration = 2;
   const portfolio = { mark: (mark: { bid?: number; ask?: number; ltp?: number }) => { marks.push(mark); return 0; }, invalidateMarketMarks:() => 0 } as unknown as PaperPortfolioService;
   const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, portfolio, 2_000, () => entryTimestamp, () => activeGeneration);
-  adapter.start();
+  adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, ltp:105 });
   bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:2, quotes:[{ bidPrice:104, askPrice:106 }] });
   assert.equal(marks.at(-1)?.ltp, 105); assert.equal(marks.at(-1)?.bid, 104);
@@ -258,7 +259,7 @@ test('generation-two partial and complete quotes invalidate then restore the rea
 test('a queued durable monitor revalidates generation before mutating exit state', async () => {
   const manager=new PaperOrderManagerService();const bus=new EventEmitter();const created=manager.create({...input(),executionOrderId:'exec-generation-queue'});const order=manager.markOpen(created.id);let activeGeneration=1;let persistenceCalls=0;
   const monitor=new PaperPositionMonitorService(manager,undefined,()=> '2026-08-10',()=>durableFill(),undefined,async()=>{persistenceCalls++;});
-  const adapter=new PaperMarketDataAdapterService(monitor,bus,undefined,2_000,()=>entryTimestamp,()=>activeGeneration);adapter.start();
+  const adapter=new PaperMarketDataAdapterService(monitor,bus,undefined,2_000,()=>entryTimestamp,()=>activeGeneration);adapter.start();adapter.setMarketDataAvailable(true);
   bus.emit('market.tick',{instrumentKey:order.contract.instrumentKey,timestamp:entryTimestamp.toISOString(),ltp:130,generationId:1});
   activeGeneration=2;
   assert.equal(await adapter.drainDurableExitQueue(1_000),true);
@@ -271,7 +272,7 @@ test('serializes durable exit work: duplicate ticks produce one committed action
   let calls = 0; let resolveCommit!: () => void; const commit = new Promise<void>((resolve) => { resolveCommit = resolve; });
   const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', () => durableFill(), undefined, async () => { calls++; await commit; });
   const adapter = new PaperMarketDataAdapterService(monitor, bus); const actions: unknown[] = [];
-  bus.on('paper.order.action', (action) => actions.push(action)); adapter.start();
+  bus.on('paper.order.action', (action) => actions.push(action)); adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
   bus.emit('market.tick', tick(order.contract.instrumentKey, 130, 2));
   await Promise.resolve(); resolveCommit();
@@ -286,7 +287,7 @@ test('shutdown drain times out safely while a durable exit is pending, then sett
   const created = manager.create({ ...input(), executionOrderId:'exec-adapter-shutdown' }); const order = manager.markOpen(created.id);
   let resolveCommit!: () => void; const commit = new Promise<void>((resolve) => { resolveCommit = resolve; });
   const monitor = new PaperPositionMonitorService(manager, undefined, () => '2026-08-10', () => durableFill(), undefined, async () => { await commit; });
-  const adapter = new PaperMarketDataAdapterService(monitor, bus); adapter.start();
+  const adapter = new PaperMarketDataAdapterService(monitor, bus); adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
   await Promise.resolve();
   assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.EXIT_PENDING);
@@ -300,4 +301,98 @@ test('shutdown-drain failpoint never completes or creates an additional exit',as
   const manager=new PaperOrderManagerService();const bus=new EventEmitter();const faults=new DeterministicExecutionFaultInjector();faults.arm('DURING_SHUTDOWN_DRAIN');
   const adapter=new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager),bus,undefined,2_000,()=>entryTimestamp,undefined,faults);
   await assert.rejects(()=>adapter.drainDurableExitQueue(1_000),InjectedExecutionFault);assert.equal(manager.getActiveOrders().length,0);assert.ok(faults.hits.includes('DURING_SHUTDOWN_DRAIN'));
+});
+
+test('a newly constructed adapter starts fail-closed: an otherwise-valid tick is ignored before availability is ever declared', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const order = open(manager);
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus);
+  adapter.start();
+  bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.OPEN);
+  assert.equal(adapter.getExecutionQuoteSnapshot(order.contract.instrumentKey), undefined);
+});
+
+test('a valid current-generation tick is ignored before explicit availability', () => {
+  const bus = new EventEmitter(); const marks: unknown[] = [];
+  const portfolio = { mark: (mark: unknown) => { marks.push(mark); return 0; }, invalidateMarketMarks: () => 0 } as unknown as PaperPortfolioService;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, portfolio, 2_000, () => entryTimestamp, () => 3);
+  adapter.start();
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:100, generationId:3 });
+  assert.equal(marks.length, 0);
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+});
+
+test('a valid current-generation depth event is ignored before explicit availability, then accepted once declared', () => {
+  const bus = new EventEmitter();
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, undefined, 2_000, () => entryTimestamp, () => 3);
+  adapter.start();
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:3, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  adapter.setMarketDataAvailable(true);
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:3, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.bestBid, 99);
+});
+
+test('getExecutionQuoteSnapshot cannot return an executable quote before explicit availability', () => {
+  const bus = new EventEmitter();
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, undefined, 2_000, () => entryTimestamp);
+  adapter.start();
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:100 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+});
+
+test('after explicit availability, a current-generation tick and depth build the executable quote normally', () => {
+  const bus = new EventEmitter();
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, undefined, 2_000, () => entryTimestamp);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:100 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+  const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(snapshot?.bestBid, 99); assert.equal(snapshot?.bestAsk, 101); assert.equal(snapshot?.dataQuality, 'FRESH_TOP_OF_BOOK');
+});
+
+test('re-declaring unavailability clears live quote state and blocks ingestion until availability is restored', () => {
+  const bus = new EventEmitter();
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, undefined, 2_000, () => entryTimestamp);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:100 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.ok(adapter.getExecutionQuoteSnapshot('NSE_FO|one'));
+
+  adapter.setMarketDataAvailable(false);
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:105 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), quotes:[{ bidPrice:104, askPrice:106 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+
+  adapter.setMarketDataAvailable(true);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:105 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), quotes:[{ bidPrice:104, askPrice:106 }] });
+  const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(snapshot?.bestBid, 104); assert.equal(snapshot?.bestAsk, 106);
+});
+
+test('generation filtering still applies independently once availability is declared', () => {
+  const bus = new EventEmitter(); const activeGeneration = 5;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(new PaperOrderManagerService()), bus, undefined, 2_000, () => entryTimestamp, () => activeGeneration);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:100, generationId:4 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:4, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), ltp:100, generationId:5 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:entryTimestamp.toISOString(), generationId:5, quotes:[{ bidPrice:99, askPrice:101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.connectionGenerationId, 5);
+});
+
+test('a reconciled open paper position is never mutated by a tick before explicit availability, then resumes normally', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const order = open(manager);
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus);
+  adapter.start();
+  bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.OPEN);
+
+  adapter.setMarketDataAvailable(true);
+  bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
+  assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TARGET_EXIT);
 });

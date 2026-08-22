@@ -127,7 +127,7 @@ export default class PaperTradingOrchestratorService {
       const eligibleAt = new Date(signal.signalTimestamp.getTime() + this.fillModel.executionLatencyMs);
       let quote = capturedExecutionQuote ?? this.executionQuoteProvider.getExecutionQuoteSnapshot(selectedContract.instrumentKey);
       if (this.fillModel.executionLatencyMs > 0 && !capturedExecutionQuote) quote = await this.executionQuoteProvider.waitForExecutionQuote?.(selectedContract.instrumentKey, eligibleAt, Number(process.env.PAPER_FILL_WAIT_MS ?? 2_000)) ?? quote;
-      const fill = this.fillModel.fill({ side:'BUY', requestedQuantity:selectedContract.lotSize as number, quote, intentTimestamp:signal.signalTimestamp });
+      const fill = this.fillModel.fill({ side:'BUY', requestedQuantity:selectedContract.lotSize as number, quote, intentTimestamp:signal.signalTimestamp, activeGenerationId:this.executionQuoteProvider.getActiveLiveGenerationId?.() });
       executionFill = this.fillModel.toSummary(fill);
       if (!executionFill) { if (executionOrderId && riskContext) this.executionEngine?.reject(executionOrderId, riskContext.sessionDate, `PAPER_FILL_${fill.status}`); this.logExecutionAttempt(signal, selectedContract.instrumentKey, quote, approvedDecision, fill, 'FILL_UNAVAILABLE'); logger.warn('PAPER_FILL_UNAVAILABLE', { strategyId: approvedDecision?.strategyId, instrument: selectedContract.instrumentKey, snapshotId:quote?.snapshotId ?? null, status:fill.status, reason:fill.reason, fillQuality:fill.fillQuality }); throw new PaperFillUnavailableError(fill); }
       this.logExecutionAttempt(signal, selectedContract.instrumentKey, quote, approvedDecision, fill, 'FILLED');

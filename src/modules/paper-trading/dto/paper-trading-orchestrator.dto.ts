@@ -30,6 +30,8 @@ export interface PaperEntryQuoteObservation {
 export interface PaperExecutionQuoteProvider {
   getExecutionQuoteSnapshot(instrumentKey: string): ExecutionQuoteSnapshot | undefined;
   waitForExecutionQuote?(instrumentKey: string, eligibleAt: Date, timeoutMs: number): Promise<ExecutionQuoteSnapshot | undefined>;
+  /** Canonical live-generation source; lets the orchestrator validate a captured quote at the fill boundary. */
+  getActiveLiveGenerationId?(): number | undefined;
 }
 
 /** Structural boundary satisfied by the existing SubscriptionManager. */

@@ -16,7 +16,8 @@ import { isCurrentLiveGeneration } from '../../market-data/utils/live-generation
  */
 export default class PaperMarketDataAdapterService {
   private started = false;
-  private marketDataAvailable = true;
+  /** Fail-closed startup: no tick/depth is ingested until the live runtime explicitly confirms recovery readiness via setMarketDataAvailable(true). */
+  private marketDataAvailable = false;
   /** Serializes only awaitable durable exits; market quote processing remains synchronous. */
   private durableExitQueue: Promise<void> = Promise.resolve();
   private readonly tickListener = (tick: unknown): void => this.handleTick(tick);
@@ -113,6 +114,7 @@ export default class PaperMarketDataAdapterService {
   }
 
   private handleDepth(depth: unknown): void {
+    if (!this.marketDataAvailable) return;
     if (!depth || typeof depth !== 'object') return;
     const candidate = depth as { instrumentKey?: unknown; timestamp?: unknown; generationId?: unknown; quotes?: Array<{ bidPrice?: unknown; askPrice?: unknown; bidQuantity?: unknown; askQuantity?: unknown }> };
     const generationId = typeof candidate.generationId === 'number' ? candidate.generationId : undefined;
@@ -135,6 +137,11 @@ export default class PaperMarketDataAdapterService {
     const quote = this.executionQuotes.get(instrumentKey);
     if (!quote || !this.isActiveGeneration(quote.connectionGenerationId ?? undefined)) return undefined;
     return immutableSnapshot(quote);
+  }
+
+  /** Exposes the same canonical live-generation source used internally, so the fill boundary can validate a captured quote against the currently active generation instead of a second counter. */
+  getActiveLiveGenerationId(): number | undefined {
+    return this.getActiveGenerationId?.();
   }
 
   /** Live-only bounded wait; replay supplies recorded snapshots directly. */

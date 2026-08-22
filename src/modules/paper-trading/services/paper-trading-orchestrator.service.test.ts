@@ -145,6 +145,29 @@ test('V2 risk and fill consume one captured canonical executable snapshot', asyn
   assert.equal(intentSnapshot, canonical); assert.equal(result.order.entry.executionFill?.averageFillPrice,101); assert.equal(manager.getActiveOrders().length,1);
 });
 
+test('a connection generation rollover between quote capture and the fill boundary denies the order with no fabricated fill', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const canonical = Object.freeze(executableQuote({ snapshotId:'canonical-fresh', connectionGenerationId:5 }));
+  const premiums = { getObservedPremium: async () => ({ observedEntryPremium:100, executionQuote:canonical }) };
+  const risk = new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
+  const context = { buildIntent: ({signal,contract,observedEntryPremium,executionQuote: quote}: any) => ({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:quote?.ltp,bid:quote?.bestBid,ask:quote?.bestAsk,ageMs:quote?.quoteAgeMs,crossed:quote?.dataQuality==='CROSSED'}}) };
+  // The quote was captured at generation 5, but the live connection has since rotated to generation 6 by the time the fill boundary runs.
+  const provider = { getExecutionQuoteSnapshot: () => executableQuote({ snapshotId:'later-same-gen', connectionGenerationId:5 }), getActiveLiveGenerationId: () => 6 };
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context,undefined,new PaperFillModelService(),provider);
+  await assert.rejects(()=>orchestrator.createFromSignal(request()),(error:unknown)=>error instanceof PaperFillUnavailableError&&error.fill.reason==='GENERATION_MISMATCH'&&error.fill.averageFillPrice===null);
+  assert.equal(manager.getActiveOrders().length,0);
+});
+
+test('a stable connection generation across capture and fill preserves normal order creation', async () => {
+  const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const canonical = Object.freeze(executableQuote({ snapshotId:'canonical-fresh', connectionGenerationId:5 }));
+  const premiums = { getObservedPremium: async () => ({ observedEntryPremium:100, executionQuote:canonical }) };
+  const risk = new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
+  const context = { buildIntent: ({signal,contract,observedEntryPremium,executionQuote: quote}: any) => ({runtimeId:'test',strategyId:'V2_TREND_DOWN_PE',sessionDate:'2026-08-10',timestamp:signal.signalTimestamp,instrument:contract.instrumentKey,underlying:'NIFTY',side:'BUY_CE' as const,action:'OPEN' as const,entryPremium:observedEntryPremium,quantity:contract.lotSize,marketDataState:'READY',sessionTradable:true,quote:{ltp:quote?.ltp,bid:quote?.bestBid,ask:quote?.bestAsk,ageMs:quote?.quoteAgeMs,crossed:quote?.dataQuality==='CROSSED'}}) };
+  const provider = { getExecutionQuoteSnapshot: () => executableQuote({ snapshotId:'later-same-gen', connectionGenerationId:5 }), getActiveLiveGenerationId: () => 5 };
+  const orchestrator = new PaperTradingOrchestratorService(new OptionContractSelectorService(),manager,subscriptions,premiums,MarketDataSubscriptionMode.FULL,risk,context,undefined,new PaperFillModelService(),provider);
+  const result = await orchestrator.createFromSignal(request());
+  assert.equal(result.order.status, PaperOrderStatus.OPEN); assert.equal(manager.getActiveOrders().length,1);
+});
+
 test('fresh LTP with stale executable depth is denied before a paper order is created', async () => {
   const manager = new PaperOrderManagerService(); const subscriptions = new SubscriptionGateway(); const stale = executableQuote({ snapshotId:'stale-depth', ltpAgeMs:1, bidAgeMs:2_001, askAgeMs:2_001, depthAgeMs:2_001, quoteAgeMs:2_001, dataQuality:'STALE' });
   const premiums = { getObservedPremium: async () => ({ observedEntryPremium:100, executionQuote:stale }) }; const risk = new RuntimeRiskGateService({persist:false,killSwitch:false,getOpenPositions:()=>[]});
