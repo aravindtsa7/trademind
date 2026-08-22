@@ -39,7 +39,7 @@ test('current-generation backfill plus fresh NIFTY data is the only path from DE
   await host.start();await connection.connect();connection.emit('message',Buffer.alloc(0),{generationId:1});health.noteValidMarketEvent(1);health.noteNiftyTick(1);assert.equal(health.confirmRecoveryReady(1),true);
   client.emit('disconnected',{code:1006},true);await flush();assert.equal(host.getState(),'DEGRADED');assert.equal(connection.getReconnectCircuitSnapshot().attempts,1);
   clock.advanceBy(10);await flush();assert.equal(connection.getGenerationId(),2);assert.equal(recovery.getState(),'WAITING_FOR_FRESH_TICK');assert.equal(host.canEvaluate(),false);
-  connection.emit('message',Buffer.alloc(0),{generationId:2});health.noteValidMarketEvent(2);health.noteNiftyTick(2);recovery.handleLiveTick(new Date(clock.now),2);await flush();
+  connection.emit('message',Buffer.alloc(0),{generationId:2});health.noteValidMarketEvent(2);health.noteNiftyTick(2);recovery.handleLiveTick({ sourceTimestamp: new Date(clock.now), receivedAt: new Date(clock.now), generationId: 2 });await flush();
   assert.equal(recovery.getState(),'READY');assert.equal(health.isHealthy(),true);assert.equal(host.getState(),'RUNNING');assert.equal(connection.getReconnectCircuitSnapshot().attempts,0);
 });
 
@@ -77,7 +77,7 @@ function buildStack(readyTimeoutMs=1_000,options:{stallMs?:number;backfillReady?
     onEod:()=>undefined,onShutdown:()=>undefined,onFault:()=>undefined,
   }});
   hostRef.current=host;
-  const emitNiftyTick=(generationId:number):void=>{connection.emit('message',Buffer.alloc(0),{generationId});health.noteValidMarketEvent(generationId);health.noteNiftyTick(generationId);recovery.handleLiveTick(new Date(clock.now),generationId);};
+  const emitNiftyTick=(generationId:number):void=>{connection.emit('message',Buffer.alloc(0),{generationId});health.noteValidMarketEvent(generationId);health.noteNiftyTick(generationId);recovery.handleLiveTick({ sourceTimestamp: new Date(clock.now), receivedAt: new Date(clock.now), generationId: generationId });};
   // Mirrors the live entrypoints: `await host.start(); if (host.getState() !==
   // 'RUNNING') return; startupComplete = true;`. Only marked complete once
   // host.start() has actually succeeded, never before.
@@ -188,7 +188,7 @@ function buildSubscriptionManagerStack(readyTimeoutMs=5_000,connectFailures=1){
     log:(event)=>transitions.push(`${event.previous}->${event.state}`),
   });
   hostRef.current=host;
-  const emitNiftyTick=(generationId:number):void=>{connection.emit('message',Buffer.alloc(0),{generationId});health.noteValidMarketEvent(generationId);health.noteNiftyTick(generationId);recovery.handleLiveTick(new Date(clock.now),generationId);};
+  const emitNiftyTick=(generationId:number):void=>{connection.emit('message',Buffer.alloc(0),{generationId});health.noteValidMarketEvent(generationId);health.noteNiftyTick(generationId);recovery.handleLiveTick({ sourceTimestamp: new Date(clock.now), receivedAt: new Date(clock.now), generationId: generationId });};
   const start=async():Promise<void>=>{await host.start();if(host.getState()==='RUNNING')startupComplete=true;};
   return {clock,client,connection,health,recovery,host,start,transitions,emitNiftyTick};
 }
@@ -249,7 +249,7 @@ test('A6 correction (BLOCKING-1): the same transient-first-connect-failure seque
     log:(event)=>transitions.push(`${event.previous}->${event.state}`),
   });
   hostRef.current=host;
-  const emitNiftyTick=(generationId:number):void=>{connection.emit('message',Buffer.alloc(0),{generationId});health.noteValidMarketEvent(generationId);health.noteNiftyTick(generationId);recovery.handleLiveTick(new Date(clock.now),generationId);};
+  const emitNiftyTick=(generationId:number):void=>{connection.emit('message',Buffer.alloc(0),{generationId});health.noteValidMarketEvent(generationId);health.noteNiftyTick(generationId);recovery.handleLiveTick({ sourceTimestamp: new Date(clock.now), receivedAt: new Date(clock.now), generationId: generationId });};
   const starting=(async()=>{await host.start();if(host.getState()==='RUNNING')startupComplete=true;})();
   await flush();
   assert.equal(host.getState(),'DEGRADED');

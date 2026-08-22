@@ -14,6 +14,8 @@ export interface MarketDataHealthSnapshot {
   lastRawMessageAgeMs: number | null;
   lastValidMarketEventAgeMs: number | null;
   lastNiftyTickAgeMs: number | null;
+  /** Local receive-time age since the accepted NIFTY sourceTimestamp last advanced; null until a source-carrying tick has been accepted for the current generation. Distinct from lastNiftyTickAgeMs, which only proves packets are still arriving, not that source time is progressing. */
+  lastNiftySourceAdvanceAgeMs: number | null;
   reconnectCount: number;
   reconnectAttemptCount: number;
   breakerState: ReconnectCircuitState;
@@ -43,6 +45,10 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
   private lastRawMessageAt?: number;
   private lastValidMarketEventAt?: number;
   private lastNiftyTickAt?: number;
+  /** SOURCE_TIME (ms) of the last accepted current-generation NIFTY tick whose sourceTimestamp advanced past the previous one. */
+  private lastAcceptedNiftySourceTimestampMs?: number;
+  /** RECEIVE_TIME this monitor last observed a NIFTY source-timestamp advance -- the only value ever compared against this.now() for staleness. */
+  private lastNiftySourceAdvanceAt?: number;
   private reconnectCount = 0;
   private stalledGeneration?: number;
   private generationActivatedAt?: number;
@@ -67,7 +73,24 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
   start(): void { if (this.timer) return; this.timer = setInterval(() => this.check(), this.heartbeatCheckMs); this.timer.unref(); }
   stop(): void { if (!this.timer) return; clearInterval(this.timer); this.timer = undefined; }
   noteValidMarketEvent(generationId: number): void { if (generationId !== this.generationId) return; this.lastValidMarketEventAt = this.now(); }
-  noteNiftyTick(generationId: number): void { if (generationId !== this.generationId) return; this.lastNiftyTickAt = this.now(); }
+  /**
+   * `sourceTimestamp` is the exchange/provider event time carried by the
+   * tick, never the local receive time. It only ever advances
+   * lastNiftySourceAdvanceAt (a RECEIVE_TIME) when it strictly progresses
+   * past the last accepted current-generation value -- a repeated or
+   * out-of-order source timestamp leaves the advance clock untouched, so
+   * `check()` can detect a feed that keeps delivering packets whose source
+   * time itself has stopped moving.
+   */
+  noteNiftyTick(generationId: number, sourceTimestamp?: Date): void {
+    if (generationId !== this.generationId) return;
+    this.lastNiftyTickAt = this.now();
+    const sourceMs = sourceTimestamp?.getTime();
+    if (sourceMs !== undefined && Number.isFinite(sourceMs) && (this.lastAcceptedNiftySourceTimestampMs === undefined || sourceMs > this.lastAcceptedNiftySourceTimestampMs)) {
+      this.lastAcceptedNiftySourceTimestampMs = sourceMs;
+      this.lastNiftySourceAdvanceAt = this.now();
+    }
+  }
   confirmRecoveryReady(generationId: number): boolean {
     if (generationId !== this.generationId || this.connection.getState() !== ConnectionState.CONNECTED) return false;
     if (this.healthState === 'HEALTHY') return true;
@@ -84,10 +107,10 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
   getSnapshot(): MarketDataHealthSnapshot {
     const now = this.now(); const age = (value?: number) => value === undefined ? null : Math.max(0, now - value); const circuit=this.connection.getReconnectCircuitSnapshot();
     const insideGrace = this.healthState === 'GRACE' && this.connection.getState() === ConnectionState.CONNECTED && this.generationActivatedAt !== undefined && now-this.generationActivatedAt < this.generationGraceMs;
-    return { generationId:this.generationId, state:this.connection.getState(), healthState:this.healthState, insideGrace, graceRemainingMs:this.healthState==='GRACE'&&this.generationActivatedAt!==undefined?Math.max(0,this.generationGraceMs-(now-this.generationActivatedAt)):null, lastRawMessageAgeMs:age(this.lastRawMessageAt), lastValidMarketEventAgeMs:age(this.lastValidMarketEventAt), lastNiftyTickAgeMs:age(this.lastNiftyTickAt), reconnectCount:this.reconnectCount, reconnectAttemptCount:circuit.attempts, breakerState:circuit.state, lastFailureReason:circuit.lastFailureReason, nextRetryAtMs:circuit.nextRetryAtMs };
+    return { generationId:this.generationId, state:this.connection.getState(), healthState:this.healthState, insideGrace, graceRemainingMs:this.healthState==='GRACE'&&this.generationActivatedAt!==undefined?Math.max(0,this.generationGraceMs-(now-this.generationActivatedAt)):null, lastRawMessageAgeMs:age(this.lastRawMessageAt), lastValidMarketEventAgeMs:age(this.lastValidMarketEventAt), lastNiftyTickAgeMs:age(this.lastNiftyTickAt), lastNiftySourceAdvanceAgeMs:age(this.lastNiftySourceAdvanceAt), reconnectCount:this.reconnectCount, reconnectAttemptCount:circuit.attempts, breakerState:circuit.state, lastFailureReason:circuit.lastFailureReason, nextRetryAtMs:circuit.nextRetryAtMs };
   }
   private activateGeneration(generationId: number): void {
-    this.generationId=generationId; this.stalledGeneration=undefined; this.healthState='GRACE'; this.lastRawMessageAt=undefined; this.lastValidMarketEventAt=undefined; this.lastNiftyTickAt=undefined;
+    this.generationId=generationId; this.stalledGeneration=undefined; this.healthState='GRACE'; this.lastRawMessageAt=undefined; this.lastValidMarketEventAt=undefined; this.lastNiftyTickAt=undefined; this.lastAcceptedNiftySourceTimestampMs=undefined; this.lastNiftySourceAdvanceAt=undefined;
     const now=this.now(); this.generationActivatedAt=this.isMarketSession(new Date(now))?now:undefined;
     if(this.generationActivatedAt!==undefined)this.emit('graceStarted',this.getSnapshot());
   }
@@ -98,7 +121,15 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
     if (this.healthState === 'GRACE' && this.generationActivatedAt !== undefined && this.now()-this.generationActivatedAt < this.generationGraceMs) return;
     const snapshot = this.getSnapshot(); const referenceAge = Math.max(snapshot.lastRawMessageAgeMs ?? Infinity, snapshot.lastValidMarketEventAgeMs ?? Infinity, snapshot.lastNiftyTickAgeMs ?? Infinity);
     if (this.stalledGeneration === snapshot.generationId) return;
-    if (snapshot.healthState !== 'GRACE' && referenceAge <= this.stallMs) return;
-    this.healthState='UNHEALTHY'; this.stalledGeneration=snapshot.generationId; const reason=snapshot.healthState==='GRACE'?'HEALTH_GRACE_EXPIRED':'STALL'; const unhealthy=this.getSnapshot(); this.emit('stalled',unhealthy); this.options.onStall?.(unhealthy); this.connection.reconnectForHealth(reason,snapshot.generationId);
+    // Packets can keep arriving (referenceAge healthy) while the accepted NIFTY
+    // sourceTimestamp itself stops advancing; a receive-time-only view would
+    // report that as healthy forever. lastNiftySourceAdvanceAgeMs is only
+    // defined once a source-carrying NIFTY tick has actually been accepted for
+    // this generation, so a feed that never supplies source timestamps -- or
+    // one that briefly repeats the same source timestamp within the stall
+    // threshold -- stays exempt from this check.
+    const sourceStalled = snapshot.lastNiftySourceAdvanceAgeMs !== null && snapshot.lastNiftySourceAdvanceAgeMs > this.stallMs;
+    if (snapshot.healthState !== 'GRACE' && referenceAge <= this.stallMs && !sourceStalled) return;
+    this.healthState='UNHEALTHY'; this.stalledGeneration=snapshot.generationId; const reason=snapshot.healthState==='GRACE'?'HEALTH_GRACE_EXPIRED':(referenceAge>this.stallMs?'STALL':'SOURCE_STALL'); const unhealthy=this.getSnapshot(); this.emit('stalled',unhealthy); this.options.onStall?.(unhealthy); this.connection.reconnectForHealth(reason,snapshot.generationId);
   }
 }

@@ -132,11 +132,27 @@ export default class PaperMarketDataAdapterService {
     this.refreshExecutionQuote(candidate.instrumentKey);
   }
 
-  /** Snapshot is immutable, explicit about quality, and safe for PaperFillModel. */
+  /** Snapshot is immutable, explicit about quality, and safe for PaperFillModel. Ages are recomputed against the current read time; nothing else about the cached observation is mutated. */
   getExecutionQuoteSnapshot(instrumentKey: string): ExecutionQuoteSnapshot | undefined {
     const quote = this.executionQuotes.get(instrumentKey);
     if (!quote || !this.isActiveGeneration(quote.connectionGenerationId ?? undefined)) return undefined;
-    return immutableSnapshot(quote);
+    return this.currentSnapshot(quote);
+  }
+
+  /**
+   * A cached snapshot's ages are only ever true as of the instant it was
+   * written -- a silent instrument would otherwise report the same tiny age
+   * forever. Every read re-derives ltp/bid/ask/depth/quote age from the
+   * immutable source timestamps against this.now(), without touching
+   * receivedTimestamp (which stays "when this snapshot was built") or any
+   * other field.
+   */
+  private currentSnapshot(quote: ExecutionQuoteSnapshot): ExecutionQuoteSnapshot {
+    const now = this.now();
+    const ltpAgeMs = ageAt(now, quote.ltpSourceTimestamp ?? null);
+    const depthAgeMs = ageAt(now, quote.depthSourceTimestamp ?? null);
+    const quoteAgeMs = ageAt(now, quote.sourceTimestamp);
+    return immutableSnapshot({ ...quote, ltpAgeMs, depthAgeMs, bidAgeMs: depthAgeMs, askAgeMs: depthAgeMs, quoteAgeMs });
   }
 
   /** Exposes the same canonical live-generation source used internally, so the fill boundary can validate a captured quote against the currently active generation instead of a second counter. */

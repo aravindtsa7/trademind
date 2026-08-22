@@ -289,7 +289,10 @@ export default class MarketReplayRunnerService {
         // event.connectionGenerationId is already proven valid and === activeGeneration by the
         // validation/equality gate above -- activeGeneration is used directly rather than falling
         // back through `??`, which would let a missing generation silently inherit ownership.
-        recovery.handleLiveTick(receivedAt, activeGeneration);
+        // receivedAt is this recorded event's own RECEIVE_TIME (see the loop header above); the
+        // recorded sourceTimestamp is replayed verbatim rather than reusing receivedAt for it, so
+        // deterministic replay never silently collapses the two clock domains into one.
+        recovery.handleLiveTick({ sourceTimestamp: event.sourceTimestamp ? new Date(event.sourceTimestamp) : receivedAt, receivedAt, generationId: activeGeneration });
         continue;
       }
       if (event.eventType === 'TICK') {
@@ -299,7 +302,7 @@ export default class MarketReplayRunnerService {
           continue;
         }
         // See the FRESH_TICK_READY comment above: generation is already proven valid and current.
-        recovery.handleLiveTick(receivedAt, activeGeneration);
+        recovery.handleLiveTick({ sourceTimestamp: event.sourceTimestamp ? new Date(event.sourceTimestamp) : receivedAt, receivedAt, generationId: activeGeneration });
         processor.process({
           type: 'live_feed',
           currentTs: event.sourceTimestamp ?? event.receivedTimestamp,

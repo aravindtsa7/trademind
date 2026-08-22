@@ -160,11 +160,26 @@ export default class MarketDataRecoveryCoordinatorService<TRecoveryData = undefi
     this.setState('CONNECTED'); this.emitEvent('RECONNECT_SUCCEEDED', details);
     const token = ++this.recoveryToken; void this.recover(this.activeGenerationId,token);
   }
-  handleLiveTick(timestamp: Date, generationId?: number): void {
+  /**
+   * `sourceTimestamp` (exchange/provider event time) and `receivedAt` (local
+   * time this tick was accepted) are distinct clock domains and must never be
+   * substituted for one another. The reconnect/recovery boundary this proves
+   * a tick arrived after (`recoveryStartedAt`) is itself a local wall-clock
+   * anchor (see handleUnexpectedDisconnect/handleInitialConnected), so the
+   * freshness proof below compares receivedAt against it -- never
+   * sourceTimestamp, which a broker/local clock skew could place on either
+   * side of that boundary independent of when TradeMind actually received
+   * the packet. Generation ownership (isCurrentLiveGeneration, checked first)
+   * already proves this tick arrived on the current connection, not a
+   * pre-reconnect buffered one, so no separate source-time baseline is
+   * required for that guarantee.
+   */
+  handleLiveTick(details: { sourceTimestamp: Date; receivedAt: Date; generationId?: number }): void {
+    const { sourceTimestamp, receivedAt, generationId } = details;
     if (this.stopping || !isCurrentLiveGeneration(generationId, this.activeGenerationId)) return;
-    if ((this.state === 'WAITING_FOR_FRESH_TICK' || this.state === 'AWAITING_LIVE_TICK') && timestamp.getTime() >= this.recoveryStartedAt) {
+    if ((this.state === 'WAITING_FOR_FRESH_TICK' || this.state === 'AWAITING_LIVE_TICK') && receivedAt.getTime() >= this.recoveryStartedAt) {
       this.freshLiveTick = true;
-      recordMarketReplayEvent('FRESH_TICK_READY', { instrumentKey:null, sourceTimestamp:timestamp.toISOString(), receivedTimestamp:new Date().toISOString(), sequenceNumber:null, connectionGenerationId:this.activeGenerationId, payload:{} });
+      recordMarketReplayEvent('FRESH_TICK_READY', { instrumentKey:null, sourceTimestamp:sourceTimestamp.toISOString(), receivedTimestamp:receivedAt.toISOString(), sequenceNumber:null, connectionGenerationId:this.activeGenerationId, payload:{} });
       this.emitEvent('MARKET_DATA_FRESH_TICK_CONFIRMED', { generationId: this.activeGenerationId });
     }
     this.tryBecomeReady();

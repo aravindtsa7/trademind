@@ -11,6 +11,8 @@ import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from './paper
 import { PaperExecutionFillSummary } from '../dto/paper-fill-model.dto';
 import { DeterministicExecutionFaultInjector, InjectedExecutionFault } from '../../execution/execution-fault-injection.test-helper';
 import TickProcessor from '../../market-data/processors/tick.processor';
+import PaperFillModelService from './paper-fill-model.service';
+import PaperEntryQuoteWaiterService, { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
 
 const entryTimestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -140,6 +142,47 @@ test('fresh LTP cannot mask stale bid/ask depth in the canonical executable snap
   now = new Date(base.getTime() + 2_001); bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:now.toISOString(), ltp:102 });
   const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
   assert.equal(snapshot?.ltpAgeMs, 0); assert.equal(snapshot?.bidAgeMs, 2_001); assert.equal(snapshot?.askAgeMs, 2_001); assert.equal(snapshot?.quoteAgeMs, 2_001); assert.equal(snapshot?.dataQuality, 'STALE');
+});
+
+test('execution quote ages advance with the read clock even without a new event, and per-field LTP/depth ages stay distinct', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z'); let now = new Date(base.getTime() + 100);
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:new Date(base.getTime() + 30).toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+  const first = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!;
+  assert.equal(first.ltpAgeMs, 100); assert.equal(first.depthAgeMs, 70); assert.equal(first.quoteAgeMs, 70);
+  now = new Date(base.getTime() + 5_100); // no new tick/depth arrives; only the read clock advances
+  const second = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!;
+  assert.equal(second.ltpAgeMs, 5_100); assert.equal(second.depthAgeMs, 5_070); assert.equal(second.quoteAgeMs, 5_070);
+  assert.equal(second.receivedTimestamp, first.receivedTimestamp); // the write-time observation instant is never repurposed as "now"
+  assert.equal(second.snapshotId, first.snapshotId); // recomputed ages do not change the content-hash identity
+  assert.equal(second.dataQuality, 'FRESH_TOP_OF_BOOK'); // the write-time book-shape label is not re-derived here -- callers gate on the numeric ages
+});
+
+test('a genuinely stale cached quote is judged by its current age, not its original frozen age -- the bounded waiter and the production PaperFillModel path both fail closed until a newer event arrives', async () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const base = new Date('2026-08-10T04:00:00.000Z');
+  let nowMs = base.getTime();
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => new Date(nowMs));
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), ltp:100 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:base.toISOString(), quotes:[{ bidPrice:99, askPrice:101 }] });
+
+  nowMs = base.getTime() + 5_100; // no new event ever arrives; the instrument has gone silent
+  const waiter = new PaperEntryQuoteWaiterService({ timeoutMs:20, pollMs:5, maxQuoteAgeMs:2_000, getSnapshot:()=>undefined, getExecutionSnapshot:(key)=>adapter.getExecutionQuoteSnapshot(key), abortReason:()=>undefined, now:()=>nowMs, sleep:async()=>{ nowMs += 5; } });
+  await assert.rejects(() => waiter.waitForFreshExecutionQuote('NSE_FO|one'), (error: unknown) => error instanceof PaperEntryQuoteWaitError && error.reason === 'STALE_QUOTE');
+
+  const staleSnapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!;
+  const fillModel = new PaperFillModelService({ maxQuoteAgeMs:2_000, maxSpreadPercent:5, executionLatencyMs:0 });
+  const staleFill = fillModel.fill({ side:'BUY', requestedQuantity:75, quote:staleSnapshot, intentTimestamp:new Date(nowMs) });
+  assert.equal(staleFill.status, 'UNAVAILABLE'); assert.equal(staleFill.reason, 'STALE_QUOTE');
+
+  bus.emit('market.tick', { instrumentKey:'NSE_FO|one', timestamp:new Date(nowMs).toISOString(), ltp:102 });
+  bus.emit('market.depth', { instrumentKey:'NSE_FO|one', timestamp:new Date(nowMs).toISOString(), quotes:[{ bidPrice:101, askPrice:103 }] });
+  const freshSnapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one')!;
+  assert.equal(freshSnapshot.quoteAgeMs, 0);
+  const freshFill = fillModel.fill({ side:'BUY', requestedQuantity:75, quote:freshSnapshot, intentTimestamp:new Date(nowMs) });
+  assert.equal(freshFill.status, 'FILLED');
 });
 
 test('captured executable snapshots are immutable and later cache updates cannot change an attempt', () => {

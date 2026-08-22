@@ -360,7 +360,7 @@ async function run(): Promise<void> {
     if (Number.isNaN(timestamp.getTime())) return;
     if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); void host?.eod('MARKET_EOD'); return; }
     health.noteValidMarketEvent(tick.generationId);
-    if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId); recovery!.handleLiveTick(timestamp, tick.generationId); if (recovery!.isEvaluationReady()) health.confirmRecoveryReady(tick.generationId); }
+    if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId, timestamp); recovery!.handleLiveTick({ sourceTimestamp: timestamp, receivedAt: new Date(), generationId: tick.generationId }); if (recovery!.isEvaluationReady()) health.confirmRecoveryReady(tick.generationId); }
     cacheCurrentLiveInstrumentValue(latestPremiumByInstrument, tick.instrumentKey, tick.ltp, tick.generationId, connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
       lastNiftyTickPrintedAt = Date.now();

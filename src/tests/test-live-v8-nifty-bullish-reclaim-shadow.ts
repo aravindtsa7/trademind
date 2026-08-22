@@ -250,8 +250,8 @@ async function run(): Promise<void> {
       timestamp: t.timestamp,
     });
     if (t.instrumentKey === NIFTY) {
-      health.noteNiftyTick(t.generationId);
-      recovery.handleLiveTick(at, t.generationId);
+      health.noteNiftyTick(t.generationId, at);
+      recovery.handleLiveTick({ sourceTimestamp: at, receivedAt: new Date(), generationId: t.generationId });
       if (recovery.isEvaluationReady()) health.confirmRecoveryReady(t.generationId);
     }
     if (!recovery.isEvaluationReady()) return;

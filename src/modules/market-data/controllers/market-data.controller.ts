@@ -21,8 +21,11 @@ export default class MarketDataController {
       this.connectedAt = state === ConnectionState.CONNECTED ? new Date() : undefined;
     });
 
-    eventBus.on('market.tick', (event: MarketTickEvent) => {
-      this.lastReceivedTickTimestamp = event.timestamp ?? new Date().toISOString();
+    // The field name promises RECEIVE_TIME (when TradeMind observed the tick
+    // locally), not the tick's own SOURCE_TIME -- event.timestamp is the
+    // exchange/provider event time and must never populate it.
+    eventBus.on('market.tick', (_event: MarketTickEvent) => {
+      this.lastReceivedTickTimestamp = new Date().toISOString();
     });
   }
 

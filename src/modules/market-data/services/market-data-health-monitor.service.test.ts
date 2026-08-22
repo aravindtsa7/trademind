@@ -69,6 +69,48 @@ test('after grace confirmation normal freshness monitoring includes the required
   setNow(101);connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.checkNow();assert.equal(connection.reconnects,1);assert.equal(connection.lastReason,'STALL');
 });
 
+// ---- A2: source-time progression stall ----
+
+test('A2-A: packets arrive and sourceTimestamp keeps advancing -- stays healthy',()=>{
+  const {connection,monitor,setNow}=setup();connection.emit('connected',{generationId:1});
+  connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(0));
+  assert.equal(monitor.confirmRecoveryReady(1),true);
+  for (let step=1;step<=5;step+=1) { setNow(step*80); connection.emit('message',Buffer.alloc(0),{generationId:1}); monitor.noteValidMarketEvent(1); monitor.noteNiftyTick(1,new Date(step*80)); monitor.checkNow(); }
+  assert.equal(connection.reconnects,0);assert.equal(monitor.isHealthy(),true);
+});
+
+test('A2-B: no packets arrive beyond the stall threshold -- existing receive-stall behavior is unchanged',()=>{
+  const {connection,monitor,setNow}=setup();connection.emit('connected',{generationId:1});connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(0));assert.equal(monitor.confirmRecoveryReady(1),true);
+  setNow(101);monitor.checkNow(); // no further messages/ticks at all
+  assert.equal(connection.reconnects,1);assert.equal(connection.lastReason,'STALL');
+});
+
+test('A2-C: packets keep arriving but the accepted NIFTY sourceTimestamp never advances -- must not be indistinguishable from healthy',()=>{
+  const {connection,monitor,setNow}=setup();connection.emit('connected',{generationId:1});connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(0));assert.equal(monitor.confirmRecoveryReady(1),true);
+  setNow(101);connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(0));monitor.checkNow(); // raw/valid/NIFTY traffic all fresh, but the source timestamp repeats
+  assert.equal(connection.reconnects,1);assert.equal(connection.lastReason,'SOURCE_STALL');assert.equal(monitor.getSnapshot().healthState,'UNHEALTHY');
+});
+
+test('A2-D: a source timestamp that briefly repeats within the stall threshold does not trigger a false stall',()=>{
+  const {connection,monitor,setNow}=setup();connection.emit('connected',{generationId:1});connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(0));assert.equal(monitor.confirmRecoveryReady(1),true);
+  setNow(50);connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(0));monitor.checkNow(); // repeated source timestamp, but well inside the 100ms stall threshold
+  assert.equal(connection.reconnects,0);assert.equal(monitor.isHealthy(),true);
+});
+
+test('A2-E: source time advancing again after a repeat resumes normal healthy tracking',()=>{
+  const {connection,monitor,setNow}=setup();connection.emit('connected',{generationId:1});connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(0));assert.equal(monitor.confirmRecoveryReady(1),true);
+  setNow(50);connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(50));monitor.checkNow(); // source time advanced again before the threshold
+  assert.equal(connection.reconnects,0);
+  setNow(130);connection.emit('message',Buffer.alloc(0),{generationId:1});monitor.noteValidMarketEvent(1);monitor.noteNiftyTick(1,new Date(130));monitor.checkNow();
+  assert.equal(connection.reconnects,0);assert.equal(monitor.isHealthy(),true);
+});
+
+test('A2-F: a stale/superseded generation cannot advance source-health state for the current generation',()=>{
+  const {connection,monitor,setNow}=setup();connection.generation=2;connection.emit('connected',{generationId:2});setNow(10);
+  monitor.noteNiftyTick(1,new Date(9_999)); // old generation -- must be ignored entirely, including for source tracking
+  assert.equal(monitor.getSnapshot().lastNiftySourceAdvanceAgeMs,null);
+});
+
 test('invalid health timing configuration fails closed',()=>{
   const connection=new FakeConnection();assert.throws(()=>new MarketDataHealthMonitorService(connection as never,{generationGraceMs:Number.NaN}),/positive finite/);assert.throws(()=>new MarketDataHealthMonitorService(connection as never,{stallMs:0}),/positive finite/);
 });
