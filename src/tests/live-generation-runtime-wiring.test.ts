@@ -7,6 +7,12 @@ function source(path: string): string {
   return readFileSync(resolve(process.cwd(), path), 'utf8');
 }
 
+const runtimePaths: Record<'V2' | 'V4' | 'V8', string> = {
+  V2: 'src/tests/test-live-paper-trading.ts',
+  V4: 'src/tests/test-live-v4-nifty-momentum-shadow.ts',
+  V8: 'src/tests/test-live-v8-nifty-bullish-reclaim-shadow.ts',
+};
+
 test('live V2, V4 and V8 candle adapters receive their active WebSocket generation providers', () => {
   const v2 = source('src/tests/test-live-paper-trading.ts');
   const v4 = source('src/tests/test-live-v4-nifty-momentum-shadow.ts');
@@ -89,4 +95,98 @@ test('A6: V2 preserves its historical + durable-execution warmup hook while also
   const onReadyIndex = v2.indexOf('onReady: (): Promise<void> => recovery.waitUntilReady(');
   assert.ok(onReadyIndex >= 0, 'expected the live onReady gate');
   assert.ok(warmupIndex < onReadyIndex, 'expected warmup (historical/execution) to remain ordered before the live onReady gate');
+});
+
+// ---- A6 post-close hardening: protect the startupComplete ownership latch ----
+//
+// These are deliberately source-level tripwires, not substitutes for the
+// behavioural coverage in market-data-reconnect-safety.integration.test.ts.
+// They exist because that behavioural coverage reproduces the recovery/host
+// wiring in its own shared harness rather than executing V2/V4/V8's actual
+// source, so a regression introduced directly into one runtime file would not
+// otherwise be caught: the previously-reproduced race was
+//   host.start() pending in onReady -> host DEGRADED -> recovery READY ->
+//   persistent recovery listener calls host.recovered() -> host RUNNING ->
+//   host.start() also tries RUNNING -> illegal RUNNING->RUNNING -> FAULTED.
+// The fix is the startupComplete latch: before host.start() has successfully
+// returned RUNNING, only host.start() itself (via onReady) may grant the
+// initial RUNNING transition; the persistent recovery.stateChanged listener's
+// call to host.recovered() must stay suppressed until then.
+
+test('A6 hardening: V2, V4 and V8 each declare startupComplete false by default (never true, never removed)', () => {
+  for (const [name, path] of Object.entries(runtimePaths)) {
+    const runtime = source(path);
+    assert.match(runtime, /let\s+startupComplete\s*=\s*false\s*;/, `${name}: expected 'let startupComplete = false;'`);
+  }
+});
+
+test('A6 hardening: V2, V4 and V8 gate the persistent recovery listener\'s host.recovered() call behind startupComplete', () => {
+  // Tolerates `if (startupComplete)`/`else if (startupComplete)` in either
+  // single-line or multi-line form (V2/V4/V8 differ in layout), but requires
+  // the conditional to sit directly against the recovered() call itself --
+  // an unconditional `void host?.recovered(...)` (the regressed shape) cannot
+  // match this.
+  const guardedRecoveredCall = /(?:if|else if)\s*\(\s*startupComplete\s*\)\s*\{?\s*void\s+host\?\.recovered\(/;
+  for (const [name, path] of Object.entries(runtimePaths)) {
+    const runtime = source(path);
+    assert.match(runtime, guardedRecoveredCall, `${name}: expected host?.recovered(...) to be called only when startupComplete is true`);
+  }
+});
+
+test('A6 hardening: V2, V4 and V8 flip startupComplete = true only after host.start() has returned RUNNING, never before', () => {
+  const runningGuard = "if (host.getState() !== 'RUNNING') return;";
+  for (const [name, path] of Object.entries(runtimePaths)) {
+    const runtime = source(path);
+    const hostStartIndex = runtime.indexOf('await host.start();');
+    const runningGuardIndex = runtime.indexOf(runningGuard);
+    const completeAssignmentIndex = runtime.search(/startupComplete\s*=\s*true/);
+    assert.ok(hostStartIndex >= 0, `${name}: expected 'await host.start();'`);
+    assert.ok(runningGuardIndex >= 0, `${name}: expected the RUNNING-state guard '${runningGuard}'`);
+    assert.ok(completeAssignmentIndex >= 0, `${name}: expected a 'startupComplete = true' assignment`);
+    assert.ok(hostStartIndex < runningGuardIndex, `${name}: expected the RUNNING-state guard to be ordered after host.start() resolves`);
+    assert.ok(runningGuardIndex < completeAssignmentIndex, `${name}: expected startupComplete to be set true only after the RUNNING-state guard, never before it or before host.start() resolves`);
+  }
+});
+
+test('A6 hardening: V2, V4 and V8 still route recovery DEGRADED to host.degrade() unconditionally -- the startupComplete latch must not suppress degrade during startup', () => {
+  const degradedCheck = /state\s*===\s*'DEGRADED'/;
+  for (const [name, path] of Object.entries(runtimePaths)) {
+    const runtime = source(path);
+    const degradedMatch = degradedCheck.exec(runtime);
+    assert.ok(degradedMatch, `${name}: expected a recovery 'DEGRADED' state check`);
+    const degradedIndex = degradedMatch!.index;
+    const degradeCallIndex = runtime.indexOf('host?.degrade(', degradedIndex);
+    assert.ok(degradeCallIndex >= 0, `${name}: expected host?.degrade(...) to follow the DEGRADED state check`);
+    const between = runtime.slice(degradedIndex, degradeCallIndex);
+    assert.ok(between.length < 200, `${name}: host?.degrade(...) is unexpectedly far from the DEGRADED state check -- wiring may have changed shape`);
+    assert.ok(!between.includes('startupComplete'), `${name}: the DEGRADED -> host.degrade() path must remain unconditional during startup, not gated by startupComplete`);
+  }
+});
+
+test('A6 hardening: V2, V4 and V8 share the identical declare -> guard -> start -> complete ordering for startupComplete, despite differing source layout', () => {
+  // The same four-point ordering chain, checked identically across all three
+  // runtimes regardless of each file's own formatting style (V2 multi-line,
+  // V4 dense single-line, V8 multi-line with braces) -- proves the invariant
+  // is structural, not incidental to one runtime's particular layout.
+  const guardedRecoveredCall = /(?:if|else if)\s*\(\s*startupComplete\s*\)\s*\{?\s*void\s+host\?\.recovered\(/;
+  const runningGuard = "if (host.getState() !== 'RUNNING') return;";
+  for (const [name, path] of Object.entries(runtimePaths)) {
+    const runtime = source(path);
+    const declarationIndex = runtime.search(/let\s+startupComplete\s*=\s*false\s*;/);
+    const guardedCallMatch = guardedRecoveredCall.exec(runtime);
+    const hostStartIndex = runtime.indexOf('await host.start();');
+    const runningGuardIndex = runtime.indexOf(runningGuard);
+    const completeAssignmentIndex = runtime.search(/startupComplete\s*=\s*true/);
+    assert.ok(
+      declarationIndex >= 0 && guardedCallMatch && hostStartIndex >= 0 && runningGuardIndex >= 0 && completeAssignmentIndex >= 0,
+      `${name}: missing one or more startupComplete invariant elements`,
+    );
+    assert.ok(
+      declarationIndex < guardedCallMatch!.index
+        && guardedCallMatch!.index < hostStartIndex
+        && hostStartIndex < runningGuardIndex
+        && runningGuardIndex < completeAssignmentIndex,
+      `${name}: expected declare(${declarationIndex}) < guarded-recovered-call(${guardedCallMatch?.index}) < await-host.start(${hostStartIndex}) < RUNNING-guard(${runningGuardIndex}) < startupComplete=true(${completeAssignmentIndex})`,
+    );
+  }
 });
