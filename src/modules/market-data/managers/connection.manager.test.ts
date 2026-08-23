@@ -228,6 +228,26 @@ test('a fresh manager starts with a closed empty circuit',()=>{
   const {manager}=setup();assert.deepEqual(manager.getReconnectCircuitSnapshot(),{state:'CLOSED',attempts:0,lastFailureReason:null,activeGenerationId:0,pendingRecoveryGenerationId:null,reconnectEpisodeActive:false,nextRetryAtMs:null});
 });
 
+// TEST-ONLY ACCEPTANCE GAP: a multi-trigger reconnect storm -- a health stall, a
+// same-tick socket connectionError, and a duplicate health-stall report all
+// landing while a scheduled backoff reconnect is already armed -- must admit
+// exactly one active episode, one scheduled attempt, and one generation
+// transition; never two overlapping/corrupting reconnect attempts.
+test('a multi-trigger reconnect storm racing an armed backoff timer admits exactly one active episode and one generation transition',async()=>{
+  const {client,scheduler,manager}=setup();
+  await manager.connect(); manager.confirmRecoveryReady(1); // generation 1, healthy
+  let episodesStarted=0; manager.on('unexpectedDisconnect',()=>{episodesStarted+=1;});
+  assert.equal(manager.reconnectForHealth('STALL',1),true); // opens the one authoritative episode and arms the backoff timer
+  client.emit('connectionError',new Error('same-tick socket error')); // a second trigger source, same tick
+  assert.equal(manager.reconnectForHealth('STALL_AGAIN',1),false); // a third trigger source -- rejected outright, episode already active
+  assert.equal(episodesStarted,1); // exactly one reconnect episode was ever opened by the storm
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,1); // exactly one scheduled backoff attempt, not three
+  scheduler.advanceBy(10); await flush();
+  assert.equal(manager.getState(),ConnectionState.CONNECTED);
+  assert.equal(manager.getGenerationId(),2); // exactly one generation transition survived the storm
+  assert.equal(client.connects,2); // exactly one reconnect attempt actually dialed out
+});
+
 test('OPEN breaker propagates through the existing host fault path and blocks evaluation',async()=>{
   const {client,scheduler,manager}=setup();const host=new StrategyHostLifecycle({strategyId:'TEST',runtimeId:'test',hooks:{warmup:()=>undefined,onEod:()=>undefined,onShutdown:()=>undefined,onFault:()=>undefined}});let messages=0;manager.on('message',()=>{messages+=1;});await host.start();manager.on('reconnectFailed',(details:{reason?:string})=>{void host.fault(new Error(details.reason??'RECONNECT_FAILED'));});
   await manager.connect();manager.confirmRecoveryReady(1);client.emit('disconnected',{code:1006},true);scheduler.advanceBy(10);await flush();manager.failRecovery(2,'BREAKER_OPEN');client.emit('message',Buffer.alloc(0));assert.throws(()=>manager.send('blocked'),/not available/);await flush();assert.equal(host.getState(),'FAULTED');assert.equal(host.canEvaluate(),false);assert.equal(messages,0);

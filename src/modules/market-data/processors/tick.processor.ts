@@ -50,7 +50,14 @@ export interface MarketDepthEvent {
 }
 
 export default class TickProcessor {
-  constructor(private readonly bus: EventEmitter = eventBus) {}
+  /**
+   * `now` is this processor's packet-receive reference. Live callers invoke
+   * `process()` synchronously as each packet arrives, so the default
+   * `Date.now()` reference is that receive instant; replay supplies its own
+   * deterministic clock so a recorded artifact is never judged against real
+   * wall-clock time (see MarketReplayRunnerService).
+   */
+  constructor(private readonly bus: EventEmitter = eventBus, private readonly now: () => number = Date.now) {}
   process(message: MarketDataFeedResponseDto, generationId?: number): void {
     if (!this.isValidMessage(message)) {
       logger.warn('Ignoring invalid decoded market data message');
@@ -63,14 +70,15 @@ export default class TickProcessor {
       return;
     }
 
-    const timestamp = normalizeMarketDataTimestamp(message.currentTs);
+    const referenceMs = this.now();
+    const timestamp = normalizeMarketDataTimestamp(message.currentTs, referenceMs);
     if (!timestamp) {
-      logger.warn('Ignoring market data message with invalid source timestamp');
+      logger.warn('Ignoring market data message with invalid or future source timestamp');
       return;
     }
 
     Object.entries(message.feeds).forEach(([instrumentKey, feed]) => {
-      this.publishTick(instrumentKey, timestamp, feed, generationId);
+      this.publishTick(instrumentKey, timestamp, feed, generationId, referenceMs);
       this.publishGreeks(instrumentKey, timestamp, feed, generationId);
       this.publishDepth(instrumentKey, timestamp, feed, generationId);
     });
@@ -88,7 +96,8 @@ export default class TickProcessor {
   private publishTick(
     instrumentKey: string,
     timestamp: string | undefined,
-    feed: MarketDataFeedDto, generationId?: number
+    feed: MarketDataFeedDto, generationId?: number,
+    referenceMs?: number
   ): void {
     const ltpc = this.getLtpc(feed);
     if (!ltpc || !this.hasLtpcValue(ltpc)) {
@@ -99,7 +108,7 @@ export default class TickProcessor {
       instrumentKey,
       timestamp,
       ltp: ltpc.ltp,
-      lastTradedTime: normalizeMarketDataTimestamp(ltpc.ltt),
+      lastTradedTime: normalizeMarketDataTimestamp(ltpc.ltt, referenceMs),
       lastTradedQuantity: ltpc.ltq,
       closePrice: ltpc.cp,
       generationId,

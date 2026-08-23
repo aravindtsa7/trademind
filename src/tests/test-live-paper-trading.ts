@@ -25,6 +25,7 @@ import { NseSessionEodCoordinator, isAtOrAfterNseSessionClose, isWithinNseSessio
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
+import { StrategyTerminalOutcomeArbiter } from '../modules/market-data/services/strategy-terminal-outcome-arbiter.service';
 import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-generation';
 import { cacheCurrentLiveDepth, getCurrentLiveDepth } from '../modules/market-data/utils/live-depth-cache';
 import { cacheCurrentLiveInstrumentValue, getCurrentLiveInstrumentValue, LiveInstrumentValue } from '../modules/market-data/utils/live-instrument-value-cache';
@@ -296,6 +297,12 @@ async function run(): Promise<void> {
   let shuttingDown = false;
   let eodRequested = false;
   let requestedShutdownReason = 'SESSION_END';
+  // Separates each terminal trigger's own close-out work (still gated by the
+  // `shuttingDown` latch below, run at most once) from the single durable
+  // SUMMARY/CLEAN_SHUTDOWN write: a racing fault can still escalate the
+  // outcome for as long as commit() has not yet run, even if a different
+  // trigger already owns the close-out work in progress.
+  const terminalOutcomeArbiter = new StrategyTerminalOutcomeArbiter();
   // Before host.start() has successfully returned, host.start() itself is the
   // sole owner of the initial RUNNING transition (via onReady ->
   // recovery.waitUntilReady()). Calling host.recovered() from the persistent
@@ -441,31 +448,7 @@ async function run(): Promise<void> {
     return paperMarketDataAdapter.drainDurableExitQueue(Number(process.env.PAPER_EXECUTION_SHUTDOWN_WAIT_MS ?? 5_000));
   };
 
-  const finalizeShutdown = (reason: string, durableExitDrained: boolean): void => {
-    if (!durableExitDrained) {
-      riskGate.transition('HALTED');
-      forwardJournal.appendEvent(istDate(new Date()), 'EXECUTION_RECONCILIATION_REQUIRED', ['EXECUTION_RECONCILIATION_REQUIRED'], { reason: 'EXIT_TRANSACTION_DRAIN_TIMEOUT' });
-      console.error('[PAPER_EXECUTION_DURABILITY_FAILURE] pending durable exit transaction did not settle before shutdown timeout; reconciliation is required.');
-    }
-    const reconciliationRequired = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING);
-    const outcome = resolveSessionOutcome({
-      reason,
-      reconciliationRequired,
-      durableExitDrained,
-    });
-    const portfolioSnapshot = portfolio.logSessionSummary(istDate(new Date()));
-    forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: outcome.sessionCompleted, eodReason: reason, status: outcome.status, indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null } });
-    if (outcome.status === 'VALID_COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
-    console.log(`\nGraceful shutdown requested (${reason}).`);
-    clearInterval(statusTimer);
-
-    paperRuntimeCandleAdapter.stop();
-    const stopResult = runtime.stop(); // Runtime stops PaperMarketDataAdapterService.
-    liveCandleEventAdapter.stop();
-    paperMarketDataAdapter.stop(); // Explicit idempotent stop for standalone cleanup.
-    subscriptionManager.unsubscribeMany(subscriptionManager.getSubscriptions().map((subscription) => subscription.instrumentKey));
-    connectionManager.disconnect();
-
+  const reportShutdownObservability = (stopResult: { openOrdersRemaining: number }): void => {
     printStatus();
     console.log(`Open paper orders left open by design: ${stopResult.openOrdersRemaining}`);
     const observedOrders = Array.from(createdOrderIds)
@@ -488,12 +471,76 @@ async function run(): Promise<void> {
     eventBus.off('paper.strategy.error', handleStrategyError);
   };
 
-  const shutdown = async (reason: string): Promise<void> => {
+  const shutdown = async (reason: string, onCloseOutComplete?: () => void): Promise<void> => {
+    // Proposed unconditionally, even if a different trigger already owns the
+    // close-out work below -- this is the only way a racing fault can still
+    // escalate the eventual commit()'d outcome.
+    terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason }).status);
     if (shuttingDown) return;
     shuttingDown = true; eodRequestedForRisk = true; riskGate.transition('HALTED');
     health.stop(); recovery.stop();
     const durableExitDrained = await drainPendingDurableExit();
-    finalizeShutdown(reason, durableExitDrained);
+    let reconciliationRequired = false;
+    // sealAfterCloseOut() is the single production seam: it runs this fallible
+    // close-out (draining state, stopping adapters, unsubscribing, disconnecting,
+    // and all required observability/listener-removal, including any
+    // trigger-specific pre-seal observability via onCloseOutComplete) fully to
+    // completion -- or, if it throws, escalates to FAULTED and still durably
+    // seals that reason -- BEFORE the SUMMARY/CLEAN_SHUTDOWN write below ever
+    // runs. Nothing capable of throwing runs after sealAfterCloseOut() resolves:
+    // the durable SUMMARY append inside the writer below is the final
+    // potentially-throwing operation in this terminal path, so a successful
+    // VALID_COMPLETED SUMMARY can never be followed by a lifecycle failure that
+    // would leave the host FAULTED next to it.
+    await terminalOutcomeArbiter.sealAfterCloseOut(
+      () => {
+        if (!durableExitDrained) {
+          riskGate.transition('HALTED');
+          forwardJournal.appendEvent(istDate(new Date()), 'EXECUTION_RECONCILIATION_REQUIRED', ['EXECUTION_RECONCILIATION_REQUIRED'], { reason: 'EXIT_TRANSACTION_DRAIN_TIMEOUT' });
+          console.error('[PAPER_EXECUTION_DURABILITY_FAILURE] pending durable exit transaction did not settle before shutdown timeout; reconciliation is required.');
+        }
+        // Computed before any fallible cleanup below so it stays correct even if
+        // a later step (e.g. connectionManager.disconnect()) throws.
+        reconciliationRequired = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING);
+        clearInterval(statusTimer);
+        paperRuntimeCandleAdapter.stop();
+        const stopResult = runtime.stop(); // Runtime stops PaperMarketDataAdapterService.
+        liveCandleEventAdapter.stop();
+        paperMarketDataAdapter.stop(); // Explicit idempotent stop for standalone cleanup.
+        subscriptionManager.unsubscribeMany(subscriptionManager.getSubscriptions().map((subscription) => subscription.instrumentKey));
+        connectionManager.disconnect();
+        // Status/order observability and listener removal are all part of this
+        // trigger's own close-out: they must finish (or fault the session) BEFORE
+        // the seal below, never after it.
+        reportShutdownObservability(stopResult);
+        // Trigger-specific pre-seal observability (e.g. performDurableEodExit's own
+        // V2_EOD_SUMMARY log) -- still close-out work, so it must finish (or fault
+        // the session) before the seal below, never after it.
+        onCloseOutComplete?.();
+      },
+      (finalReason) => {
+        // commit() (inside sealAfterCloseOut) reads the arbiter's authoritative reason at this
+        // exact instant -- a fault that raced in via propose() any time before this line (including
+        // during the drain above, or during close-out itself) wins here even though this call
+        // originated from a different trigger's own local `reason`.
+        const outcome = resolveSessionOutcome({
+          reason: finalReason,
+          reconciliationRequired,
+          durableExitDrained,
+        });
+        const portfolioSnapshot = portfolio.logSessionSummary(istDate(new Date()));
+        // CLEAN_SHUTDOWN (non-authoritative) must be durable before SUMMARY (the
+        // A9-authoritative eligibility record): a failure appending CLEAN_SHUTDOWN
+        // must never leave a durable VALID_COMPLETED SUMMARY with no corresponding
+        // shutdown evidence.
+        if (outcome.status === 'VALID_COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason: finalReason });
+        console.log(`\nGraceful shutdown requested (${finalReason}).`);
+        // The durable SUMMARY append is the FINAL potentially-throwing operation in
+        // this writer -- and, once sealAfterCloseOut() has run all close-out and
+        // observability above, in the entire terminal path. Nothing follows it.
+        forwardJournal.append({ recordType: 'SUMMARY', tradingDate: istDate(new Date()), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, sessionCompleted: outcome.sessionCompleted, eodReason: finalReason, status: outcome.status, indicators: { portfolioOpenCount: portfolioSnapshot?.openPositionCount ?? null, portfolioClosedCount: portfolioSnapshot?.closedPositionCount ?? null, portfolioRealizedPnl: portfolioSnapshot?.totalRealizedPnl ?? null } });
+      },
+    );
   };
 
   const performDurableEodExit = async (): Promise<void> => {
@@ -517,10 +564,14 @@ async function run(): Promise<void> {
       eventBus.emit('paper.order.action', action);
       console.log(`[V2_EOD_EXIT] order=${action.orderId} reason=TIME_EXIT premium=${action.observedPremium.toFixed(2)} timestamp=${formatIst(action.timestamp)}`);
     });
-    await shutdown('EOD_NSE_SESSION_CLOSE');
-    const status = runtime.getStatus();
-    const eodStatus = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING) ? 'RECONCILIATION_REQUIRED' : 'COMPLETED';
-    console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=${eodStatus}`);
+    // The V2_EOD_SUMMARY status/order reads and log are pre-seal, trigger-specific
+    // close-out observability -- passed into shutdown() so they always run BEFORE
+    // the seal, never after: nothing may follow `await shutdown(...)` in this hook.
+    await shutdown('EOD_NSE_SESSION_CLOSE', () => {
+      const status = runtime.getStatus();
+      const eodStatus = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING) ? 'RECONCILIATION_REQUIRED' : 'COMPLETED';
+      console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=${eodStatus}`);
+    });
   };
   connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => {
     recovery.handleUnexpectedDisconnect(details);
@@ -535,7 +586,11 @@ async function run(): Promise<void> {
   connectionManager.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null });
     recovery.fault('RECONNECT_FAILED');
-    void host?.fault(new Error('RECONNECT_FAILED'));
+    // Once the arbiter has started (or finished) sealing a different outcome, this
+    // external trigger must not flip the HOST's own state to FAULTED: that would
+    // disagree with the outcome already durably recorded (or in the middle of being
+    // recorded) for this session.
+    if (!terminalOutcomeArbiter.isSealing()) void host?.fault(new Error('RECONNECT_FAILED'));
   });
   // ConnectionManager emits 'connected' on every successful open, cold start
   // and reconnect alike (and 'reconnected' fires immediately after it on a

@@ -7,6 +7,7 @@ import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-gener
 import LiveCandleBuilderService from '../modules/market-data/services/live-candle-builder.service';
 import LiveCandleEventAdapterService from '../modules/market-data/services/live-candle-event-adapter.service';
 import { describeV8ErrorSafely, routeV8CompletedCandleFailure, v8ObserveTerminalFailure } from '../modules/adaptive-intraday/services/v8-bullish-reclaim-shadow.service';
+import { StrategyTerminalOutcomeArbiter } from '../modules/market-data/services/strategy-terminal-outcome-arbiter.service';
 import { EventEmitter } from 'node:events';
 
 function v8HarnessLifecycle() {
@@ -554,6 +555,158 @@ test('HOSTILE-E: a hostile non-Error value (a Proxy whose instanceof trap throws
   assert.deepEqual(reasons, ['UNKNOWN_FAULT']);
   assert.equal(host.getState(), 'FAULTED');
   assert.equal(host.canEvaluate(), false);
+});
+
+// A10 blocker B2 (third correction): drives the real production
+// StrategyTerminalOutcomeArbiter (also imported by the real
+// test-live-v8-nifty-bullish-reclaim-shadow.ts entrypoint), mirroring its shutdown()'s shared
+// close-out step -- any terminal trigger can be genuinely blocked there, between propose()
+// and commit().
+function deferredBarrier<T = void>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((res) => { resolve = res; });
+  return { promise, resolve };
+}
+function v8WithBlockingDrain() {
+  const summaries: Array<{ status: string; sessionCompleted: boolean; eodReason: string }> = [];
+  const cleanShutdownEvents: string[] = [];
+  let closing = false;
+  const arbiter = new StrategyTerminalOutcomeArbiter();
+  const drainStarted = deferredBarrier<void>();
+  const drainBlocker = deferredBarrier<void>();
+  const shutdown = async (reason: string): Promise<void> => {
+    arbiter.propose(reason, resolveSessionOutcome({ reason }).status);
+    if (closing) return;
+    closing = true;
+    drainStarted.resolve(); await drainBlocker.promise;
+    await arbiter.commit((finalReason) => {
+      const outcome = resolveSessionOutcome({ reason: finalReason });
+      summaries.push({ status: outcome.status, sessionCompleted: outcome.sessionCompleted, eodReason: finalReason });
+      if (outcome.status === 'VALID_COMPLETED') cleanShutdownEvents.push(finalReason);
+    });
+  };
+  const host = new StrategyHostLifecycle({ strategyId: 'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW', runtimeId: 'shadow:v8:reclaim', hooks: {
+    warmup: (): void => undefined,
+    onEod: (reason): Promise<void> => shutdown(reason ?? 'EOD'),
+    onShutdown: (reason): Promise<void> => shutdown(reason ?? 'SIGINT'),
+    onFault: (): Promise<void> => shutdown('FAULTED'),
+  } });
+  return { host, summaries, cleanShutdownEvents, drainStarted, drainBlocker, arbiter };
+}
+
+test('V8-C: EOD proposed, close-out latch owned, paused before commit, fault arrives, resumed -> FAULTED, exactly one SUMMARY, no VALID_COMPLETED/CLEAN_SHUTDOWN', async () => {
+  const harness = v8WithBlockingDrain();
+  await harness.host.start();
+  const eodPromise = harness.host.eod('EOD');
+  await harness.drainStarted.promise;
+  assert.equal(harness.host.getState(), 'EOD');
+  await harness.host.fault(new Error('RECONNECT_FAILED'));
+  assert.equal(harness.host.getState(), 'FAULTED');
+  harness.drainBlocker.resolve();
+  await eodPromise;
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.summaries[0]?.status, 'FAULTED');
+  assert.deepEqual(harness.cleanShutdownEvents, []);
+  assert.equal(harness.arbiter.getCommittedReason(), 'FAULTED');
+});
+
+test('V8-E/F: SIGINT/SIGTERM proposed, paused before commit, fault arrives -> FAULTED, not MANUAL_STOP', async () => {
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    const harness = v8WithBlockingDrain();
+    await harness.host.start();
+    const shutdownPromise = harness.host.shutdown(signal);
+    await harness.drainStarted.promise;
+    await harness.host.fault(new Error('EVALUATOR_CRASHED'));
+    harness.drainBlocker.resolve();
+    await shutdownPromise;
+    assert.equal(harness.summaries.length, 1);
+    assert.equal(harness.summaries[0]?.status, 'FAULTED');
+    assert.deepEqual(harness.cleanShutdownEvents, []);
+  }
+});
+
+// A10 final correction: drives sealAfterCloseOut() -- the real production
+// finalization seam used verbatim by test-live-v8-nifty-bullish-reclaim-shadow.ts's
+// shutdown() -- and the isSealing() gate an external fault trigger (e.g.
+// reconnectFailed, or routeV8CompletedCandleFailure's fault callback) must
+// consult before calling host.fault() directly.
+function v8WithSealAfterCloseOut(options: { closeOutBlocks?: boolean; closeOutThrows?: boolean } = {}) {
+  const summaries: Array<{ status: string; sessionCompleted: boolean; eodReason: string }> = [];
+  let closing = false;
+  const arbiter = new StrategyTerminalOutcomeArbiter();
+  const closeOutStarted = deferredBarrier<void>();
+  const closeOutBlocker = deferredBarrier<void>();
+  const externalFaultTrigger = (host: StrategyHostLifecycle): void => { if (!arbiter.isSealing()) void host.fault(new Error('RECONNECT_FAILED_EXTERNAL')); };
+  const shutdown = async (reason: string): Promise<void> => {
+    arbiter.propose(reason, resolveSessionOutcome({ reason }).status);
+    if (closing) return;
+    closing = true;
+    await arbiter.sealAfterCloseOut(
+      async () => { if (options.closeOutBlocks) { closeOutStarted.resolve(); await closeOutBlocker.promise; } if (options.closeOutThrows) throw new Error('CLOSE_OUT_FAILED'); },
+      (finalReason) => { const outcome = resolveSessionOutcome({ reason: finalReason }); summaries.push({ status: outcome.status, sessionCompleted: outcome.sessionCompleted, eodReason: finalReason }); },
+    );
+  };
+  const host = new StrategyHostLifecycle({ strategyId: 'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW', runtimeId: 'shadow:v8:reclaim', hooks: {
+    warmup: (): void => undefined,
+    onEod: (reason): Promise<void> => shutdown(reason ?? 'EOD'),
+    onShutdown: (reason): Promise<void> => shutdown(reason ?? 'SIGINT'),
+    onFault: (): Promise<void> => shutdown('FAULTED'),
+  } });
+  return { host, summaries, closeOutStarted, closeOutBlocker, arbiter, externalFaultTrigger };
+}
+
+test('V8 real seam: an external fault trigger racing WHILE close-out is genuinely in flight is suppressed by isSealing(), so host and journal never disagree', async () => {
+  const harness = v8WithSealAfterCloseOut({ closeOutBlocks: true });
+  await harness.host.start();
+  const eodPromise = harness.host.eod('EOD');
+  await harness.closeOutStarted.promise;
+  assert.equal(harness.arbiter.isSealing(), false);
+  harness.externalFaultTrigger(harness.host);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(harness.host.getState(), 'FAULTED');
+  harness.closeOutBlocker.resolve();
+  await eodPromise;
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.summaries[0]?.status, 'FAULTED');
+  assert.equal(harness.host.getState(), 'FAULTED');
+});
+
+test('V8 real seam: an external fault trigger arriving AFTER the seal has started never flips host state', async () => {
+  const harness = v8WithSealAfterCloseOut();
+  await harness.host.start();
+  await harness.host.eod('EOD');
+  assert.equal(harness.host.getState(), 'STOPPED');
+  harness.externalFaultTrigger(harness.host);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(harness.host.getState(), 'STOPPED');
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.summaries[0]?.status, 'VALID_COMPLETED');
+});
+
+test('V8 real seam: close-out throwing before the seal escalates to FAULTED, seals exactly one SUMMARY, and StrategyHostLifecycle itself reaches FAULTED', async () => {
+  const harness = v8WithSealAfterCloseOut({ closeOutThrows: true });
+  await harness.host.start();
+  await harness.host.eod('EOD');
+  assert.equal(harness.host.getState(), 'FAULTED');
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.summaries[0]?.status, 'FAULTED');
+  assert.equal(harness.arbiter.getCommittedReason(), 'CLOSE_OUT_FAILED');
+});
+
+test('V8-M: fault arriving after EOD close-out and commit already completed leaves the committed outcome unchanged -- no illegal STOPPED->FAULTED transition', async () => {
+  const harness = v8WithBlockingDrain();
+  await harness.host.start();
+  const eodPromise = harness.host.eod('EOD');
+  await harness.drainStarted.promise;
+  harness.drainBlocker.resolve();
+  await eodPromise;
+  assert.equal(harness.host.getState(), 'STOPPED');
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.summaries[0]?.status, 'VALID_COMPLETED');
+  await assert.doesNotReject(() => harness.host.fault(new Error('POST_SESSION_FAULT')));
+  assert.equal(harness.host.getState(), 'STOPPED');
+  assert.equal(harness.summaries.length, 1);
+  assert.equal(harness.arbiter.getCommittedReason(), 'EOD');
 });
 
 test('V8 live tick and depth handlers rotate quote state through the strict active-generation cache scope before mutation',()=>{

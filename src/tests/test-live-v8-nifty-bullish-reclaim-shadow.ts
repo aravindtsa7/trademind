@@ -24,6 +24,7 @@ import {
   isWithinNseSession,
 } from '../modules/market-data/services/nse-session-calendar.service';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
+import { StrategyTerminalOutcomeArbiter } from '../modules/market-data/services/strategy-terminal-outcome-arbiter.service';
 import { LiveGenerationCacheScope } from '../modules/market-data/utils/live-generation-cache';
 import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-generation';
 import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-paper-fresh-warmup.service';
@@ -193,6 +194,10 @@ async function run(): Promise<void> {
     counters = new V8ShadowRuntimeCounters();
   let closing = false,
     eod = false;
+  // Separates each terminal trigger's own close-out work (still gated by the `closing` latch
+  // below, run at most once) from the single durable SUMMARY/CLEAN_SHUTDOWN write: a racing
+  // fault can still escalate the outcome for as long as commit() has not yet run.
+  const terminalOutcomeArbiter = new StrategyTerminalOutcomeArbiter();
   // Bounds the wait for the first accepted current-generation NIFTY event
   // after subscribing on cold start. Reuses the same 45s figure
   // MarketDataHealthMonitorService already treats as "stalled" for an
@@ -420,6 +425,11 @@ async function run(): Promise<void> {
       await routeV8CompletedCandleFailure(error, {
         fault: (faultError) => {
           if (!host) throw new Error('V8_HOST_UNAVAILABLE_DURING_ACTIVE_FAULT');
+          // Once the arbiter has started (or finished) sealing a different outcome
+          // (a shutdown() raced ahead of this evaluator failure), this must not flip
+          // the HOST's own state to FAULTED: that would disagree with the outcome
+          // already durably recorded (or in the middle of being recorded).
+          if (terminalOutcomeArbiter.isSealing()) return Promise.resolve();
           return host.fault(faultError);
         },
         journal: () => journal.appendEvent(date, 'V8_EVALUATOR_FAULT', ['V8_EVALUATOR_FAULT', 'CRITICAL_DATA_QUALITY'], { error: describeV8ErrorSafely(error) }),
@@ -467,40 +477,66 @@ async function run(): Promise<void> {
     );
   };
   const shutdown = async (reason: string) => {
+    // Proposed unconditionally, even if a different trigger already owns the close-out work
+    // below -- this is the only way a racing fault can still escalate the eventual commit()'d
+    // outcome.
+    terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason }).status);
     if (closing) return;
     closing = true;
     eod = true;
-    const outcome = resolveSessionOutcome({ reason });
-    if (statusTimer) clearInterval(statusTimer);
-    health.stop();
-    recovery.stop();
-    const at = new Date();
-    tracker.closeAtEod(at).forEach(writeExit);
-    journal.append({
-      recordType: 'SUMMARY',
-      tradingDate: date,
-      strategyId: STRATEGY,
-      fingerprint,
-      sessionCompleted: outcome.sessionCompleted,
-      eodReason: reason,
-      signals,
-      resolvedTrades: 0,
-      unresolvedTrades: tracker.getOpenCount(),
-      status: outcome.status,
-      flags: ['SHADOW_ONLY', 'ZERO_ORDER'],
-    });
-    if (outcome.status === 'VALID_COMPLETED') journal.appendEvent(date, 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
-    candles.stop();
-    eventBus.off('market.tick', handleTick);
-    eventBus.off('market.depth', handleDepth);
-    eventBus.off('market.candle.completed', onCompletedCandle);
-    await subscriptions.unsubscribeMany(
-      subscriptions.getSubscriptions().map((s) => s.instrumentKey),
-    );
-    connection.disconnect();
-    const value = counters.snapshot();
-    console.log(
-      `[V8_EOD_SUMMARY] date=${date} completed2m=${value.completed2m} signals=${value.signals} closed=${value.closed} open=${tracker.getOpenCount()} status=COMPLETED`,
+    // sealAfterCloseOut() is the single production seam: it runs this fallible close-out
+    // (including all required observability) fully to completion -- or, if it throws, escalates
+    // to FAULTED and still durably seals that reason -- BEFORE the SUMMARY/CLEAN_SHUTDOWN write
+    // below ever runs. Nothing capable of throwing runs after sealAfterCloseOut() resolves: the
+    // durable SUMMARY append inside the writer below is the final potentially-throwing operation
+    // in this terminal path, so a successful VALID_COMPLETED SUMMARY can never be followed by a
+    // lifecycle failure that would leave the host FAULTED next to it.
+    await terminalOutcomeArbiter.sealAfterCloseOut(
+      async () => {
+        if (statusTimer) clearInterval(statusTimer);
+        health.stop();
+        recovery.stop();
+        const at = new Date();
+        tracker.closeAtEod(at).forEach(writeExit);
+        candles.stop();
+        eventBus.off('market.tick', handleTick);
+        eventBus.off('market.depth', handleDepth);
+        eventBus.off('market.candle.completed', onCompletedCandle);
+        await subscriptions.unsubscribeMany(
+          subscriptions.getSubscriptions().map((s) => s.instrumentKey),
+        );
+        connection.disconnect();
+        // Status observability -- still close-out work, so it must finish (or fault the
+        // session) before the seal below, never after it.
+        const value = counters.snapshot();
+        console.log(
+          `[V8_EOD_SUMMARY] date=${date} completed2m=${value.completed2m} signals=${value.signals} closed=${value.closed} open=${tracker.getOpenCount()} status=COMPLETED`,
+        );
+      },
+      (finalReason) => {
+        // commit() (inside sealAfterCloseOut) reads the arbiter's authoritative reason at this
+        // exact instant -- a fault that raced in via propose() any time before this line (including
+        // during close-out itself) wins here even though this call originated from a different
+        // trigger's own local `reason`.
+        const outcome = resolveSessionOutcome({ reason: finalReason });
+        // CLEAN_SHUTDOWN (non-authoritative) must be durable before SUMMARY (the A9-authoritative
+        // eligibility record): a failure appending CLEAN_SHUTDOWN must never leave a durable
+        // VALID_COMPLETED SUMMARY with no corresponding shutdown evidence.
+        if (outcome.status === 'VALID_COMPLETED') journal.appendEvent(date, 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason: finalReason });
+        journal.append({
+          recordType: 'SUMMARY',
+          tradingDate: date,
+          strategyId: STRATEGY,
+          fingerprint,
+          sessionCompleted: outcome.sessionCompleted,
+          eodReason: finalReason,
+          signals,
+          resolvedTrades: 0,
+          unresolvedTrades: tracker.getOpenCount(),
+          status: outcome.status,
+          flags: ['SHADOW_ONLY', 'ZERO_ORDER'],
+        });
+      },
     );
   };
   connection.on('unexpectedDisconnect', (d: any) => {
@@ -519,7 +555,11 @@ async function run(): Promise<void> {
       'DATA_GAP_UNRECOVERABLE',
       'CRITICAL_DATA_QUALITY',
     ]);
-    void host?.fault(new Error('RECONNECT_FAILED'));
+    // Once the arbiter has started (or finished) sealing a different outcome, this
+    // external trigger must not flip the HOST's own state to FAULTED: that would
+    // disagree with the outcome already durably recorded (or in the middle of being
+    // recorded) for this session.
+    if (!terminalOutcomeArbiter.isSealing()) void host?.fault(new Error('RECONNECT_FAILED'));
   });
   // ConnectionManager emits 'connected' on every successful open, cold start
   // and reconnect alike (and 'reconnected' fires immediately after it on a

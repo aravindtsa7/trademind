@@ -13,6 +13,7 @@ import { DeterministicExecutionFaultInjector, InjectedExecutionFault } from '../
 import TickProcessor from '../../market-data/processors/tick.processor';
 import PaperFillModelService from './paper-fill-model.service';
 import PaperEntryQuoteWaiterService, { PaperEntryQuoteWaitError } from './paper-entry-quote-waiter.service';
+import { normalizeMarketDataTimestamp } from '../../market-data/utils/market-data-timestamp';
 
 const entryTimestamp = new Date('2026-08-10T04:00:00.000Z');
 
@@ -111,7 +112,8 @@ test('fresh depth marks the authoritative portfolio at executable long-option bi
   const manager = new PaperOrderManagerService(); const bus = new EventEmitter(); const order = open(manager);
   const portfolio = new PaperPortfolioService(new InMemoryPaperPortfolioRepository(), () => entryTimestamp);
   portfolio.open({ order, strategyId:'V2_TREND_DOWN_PE', underlying:'NIFTY 50', correlationId:'corr', intentId:'intent', sessionDate:'2026-08-10' });
-  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'), bus, portfolio);
+  const tickTimestamp = new Date(entryTimestamp.getTime() + 60_000);
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'), bus, portfolio, 2_000, () => tickTimestamp);
   adapter.start(); adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', tick(order.contract.instrumentKey, 101));
   bus.emit('market.depth', { instrumentKey: order.contract.instrumentKey, timestamp: tick(order.contract.instrumentKey, 101).timestamp, quotes: [{ bidPrice:100.5, askPrice:101.5 }] });
@@ -158,6 +160,95 @@ test('execution quote ages advance with the read clock even without a new event,
   assert.equal(second.receivedTimestamp, first.receivedTimestamp); // the write-time observation instant is never repurposed as "now"
   assert.equal(second.snapshotId, first.snapshotId); // recomputed ages do not change the content-hash identity
   assert.equal(second.dataQuality, 'FRESH_TOP_OF_BOOK'); // the write-time book-shape label is not re-derived here -- callers gate on the numeric ages
+});
+
+// B1: PaperMarketDataAdapter must independently fail closed when a source
+// timestamp is after the adapter's own receive/current reference. With the
+// handleTick/handleDepth future-timestamp rejection gate, a future-source-
+// timestamped event never even enters the internal cache or produces an
+// executable quote snapshot.
+test('B1-6: a future source timestamp at the adapter boundary is rejected before entering the cache -- no executable quote exists', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
+  const now = new Date('2026-08-10T04:00:00.000Z');
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  const futureSourceTs = new Date(now.getTime() + 60_000).toISOString(); // ahead of the adapter's own reference clock
+  bus.emit('market.tick', { instrumentKey: 'NSE_FO|one', timestamp: futureSourceTs, ltp: 100 });
+  bus.emit('market.depth', { instrumentKey: 'NSE_FO|one', timestamp: futureSourceTs, quotes: [{ bidPrice: 99, askPrice: 101 }] });
+  // Future-timestamped events are rejected at the gate; no snapshot is created at all
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+});
+
+test('B1-7/B1-8: a future-source-timestamped event is rejected at the adapter gate -- the waiter and fill model see no quote at all', async () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
+  const base = new Date('2026-08-10T04:00:00.000Z');
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => base);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  const futureSourceTs = new Date(base.getTime() + 60_000).toISOString();
+  bus.emit('market.tick', { instrumentKey: 'NSE_FO|one', timestamp: futureSourceTs, ltp: 100 });
+  bus.emit('market.depth', { instrumentKey: 'NSE_FO|one', timestamp: futureSourceTs, quotes: [{ bidPrice: 99, askPrice: 101 }] });
+
+  // No snapshot exists at all -- the waiter correctly fails with QUOTE_UNAVAILABLE
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  let nowMs = base.getTime();
+  const waiter = new PaperEntryQuoteWaiterService({ timeoutMs: 20, pollMs: 5, maxQuoteAgeMs: 2_000, getSnapshot: () => undefined, getExecutionSnapshot: (key) => adapter.getExecutionQuoteSnapshot(key), abortReason: () => undefined, now: () => nowMs, sleep: async () => { nowMs += 5; } });
+  await assert.rejects(() => waiter.waitForFreshExecutionQuote('NSE_FO|one'), (error: unknown) => error instanceof PaperEntryQuoteWaitError && error.reason === 'QUOTE_UNAVAILABLE');
+});
+
+test('canonical-ingest forward-skew tolerance and executable-quote freshness are independent boundaries: an event only accepted upstream because of a configured canonical tolerance is still rejected here', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
+  const now = new Date('2026-08-10T04:00:00.000Z');
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  // Simulates a hypothetical canonical-ingest layer configured with a non-zero
+  // providerForwardSkewToleranceMs (never the default) that let a 300ms-future
+  // packet through. The executable adapter boundary knows nothing about that
+  // tolerance and must still reject it outright.
+  const acceptedUpstreamTs = normalizeMarketDataTimestamp(String(now.getTime() + 300), now.getTime(), 500);
+  assert.ok(acceptedUpstreamTs, 'precondition: the canonical layer would have accepted this under a configured tolerance');
+  bus.emit('market.tick', { instrumentKey: 'NSE_FO|one', timestamp: acceptedUpstreamTs, ltp: 100 });
+  bus.emit('market.depth', { instrumentKey: 'NSE_FO|one', timestamp: acceptedUpstreamTs, quotes: [{ bidPrice: 99, askPrice: 101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined, 'the executable boundary applies zero tolerance regardless of any canonical-ingest allowance');
+});
+
+test('B1-9 (adapter): a rejected future-timestamped event is absent forever -- advancing the clock never resurrects it, only a new legitimate event proves recovery', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
+  const base = new Date('2026-08-10T04:00:00.000Z'); let now = base;
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  const poisonedTs = new Date(base.getTime() + 5_000).toISOString();
+  bus.emit('market.tick', { instrumentKey: 'NSE_FO|one', timestamp: poisonedTs, ltp: 100 });
+  bus.emit('market.depth', { instrumentKey: 'NSE_FO|one', timestamp: poisonedTs, quotes: [{ bidPrice: 99, askPrice: 101 }] });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined); // rejected before it ever entered the cache
+  now = new Date(base.getTime() + 2_000); // reference advances but is still behind the poisoned timestamp
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined);
+  now = new Date(base.getTime() + 10_000); // reference now genuinely passes what the poisoned timestamp claimed -- still no resurrection
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one'), undefined, 'the same rejected event must never reappear merely because time passed; nothing ever wrote it to the cache');
+  // Recovery requires a NEW, genuinely-current event -- not the passage of time.
+  const legitimateTs = now.toISOString();
+  bus.emit('market.tick', { instrumentKey: 'NSE_FO|one', timestamp: legitimateTs, ltp: 100 });
+  bus.emit('market.depth', { instrumentKey: 'NSE_FO|one', timestamp: legitimateTs, quotes: [{ bidPrice: 99, askPrice: 101 }] });
+  const snapshot = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(snapshot?.quoteAgeMs, 0);
+  assert.equal(snapshot?.dataQuality, 'FRESH_TOP_OF_BOOK');
+});
+
+// TEST-ONLY ACCEPTANCE GAP #3: prove ages via the real production ingestion path
+// (TickProcessor), not only hand-fed bus.emit downstream events.
+test('GAP-3: a frozen source timestamp ingested via the real TickProcessor ages forward correctly as the adapter clock advances, and eventually becomes stale', () => {
+  const manager = new PaperOrderManagerService(); const bus = new EventEmitter();
+  const source = new Date('2026-08-10T04:00:00.000Z'); let now = new Date(source);
+  const adapter = new PaperMarketDataAdapterService(new PaperPositionMonitorService(manager), bus, undefined, 2_000, () => now);
+  adapter.start(); adapter.setMarketDataAvailable(true);
+  new TickProcessor(bus, () => now.getTime()).process({ type: 'live_feed', currentTs: String(source.getTime()), feeds: { 'NSE_FO|one': { fullFeed: { marketFF: { ltpc: { ltp: 100 }, marketLevel: { bidAskQuote: [{ bidP: 99, bidQ: '10', askP: 101, askQ: '10' }] } } } } } });
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.quoteAgeMs, 0);
+  now = new Date(source.getTime() + 1_000);
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.quoteAgeMs, 1_000);
+  assert.equal(adapter.getExecutionQuoteSnapshot('NSE_FO|one')?.dataQuality, 'FRESH_DEPTH');
+  now = new Date(source.getTime() + 2_001); // past maxQuoteAgeMs (2_000)
+  const stale = adapter.getExecutionQuoteSnapshot('NSE_FO|one');
+  assert.equal(stale?.quoteAgeMs, 2_001); // the numeric age callers actually gate freshness on has become stale
+  assert.ok((stale?.quoteAgeMs ?? 0) > 2_000);
 });
 
 test('a genuinely stale cached quote is judged by its current age, not its original frozen age -- the bounded waiter and the production PaperFillModel path both fail closed until a newer event arrives', async () => {
@@ -438,4 +529,76 @@ test('a reconciled open paper position is never mutated by a tick before explici
   adapter.setMarketDataAvailable(true);
   bus.emit('market.tick', tick(order.contract.instrumentKey, 130));
   assert.equal(manager.getById(order.id)?.status, PaperOrderStatus.TARGET_EXIT);
+});
+
+// B1-10: real persistence regression -- a future-timestamped tick+depth must never
+// produce a BID_ASK mark on a persisted paper position. Exercises the complete path:
+// PaperMarketDataAdapterService → PaperPortfolioService → InMemoryPaperPortfolioRepository.
+test('B1-10: future-timestamped tick+depth never produces a BID_ASK mark on a persisted open position', () => {
+  const base = new Date('2026-08-10T04:00:00.000Z');
+  const manager = new PaperOrderManagerService();
+  const bus = new EventEmitter();
+  const order = open(manager);
+  const repository = new InMemoryPaperPortfolioRepository();
+  const portfolio = new PaperPortfolioService(repository, () => base);
+  portfolio.open({ order, strategyId: 'V2_TREND_DOWN_PE', underlying: 'NIFTY 50', correlationId: 'corr-b1-10', intentId: 'intent-b1-10', sessionDate: '2026-08-10' });
+  const adapter = new PaperMarketDataAdapterService(
+    new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'),
+    bus, portfolio, 2_000, () => base,
+  );
+  adapter.start(); adapter.setMarketDataAvailable(true);
+
+  // Feed a future-timestamped tick and depth
+  const futureTs = new Date(base.getTime() + 60_000).toISOString();
+  bus.emit('market.tick', { instrumentKey: order.contract.instrumentKey, timestamp: futureTs, ltp: 200 });
+  bus.emit('market.depth', { instrumentKey: order.contract.instrumentKey, timestamp: futureTs, quotes: [{ bidPrice: 199, askPrice: 201 }] });
+
+  // The position must never be marked BID_ASK with a future-derived price
+  const persisted = repository.load('2026-08-10');
+  const position = persisted?.positions.find((p) => p.originatingOrderId === order.id);
+  assert.ok(position, 'position must exist');
+  assert.notEqual(position.quoteQuality, 'BID_ASK', 'future-timestamped data must not produce a BID_ASK mark');
+  assert.equal(position.currentMarkPrice, null, 'future-timestamped data must not set a mark price');
+  assert.equal(position.unrealizedPnl, null, 'future-timestamped data must not compute unrealized P&L');
+  assert.equal(adapter.getExecutionQuoteSnapshot(order.contract.instrumentKey), undefined, 'future-timestamped tick must not produce a cached execution quote');
+
+  // Now feed current-timestamped events: they must produce a valid BID_ASK mark
+  bus.emit('market.tick', { instrumentKey: order.contract.instrumentKey, timestamp: base.toISOString(), ltp: 110 });
+  bus.emit('market.depth', { instrumentKey: order.contract.instrumentKey, timestamp: base.toISOString(), quotes: [{ bidPrice: 109, askPrice: 111 }] });
+  const current = repository.load('2026-08-10');
+  const currentPosition = current?.positions.find((p) => p.originatingOrderId === order.id);
+  assert.equal(currentPosition?.quoteQuality, 'BID_ASK', 'current-timestamped data must produce a BID_ASK mark');
+  assert.equal(currentPosition?.currentMarkPrice, 109, 'current-timestamped bid must be the mark price');
+});
+
+// B1-11: depth-driven portfolio marking path with future-timestamped LTP cached earlier
+// A depth event arrives with a current timestamp, but the LTP cached before it has a future
+// source timestamp. The ageMs (received vs LTP source) must fail closed.
+test('B1-11: depth-driven portfolio mark rejects a future-timestamped cached LTP via ageAt against receive time', () => {
+  const base = new Date('2026-08-10T04:00:00.000Z');
+  const manager = new PaperOrderManagerService();
+  const bus = new EventEmitter();
+  const order = open(manager);
+  const repository = new InMemoryPaperPortfolioRepository();
+  const portfolio = new PaperPortfolioService(repository, () => base);
+  portfolio.open({ order, strategyId: 'V2_TREND_DOWN_PE', underlying: 'NIFTY 50', correlationId: 'corr-b1-11', intentId: 'intent-b1-11', sessionDate: '2026-08-10' });
+  // Use a clock that advances: first tick uses a future ts that is exactly at base (accepted),
+  // then the depth arrives. We want to test the depth-driven mark path when LTP source is future.
+  let now = base;
+  const adapter = new PaperMarketDataAdapterService(
+    new PaperPositionMonitorService(manager, portfolio, () => '2026-08-10'),
+    bus, portfolio, 2_000, () => now,
+  );
+  adapter.start(); adapter.setMarketDataAvailable(true);
+
+  // First: a current tick (passes the guard)
+  bus.emit('market.tick', { instrumentKey: order.contract.instrumentKey, timestamp: base.toISOString(), ltp: 110 });
+  // Now rewind the clock to simulate receiving a depth event where the cached LTP's source
+  // timestamp is AHEAD of the depth's receive time (simulating clock skew in the other direction)
+  now = new Date(base.getTime() - 5_000); // adapter clock is behind the cached LTP's source timestamp
+  bus.emit('market.depth', { instrumentKey: order.contract.instrumentKey, timestamp: now.toISOString(), quotes: [{ bidPrice: 109, askPrice: 111 }] });
+  const position = repository.load('2026-08-10')?.positions.find((p) => p.originatingOrderId === order.id);
+  // The ageMs for the depth-driven mark must be null (ageAt(received, ltpSourceTimestamp) where received < ltpSourceTimestamp)
+  // This means freshBid fails in portfolio.mark(), so no BID_ASK mark
+  assert.notEqual(position?.quoteQuality, 'BID_ASK', 'depth-driven mark must not produce BID_ASK when cached LTP source is ahead of receive time');
 });

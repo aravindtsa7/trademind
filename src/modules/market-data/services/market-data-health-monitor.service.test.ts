@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events';
 import test from 'node:test';
 import { ConnectionState, ReconnectCircuitSnapshot } from '../managers/connection.manager';
 import MarketDataHealthMonitorService from './market-data-health-monitor.service';
+import TickProcessor, { MarketTickEvent } from '../processors/tick.processor';
 
 class FakeConnection extends EventEmitter {
   state = ConnectionState.CONNECTED;
@@ -113,4 +114,44 @@ test('A2-F: a stale/superseded generation cannot advance source-health state for
 
 test('invalid health timing configuration fails closed',()=>{
   const connection=new FakeConnection();assert.throws(()=>new MarketDataHealthMonitorService(connection as never,{generationGraceMs:Number.NaN}),/positive finite/);assert.throws(()=>new MarketDataHealthMonitorService(connection as never,{stallMs:0}),/positive finite/);
+});
+
+// B1-10: a future NIFTY source timestamp must never poison the health-monitor source
+// watermark. Wired exactly like the live scripts (TickProcessor's 'market.tick' ->
+// health.noteNiftyTick), the canonical boundary in TickProcessor rejects the poisoned
+// packet before it is ever published, so noteNiftyTick never observes it and later
+// legitimate source timestamps keep advancing the watermark normally.
+test('B1-10: a rejected future NIFTY source timestamp cannot poison the health-monitor watermark or block later legitimate source progression', () => {
+  const connection = new FakeConnection();
+  const base = Date.UTC(2026, 7, 20, 3, 45, 0); // a real epoch instant -- TickProcessor's numeric-epoch branch requires plausible real-world magnitude
+  let now = base;
+  const monitor = new MarketDataHealthMonitorService(connection as never, { stallMs: 100, generationGraceMs: 100, heartbeatCheckMs: 1_000, now: () => now, isMarketSession: () => true });
+  const bus = new EventEmitter();
+  const processor = new TickProcessor(bus, () => now);
+  const niftyTicks: MarketTickEvent[] = [];
+  bus.on('market.tick', (event: MarketTickEvent) => {
+    niftyTicks.push(event);
+    monitor.noteValidMarketEvent(event.generationId as number);
+    if (event.instrumentKey === 'NSE_INDEX|Nifty 50') monitor.noteNiftyTick(event.generationId as number, new Date(event.timestamp as string));
+  });
+  const niftyFeed = (currentTs: string) => ({ type: 'live_feed' as const, currentTs, feeds: { 'NSE_INDEX|Nifty 50': { ltpc: { ltp: 24_300 } } } });
+
+  connection.emit('connected', { generationId: 1 });
+  // A poisoned future packet arrives first -- must be rejected outright, never published.
+  connection.emit('message', Buffer.alloc(0), { generationId: 1 });
+  processor.process(niftyFeed(String(now + 60_000)), 1);
+  assert.equal(niftyTicks.length, 0);
+  assert.equal(monitor.getSnapshot().lastNiftySourceAdvanceAgeMs, null);
+
+  // Legitimate, genuinely advancing source timestamps then progress normally.
+  connection.emit('message', Buffer.alloc(0), { generationId: 1 });
+  processor.process(niftyFeed(String(now)), 1);
+  assert.equal(niftyTicks.length, 1);
+  assert.equal(monitor.confirmRecoveryReady(1), true);
+
+  now = base + 50; connection.emit('message', Buffer.alloc(0), { generationId: 1 }); processor.process(niftyFeed(String(now)), 1); monitor.checkNow();
+  assert.equal(connection.reconnects, 0);
+  now = base + 130; connection.emit('message', Buffer.alloc(0), { generationId: 1 }); processor.process(niftyFeed(String(now)), 1); monitor.checkNow();
+  assert.equal(connection.reconnects, 0, 'the poisoned first packet must never have frozen the source watermark ahead of these later legitimate advances');
+  assert.equal(monitor.isHealthy(), true);
 });

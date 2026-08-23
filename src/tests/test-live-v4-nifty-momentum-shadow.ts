@@ -22,6 +22,7 @@ import { StrategySignal } from '../modules/strategies/dto/strategy-signal.dto';
 import { NseSessionEodCoordinator, isAtOrAfterNseSessionClose, isWithinNseSession } from '../modules/market-data/services/nse-session-calendar.service';
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
+import { StrategyTerminalOutcomeArbiter } from '../modules/market-data/services/strategy-terminal-outcome-arbiter.service';
 import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-generation';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import { ForwardValidationJournal, resolveSessionOutcome, strategyFingerprint } from '../modules/research-validation';
@@ -90,6 +91,10 @@ async function run(): Promise<void> {
 
   const websocket = new MarketDataWebSocketClient(token); const connection = new ConnectionManager(token, websocket); const subscriptions = new SubscriptionManager(token, connection); const decoder = new ProtobufDecoder(); const ticks = new TickProcessor(); const candleEvents = new LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus, () => connection.getGenerationId()); const tracker = new V4MomentumShadowTrackerService(); const contracts = new CurrentNiftyPeContracts();
   let completed3m = 0; let opportunities = 0; let signals = 0; let closing = false; let eodStarted = false; let eodTimer: NodeJS.Timeout | undefined; let eodWatchdog: NodeJS.Timeout | undefined; let host: StrategyHostLifecycle | undefined;
+  // Separates each terminal trigger's own close-out work (still gated by the `closing` latch
+  // below, run at most once) from the single durable SUMMARY/CLEAN_SHUTDOWN write: a racing
+  // fault can still escalate the outcome for as long as commit() has not yet run.
+  const terminalOutcomeArbiter = new StrategyTerminalOutcomeArbiter();
   // Bounds the wait for the first accepted current-generation NIFTY event after subscribing on cold start. Reuses the same 45s figure MarketDataHealthMonitorService already treats as "stalled" for an established connection (MARKET_DATA_STALL_MS). On a genuinely silent feed during an active session, this bound -- not the health monitor's periodic stall check -- is what owns and reports the startup failure.
   const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000);
   // Before host.start() has successfully returned, host.start() itself is the sole owner of the initial RUNNING transition (via onReady -> recovery.waitUntilReady()). Calling host.recovered() from the persistent recovery listener too, while the host is still transiting through READY/DEGRADED during startup, races start()'s own unconditional RUNNING transition and produces an illegal RUNNING->RUNNING transition.
@@ -131,62 +136,97 @@ async function run(): Promise<void> {
   };
   const interval = setInterval(() => { if (recovery.isEvaluationReady()) flush(tracker.advance(new Date())); }, 15_000); interval.unref();
   const status = setInterval(() => console.log(`[V4_SHADOW_STATUS] completed3m=${completed3m} regimeAligned=${opportunities} signals=${signals} open=${tracker.getOpenCount()} closed=${tracker.getClosed().length}`), 60_000); status.unref();
-  const shutdown = (reason = 'SESSION_END'): void => {
+  const shutdown = async (reason = 'SESSION_END', onCloseOutComplete?: () => void): Promise<void> => {
+    // Proposed unconditionally, even if a different trigger already owns the close-out work
+    // below -- this is the only way a racing fault can still escalate the eventual commit()'d
+    // outcome.
+    terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason }).status);
     if (closing) return;
     closing = true;
-    const outcome = resolveSessionOutcome({ reason });
-    health.stop();
-    recovery.stop();
-    clearInterval(interval);
-    clearInterval(status);
-    if (eodTimer) clearTimeout(eodTimer);
-    if (eodWatchdog) clearInterval(eodWatchdog);
-    flush(tracker.advance(new Date()));
-    candleEvents.stop();
-    connection.off('message', onMessage);
-    eventBus.off('market.tick', onTick);
-    eventBus.off('market.candle.completed', onCandle);
-    subscriptions.unsubscribeMany(subscriptions.getSubscriptions().map((value) => value.instrumentKey));
-    connection.disconnect();
-    const closed = tracker.getClosed();
-    const settled = closed.filter((entry) => entry.grossReturnPercent !== null);
-    const gross = settled.length ? settled.reduce((sum, entry) => sum + (entry.grossReturnPercent ?? 0), 0) / settled.length : 0;
-    forwardJournal.append({
-      recordType: 'SUMMARY',
-      tradingDate: istDate(new Date()),
-      strategyId: v4MomentumShadowStrategyId,
-      fingerprint: forwardFingerprint,
-      sessionCompleted: outcome.sessionCompleted,
-      eodReason: reason,
-      signals,
-      resolvedTrades: settled.length,
-      unresolvedTrades: closed.length - settled.length,
-      target: closed.filter(x=>x.exitReason==='TARGET').length,
-      stop: closed.filter(x=>x.exitReason==='STOP_LOSS').length,
-      timeout: closed.filter(x=>x.exitReason==='TIMEOUT').length,
-      eod: closed.filter(x=>x.exitReason==='TIMEOUT').length,
-      averageTheoretical: gross,
-      averageExecutable: gross,
-      averageFriction: 0,
-      status: outcome.status,
-    });
-    if (outcome.status === 'VALID_COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason });
-    console.log(`V4 MOMENTUM SHADOW DAILY date=${istDate(new Date())} completed3m=${completed3m} regimeAligned=${opportunities} signals=${signals} resolved=${settled.length} targets=${closed.filter(x=>x.exitReason==='TARGET').length} stops=${closed.filter(x=>x.exitReason==='STOP_LOSS').length} timeouts=${closed.filter(x=>x.exitReason==='TIMEOUT').length} ambiguous=${closed.filter(x=>x.exitReason==='AMBIGUOUS').length} grossAvg=${gross.toFixed(2)} net40=${(settled.length ? gross - .4 : 0).toFixed(2)} fixedNotionalPnl=${(gross * 1000).toFixed(2)}`);
+    // sealAfterCloseOut() is the single production seam: it runs this fallible close-out
+    // (including any trigger-specific pre-seal observability via onCloseOutComplete) fully to
+    // completion -- or, if it throws, escalates to FAULTED and still durably seals that reason --
+    // BEFORE the SUMMARY/CLEAN_SHUTDOWN write below ever runs. Nothing capable of throwing runs
+    // after sealAfterCloseOut() resolves: the durable SUMMARY append inside the writer below is
+    // the final potentially-throwing operation in this terminal path, so a successful
+    // VALID_COMPLETED SUMMARY can never be followed by a lifecycle failure that would leave the
+    // host FAULTED next to it.
+    await terminalOutcomeArbiter.sealAfterCloseOut(
+      () => {
+        health.stop();
+        recovery.stop();
+        clearInterval(interval);
+        clearInterval(status);
+        if (eodTimer) clearTimeout(eodTimer);
+        if (eodWatchdog) clearInterval(eodWatchdog);
+        flush(tracker.advance(new Date()));
+        candleEvents.stop();
+        connection.off('message', onMessage);
+        eventBus.off('market.tick', onTick);
+        eventBus.off('market.candle.completed', onCandle);
+        subscriptions.unsubscribeMany(subscriptions.getSubscriptions().map((value) => value.instrumentKey));
+        connection.disconnect();
+        // Trigger-specific pre-seal observability (e.g. finishEod's own EOD summary log) --
+        // still close-out work, so it must finish (or fault the session) before the seal below.
+        onCloseOutComplete?.();
+      },
+      (finalReason) => {
+        // commit() (inside sealAfterCloseOut) reads the arbiter's authoritative reason at this
+        // exact instant -- a fault that raced in via propose() any time before this line (including
+        // during close-out itself) wins here even though this call originated from a different
+        // trigger's own local `reason`.
+        const closed = tracker.getClosed();
+        const settled = closed.filter((entry) => entry.grossReturnPercent !== null);
+        const gross = settled.length ? settled.reduce((sum, entry) => sum + (entry.grossReturnPercent ?? 0), 0) / settled.length : 0;
+        const outcome = resolveSessionOutcome({ reason: finalReason });
+        // CLEAN_SHUTDOWN (non-authoritative) must be durable before SUMMARY (the A9-authoritative
+        // eligibility record): a failure appending CLEAN_SHUTDOWN must never leave a durable
+        // VALID_COMPLETED SUMMARY with no corresponding shutdown evidence.
+        if (outcome.status === 'VALID_COMPLETED') forwardJournal.appendEvent(istDate(new Date()), 'CLEAN_SHUTDOWN', ['CLEAN_SHUTDOWN'], { reason: finalReason });
+        console.log(`V4 MOMENTUM SHADOW DAILY date=${istDate(new Date())} completed3m=${completed3m} regimeAligned=${opportunities} signals=${signals} resolved=${settled.length} targets=${closed.filter(x=>x.exitReason==='TARGET').length} stops=${closed.filter(x=>x.exitReason==='STOP_LOSS').length} timeouts=${closed.filter(x=>x.exitReason==='TIMEOUT').length} ambiguous=${closed.filter(x=>x.exitReason==='AMBIGUOUS').length} grossAvg=${gross.toFixed(2)} net40=${(settled.length ? gross - .4 : 0).toFixed(2)} fixedNotionalPnl=${(gross * 1000).toFixed(2)}`);
+        // The durable SUMMARY append is the FINAL potentially-throwing operation in this writer --
+        // and, once sealAfterCloseOut() has run all close-out and observability above, in the
+        // entire terminal path. Nothing follows it.
+        forwardJournal.append({
+          recordType: 'SUMMARY',
+          tradingDate: istDate(new Date()),
+          strategyId: v4MomentumShadowStrategyId,
+          fingerprint: forwardFingerprint,
+          sessionCompleted: outcome.sessionCompleted,
+          eodReason: finalReason,
+          signals,
+          resolvedTrades: settled.length,
+          unresolvedTrades: closed.length - settled.length,
+          target: closed.filter(x=>x.exitReason==='TARGET').length,
+          stop: closed.filter(x=>x.exitReason==='STOP_LOSS').length,
+          timeout: closed.filter(x=>x.exitReason==='TIMEOUT').length,
+          eod: closed.filter(x=>x.exitReason==='TIMEOUT').length,
+          averageTheoretical: gross,
+          averageExecutable: gross,
+          averageFriction: 0,
+          status: outcome.status,
+        });
+      },
+    );
   };
   const finishEod = async (reason = 'VALID_COMPLETED'): Promise<void> => {
-    await eodCoordinator.runOnce(new Date(), () => {
+    await eodCoordinator.runOnce(new Date(), async () => {
       eodStarted = true;
       forwardJournal.appendEvent(istDate(new Date()), 'EOD_FORCED_EXIT', ['EOD_FORCED_EXIT']);
       candleEvents.finishSession(nifty);
       flush(tracker.closeAtSessionEnd(new Date()));
-      shutdown(reason);
-      const closed = tracker.getClosed();
-      console.log(`[V4_EOD_SUMMARY]\ndate=${istDate(new Date())}\nstrategyId=${v4MomentumShadowStrategyId}\ncompleted3m=${completed3m}\nregimeAligned=${opportunities}\nsignals=${signals}\nshadowOpened=${tracker.getOpenedCount()}\nshadowClosed=${closed.length}\ntarget=${closed.filter(x=>x.exitReason==='TARGET').length}\nstop=${closed.filter(x=>x.exitReason==='STOP_LOSS').length}\ntimeout=${closed.filter(x=>x.exitReason==='TIMEOUT').length}\nopen=${tracker.getOpenCount()}\nstatus=VALID_COMPLETED`);
+      // The EOD summary log is pre-seal, trigger-specific close-out observability -- passed into
+      // shutdown() so it always runs BEFORE the seal, never after: nothing may follow
+      // `await shutdown(...)` in this hook.
+      await shutdown(reason, () => {
+        const closed = tracker.getClosed();
+        console.log(`[V4_EOD_SUMMARY]\ndate=${istDate(new Date())}\nstrategyId=${v4MomentumShadowStrategyId}\ncompleted3m=${completed3m}\nregimeAligned=${opportunities}\nsignals=${signals}\nshadowOpened=${tracker.getOpenedCount()}\nshadowClosed=${closed.length}\ntarget=${closed.filter(x=>x.exitReason==='TARGET').length}\nstop=${closed.filter(x=>x.exitReason==='STOP_LOSS').length}\ntimeout=${closed.filter(x=>x.exitReason==='TIMEOUT').length}\nopen=${tracker.getOpenCount()}\nstatus=VALID_COMPLETED`);
+      });
     });
   };
   connection.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => { recovery.handleUnexpectedDisconnect(details); candleEvents.stop(); forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_DISCONNECTED', ['WEBSOCKET_DISCONNECTED'], { code: details.code ?? null, reason: details.reason ?? null }); });
   connection.on('reconnected', (details: { downtimeMs?: number; generationId?: number }) => { forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_RECONNECTED', ['WEBSOCKET_RECONNECTED'], { downtimeMs: details.downtimeMs ?? null }); recovery.handleReconnected(details); });
-  connection.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => { recovery.fault('RECONNECT_FAILED'); forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null }); void host?.fault(new Error('RECONNECT_FAILED')); });
+  connection.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => { recovery.fault('RECONNECT_FAILED'); forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null }); if (!terminalOutcomeArbiter.isSealing()) void host?.fault(new Error('RECONNECT_FAILED')); });
   // ConnectionManager emits 'connected' on every successful open, cold start and reconnect alike ('reconnected' fires immediately after it on a reconnect). handleInitialConnected() only has an effect the very first time it runs, so this cannot reset or race the reconnect state machine driven by 'unexpectedDisconnect' / 'reconnected' above.
   connection.on('connected', (details: { generationId: number }) => { recovery.handleInitialConnected({ generationId: details.generationId }); });
   host = new StrategyHostLifecycle({ strategyId:v4MomentumShadowStrategyId, runtimeId:'shadow:v4:momentum', eodCoordinator, hooks:{warmup:()=>undefined,

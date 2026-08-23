@@ -146,3 +146,41 @@ test('invalid WebSocket open timeout configuration fails closed',()=>{
   assert.throws(()=>client({openHandshakeTimeoutMs:Number.NaN}),/positive finite/);
   assert.throws(()=>client({openHandshakeTimeoutMs:0}),/positive finite/);
 });
+
+// TEST-ONLY ACCEPTANCE GAP: the pre-socket authorization REST request (Upstox's
+// market-data-feed/authorize call) must fail closed -- on rejection/timeout and
+// on a malformed response -- without ever opening a WebSocket.
+test('a rejected/timed-out authorization request fails closed before any socket is created',async()=>{
+  const original=globalThis.WebSocket;resetWebSockets();globalThis.WebSocket=FakeWebSocket as unknown as typeof WebSocket;
+  try{
+    const value=new MarketDataWebSocketClient('token');
+    (value as unknown as {axios:{get:()=>Promise<unknown>}}).axios={get:async()=>{throw new Error('AUTHORIZE_REQUEST_TIMEOUT');}};
+    await assert.rejects(()=>value.connect(),/AUTHORIZE_REQUEST_TIMEOUT/);
+    assert.equal(FakeWebSocket.instances.length,0); // no socket is ever opened from a rejected authorization request
+  }finally{globalThis.WebSocket=original;}
+});
+
+test('an authorization response missing the redirect URI fails closed before any socket is created',async()=>{
+  const original=globalThis.WebSocket;resetWebSockets();globalThis.WebSocket=FakeWebSocket as unknown as typeof WebSocket;
+  try{
+    const value=new MarketDataWebSocketClient('token');
+    (value as unknown as {axios:{get:()=>Promise<unknown>}}).axios={get:async()=>({data:{}})};
+    await assert.rejects(()=>value.connect(),/did not return an authorized/);
+    assert.equal(FakeWebSocket.instances.length,0);
+  }finally{globalThis.WebSocket=original;}
+});
+
+test('an authorization rejection routes through ConnectionManager recovery without ever creating a socket generation',async()=>{
+  const original=globalThis.WebSocket;resetWebSockets();globalThis.WebSocket=FakeWebSocket as unknown as typeof WebSocket;
+  try{
+    const value=new MarketDataWebSocketClient('token');
+    (value as unknown as {axios:{get:()=>Promise<unknown>}}).axios={get:async()=>{throw new Error('AUTHORIZE_REQUEST_TIMEOUT');}};
+    const manager=new ConnectionManager('token',value,{maximumReconnectAttempts:3,maximumReconnectDurationMs:1_000,reconnectJitterMs:0,initialReconnectDelayMs:10,maximumReconnectDelayMs:40});
+    await assert.rejects(()=>manager.connect(),/AUTHORIZE_REQUEST_TIMEOUT/);
+    assert.equal(manager.getState(),ConnectionState.RECONNECTING);
+    assert.equal(manager.getGenerationId(),0); // authorization never reached a socket, so no generation was ever assigned
+    assert.equal(manager.getReconnectCircuitSnapshot().attempts,1);
+    assert.equal(FakeWebSocket.instances.length,0);
+    manager.disconnect();
+  }finally{globalThis.WebSocket=original;}
+});

@@ -45,7 +45,11 @@ export default class MarketReplayRunnerService {
 
     const clock = new DeterministicReplayClock();
     const bus = new EventEmitter();
-    const processor = new TickProcessor(bus);
+    // Uses the replay clock (advanced to each event's own recorded
+    // receivedTimestamp below) rather than real wall-clock time, so a
+    // recorded artifact's future-source-timestamp rejection is judged against
+    // its own genuine receive instant -- never today's Date.now().
+    const processor = new TickProcessor(bus, () => clock.now().getTime());
     const candles = new LiveCandleEventAdapterService(new LiveCandleBuilderService(), bus);
     const output: string[] = [];
     const warnings: string[] = [];

@@ -51,6 +51,20 @@ test('excludes the current incomplete five-minute bucket while retaining the lat
   assert.equal(result.ready, true); assert.equal(result.latestCompletedOneMinuteExpected?.toISOString(), '2026-08-12T07:08:00.000Z'); assert.equal(result.latestCompletedFiveMinuteAvailable?.toISOString(), '2026-08-12T07:00:00.000Z'); assert.equal(result.lastFiveMinuteTimestamp.toISOString(), '2026-08-12T07:00:00.000Z');
 });
 
+// TEST-ONLY ACCEPTANCE GAP: an intraday fetch throwing (e.g. a network/API
+// failure, not a soft "newest minute not yet published" gap) must fail closed
+// to CURRENT_DAY_BACKFILL_FAILED, never a stale-looking or ready result, and
+// must not blindly retry a hard failure the way the soft publication-lag path does.
+test('GAP-4: an intraday backfill fetch throwing fails closed to CURRENT_DAY_BACKFILL_FAILED without retrying a hard failure', async () => {
+  const target = new Target(); let calls = 0;
+  const result = await new LivePaperFreshWarmupService({ findByInstrumentAndTimeframe: async () => prior() }, target, { fetchCurrentDayOneMinuteCandles: async () => { calls += 1; throw new Error('UPSTOX_INTRADAY_FETCH_FAILED'); } }, { maxIntradayAttempts: 5 }).warmUp(at1240);
+  assert.equal(result.ready, false);
+  assert.equal(result.freshnessReason, 'CURRENT_DAY_BACKFILL_FAILED: UPSTOX_INTRADAY_FETCH_FAILED');
+  assert.equal(calls, 1); // a hard fetch failure is not retried like a soft publication-lag gap
+  assert.equal(result.intradayBackfillAttempts, 1);
+  assert.equal(result.currentDayRowsReturned, 0);
+});
+
 test('fresh warm-up supplies current-day five-minute indicators to V2 and current-day one-minute regime/ATR state to V4', async () => {
   const originalVersion = process.env.TRADING_STRATEGY_VERSION; const originalPaperOnly = process.env.PAPER_TRADING_ONLY;
   process.env.TRADING_STRATEGY_VERSION = 'V2'; process.env.PAPER_TRADING_ONLY = 'true';

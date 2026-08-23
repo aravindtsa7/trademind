@@ -80,10 +80,19 @@ export default class PaperMarketDataAdapterService {
     if (!this.marketDataAvailable) return;
     const update = this.normalizeTick(tick);
     if (!update || !this.acceptLiveCacheGeneration(update.generationId)) return;
-    this.latestPremiumByInstrument.set(update.instrumentKey, { premium: update.premium, sourceTimestamp: new Date(update.timestamp.getTime()), receivedTimestamp: new Date(this.now().getTime()), generationId:update.generationId });
+    const received = this.now();
+    // A source timestamp after the adapter's own receive reference is a future/skewed reading;
+    // it must never enter executable cache state, portfolio marking, or bid/ask persistence.
+    // This boundary is intentionally strict (zero tolerance) and independent of the canonical
+    // ingest layer's DEFAULT_PROVIDER_FORWARD_SKEW_TOLERANCE_MS (market-data-timestamp.ts):
+    // canonical ingest tolerance and executable-quote/portfolio freshness are different
+    // concerns, and a fill/mark must never treat a timestamp as current merely because it fell
+    // inside an upstream canonical-ingest allowance.
+    if (update.timestamp.getTime() > received.getTime()) return;
+    this.latestPremiumByInstrument.set(update.instrumentKey, { premium: update.premium, sourceTimestamp: new Date(update.timestamp.getTime()), receivedTimestamp: new Date(received.getTime()), generationId:update.generationId });
     const depth = this.depthByInstrument.get(update.instrumentKey);
     const quoteTimestamp = depth?.sourceTimestamp ? new Date(depth.sourceTimestamp) : undefined;
-    const ageMs = quoteTimestamp && !Number.isNaN(quoteTimestamp.getTime()) ? update.timestamp.getTime() - quoteTimestamp.getTime() : undefined;
+    const ageMs = quoteTimestamp && !Number.isNaN(quoteTimestamp.getTime()) ? (ageAt(received, depth!.sourceTimestamp!) ?? undefined) : undefined;
     this.portfolio?.mark({ instrumentKey: update.instrumentKey, timestamp: update.timestamp, bid: depth?.bid, ask: depth?.ask, ltp: update.premium, ageMs, maxAgeMs: this.maxQuoteAgeMs });
     this.refreshExecutionQuote(update.instrumentKey);
     if (this.positionMonitor.hasDurableExitPersistence()) {
@@ -121,13 +130,17 @@ export default class PaperMarketDataAdapterService {
     if (typeof candidate.instrumentKey !== 'string' || !this.acceptLiveCacheGeneration(generationId)) return;
     const top = candidate.quotes?.[0];
     const sourceTimestamp = typeof candidate.timestamp === 'string' ? candidate.timestamp : undefined;
+    const received = this.now();
+    // A source timestamp after the adapter's own receive reference is a future/skewed reading;
+    // it must never enter executable cache state, portfolio marking, or bid/ask persistence.
+    if (sourceTimestamp) { const sourceMs = new Date(sourceTimestamp).getTime(); if (Number.isFinite(sourceMs) && sourceMs > received.getTime()) return; }
     const levels = candidate.quotes?.map((value) => ({ bid: finite(value.bidPrice), ask: finite(value.askPrice), bidSize: numeric(value.bidQuantity), askSize: numeric(value.askQuantity) })) ?? [];
-    const quote = { bid: typeof top?.bidPrice === 'number' ? top.bidPrice : undefined, ask: typeof top?.askPrice === 'number' ? top.askPrice : undefined, bidSize:numeric(top?.bidQuantity), askSize:numeric(top?.askQuantity), sourceTimestamp, receivedTimestamp:new Date(this.now().getTime()), levels, generationId };
+    const quote = { bid: typeof top?.bidPrice === 'number' ? top.bidPrice : undefined, ask: typeof top?.askPrice === 'number' ? top.askPrice : undefined, bidSize:numeric(top?.bidQuantity), askSize:numeric(top?.askQuantity), sourceTimestamp, receivedTimestamp:new Date(received.getTime()), levels, generationId };
     this.depthByInstrument.set(candidate.instrumentKey, quote);
     const latest = this.latestPremiumByInstrument.get(candidate.instrumentKey);
     const quoteTime = sourceTimestamp ? new Date(sourceTimestamp) : undefined;
     if (latest && quoteTime && !Number.isNaN(quoteTime.getTime())) {
-      this.portfolio?.mark({ instrumentKey: candidate.instrumentKey, timestamp: quoteTime, bid: quote.bid, ask: quote.ask, ltp: latest.premium, ageMs: Math.max(0, quoteTime.getTime() - latest.sourceTimestamp.getTime()), maxAgeMs: this.maxQuoteAgeMs });
+      this.portfolio?.mark({ instrumentKey: candidate.instrumentKey, timestamp: quoteTime, bid: quote.bid, ask: quote.ask, ltp: latest.premium, ageMs: ageAt(received, latest.sourceTimestamp.toISOString()) ?? undefined, maxAgeMs: this.maxQuoteAgeMs });
     }
     this.refreshExecutionQuote(candidate.instrumentKey);
   }
@@ -235,6 +248,7 @@ export default class PaperMarketDataAdapterService {
 
 function finite(value: unknown): number | undefined { return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined; }
 function numeric(value: unknown): number | undefined { const result = typeof value === 'string' ? Number(value) : value; return typeof result === 'number' && Number.isFinite(result) && result >= 0 ? result : undefined; }
-function ageAt(received: Date, sourceTimestamp: string | null): number | null { const source = sourceTimestamp ? new Date(sourceTimestamp).getTime() : Number.NaN; return Number.isFinite(source) ? Math.max(0, received.getTime() - source) : null; }
+/** A source timestamp after `received` is a poisoned/skewed reading, never a fresh one -- it must fail closed (null), not clamp to a fresh 0 via Math.max(0, ...). */
+function ageAt(received: Date, sourceTimestamp: string | null): number | null { const source = sourceTimestamp ? new Date(sourceTimestamp).getTime() : Number.NaN; if (!Number.isFinite(source)) return null; const delta = received.getTime() - source; return delta < 0 ? null : delta; }
 function quoteSnapshotId(snapshot: Omit<ExecutionQuoteSnapshot, 'snapshotId'>): string { return createHash('sha256').update(JSON.stringify({ instrumentKey:snapshot.instrumentKey, sourceTimestamp:snapshot.sourceTimestamp, receivedTimestamp:snapshot.receivedTimestamp, ltp:snapshot.ltp, bestBid:snapshot.bestBid, bestAsk:snapshot.bestAsk, bidSize:snapshot.bidSize, askSize:snapshot.askSize, depthLevels:snapshot.depthLevels, connectionGenerationId:snapshot.connectionGenerationId })).digest('hex').slice(0, 24); }
 function immutableSnapshot(snapshot: ExecutionQuoteSnapshot): ExecutionQuoteSnapshot { return Object.freeze({ ...snapshot, depthLevels:Object.freeze(snapshot.depthLevels.map((level) => Object.freeze({ ...level }))) }); }
