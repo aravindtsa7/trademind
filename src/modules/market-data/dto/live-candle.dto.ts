@@ -20,7 +20,8 @@ export interface LiveCandleDto {
 export type LiveCandleTickIgnoreReason =
   | 'OUTSIDE_MARKET_SESSION'
   | 'DUPLICATE_TICK'
-  | 'OUT_OF_ORDER_TICK';
+  | 'OUT_OF_ORDER_TICK'
+  | 'BEFORE_LIVE_CONSTRUCTION_BOUNDARY';
 
 export interface LiveCandleProcessResult {
   completedCandle?: LiveCandleDto;

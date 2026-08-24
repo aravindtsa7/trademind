@@ -156,6 +156,63 @@ export class NseSessionEodCoordinator {
   }
 }
 
+/**
+ * One-shot trigger for an arbitrary fixed wall-clock instant (e.g. the NIFTY
+ * source-completion boundary), independent of NseSessionEodCoordinator's own
+ * close-anchored scheduling. Shares its NseSessionClock injection point so
+ * tests can drive both with the same fake clock.
+ *
+ * `armAt()` fires `action` at most once for the lifetime of an instance,
+ * self-corrects exactly like NseSessionEodCoordinator when the wall clock
+ * wakes it a little early, and is safe to `cancel()` before or after it has
+ * fired -- cancel() after firing is simply a no-op, and armAt() after either
+ * firing or cancelling is also a no-op (this trigger is genuinely one-shot,
+ * not re-armable).
+ */
+export class OneShotWallClockTrigger {
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private fired = false;
+  private cancelled = false;
+
+  constructor(private readonly clock: NseSessionClock = systemClock) {}
+
+  armAt(at: Date, action: () => Promise<void> | void): void {
+    if (this.fired || this.cancelled || this.timer !== undefined) return;
+    this.armTimer(at, action);
+  }
+
+  cancel(): void {
+    this.cancelled = true;
+    if (this.timer !== undefined) {
+      this.clock.clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+  }
+
+  hasFired(): boolean {
+    return this.fired;
+  }
+
+  private armTimer(at: Date, action: () => Promise<void> | void): void {
+    const delayMs = Math.max(0, at.getTime() - this.clock.now().getTime());
+    const handle = this.clock.setTimeout(() => {
+      this.timer = undefined;
+      if (this.fired || this.cancelled) return;
+      const now = this.clock.now();
+      if (now.getTime() < at.getTime()) {
+        // Woken a little early (clock drift/borderline scheduling): re-arm for the
+        // remaining delay instead of firing early or silently dropping the trigger.
+        this.armTimer(at, action);
+        return;
+      }
+      this.fired = true;
+      void action();
+    }, delayMs);
+    handle.unref?.();
+    this.timer = handle;
+  }
+}
+
 function istParts(value: Date): { date: string; weekday: string; minute: number } {
   const parts = Object.fromEntries(formatter.formatToParts(value).map((part) => [part.type, part.value]));
   return { date: `${parts.year}-${parts.month}-${parts.day}`, weekday: parts.weekday, minute: Number(parts.hour) * 60 + Number(parts.minute) };

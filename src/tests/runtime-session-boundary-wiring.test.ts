@@ -13,12 +13,16 @@ const hostCoordinatorRuntimes = [
 ] as const;
 const localSessionClose = /15\s*\*\s*60\s*\+\s*(?:30|40)|15:30|15:40|15_30|15_40/;
 
+function withoutComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+}
+
 test('V12 schedules wall-clock EOD through the shared NSE session coordinator', () => {
   for (const file of directCoordinatorRuntimes) {
     const source = readFileSync(resolve(process.cwd(), file), 'utf8');
     assert.match(source, /nse-session-calendar\.service/);
     assert.match(source, /\.schedule\(/);
-    assert.doesNotMatch(source, localSessionClose);
+    assert.doesNotMatch(withoutComments(source), localSessionClose);
   }
 });
 
@@ -30,7 +34,7 @@ test('V2, V4, and V8 delegate wall-clock EOD from their runtime to StrategyHostL
     assert.match(source, /new StrategyHostLifecycle\(/);
     assert.match(source, /eodCoordinator/);
     assert.doesNotMatch(source, /\.schedule\(/);
-    assert.doesNotMatch(source, localSessionClose);
+    assert.doesNotMatch(withoutComments(source), localSessionClose);
   }
 });
 

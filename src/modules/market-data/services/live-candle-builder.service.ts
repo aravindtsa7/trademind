@@ -20,6 +20,32 @@ const timeframeMinutes: Record<LiveCandleTimeframe, number> = { '1m': 1, '2m': 2
 export default class LiveCandleBuilderService {
   private readonly activeCandles = new Map<string, ActiveCandle>();
   private readonly lastAcceptedTickTimestamps = new Map<string, number>();
+  // Per-instrument floor (epoch ms) below which no bucket, for any timeframe, may ever be
+  // created or extended from a live tick. Set by the market-data recovery coordinator at
+  // every cold start and reconnect (see MarketDataRecoveryCoordinatorService's
+  // onLiveConstructionBoundary callback) to the first minute boundary guaranteed to have
+  // been observed from its very start on the current connection -- never the minute a
+  // WebSocket happened to connect mid-way through. A minute earlier than the boundary is
+  // excluded here permanently rather than ever being allowed to "complete" from a partial
+  // observation; its authoritative OHLC, when needed, comes from REST reconciliation
+  // instead (see the coordinator's forming-minute reconciliation). Unset (no entry) means
+  // no gating -- preserves prior behavior for callers that do not opt into cold-start
+  // continuity (e.g. market replay).
+  private readonly liveConstructionBoundaries = new Map<string, number>();
+
+  /** See `liveConstructionBoundaries` above. Deliberately never lowered implicitly by `reset()`: a stale, more-restrictive boundary is safe, while silently dropping back to "no gating" is not. */
+  setLiveConstructionBoundary(instrumentKey: string, boundaryMs: number): void {
+    this.liveConstructionBoundaries.set(instrumentKey, boundaryMs);
+  }
+
+  /**
+   * Fail-closed end-of-session sentinel used when recovery cannot find a strictly-future
+   * strategy-aligned handoff before the canonical close. This does not claim that the close
+   * is a strategy boundary; it prevents every remaining in-session bucket from being built.
+   */
+  blockLiveConstructionForSession(instrumentKey: string, sessionCloseMs: number): void {
+    this.liveConstructionBoundaries.set(instrumentKey, sessionCloseMs);
+  }
 
   processTick(tick: NormalizedLiveTickDto, timeframe: LiveCandleTimeframe): LiveCandleProcessResult {
     this.validateTick(tick);
@@ -39,6 +65,16 @@ export default class LiveCandleBuilderService {
     }
 
     const candleTime = getBucketStart(market, interval, session.openMinute);
+    const boundary = this.liveConstructionBoundaries.get(tick.instrumentKey);
+    if (boundary !== undefined && candleTime.getTime() < boundary) {
+      // The bucket this tick belongs to started before the proven-clean construction
+      // boundary, so it may have been observed from partway through (or not at all) --
+      // never build or extend it live. The watermark below is intentionally NOT advanced
+      // here: a later, in-bucket tick must still hit this same guard, and once a tick from
+      // a bucket at/after the boundary arrives, the normal chronological-order guard above
+      // takes over.
+      return { ignored: true, ignoreReason: 'BEFORE_LIVE_CONSTRUCTION_BOUNDARY' };
+    }
     const active = this.activeCandles.get(key);
     this.lastAcceptedTickTimestamps.set(key, tickTimestamp);
 

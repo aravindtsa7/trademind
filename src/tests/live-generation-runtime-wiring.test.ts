@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
 
 function source(path: string): string {
   return readFileSync(resolve(process.cwd(), path), 'utf8');
@@ -18,8 +19,11 @@ test('live V2, V4 and V8 candle adapters receive their active WebSocket generati
   const v4 = source('src/tests/test-live-v4-nifty-momentum-shadow.ts');
   const v8 = source('src/tests/test-live-v8-nifty-bullish-reclaim-shadow.ts');
   assert.ok(v2.includes('LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connectionManager.getGenerationId())'));
-  assert.ok(v4.includes('LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus, () => connection.getGenerationId())'));
-  assert.ok(v8.includes('LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus, () => connection.getGenerationId())'));
+  // A7-H2: V4 and V8 now hold their LiveCandleBuilderService in its own named variable too
+  // (not constructed inline), so the recovery coordinator's onLiveConstructionBoundary
+  // callback has something to wire setLiveConstructionBoundary(...) to.
+  assert.ok(v4.includes('LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId())'));
+  assert.ok(v8.includes('LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId())'));
 });
 
 test('V2 forward-journal depth cache delegates to the strict current-generation cache helper', () => {
@@ -189,4 +193,74 @@ test('A6 hardening: V2, V4 and V8 share the identical declare -> guard -> start 
       `${name}: expected declare(${declarationIndex}) < guarded-recovered-call(${guardedCallMatch?.index}) < await-host.start(${hostStartIndex}) < RUNNING-guard(${runningGuardIndex}) < startupComplete=true(${completeAssignmentIndex})`,
     );
   }
+});
+
+// ---- A7-H1: cold-start REST→LIVE continuity reconciliation wiring ----
+//
+// These tests actually INSTANTIATE the live service class (not just read source
+// strings) so that a JSDoc-corruption or edit accident that removes
+// handleInitialConnected from the compiled class is caught at test-time rather
+// than discovered on the next live V8 run.
+
+test('A7-H1: MarketDataRecoveryCoordinatorService.handleInitialConnected is a callable function at runtime', () => {
+  const inst = new MarketDataRecoveryCoordinatorService({
+    backfill: async () => ({ ready: true, reason: 'ok', missingMinutes: 0, duplicateMinutes: 0 }),
+    isMarketSession: () => true,
+  });
+  assert.equal(typeof inst.handleInitialConnected, 'function',
+    'handleInitialConnected must be a function; if it is undefined the method body was lost in the compiled class (JSDoc corruption or missing method declaration)');
+});
+
+test('A7-H1: handleInitialConnected seeds the generation and grants backfillReady so a live tick alone can reach READY', () => {
+  const inst = new MarketDataRecoveryCoordinatorService({
+    backfill: async () => ({ ready: true, reason: 'ok', missingMinutes: 0, duplicateMinutes: 0 }),
+    isMarketSession: () => true,
+    nowMs: () => 1_000,
+  });
+  assert.equal(inst.getGenerationId(), 0, 'generation starts at 0');
+  assert.equal(inst.isEvaluationReady(), false, 'not ready before handleInitialConnected');
+  inst.handleInitialConnected({ generationId: 1, connectedAt: new Date(1_000) });
+  assert.equal(inst.getGenerationId(), 1, 'generation seeded to 1 after handleInitialConnected');
+  assert.equal(inst.isEvaluationReady(), false, 'not ready until a live tick also arrives');
+  inst.handleLiveTick({ sourceTimestamp: new Date(1_000), receivedAt: new Date(1_001), generationId: 1 });
+  assert.equal(inst.isEvaluationReady(), true, 'READY after handleInitialConnected + handleLiveTick');
+});
+
+test('A7-H1: handleInitialConnected with no getLastSeededCompletedMinute uses legacy unconditional grant path', () => {
+  const inst = new MarketDataRecoveryCoordinatorService({
+    backfill: async () => ({ ready: true, reason: 'ok', missingMinutes: 0, duplicateMinutes: 0 }),
+    isMarketSession: () => true,
+    nowMs: () => 1_000,
+    // getLastSeededCompletedMinute intentionally absent → returns undefined → legacy path
+  });
+  inst.handleInitialConnected({ generationId: 1, connectedAt: new Date(1_000) });
+  assert.equal(inst.getGenerationId(), 1);
+  // backfillReady must have been granted immediately (no reconciliation configured)
+  inst.handleLiveTick({ sourceTimestamp: new Date(1_000), receivedAt: new Date(1_001), generationId: 1 });
+  assert.equal(inst.isEvaluationReady(), true, 'READY with legacy (no getLastSeededCompletedMinute) path');
+});
+
+test('A7-H1: V2, V4 and V8 source files supply getLastSeededCompletedMinute to the coordinator callbacks', () => {
+  for (const [name, path] of Object.entries(runtimePaths)) {
+    const runtime = source(path);
+    assert.ok(
+      runtime.includes('getLastSeededCompletedMinute'),
+      `${name}: expected getLastSeededCompletedMinute to be wired into MarketDataRecoveryCoordinatorService callbacks`,
+    );
+  }
+});
+
+test('A7-H5: V4 consumes the positive source-close barrier before shutdown can stop recovery', () => {
+  const v4 = source('src/tests/test-live-v4-nifty-momentum-shadow.ts');
+  const finishStart = v4.indexOf('const finishEod = async');
+  const finishEnd = v4.indexOf("connection.on('unexpectedDisconnect'", finishStart);
+  assert.ok(finishStart >= 0 && finishEnd > finishStart);
+  const finishEod = v4.slice(finishStart, finishEnd);
+  const barrier = finishEod.indexOf('await recovery.completePendingBoundaryReconciliation()');
+  const shutdown = finishEod.indexOf('await shutdown(');
+  assert.ok(barrier >= 0, 'V4 EOD must consume the shared positive reconciliation result');
+  assert.ok(shutdown > barrier, 'V4 must consume the result before shutdown calls recovery.stop()');
+  assert.ok(finishEod.includes("boundaryReconciliation.outcome === 'NOT_RECOVERED'"));
+  assert.ok(finishEod.includes('sourceCloseRecoveryFailed'));
+  assert.ok(v4.includes('if (!eodStarted && !closing) candleEvents.start()'), 'terminal recovery must not restart live processing');
 });

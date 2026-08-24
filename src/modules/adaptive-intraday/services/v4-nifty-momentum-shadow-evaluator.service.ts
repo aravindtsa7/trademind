@@ -35,8 +35,15 @@ export default class V4NiftyMomentumShadowEvaluatorService {
     this.aggregator.aggregate(this.oneMinute, '5m', completeOnly).forEach((candle) => { this.fiveMinute.push(clone(candle)); this.seededFiveMinute.add(candle.timestamp.getTime()); });
   }
 
-  /** Adds only unseen completed one-minute recovery data; no historical signal is evaluated and cooldown state is preserved. */
-  recoverHistoricalOneMinute(candles: readonly Candle[]): void {
+  /**
+   * Adds only unseen completed one-minute recovery data; no historical signal is evaluated and
+   * cooldown state is preserved. `excludeThreeMinuteBucketsFrom`, when supplied, withholds any
+   * 3m bucket starting at or after it from `threeMinute`/`seededThreeMinute` (5m regime state is
+   * always seeded in full) -- used only by the A7-H6 source-boundary evaluation path, which
+   * needs the one genuine final forward-evaluation opportunity delivered through
+   * evaluateCompletedThreeMinute() itself rather than silently pre-seeded here as history.
+   */
+  recoverHistoricalOneMinute(candles: readonly Candle[], excludeThreeMinuteBucketsFrom?: Date): void {
     let latest = this.oneMinute.at(-1)?.timestamp.getTime() ?? Number.NEGATIVE_INFINITY;
     for (const candle of candles) {
       if (!(candle.timestamp instanceof Date) || !Number.isFinite(candle.close) || candle.close <= 0) throw new Error('V4 recovery requires valid one-minute candles.');
@@ -44,8 +51,20 @@ export default class V4NiftyMomentumShadowEvaluatorService {
       this.oneMinute.push(clone(candle)); latest = timestamp;
     }
     const completeOnly = { incompleteLeadingBucket: 'discard' as const, incompleteTrailingBucket: 'discard' as const };
-    this.aggregator.aggregate(this.oneMinute, '3m', completeOnly).forEach((candle) => { if (!this.threeMinute.some((value) => value.timestamp.getTime() === candle.timestamp.getTime())) { this.threeMinute.push(clone(candle)); this.seededThreeMinute.add(candle.timestamp.getTime()); } });
+    const excludeFromMs = excludeThreeMinuteBucketsFrom?.getTime();
+    this.aggregator.aggregate(this.oneMinute, '3m', completeOnly).forEach((candle) => { if (excludeFromMs !== undefined && candle.timestamp.getTime() >= excludeFromMs) return; if (!this.threeMinute.some((value) => value.timestamp.getTime() === candle.timestamp.getTime())) { this.threeMinute.push(clone(candle)); this.seededThreeMinute.add(candle.timestamp.getTime()); } });
     this.aggregator.aggregate(this.oneMinute, '5m', completeOnly).forEach((candle) => { if (!this.fiveMinute.some((value) => value.timestamp.getTime() === candle.timestamp.getTime())) { this.fiveMinute.push(clone(candle)); this.seededFiveMinute.add(candle.timestamp.getTime()); } });
+  }
+
+  /**
+   * Returns the complete 3m bucket starting exactly at `bucketStart`, aggregated fresh from
+   * already-recovered one-minute history, without seeding it into `threeMinute`. Used only by
+   * the A7-H6 source-boundary evaluation path to reconstruct the one bucket
+   * recoverHistoricalOneMinute() above was told to withhold.
+   */
+  getReconstructedThreeMinuteBucket(bucketStart: Date): Candle | undefined {
+    const completeOnly = { incompleteLeadingBucket: 'discard' as const, incompleteTrailingBucket: 'discard' as const };
+    return this.aggregator.aggregate(this.oneMinute, '3m', completeOnly).find((candle) => candle.timestamp.getTime() === bucketStart.getTime());
   }
 
   processCompletedFiveMinute(candle: Candle): void {

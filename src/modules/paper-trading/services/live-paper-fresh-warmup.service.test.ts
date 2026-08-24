@@ -65,6 +65,76 @@ test('GAP-4: an intraday backfill fetch throwing fails closed to CURRENT_DAY_BAC
   assert.equal(result.currentDayRowsReturned, 0);
 });
 
+// ---- A7-H4: NIFTY_INDEX source horizon (09:15-15:29 IST, 375 rows) semantics ----
+// The authoritative NIFTY_INDEX 1-minute source horizon ends at 15:29 IST -- 375 candles,
+// the same contract isCompleteHistoricalSession() enforces for a closed session
+// (historical-session-completeness.util.ts). There is no NIFTY_INDEX candle at 15:30, let
+// alone through 15:39: the underlying cash-market index simply stops publishing prints at
+// 15:29, ten minutes before TradeMind's own, wholly independent, 15:40 operational
+// EOD/grace boundary. An earlier version of this file wrongly clamped this function's
+// canonical-close target to a fabricated 15:39 "candle"; these tests pin the corrected
+// contract instead. Safety against an ordinary NEW post-close cold startup lives one layer
+// up, in the runtime's own isLikelyMarketSession gate (src/tests/test-live-paper-trading.ts),
+// which never calls warmUp() at all once the NSE session has closed -- this function's own
+// contract is exclusively about what an already-active session's source-horizon recovery may
+// still require, which is why it does not itself reject a reference time after 15:30.
+const at1529_59 = new Date('2026-08-12T15:29:59+05:30');
+const at1530_00 = new Date('2026-08-12T15:30:00+05:30');
+
+test('A7-H4: 15:29:59 still treats 15:29 as forming -- expected completed 1m is 15:28', async () => {
+  const target = new Target();
+  const result = await new LivePaperFreshWarmupService({ findByInstrumentAndTimeframe: async () => prior() }, target, { fetchCurrentDayOneMinuteCandles: async () => rows('2026-08-12', 374).map(dto) }, { maxIntradayAttempts: 1 }).warmUp(at1529_59);
+  assert.equal(result.latestCompletedOneMinuteExpected?.toISOString(), '2026-08-12T09:58:00.000Z');
+  assert.equal(result.ready, true);
+});
+
+test('A7-H4: exactly 15:30:00 (source horizon) expects completed 1m 15:29 -- the session\'s actual last candle, never the boundary minute itself', async () => {
+  const target = new Target();
+  const result = await new LivePaperFreshWarmupService({ findByInstrumentAndTimeframe: async () => prior() }, target, { fetchCurrentDayOneMinuteCandles: async () => rows('2026-08-12', 375).map(dto) }, { maxIntradayAttempts: 1 }).warmUp(at1530_00);
+  assert.equal(result.latestCompletedOneMinuteExpected?.toISOString(), '2026-08-12T09:59:00.000Z');
+  assert.equal(result.ready, true);
+  assert.equal(result.currentDaySource, 'INTRADAY');
+});
+
+test('A7-H4: 15:30 is never treated as a completed market-data minute, at any reference time at or after the source horizon -- including TradeMind\'s own 15:40 operational EOD', async () => {
+  const target = new Target();
+  for (const now of [at1530_00, new Date('2026-08-12T15:40:00+05:30'), new Date('2026-08-12T16:30:00+05:30')]) {
+    const result = await new LivePaperFreshWarmupService({ findByInstrumentAndTimeframe: async () => prior() }, target, { fetchCurrentDayOneMinuteCandles: async () => rows('2026-08-12', 375).map(dto) }, { maxIntradayAttempts: 1 }).warmUp(now);
+    assert.notEqual(result.latestCompletedOneMinuteExpected?.toISOString(), '2026-08-12T10:00:00.000Z', `${now.toISOString()}: 15:30 must never be the expected completed minute`);
+    assert.equal(result.latestCompletedOneMinuteExpected?.toISOString(), '2026-08-12T09:59:00.000Z', `${now.toISOString()}: this recovery purpose's only meaningful target is 15:29, never a fabricated 15:30-15:39 candle`);
+  }
+});
+
+test('A7-H4: source-horizon recovery retries a single newest-minute (15:29) publication lag, then succeeds', async () => {
+  const target = new Target(); const behind = rows('2026-08-12', 374).map(dto); const current = rows('2026-08-12', 375).map(dto); let calls = 0; let waits = 0;
+  const result = await new LivePaperFreshWarmupService({ findByInstrumentAndTimeframe: async () => prior() }, target, { fetchCurrentDayOneMinuteCandles: async () => (++calls === 1 ? behind : current) }, { maxIntradayAttempts: 2, intradayRetryIntervalMs: 0, wait: async () => { waits += 1; } }).warmUp(at1530_00);
+  assert.equal(result.ready, true); assert.equal(calls, 2); assert.equal(waits, 1);
+  assert.equal(result.intradayRetryReason, 'NEWEST_COMPLETED_MINUTE_NOT_PUBLISHED');
+  assert.equal(result.latestCompletedOneMinuteExpected?.toISOString(), '2026-08-12T09:59:00.000Z');
+});
+
+test('A7-H4: an incomplete 15:29 at the source horizon fails closed instead of silently completing the session', async () => {
+  const target = new Target(); const behind = rows('2026-08-12', 374).map(dto); let calls = 0; let waits = 0;
+  const result = await new LivePaperFreshWarmupService({ findByInstrumentAndTimeframe: async () => prior() }, target, { fetchCurrentDayOneMinuteCandles: async () => { calls += 1; return behind; } }, { maxIntradayAttempts: 2, intradayRetryIntervalMs: 0, wait: async () => { waits += 1; } }).warmUp(at1530_00);
+  assert.equal(result.ready, false); assert.equal(calls, 2); assert.equal(waits, 1);
+  assert.equal(result.currentDayMissingMinuteCount, 1);
+  assert.equal(result.intradayRetryReason, 'NEWEST_COMPLETED_MINUTE_NOT_PUBLISHED');
+});
+
+test('A7-H4: a late startup reference time after the source horizon does not become a valid completed session merely because warmup can read complete historical data', async () => {
+  // "Complete" 375-row historical data existing does not, by itself, prove the strategy had a
+  // genuine real-time evaluation opportunity for it -- see LivePaperStrategyAdapterService's
+  // recoverHistoricalCandles(), which seeds indicator history without ever evaluating a signal
+  // for recovered candles. This test only pins expectedNifty1mCompletedMinute's own contract:
+  // a late reference time still resolves the source horizon correctly (15:29), it just never
+  // authorizes trading on its own -- that guarantee lives in recoverHistoricalCandles/the live
+  // candle builder's session-boundary gate, exercised directly in the coordinator's own tests.
+  const target = new Target();
+  const result = await new LivePaperFreshWarmupService({ findByInstrumentAndTimeframe: async () => prior() }, target, { fetchCurrentDayOneMinuteCandles: async () => rows('2026-08-12', 375).map(dto) }, { maxIntradayAttempts: 1 }).warmUp(new Date('2026-08-12T18:00:00+05:30'));
+  assert.equal(result.latestCompletedOneMinuteExpected?.toISOString(), '2026-08-12T09:59:00.000Z');
+  assert.equal(result.ready, true);
+});
+
 test('fresh warm-up supplies current-day five-minute indicators to V2 and current-day one-minute regime/ATR state to V4', async () => {
   const originalVersion = process.env.TRADING_STRATEGY_VERSION; const originalPaperOnly = process.env.PAPER_TRADING_ONLY;
   process.env.TRADING_STRATEGY_VERSION = 'V2'; process.env.PAPER_TRADING_ONLY = 'true';

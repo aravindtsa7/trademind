@@ -12,6 +12,7 @@ import {
 } from '../dto/paper-strategy-warmup.dto';
 import PaperStrategyWarmupService from './paper-strategy-warmup.service';
 import CandleTimeframeAggregatorService from '../../indicators/services/candle-timeframe-aggregator.service';
+import { expectedNifty1mCompletedMinute } from '../../historical-candles/utils/historical-session-completeness.util';
 
 export interface LiveFreshWarmupRepository extends PaperStrategyWarmupRepository {
   bulkUpsert?(inputs: HistoricalCandleUpsertInput[]): Promise<unknown>;
@@ -75,7 +76,7 @@ export default class LivePaperFreshWarmupService {
   async warmUp(now = new Date()): Promise<LivePaperFreshWarmupResult> {
     const stored = await this.repository.findByInstrumentAndTimeframe(paperStrategyWarmupInstrumentKey, paperStrategyWarmupTimeframe);
     const market = ist(now);
-    const expected = expectedCompletedMinute(now);
+    const expected = expectedNifty1mCompletedMinute(now);
     // A stored current-day forming candle must never become a warm-up input.
     const existing = expected === null ? stored : stored.filter((candle) => {
       const candleMarketTime = ist(candle.candleTime);
@@ -203,11 +204,6 @@ function merge(existing: readonly HistoricalCandleWarmupRecord[], current: reado
 }
 function toCandle(row: HistoricalCandleWarmupRecord): Candle { return { timestamp: new Date(row.candleTime.getTime()), open: Number(row.open), high: Number(row.high), low: Number(row.low), close: Number(row.close), volume: Number(row.volume), openInterest: row.openInterest == null ? undefined : Number(row.openInterest) }; }
 function ist(value: Date): { date: string; minute: number } { const p = Object.fromEntries(formatter.formatToParts(value).map((part) => [part.type, part.value])); return { date: `${p.year}-${p.month}-${p.day}`, minute: Number(p.hour) * 60 + Number(p.minute) }; }
-function expectedCompletedMinute(now: Date): Date | null {
-  const value = ist(now); if (value.minute <= 9 * 60 + 15 || value.minute >= 15 * 60 + 30) return null;
-  const minute = value.minute - 1; const hour = Math.floor(minute / 60); const minuteOfHour = minute % 60;
-  return new Date(`${ist(now).date}T${String(hour).padStart(2, '0')}:${String(minuteOfHour).padStart(2, '0')}:00+05:30`);
-}
 function latestCompletedFiveMinute(candles: readonly Candle[], now: Date): Date | null {
   const end = now.getTime(); const candidate = new CandleTimeframeAggregatorService().aggregate(candles, '5m', { incompleteLeadingBucket: 'discard', incompleteTrailingBucket: 'discard' }).filter((candle) => candle.timestamp.getTime() + 5 * 60_000 <= end).at(-1);
   return candidate ? new Date(candidate.timestamp.getTime()) : null;

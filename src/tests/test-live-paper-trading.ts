@@ -21,15 +21,17 @@ import LivePaperStrategyAdapterService from '../modules/paper-trading/services/l
 import LivePaperFreshWarmupService from '../modules/paper-trading/services/live-paper-fresh-warmup.service';
 import { LivePaperCompletedCandleInput, LivePaperStrategyResult } from '../modules/paper-trading/dto/live-paper-strategy.dto';
 import { PaperTradingRuntimeState } from '../modules/paper-trading/dto/paper-trading-runtime.dto';
-import { NseSessionEodCoordinator, isAtOrAfterNseSessionClose, isWithinNseSession } from '../modules/market-data/services/nse-session-calendar.service';
+import { NseSessionEodCoordinator, OneShotWallClockTrigger, isAtOrAfterNseSessionClose, isWithinNseSession } from '../modules/market-data/services/nse-session-calendar.service';
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
 import { StrategyTerminalOutcomeArbiter } from '../modules/market-data/services/strategy-terminal-outcome-arbiter.service';
+import { SourceBoundaryEvaluationCoverageTracker } from '../modules/market-data/services/source-boundary-evaluation-coverage';
 import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-generation';
 import { cacheCurrentLiveDepth, getCurrentLiveDepth } from '../modules/market-data/utils/live-depth-cache';
 import { cacheCurrentLiveInstrumentValue, getCurrentLiveInstrumentValue, LiveInstrumentValue } from '../modules/market-data/utils/live-instrument-value-cache';
 import CandleTimeframeAggregatorService from '../modules/indicators/services/candle-timeframe-aggregator.service';
+import { nifty1mSourceCompletionBoundary } from '../modules/historical-candles/utils/historical-session-completeness.util';
 import { ForwardValidationJournal, normalizeQuote, resolveSessionOutcome, strategyFingerprint } from '../modules/research-validation';
 import RuntimeRiskGateService from '../modules/risk/runtime-risk-gate.service';
 import PaperEntryQuoteWaiterService from '../modules/paper-trading/services/paper-entry-quote-waiter.service';
@@ -149,8 +151,14 @@ async function run(): Promise<void> {
     return;
   }
 
+  const liveConstructionAlignmentMinutes = 5;
+  const alignedHandoffWaitMs = liveConstructionAlignmentMinutes * 60_000;
+  const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000) + alignedHandoffWaitMs;
+  const healthGraceMs = positiveTimeoutMs('MARKET_DATA_HEALTH_GRACE_MS', process.env.MARKET_DATA_HEALTH_GRACE_MS, 45_000) + alignedHandoffWaitMs;
+  const reconnectDurationMs = positiveTimeoutMs('MARKET_DATA_MAX_RECONNECT_DURATION_MS', process.env.MARKET_DATA_MAX_RECONNECT_DURATION_MS, 60_000) + alignedHandoffWaitMs;
+
   const webSocketClient = new MarketDataWebSocketClient(accessToken);
-  const connectionManager = new ConnectionManager(accessToken, webSocketClient);
+  const connectionManager = new ConnectionManager(accessToken, webSocketClient, { maximumReconnectDurationMs:reconnectDurationMs });
   const subscriptionManager = new SubscriptionManager(accessToken, connectionManager);
   const protobufDecoder = new ProtobufDecoder();
   const tickProcessor = new TickProcessor();
@@ -291,7 +299,6 @@ async function run(): Promise<void> {
   // stall check, which only starts polling once CONNECTED and fires on a
   // multiple of its own heartbeat) is what owns and reports the startup
   // failure.
-  const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000);
   const eodCoordinator = new NseSessionEodCoordinator();
   let lastNiftyTickPrintedAt = 0;
   let shuttingDown = false;
@@ -311,9 +318,10 @@ async function run(): Promise<void> {
   // transition and produces an illegal RUNNING->RUNNING transition.
   let startupComplete = false;
   type RecoveryWarmup = Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>;
-  const performRecoveryBackfill = async (): Promise<{ ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number; recoveryData: RecoveryWarmup }> => {
+  const performRecoveryBackfill = async (requiredCompletedMinute?: Date): Promise<{ ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number; recoveryData: RecoveryWarmup }> => {
     const recoveryWarmupTarget = { count: 0, seedHistoricalCandles(candles: readonly import('../modules/indicators/types').Candle[]): void { this.count = candles.length; }, isWarmupReady(): boolean { return this.count >= 36; } };
-    const recoveryWarmup = await new LivePaperFreshWarmupService(new HistoricalCandleRepository(), recoveryWarmupTarget).warmUp();
+    const recoveryWarmup = await new LivePaperFreshWarmupService(new HistoricalCandleRepository(), recoveryWarmupTarget)
+      .warmUp(requiredCompletedMinute ? new Date(requiredCompletedMinute.getTime() + 60_000) : undefined);
     return {
       ready: recoveryWarmup.ready,
       reason: recoveryWarmup.freshnessReason,
@@ -322,11 +330,43 @@ async function run(): Promise<void> {
       recoveryData: recoveryWarmup,
     };
   };
+  // A7-H6: set only when a recovery reconstructs data reaching exactly the NIFTY
+  // source-completion boundary (15:29 IST) -- the one bucket recoverHistoricalCandles() below
+  // must withhold so the source-boundary trigger's own actionable evaluation call is never
+  // rejected as "already seeded". Read and cleared by performSourceBoundaryEvaluation().
+  let pendingSourceBoundaryCandle: Candle | undefined;
+  const isNiftyFinalSourceMinute = (candidate: Date | null | undefined): boolean =>
+    candidate != null && candidate.getTime() === nifty1mSourceCompletionBoundary(candidate).getTime() - 60_000;
   const applyRecoveredHistoricalCandles = (_generationId: number, recoveryWarmup: RecoveryWarmup | undefined): undefined => {
     if (!recoveryWarmup) return undefined;
     const completed = new CandleTimeframeAggregatorService().aggregate(recoveryWarmup.seededOneMinuteCandles, '5m', { incompleteLeadingBucket: 'discard', incompleteTrailingBucket: 'discard' });
-    strategyAdapter.recoverHistoricalCandles(completed);
-    liveCandleBuilder.reset(niftyInstrumentKey);
+    // recoverHistoricalCandles() remains non-evaluating infrastructure recovery for every
+    // ordinary (mid-session) reconciliation. Only when this recovery proves coverage exactly
+    // through the source horizon is its final bucket also the one genuine forward-evaluation
+    // opportunity left in the session -- withhold just that bucket from seeding and hand it to
+    // performSourceBoundaryEvaluation() instead, so history stays complete for every other case.
+    const isTerminalRecovery = isNiftyFinalSourceMinute(recoveryWarmup.lastCurrentDayCandle);
+    const toSeed = isTerminalRecovery && completed.length > 0 ? completed.slice(0, -1) : completed;
+    strategyAdapter.recoverHistoricalCandles(toSeed);
+    if (isTerminalRecovery && completed.length > 0) pendingSourceBoundaryCandle = completed.at(-1);
+    // A7 reset-race correction: deliberately NOT calling liveCandleBuilder.reset(niftyInstrumentKey)
+    // here. This callback fires asynchronously, well after onLiveConstructionBoundary already
+    // set today's floor (liveConstructionBoundaries, checked on every tick -- no bucket before
+    // it can ever be built, on any generation) and well after a live tick may already have built
+    // a genuine current-generation active candle at/after that boundary (the boundary and
+    // "recovery is due" are both driven by the SAME live tick reaching handleMarketTick before
+    // this same event reaches LiveCandleEventAdapterService -- recovery is deliberately NOT
+    // awaited inline, so it can resolve strictly after that candle already exists). An
+    // unconditional whole-instrument reset here would delete that valid candle and its
+    // chronological watermark, corrupting the bucket's open (or losing it outright) the moment
+    // a later tick rebuilds it from scratch. Stale state from BEFORE this generation is already
+    // retired independently and unconditionally, before any tick of the new generation can build
+    // anything: LiveCandleEventAdapterService's own LiveGenerationCacheScope resets the builder
+    // (candleBuilder.reset(), no instrument filter) the instant a tick's generationId first
+    // differs from its cached one, and setLiveConstructionBoundary's floor (set synchronously,
+    // before recovery even starts) independently guarantees nothing before the boundary can ever
+    // be built on any generation. Both guarantees are unconditional and generation-driven, not
+    // recovery-timing-driven, so this callback has nothing left to safely clear.
     liveCandleEventAdapter.start();
     return undefined;
   };
@@ -339,7 +379,12 @@ async function run(): Promise<void> {
     if (state === 'DEGRADED') {
       void host?.degrade('MARKET_DATA_DEGRADED');
     }
-    if (state === 'READY' && !shuttingDown) {
+    // eodRequested (set synchronously the instant EOD is detected, well before shuttingDown
+    // is set inside shutdown()) must also gate this: an EOD-triggered canonical-close
+    // reconciliation (see completePendingBoundaryReconciliation in performDurableEodExit)
+    // can drive this coordinator to READY while shuttingDown is still false, and must never
+    // be allowed to re-arm post-close strategy evaluation.
+    if (state === 'READY' && !shuttingDown && !eodRequested) {
       if (!health.confirmRecoveryReady(recovery!.getGenerationId())) {
         connectionManager.failRecovery(recovery!.getGenerationId(), 'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');
         return;
@@ -354,11 +399,24 @@ async function run(): Promise<void> {
     if (state === 'FAULTED') connectionManager.failRecovery(recovery!.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   };
   recovery = new MarketDataRecoveryCoordinatorService<RecoveryWarmup>({
+    getLastSeededCompletedMinute: () => warmupResult.lastCurrentDayCandle,
+    liveConstructionAlignmentMinutes,
+    // NSE_INDEX|Nifty 50's own source horizon is narrower than TradeMind's own operational
+    // EOD/grace boundary above -- see historical-session-completeness.util.
+    getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
+    getRecoveredCompletedMinute: (recoveryWarmup) => recoveryWarmup?.lastCurrentDayCandle,
     backfill: performRecoveryBackfill,
     onRecovered: applyRecoveredHistoricalCandles,
+    // A7-H2: exclude any bucket, on any timeframe, that starts before the first minute
+    // guaranteed observable from its very start on this connection -- otherwise a
+    // WebSocket that connects/reconnects mid-minute could silently emit a partial
+    // "completed" 5m candle into the live evaluation path.
+    onLiveConstructionBoundary: (boundary) => liveCandleBuilder.setLiveConstructionBoundary(niftyInstrumentKey, boundary.getTime()),
+    onLiveConstructionUnavailable: (sessionClose) => liveCandleBuilder.blockLiveConstructionForSession(niftyInstrumentKey, sessionClose.getTime()),
     onEvent: handleRecoveryEvent,
   });
   const health = new MarketDataHealthMonitorService(connectionManager, {
+    generationGraceMs:healthGraceMs,
     onStall: (snapshot) => {
       recovery.handleUnexpectedDisconnect({ generationId: snapshot.generationId, reason: 'STALL', lastMessageAgeMs: snapshot.lastRawMessageAgeMs, lastTickAgeMs: snapshot.lastNiftyTickAgeMs });
       paperMarketDataAdapter.setMarketDataAvailable(false); paperRuntimeCandleAdapter.stop(); liveCandleEventAdapter.stop();
@@ -366,6 +424,97 @@ async function run(): Promise<void> {
     },
   });
   recovery.on('stateChanged', handleRecoveryState);
+
+  // A7-H6: owned evidence for whether the one required final forward-strategy evaluation at
+  // the NIFTY source-completion boundary actually ran (see SourceBoundaryEvaluationCoverageTracker).
+  const sourceBoundaryEvaluationCoverage = new SourceBoundaryEvaluationCoverageTracker('paper:v2', 'V2_TREND_DOWN_PE');
+  // One-shot, generation-owned, cancellable trigger for the NIFTY source-completion boundary --
+  // never a hardcoded literal (see nifty1mSourceCompletionBoundary), and cancelled unconditionally
+  // in shutdown()'s close-out below so it can never fire after terminalization has started.
+  const sourceBoundaryTrigger = new OneShotWallClockTrigger();
+  /**
+   * The source-boundary completion trigger: fires once at the NIFTY source-completion
+   * boundary (15:30 IST) rather than waiting for the 15:40 operational EOD barrier, so the
+   * final genuine V2 5m opportunity (15:25-15:29) is never silently substituted by non-
+   * evaluating terminal recovery. Reads `connectionManager.getGenerationId()` fresh at fire
+   * time (never a value captured at arm time) so a disconnect/reconnect between arming and
+   * firing is always judged against whichever generation is actually current when it runs.
+   */
+  const performSourceBoundaryEvaluation = async (): Promise<void> => {
+    if (shuttingDown || eodRequested) return;
+    const generationId = connectionManager.getGenerationId();
+    const boundaryAt = nifty1mSourceCompletionBoundary(new Date());
+    const finalBucketStart = new Date(boundaryAt.getTime() - liveConstructionAlignmentMinutes * 60_000);
+    sourceBoundaryEvaluationCoverage.require(generationId, boundaryAt);
+
+    let candle: import('../modules/indicators/types').Candle | undefined;
+    // Path A: ticks flowed normally all session and already built this exact final bucket
+    // locally -- flush it (mirroring finishSession()'s own semantics for this one candle)
+    // rather than re-deriving it from REST.
+    const active = liveCandleBuilder.getActiveCandle(niftyInstrumentKey, '5m');
+    if (active && active.candleTime.getTime() === finalBucketStart.getTime()) {
+      candle = { timestamp: new Date(active.candleTime.getTime()), open: active.open, high: active.high, low: active.low, close: active.close, volume: 0 };
+      // Consumed here -- must not also be flushed (and re-emitted) a second time by the
+      // 15:40 EOD finishSession() call.
+      liveCandleBuilder.reset(niftyInstrumentKey, '5m');
+    } else {
+      // Path B: no locally-built candle for this bucket exists (e.g. a disconnect/reconnect
+      // gated live construction for it) -- positively recover/confirm authoritative source
+      // through 15:29 via the exact same barrier the 15:40 EOD path uses. Idempotent: a
+      // second call (from EOD, after this one already succeeded) returns the same RECOVERED
+      // outcome without re-running backfill.
+      const result = await recovery!.completePendingBoundaryReconciliation();
+      if (shuttingDown || eodRequested || connectionManager.getGenerationId() !== generationId) {
+        sourceBoundaryEvaluationCoverage.markLost(generationId, 'TERMINALIZED_OR_SUPERSEDED_DURING_RECOVERY');
+        return;
+      }
+      if (result.outcome !== 'RECOVERED') {
+        sourceBoundaryEvaluationCoverage.markLost(generationId, result.reason);
+        return;
+      }
+      candle = pendingSourceBoundaryCandle;
+      pendingSourceBoundaryCandle = undefined;
+      if (!candle) {
+        sourceBoundaryEvaluationCoverage.markLost(generationId, 'TERMINAL_CANDLE_NOT_RECONSTRUCTED');
+        return;
+      }
+    }
+
+    if (shuttingDown || eodRequested || connectionManager.getGenerationId() !== generationId) {
+      sourceBoundaryEvaluationCoverage.markLost(generationId, 'TERMINALIZED_OR_SUPERSEDED_BEFORE_EVALUATION');
+      return;
+    }
+    if (hostGatedRuntime.getState() !== PaperTradingRuntimeState.RUNNING) {
+      sourceBoundaryEvaluationCoverage.markLost(generationId, 'HOST_NOT_RUNNING_AT_SOURCE_BOUNDARY');
+      return;
+    }
+    try {
+      const contracts = await contractsProvider.getContracts();
+      if (shuttingDown || eodRequested || connectionManager.getGenerationId() !== generationId) {
+        sourceBoundaryEvaluationCoverage.markLost(generationId, 'TERMINALIZED_OR_SUPERSEDED_BEFORE_EVALUATION');
+        return;
+      }
+      // The exact same actionable path an ordinary completed live 5m candle uses: the
+      // host-gated runtime object PaperRuntimeCandleAdapterService itself calls.
+      const result = await hostGatedRuntime.processCompletedCandle({ candle, completed: true, contracts });
+      eventBus.emit('paper.strategy.evaluated', {
+        candleTimestamp: new Date(result.candleTimestamp.getTime()),
+        spotPrice: result.spotPrice,
+        rawSignal: result.rawEmaSignal,
+        finalSignal: result.finalSignal,
+        timeFilterAllowed: result.timeFilterAllowed,
+        reasons: [...result.reasons],
+        paperOrderId: result.orchestration?.order.id,
+      });
+      // NO_TRADE, a filtered signal, or a risk-denied BUY_PE all still count as evaluated --
+      // the opportunity was genuinely evaluated through the actionable path exactly once.
+      sourceBoundaryEvaluationCoverage.markEvaluated(generationId, candle.timestamp, 'SOURCE_BOUNDARY_EVALUATION_COMPLETED');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Source-boundary strategy evaluation failed.';
+      eventBus.emit('paper.strategy.error', { instrumentKey: niftyInstrumentKey, candleTimestamp: new Date(candle.timestamp.getTime()), message });
+      sourceBoundaryEvaluationCoverage.markLost(generationId, message);
+    }
+  };
 
   function handleWebSocketMessage(buffer: Buffer, details: { generationId: number }): void {
     try {
@@ -471,11 +620,15 @@ async function run(): Promise<void> {
     eventBus.off('paper.strategy.error', handleStrategyError);
   };
 
-  const shutdown = async (reason: string, onCloseOutComplete?: () => void): Promise<void> => {
+  const shutdown = async (reason: string, onCloseOutComplete?: () => void, invalidData = false): Promise<void> => {
+    // Cancelled unconditionally and before anything else, on every terminal trigger (including
+    // a duplicate/racing one) -- cancel() is idempotent, so this is the one place that
+    // guarantees the source-boundary trigger can never fire once terminalization has started.
+    sourceBoundaryTrigger.cancel();
     // Proposed unconditionally, even if a different trigger already owns the
     // close-out work below -- this is the only way a racing fault can still
     // escalate the eventual commit()'d outcome.
-    terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason }).status);
+    terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason, invalidData }).status);
     if (shuttingDown) return;
     shuttingDown = true; eodRequestedForRisk = true; riskGate.transition('HALTED');
     health.stop(); recovery.stop();
@@ -527,6 +680,7 @@ async function run(): Promise<void> {
           reason: finalReason,
           reconciliationRequired,
           durableExitDrained,
+          invalidData,
         });
         const portfolioSnapshot = portfolio.logSessionSummary(istDate(new Date()));
         // CLEAN_SHUTDOWN (non-authoritative) must be durable before SUMMARY (the
@@ -551,6 +705,35 @@ async function run(): Promise<void> {
     paperRuntimeCandleAdapter.stop();
     liveCandleEventAdapter.finishSession(niftyInstrumentKey);
     const eodAt = new Date();
+    // A7-H3: V2's 5-minute alignment can land its final live-construction handoff
+    // boundary exactly on the canonical session close, leaving REST ownership of the
+    // final 5m candle's source minutes unresolved when EOD fires. This barrier
+    // must run -- and be awaited -- BEFORE shutdown() (which calls recovery.stop()
+    // below), or a still-pending/in-flight reconciliation would be silently discarded
+    // and the session could reach VALID_COMPLETED with that final completed bar never
+    // proven, violating NO_PARTIAL_BAR / NO_SILENTLY_MISSING_COMPLETED_STRATEGY_BAR.
+    // NONE_PENDING is safe only when no aligned requirement ever existed; a previously
+    // proven requirement remains RECOVERED. Required work invalidated by disconnect/stop/
+    // generation change is retained as NOT_RECOVERED, never erased into a benign no-op.
+    const boundaryReconciliation = await recovery!.completePendingBoundaryReconciliation();
+    const canonicalCloseRecoveryFailed = boundaryReconciliation.outcome === 'NOT_RECOVERED';
+    if (canonicalCloseRecoveryFailed) {
+      forwardJournal.appendEvent(istDate(eodAt), 'V2_CANONICAL_CLOSE_RECOVERY_FAILED', ['V2_CANONICAL_CLOSE_RECOVERY_FAILED', 'CRITICAL_DATA_QUALITY'], { reason: boundaryReconciliation.reason, recoveryState: recovery!.getState() });
+      console.error(`[V2_CANONICAL_CLOSE_RECOVERY] Failed to prove complete source coverage before the session's live-construction handoff (${boundaryReconciliation.reason}); session will fail closed as INVALID_DATA.`);
+    }
+    // A7-H6: SOURCE/DATA coverage (above) is not FORWARD EVALUATION coverage. require() is a
+    // no-op if the source-boundary trigger already recorded EVALUATED/LOST for this exact
+    // generation; if that trigger never ran at all (e.g. it never fired, or start-up happened
+    // too late to arm it), this establishes REQUIRED_PENDING here, which is correctly
+    // unsatisfied below -- a terminal-only recovery must never silently substitute for a
+    // missed real-time evaluation opportunity.
+    const finalGenerationId = connectionManager.getGenerationId();
+    sourceBoundaryEvaluationCoverage.require(finalGenerationId, nifty1mSourceCompletionBoundary(eodAt));
+    const evaluationCoverageLost = !sourceBoundaryEvaluationCoverage.isSatisfiedFor(finalGenerationId);
+    if (evaluationCoverageLost) {
+      forwardJournal.appendEvent(istDate(eodAt), 'V2_SOURCE_BOUNDARY_EVALUATION_LOST', ['V2_SOURCE_BOUNDARY_EVALUATION_LOST', 'CRITICAL_DATA_QUALITY'], { reason: sourceBoundaryEvaluationCoverage.getRecord()?.reason ?? 'UNKNOWN', disposition: sourceBoundaryEvaluationCoverage.disposition(finalGenerationId) });
+      console.error(`[V2_SOURCE_BOUNDARY_EVALUATION] Forward-evaluation coverage for the final source-boundary candle was not proven (${sourceBoundaryEvaluationCoverage.disposition(finalGenerationId)}); session will fail closed as INVALID_DATA.`);
+    }
     forwardJournal.appendEvent(istDate(eodAt), 'EOD_FORCED_EXIT', ['EOD_FORCED_EXIT']);
     // Drain an already-triggered target/stop/timeout transaction first, then
     // route remaining EOD exits through the exact same durable pipeline.
@@ -571,7 +754,7 @@ async function run(): Promise<void> {
       const status = runtime.getStatus();
       const eodStatus = orderManager.getActiveOrders().some((order) => order.status === PaperOrderStatus.RECONCILIATION_REQUIRED || order.status === PaperOrderStatus.EXIT_PENDING) ? 'RECONCILIATION_REQUIRED' : 'COMPLETED';
       console.log(`[V2_EOD_SUMMARY]\ndate=${istDate(eodAt)}\nstrategyId=${process.env.PAPER_STRATEGY_ID ?? 'V2_TREND_DOWN_PE'}\ncompleted5m=${status.completedCandlesProcessed}\nnoTrade=${status.noTradeEvaluations}\nsignals=${status.paperOrdersCreated}\norders=${status.paperOrdersCreated}\ntargetExits=${status.targetExits}\nstopExits=${status.stopExits}\ntimeExits=${status.timeExits}\nactivePositions=${status.activeOrderCount}\nstatus=${eodStatus}`);
-    });
+    }, canonicalCloseRecoveryFailed || evaluationCoverageLost);
   };
   connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => {
     recovery.handleUnexpectedDisconnect(details);
@@ -581,7 +764,15 @@ async function run(): Promise<void> {
   });
   connectionManager.on('reconnected', (details: { downtimeMs?: number; generationId?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_RECONNECTED', ['WEBSOCKET_RECONNECTED'], { downtimeMs: details.downtimeMs ?? null });
+    // handleReconnected() synchronously establishes the current-generation live-construction
+    // boundary (via onLiveConstructionBoundary, called before this returns) -- restart the
+    // candle adapter immediately so the first clean-boundary tick reaches LiveCandleBuilder
+    // instead of being dropped while asynchronous backfill is still in flight. Idempotent
+    // start(): the eventual onRecovered -> liveCandleEventAdapter.start() call is a no-op.
+    // paperRuntimeCandleAdapter stays stopped until the existing recovery READY path so no
+    // strategy evaluation can happen before recovery actually completes.
     recovery.handleReconnected(details);
+    liveCandleEventAdapter.start();
   });
   connectionManager.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => {
     forwardJournal.appendEvent(forwardDate, 'RECONNECT_FAILED', ['RECONNECT_FAILED', 'DATA_GAP', 'CRITICAL_DATA_QUALITY'], { attempts: details.attempts ?? null, downtimeMs: details.downtimeMs ?? null });
@@ -645,6 +836,11 @@ async function run(): Promise<void> {
   // recovery listener may take over ownership of DEGRADED -> RUNNING for any
   // later, genuine reconnect recovery.
   startupComplete = true;
+  // A7-H6: armed only once startup has genuinely reached RUNNING. nifty1mSourceCompletionBoundary
+  // always resolves to today's trading date -- if it has already passed (only reachable here
+  // because a late-enough cold start would already have failed closed above), armAt() fires it
+  // immediately rather than silently dropping the requirement.
+  sourceBoundaryTrigger.armAt(nifty1mSourceCompletionBoundary(new Date()), performSourceBoundaryEvaluation);
   console.log('Live paper-trading harness is RUNNING. It is subscribed to NIFTY only and will subscribe to an option only after an actionable signal. Press Ctrl+C to stop.');
   printStatus();
 }

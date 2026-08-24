@@ -153,8 +153,8 @@ test('V2/V4/V8: the SUMMARY append is the final statement inside the sealAfterCl
 
 test('V2/V4/V8: nothing potentially-throwing runs after sealAfterCloseOut() resolves in the shutdown()/onEod terminal-hook body -- no reportShutdownObservability(), console.log, tracker/counters read, or listener removal follows the seal', () => {
   const declarations: Record<'V2' | 'V4' | 'V8', string> = {
-    V2: 'const shutdown = async (reason: string, onCloseOutComplete?: () => void): Promise<void> => {',
-    V4: "const shutdown = async (reason = 'SESSION_END', onCloseOutComplete?: () => void): Promise<void> => {",
+    V2: 'const shutdown = async (reason: string, onCloseOutComplete?: () => void, invalidData = false): Promise<void> => {',
+    V4: "const shutdown = async (reason = 'SESSION_END', onCloseOutComplete?: () => void, invalidData = false): Promise<void> => {",
     V8: 'const shutdown = async (reason: string) => {',
   };
   for (const [name, file] of Object.entries(runtimes)) {

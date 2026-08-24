@@ -4,6 +4,7 @@ import {
   NseSessionCalendar,
   NseSessionClock,
   NseSessionEodCoordinator,
+  OneShotWallClockTrigger,
   isAtOrAfterNseSessionClose,
   isWithinNseSession,
 } from './nse-session-calendar.service';
@@ -210,4 +211,101 @@ test('Fix A / exactly-once proof: early re-arm, follow-up firing, a stale duplic
   await manualTrigger;
   await Promise.resolve(); await Promise.resolve();
   assert.equal(calls, 1);
+});
+
+test('OneShotWallClockTrigger: fires exactly once at the armed instant', async () => {
+  const helper = fakeClock(ist('2026-08-24', '15:25:00'));
+  const trigger = new OneShotWallClockTrigger(helper.clock);
+  let calls = 0;
+  trigger.armAt(ist('2026-08-24', '15:30:00'), () => { calls += 1; });
+  assert.equal(helper.pendingDelay(), 5 * 60_000);
+
+  helper.setNow(ist('2026-08-24', '15:30:00'));
+  helper.fireOnly();
+  await Promise.resolve();
+  assert.equal(calls, 1);
+  assert.equal(trigger.hasFired(), true);
+  assert.equal(helper.pendingCount(), 0);
+});
+
+test('OneShotWallClockTrigger: an early wake-up self-corrects with exactly one follow-up timer, never firing before the armed instant', async () => {
+  const helper = fakeClock(ist('2026-08-24', '15:29:59.800'));
+  const trigger = new OneShotWallClockTrigger(helper.clock);
+  let calls = 0;
+  trigger.armAt(ist('2026-08-24', '15:30:00'), () => { calls += 1; });
+  assert.equal(helper.pendingDelay(), 200);
+
+  helper.fireOnly(); // fires ~200ms early
+  assert.equal(calls, 0);
+  assert.equal(helper.pendingCount(), 1);
+  assert.equal(helper.pendingDelay(), 200);
+
+  helper.setNow(ist('2026-08-24', '15:30:00'));
+  helper.fireOnly();
+  await Promise.resolve();
+  assert.equal(calls, 1);
+});
+
+test('OneShotWallClockTrigger: a second armAt() call is a no-op once already armed, fired, or cancelled', async () => {
+  const helper = fakeClock(ist('2026-08-24', '15:25:00'));
+  const trigger = new OneShotWallClockTrigger(helper.clock);
+  let calls = 0;
+  trigger.armAt(ist('2026-08-24', '15:30:00'), () => { calls += 1; });
+  trigger.armAt(ist('2026-08-24', '15:30:00'), () => { calls += 1; }); // already armed -- ignored
+  assert.equal(helper.pendingCount(), 1);
+
+  helper.setNow(ist('2026-08-24', '15:30:00'));
+  helper.fireOnly();
+  await Promise.resolve();
+  assert.equal(calls, 1);
+
+  trigger.armAt(ist('2026-08-24', '15:35:00'), () => { calls += 1; }); // already fired -- ignored, genuinely one-shot
+  assert.equal(helper.pendingCount(), 0);
+  assert.equal(calls, 1);
+});
+
+test('OneShotWallClockTrigger: cancel() before firing is safe on shutdown/disconnect and the action never runs', async () => {
+  const helper = fakeClock(ist('2026-08-24', '15:25:00'));
+  const trigger = new OneShotWallClockTrigger(helper.clock);
+  let calls = 0;
+  trigger.armAt(ist('2026-08-24', '15:30:00'), () => { calls += 1; });
+  trigger.cancel();
+  assert.equal(helper.pendingCount(), 0);
+
+  helper.setNow(ist('2026-08-24', '15:30:00'));
+  await Promise.resolve();
+  assert.equal(calls, 0);
+  assert.equal(trigger.hasFired(), false);
+
+  // cancel() after cancel() and armAt() after cancel() both stay safe no-ops.
+  trigger.cancel();
+  trigger.armAt(ist('2026-08-24', '15:31:00'), () => { calls += 1; });
+  assert.equal(helper.pendingCount(), 0);
+  assert.equal(calls, 0);
+});
+
+test('OneShotWallClockTrigger: cancel() after firing is a harmless no-op', async () => {
+  const helper = fakeClock(ist('2026-08-24', '15:30:00'));
+  const trigger = new OneShotWallClockTrigger(helper.clock);
+  let calls = 0;
+  trigger.armAt(ist('2026-08-24', '15:30:00'), () => { calls += 1; });
+  helper.fireOnly();
+  await Promise.resolve();
+  assert.equal(calls, 1);
+
+  trigger.cancel(); // must not throw or otherwise affect the already-fired outcome
+  assert.equal(trigger.hasFired(), true);
+});
+
+test('OneShotWallClockTrigger: a late start (already past the armed instant) fires immediately, exactly once', async () => {
+  const helper = fakeClock(ist('2026-08-24', '15:35:00'));
+  const trigger = new OneShotWallClockTrigger(helper.clock);
+  let calls = 0;
+  trigger.armAt(ist('2026-08-24', '15:30:00'), () => { calls += 1; });
+  assert.equal(helper.pendingDelay(), 0);
+
+  helper.fireOnly();
+  await Promise.resolve();
+  assert.equal(calls, 1);
+  assert.equal(helper.pendingCount(), 0);
 });

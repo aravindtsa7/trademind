@@ -23,6 +23,7 @@ import {
   isAtOrAfterNseSessionClose,
   isWithinNseSession,
 } from '../modules/market-data/services/nse-session-calendar.service';
+import { nifty1mSourceCompletionBoundary } from '../modules/historical-candles/utils/historical-session-completeness.util';
 import { StrategyHostLifecycle } from '../modules/market-data/services/strategy-host-lifecycle.service';
 import { StrategyTerminalOutcomeArbiter } from '../modules/market-data/services/strategy-terminal-outcome-arbiter.service';
 import { LiveGenerationCacheScope } from '../modules/market-data/utils/live-generation-cache';
@@ -183,12 +184,18 @@ async function run(): Promise<void> {
     flags: ['FORWARD_EVALUATION_ONLY', 'SHADOW_ONLY', 'ZERO_ORDER'],
   });
   console.log(`[V8_FORWARD_FINGERPRINT] strategyId=${STRATEGY} fingerprint=${fingerprint}`);
+  const liveConstructionAlignmentMinutes = 2;
+  const alignedHandoffWaitMs = liveConstructionAlignmentMinutes * 60_000;
+  const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000) + alignedHandoffWaitMs;
+  const healthGraceMs = positiveTimeoutMs('MARKET_DATA_HEALTH_GRACE_MS', process.env.MARKET_DATA_HEALTH_GRACE_MS, 45_000) + alignedHandoffWaitMs;
+  const reconnectDurationMs = positiveTimeoutMs('MARKET_DATA_MAX_RECONNECT_DURATION_MS', process.env.MARKET_DATA_MAX_RECONNECT_DURATION_MS, 60_000) + alignedHandoffWaitMs;
   const websocket = new MarketDataWebSocketClient(token),
-    connection = new ConnectionManager(token, websocket),
+    connection = new ConnectionManager(token, websocket, { maximumReconnectDurationMs:reconnectDurationMs }),
     subscriptions = new SubscriptionManager(token, connection),
     decoder = new ProtobufDecoder(),
     ticks = new TickProcessor(),
-    candles = new LiveCandleEventAdapterService(new LiveCandleBuilderService(), eventBus, () => connection.getGenerationId()),
+    liveCandleBuilder = new LiveCandleBuilderService(),
+    candles = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId()),
     tracker = new V8ShadowObservationTracker(frozen.candidate.policy),
     contracts = new CurrentNiftyCeContracts(),
     counters = new V8ShadowRuntimeCounters();
@@ -207,7 +214,6 @@ async function run(): Promise<void> {
   // genuinely silent feed during an active session, this bound -- not the
   // health monitor's periodic stall check -- is what owns and reports the
   // startup failure.
-  const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000);
   // Before host.start() has successfully returned, host.start() itself is the
   // sole owner of the initial RUNNING transition (via onReady ->
   // recovery.waitUntilReady()). Calling host.recovered() from the persistent
@@ -442,11 +448,15 @@ async function run(): Promise<void> {
   };
   type RecoveryWarmup = Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>;
   const recovery = new MarketDataRecoveryCoordinatorService<RecoveryWarmup>({
-    backfill: async () => {
+    getLastSeededCompletedMinute: () => warmup.lastCurrentDayCandle,
+    liveConstructionAlignmentMinutes,
+    getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
+    getRecoveredCompletedMinute: (recoveryWarmup) => recoveryWarmup?.lastCurrentDayCandle,
+    backfill: async (requiredCompletedMinute) => {
       const r = await new LivePaperFreshWarmupService(
         new HistoricalCandleRepository(),
         new WarmupTarget(),
-      ).warmUp();
+      ).warmUp(requiredCompletedMinute ? new Date(requiredCompletedMinute.getTime() + 60_000) : undefined);
       return {
         ready: r.ready,
         reason: r.freshnessReason,
@@ -456,9 +466,16 @@ async function run(): Promise<void> {
       };
     },
     onRecovered: (_generationId,recoveryWarmup) => { if (recoveryWarmup?.ready) evaluator.recoverHistoricalOneMinute(recoveryWarmup.seededOneMinuteCandles); candles.start(); return undefined; },
+    // A7-H2: the coordinator computes the first minute boundary guaranteed observable from
+    // its very start on this connection (cold start or reconnect alike); no live candle,
+    // for any timeframe, may ever be built before it -- otherwise a WebSocket that
+    // connects/reconnects mid-minute could silently emit a partial "completed" candle.
+    onLiveConstructionBoundary: (boundary) => liveCandleBuilder.setLiveConstructionBoundary(NIFTY, boundary.getTime()),
+    onLiveConstructionUnavailable: (sessionClose) => liveCandleBuilder.blockLiveConstructionForSession(NIFTY, sessionClose.getTime()),
     onEvent: (type, details) => journal.appendEvent(date, type, [type], details),
   });
   const health = new MarketDataHealthMonitorService(connection, {
+    generationGraceMs:healthGraceMs,
     onStall: (s) => {
       candles.stop();
       recovery.handleUnexpectedDisconnect({
