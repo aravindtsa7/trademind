@@ -47,23 +47,65 @@ test('B1: omitting referenceMs preserves generic historical/replay parsing regar
   assert.equal(normalizeMarketDataTimestamp('2099-01-01T00:00:00.000Z'), '2099-01-01T00:00:00.000Z');
 });
 
-// Forward-skew contract: no vendor-contract/measured provider-forward-skew allowance is
-// established anywhere in this repository (investigated: MarketDataRecoveryCoordinatorService
-// deliberately avoids cross-clock-domain comparison rather than defining one). The default
-// canonical-ingest tolerance is therefore exactly 0 -- strict fail-closed -- until that
-// provider-contract validation happens elsewhere.
-test('the default provider-forward-skew tolerance is exactly zero pending provider-contract validation', () => {
-  assert.equal(DEFAULT_PROVIDER_FORWARD_SKEW_TOLERANCE_MS, 0);
+// Forward-skew contract (A7-H1, 2026-08-24 evidence): a genuinely NTP-synchronized
+// Windows host was directly measured to still disagree with independent external time
+// by ~116-141ms (Microsoft NTP/Cloudflare/Google stripchart references), and a live V8
+// run on that same synchronized host saw rejected Upstox currentTs forwardSkewMs values
+// of 85-92ms -- inside that measured range, not evidence of a genuinely future provider
+// timestamp. 150ms is the smallest simple bound strictly above the observed maximum
+// (~141ms): a bounded host-clock-uncertainty allowance, never an Upstox SLA. A multi-
+// second skew (the earlier ~3.3s unhealthy-clock episode) must remain rejected.
+test('the default provider-forward-skew tolerance is exactly 150ms -- an evidence-based host-clock-uncertainty allowance, not a provider SLA', () => {
+  assert.equal(DEFAULT_PROVIDER_FORWARD_SKEW_TOLERANCE_MS, 150);
 });
 
-test('an explicit non-zero providerForwardSkewToleranceMs is honored only when a caller opts in -- the canonical-ingest boundary is configurable, not hard-coded to zero', () => {
+test('an explicit non-default providerForwardSkewToleranceMs is honored only when a caller opts in -- the canonical-ingest boundary is configurable, not hard-coded', () => {
   const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
-  // 300ms into the future is rejected by default (tolerance 0)...
+  // 300ms into the future is rejected by the default 150ms tolerance...
   assert.equal(normalizeMarketDataTimestamp(String(referenceMs + 300), referenceMs), undefined);
   // ...but accepted once a caller explicitly configures a wider tolerance.
   assert.equal(normalizeMarketDataTimestamp(String(referenceMs + 300), referenceMs, 500), new Date(referenceMs + 300).toISOString());
   // Still rejected once genuinely beyond even a configured tolerance.
   assert.equal(normalizeMarketDataTimestamp(String(referenceMs + 501), referenceMs, 500), undefined);
+});
+
+// A7-H1: exact boundary semantics of the new 150ms default -- <=150ms passes, >150ms
+// (including a multi-second skew matching the earlier ~3.3s unhealthy-clock episode)
+// is still rejected, using the DEFAULT tolerance exactly as production does (no
+// explicit third argument).
+test('A7-H1: a source timestamp exactly equal to the reference (0ms skew) is accepted under the default tolerance', () => {
+  const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
+  assert.equal(normalizeMarketDataTimestamp(String(referenceMs), referenceMs), new Date(referenceMs).toISOString());
+});
+
+test('A7-H1: a small positive skew matching the observed live evidence (90ms) is accepted under the default tolerance', () => {
+  const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
+  assert.equal(normalizeMarketDataTimestamp(String(referenceMs + 90), referenceMs), new Date(referenceMs + 90).toISOString());
+});
+
+test('A7-H1: a skew of exactly 150ms (the configured bound) is accepted, not rejected', () => {
+  const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
+  assert.equal(normalizeMarketDataTimestamp(String(referenceMs + 150), referenceMs), new Date(referenceMs + 150).toISOString());
+});
+
+test('A7-H1: a skew of 151ms -- one millisecond past the configured bound -- is rejected', () => {
+  const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
+  assert.equal(normalizeMarketDataTimestamp(String(referenceMs + 151), referenceMs), undefined);
+});
+
+test('A7-H1: a multi-second future timestamp, matching the earlier ~3.3s unhealthy-host-clock episode, remains rejected under the new 150ms bound', () => {
+  const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
+  assert.equal(normalizeMarketDataTimestamp(String(referenceMs + 3_300), referenceMs), undefined);
+});
+
+test('A7-H1: an invalid/unparsable timestamp is still rejected regardless of the forward-skew bound', () => {
+  const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
+  assert.equal(normalizeMarketDataTimestamp('not-a-timestamp', referenceMs), undefined);
+});
+
+test('A7-H1: an ordinary past timestamp, well behind the reference, remains accepted under the new default', () => {
+  const referenceMs = Date.UTC(2026, 7, 20, 3, 45, 0);
+  assert.equal(normalizeMarketDataTimestamp(String(referenceMs - 60_000), referenceMs), new Date(referenceMs - 60_000).toISOString());
 });
 
 // A malformed explicit tolerance must fail closed -- rejected exactly like any other

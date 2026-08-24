@@ -3,19 +3,37 @@
  * `referenceMs` a source timestamp may be and still be accepted as the
  * canonical live source timestamp (see `normalizeMarketDataTimestamp`).
  *
- * This is deliberately 0 (strict fail-closed). MarketDataRecoveryCoordinatorService
- * already documents that broker/local clocks are known to be able to disagree
- * in either direction (see its handleLiveTick clock-domain comment) -- but no
- * vendor contract, SLA, or measured bound in this repository currently
- * justifies any specific positive tolerance, and inventing one (1ms, 100ms,
- * 500ms, 1s, 2s, or otherwise) would be a guess. This constant exists so that
- * if/when a provider contract or measured bound DOES establish a defensible
- * value, there is exactly one place to change it -- never a per-call-site
- * magic number, and never derived from an unrelated quote-freshness threshold
- * (e.g. RISK_MAX_QUOTE_AGE_MS). Provider-contract validation is required
- * before this is ever raised above 0.
+ * This is a bounded HOST-CLOCK-UNCERTAINTY allowance, NOT an Upstox provider
+ * SLA and NOT permission for an arbitrarily future provider timestamp. It
+ * exists because a genuinely NTP-synchronized Windows host was directly
+ * measured (2026-08-24) to still disagree with independent external time by a
+ * consistent, bounded amount:
+ *
+ *   - Windows Time reported successful sync (Leap Indicator 0, source
+ *     40.81.94.65,0x8) immediately beforehand.
+ *   - Direct stripchart measurement against three independent NTP references
+ *     nonetheless showed the local clock ~116-141ms BEHIND external time
+ *     (Microsoft NTP ~121-137ms, Cloudflare ~116-120ms, Google ~121-135ms).
+ *   - During that same synchronized-host live run, rejected Upstox
+ *     `currentTs` values showed forwardSkewMs of 85-92ms against the (then
+ *     strict 0ms) tolerance -- squarely inside the independently-measured
+ *     clock-uncertainty range, not evidence that Upstox itself publishes
+ *     future timestamps.
+ *   - By contrast, an earlier genuinely UNHEALTHY host clock was ~3.3
+ *     SECONDS slow -- a multi-second skew, orders of magnitude beyond any
+ *     plausible NTP-synchronized uncertainty, and must remain rejected.
+ *
+ * 150ms is therefore the smallest simple round bound strictly above the
+ * observed synchronized-host maximum (~141ms), not a derived or vendor-quoted
+ * figure. It absorbs ordinary NTP-synchronized clock uncertainty while still
+ * rejecting any multi-second-class skew (a genuinely unhealthy/unsynchronized
+ * host clock, or a truly future provider timestamp). This constant exists so
+ * there is exactly one place to change it -- never a per-call-site magic
+ * number, and never derived from an unrelated quote-freshness threshold (e.g.
+ * RISK_MAX_QUOTE_AGE_MS). Raising it further requires new evidence, exactly
+ * as this 0ms -> 150ms change did.
  */
-export const DEFAULT_PROVIDER_FORWARD_SKEW_TOLERANCE_MS = 0;
+export const DEFAULT_PROVIDER_FORWARD_SKEW_TOLERANCE_MS = 150;
 
 /**
  * Converts an upstream market-data timestamp into the one timestamp contract

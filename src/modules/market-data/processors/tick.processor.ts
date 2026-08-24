@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import logger from '../../../core/logger/logger';
 import { shouldEmitTradingLog } from '../../../core/logger/trading-log-mode';
 import { recordMarketReplayEvent } from '../../market-replay/market-replay-recorder.service';
-import { normalizeMarketDataTimestamp } from '../utils/market-data-timestamp';
+import { DEFAULT_PROVIDER_FORWARD_SKEW_TOLERANCE_MS, normalizeMarketDataTimestamp } from '../utils/market-data-timestamp';
 import {
   LtpcDto,
   MarketDataFeedDto,
@@ -50,6 +50,16 @@ export interface MarketDepthEvent {
 }
 
 export default class TickProcessor {
+  // Rate-limits the invalid/future-timestamp diagnostic below: a sustained clock-skew
+  // episode (the exact scenario this diagnostic exists to measure) would otherwise log
+  // once per rejected packet -- effectively once per tick -- for as long as the skew
+  // persists. No existing warn-level rate limiter exists elsewhere in this codebase to
+  // reuse (shouldEmitTradingLog only gates DEBUG-level packet tracing; warnings are
+  // always emitted in every mode), so this is a minimal, self-contained one. Every
+  // rejected packet is still dropped regardless of whether this particular occurrence
+  // is logged.
+  private lastForwardSkewWarnAtMs = -Infinity;
+
   /**
    * `now` is this processor's packet-receive reference. Live callers invoke
    * `process()` synchronously as each packet arrives, so the default
@@ -57,7 +67,11 @@ export default class TickProcessor {
    * deterministic clock so a recorded artifact is never judged against real
    * wall-clock time (see MarketReplayRunnerService).
    */
-  constructor(private readonly bus: EventEmitter = eventBus, private readonly now: () => number = Date.now) {}
+  constructor(
+    private readonly bus: EventEmitter = eventBus,
+    private readonly now: () => number = Date.now,
+    private readonly forwardSkewWarnIntervalMs: number = 5_000,
+  ) {}
   process(message: MarketDataFeedResponseDto, generationId?: number): void {
     if (!this.isValidMessage(message)) {
       logger.warn('Ignoring invalid decoded market data message');
@@ -73,7 +87,7 @@ export default class TickProcessor {
     const referenceMs = this.now();
     const timestamp = normalizeMarketDataTimestamp(message.currentTs, referenceMs);
     if (!timestamp) {
-      logger.warn('Ignoring market data message with invalid or future source timestamp');
+      this.logRejectedSourceTimestamp(message, generationId, referenceMs);
       return;
     }
 
@@ -81,6 +95,50 @@ export default class TickProcessor {
       this.publishTick(instrumentKey, timestamp, feed, generationId, referenceMs);
       this.publishGreeks(instrumentKey, timestamp, feed, generationId);
       this.publishDepth(instrumentKey, timestamp, feed, generationId);
+    });
+  }
+
+  /**
+   * Structured diagnostics for a message-level `currentTs` rejected by
+   * normalizeMarketDataTimestamp() (invalid, unparsable, or beyond the
+   * provider-forward-skew tolerance) -- distinct from the per-tick
+   * `ltpc.ltt` (last-traded-time) field, which is normalized separately per
+   * instrument in publishTick() and is not this diagnostic's concern.
+   * `sourceTsField` names which provider field was being interpreted so log
+   * consumers never have to guess. Never logs the access token or the raw
+   * feed payload -- only the timestamp field and identifiers already public
+   * in every other market-data log line (instrument keys, generationId).
+   */
+  private logRejectedSourceTimestamp(message: MarketDataFeedResponseDto, generationId: number | undefined, referenceMs: number): void {
+    if (referenceMs - this.lastForwardSkewWarnAtMs < this.forwardSkewWarnIntervalMs) return;
+    this.lastForwardSkewWarnAtMs = referenceMs;
+
+    const rawTs = message.currentTs;
+    let sourceTimestampMs: number | undefined;
+    if (typeof rawTs === 'string') {
+      const trimmed = rawTs.trim();
+      // A safe-integer digit string is not on its own proof of a valid Date: e.g.
+      // Number.MAX_SAFE_INTEGER (9007199254740991) is a safe integer but far outside the
+      // ECMA-262 valid Date range (+-8,640,000,000,000,000ms from the epoch), so
+      // `new Date(v).toISOString()` below would throw RangeError: Invalid time value.
+      // This diagnostic path must be unconditionally nonthrowing regardless of how
+      // hostile the rejected currentTs value is -- an extreme numeric timestamp is
+      // dropped from the log (sourceTimestamp/forwardSkewMs left undefined) rather than
+      // ever reaching toISOString() unvalidated.
+      if (/^\d+$/.test(trimmed)) { const v = Number(trimmed); if (Number.isSafeInteger(v) && !Number.isNaN(new Date(v).getTime())) sourceTimestampMs = v; }
+      else { const parsed = new Date(trimmed); if (!Number.isNaN(parsed.getTime())) sourceTimestampMs = parsed.getTime(); }
+    }
+    const forwardSkewMs = sourceTimestampMs !== undefined ? sourceTimestampMs - referenceMs : undefined;
+
+    logger.warn('Ignoring market data message with invalid or future source timestamp', {
+      sourceTsField: 'currentTs',
+      sourceTimestampRaw: typeof rawTs === 'string' ? rawTs : String(rawTs ?? ''),
+      sourceTimestamp: sourceTimestampMs !== undefined ? new Date(sourceTimestampMs).toISOString() : undefined,
+      referenceTimestamp: new Date(referenceMs).toISOString(),
+      forwardSkewMs,
+      allowedForwardSkewMs: DEFAULT_PROVIDER_FORWARD_SKEW_TOLERANCE_MS,
+      generationId: generationId ?? null,
+      instrumentKeys: Object.keys(message.feeds ?? {}),
     });
   }
 
