@@ -11,6 +11,7 @@ const V8_CLOSED_SESSION_ROW_COUNT = 375;
 const V8_CLOSED_SESSION_START_MINUTE = 9 * 60 + 15;
 const V8_CLOSED_SESSION_END_MINUTE = 15 * 60 + 29;
 const V8_MINUTE_MS = 60_000;
+const V8_ATR_PERIOD = 14;
 
 /**
  * True only for a timestamp that lands exactly on a one-minute boundary
@@ -324,8 +325,30 @@ export default class V8BullishReclaimShadowEvaluatorService {
       new AdaptiveMarketRegimeService({ trendStrengthThreshold: 20, emaProximityPercent: .05, highVolatilityThreshold: .1, lowVolatilityThreshold: .05 }),
     ) as V8PreparedSession[];
   }
+  /**
+   * ATR14 is session-local per frozen V8 semantics (matches research's own
+   * `createIndicators`): each session/timeframe's ATR is computed only from
+   * that session's own `frames[timeframe].candles`, never `allCandles`.
+   * A forming live session legitimately has fewer than 14 current-session
+   * bars in one timeframe while another timeframe already has enough --
+   * calling AtrIndicator on an insufficient-history slice is not a fault,
+   * it just means that session/timeframe's ATR isn't available yet
+   * (evaluateV8BullishReclaimFrames already reports ATR_UNAVAILABLE for a
+   * missing map entry). Any other IndicatorEngine failure still propagates.
+   */
   private indicators(sessions: readonly V8PreparedSession[]): V8IndicatorContext {
     const engine = new IndicatorEngineService();
-    return { atr14ByFrame: new Map(([2, 3] as const).map((timeframe) => { const values = new Map<number, number>(); sessions.forEach((session) => engine.calculate(session.frames[timeframe].candles, { indicators: [{ type: IndicatorType.ATR, period: 14 }] }).indicators.find((item) => item.config.type === IndicatorType.ATR)?.result.values.forEach((item) => { if ('value' in item && typeof item.value === 'number') values.set(item.timestamp.getTime(), item.value); })); return [timeframe, values] as const; })) };
+    const atr14ByFrame = new Map(([2, 3] as const).map((timeframe) => {
+      const values = new Map<number, number>();
+      sessions.forEach((session) => {
+        const candles = session.frames[timeframe].candles;
+        if (candles.length < V8_ATR_PERIOD) return;
+        engine.calculate(candles, { indicators: [{ type: IndicatorType.ATR, period: V8_ATR_PERIOD }] })
+          .indicators.find((item) => item.config.type === IndicatorType.ATR)?.result.values
+          .forEach((item) => { if ('value' in item && typeof item.value === 'number') values.set(item.timestamp.getTime(), item.value); });
+      });
+      return [timeframe, values] as const;
+    }));
+    return { atr14ByFrame };
   }
 }

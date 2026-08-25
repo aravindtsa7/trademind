@@ -335,3 +335,98 @@ test('H: V8 strategy fingerprint is unaffected by the historical-session safety 
   const base = { id: 'z', config: trainConfig, policy: { target: 6, stop: 5, hold: 15 }, settledTrades: 32, netAt040: 1, grossMedian: 2, targetRate: 60, stopRate: 30, maxDrawdown: 10, maxLosingStreak: 2 };
   assert.equal(v8FrozenStrategyFingerprint(base), V8_FROZEN_FINGERPRINT);
 });
+
+// -------------------------------------------------------------------------
+// I: V8 partial-session ATR14 fault (Aug-25) -- indicators() must skip the
+// ATR14 calculation for a current-session timeframe with <14 completed bars
+// instead of unconditionally calling AtrIndicator, or a legitimate forming-
+// session gap on an UNUSED timeframe crashes evaluation of the timeframe
+// that IS ready. ATR remains strictly session-local (frames[timeframe].candles,
+// never allCandles) in every case below.
+// -------------------------------------------------------------------------
+
+function v8TestConfig3m() {
+  const config = createV8BullishReclaimConfigs().find((value) =>
+    value.timeframe === 3
+    && value.levelFamily === 'PDH'
+    && value.reclaimBufferAtr === 0
+    && value.bullishBodyAtr === 0.25
+    && value.rsiMinimum === 'NONE'
+    && value.regimeMode === 'NO_REGIME_FILTER'
+    && value.cooldownMinutes === 5);
+  assert.ok(config, 'expected the 3m PDH/NO_REGIME_FILTER/NONE test config to exist in the frozen grid');
+  return config;
+}
+
+test('I1: an active 2m timeframe with >=14 completed 2m frames but <14 completed 3m frames does not crash evaluation', () => {
+  const evaluator = new V8BullishReclaimShadowEvaluatorService(v8TestConfig()); // timeframe: 2 (active)
+  seed(evaluator, completeClosedSession('2026-08-13', 24_100));
+  // 30 quiet target minutes: 2m frame => 15 completed candles (>=14, ready); 3m frame => 10 (<14, unused here).
+  seed(evaluator, flatMinutes('2026-08-14', 30, { open: 24_000, high: 24_010, low: 23_990, close: 24_000 }));
+  const activeFrame = { timestamp: new Date(sessionStart('2026-08-14') + 28 * MINUTE), open: 0, high: 0, low: 0, close: 0, volume: 0 };
+
+  let result: ReturnType<V8BullishReclaimShadowEvaluatorService['evaluateCompletedFrameWithDiagnostics']> | undefined;
+  assert.doesNotThrow(() => { result = evaluator.evaluateCompletedFrameWithDiagnostics(activeFrame); });
+  // Proves the unused, insufficient-history 3m ATR calculation did not kill the runtime: the
+  // active 2m frame (which already has >=14 bars) still has its own ATR14 available.
+  assert.notEqual(result?.evaluation.atr14, null);
+});
+
+test('I2: a current 3m timeframe with <14 completed frames reports ATR_UNAVAILABLE rather than throwing', () => {
+  const evaluator = new V8BullishReclaimShadowEvaluatorService(v8TestConfig3m());
+  seed(evaluator, completeClosedSession('2026-08-13', 24_100));
+  // 30 quiet target minutes: 3m frame => 10 completed candles, still short of the 14-bar floor.
+  seed(evaluator, flatMinutes('2026-08-14', 30, { open: 24_000, high: 24_010, low: 23_990, close: 24_000 }));
+  const activeFrame = { timestamp: new Date(sessionStart('2026-08-14') + 27 * MINUTE), open: 0, high: 0, low: 0, close: 0, volume: 0 };
+
+  let result: ReturnType<V8BullishReclaimShadowEvaluatorService['evaluateCompletedFrameWithDiagnostics']> | undefined;
+  assert.doesNotThrow(() => { result = evaluator.evaluateCompletedFrameWithDiagnostics(activeFrame); });
+  assert.equal(result?.evaluation.reason, 'ATR_UNAVAILABLE');
+  assert.equal(result?.evaluation.atr14, null);
+  assert.equal(result?.signal, undefined);
+});
+
+test('I3: ATR14 readiness edge -- absent below 14 current-session frames, available exactly at the 14th', () => {
+  const evaluator = new V8BullishReclaimShadowEvaluatorService(v8TestConfig3m());
+  seed(evaluator, completeClosedSession('2026-08-13', 24_100));
+  // 39 quiet target minutes => exactly 13 completed 3m frames (<14).
+  seed(evaluator, flatMinutes('2026-08-14', 39, { open: 24_000, high: 24_010, low: 23_990, close: 24_000 }));
+  const thirteenthFrame = { timestamp: new Date(sessionStart('2026-08-14') + 36 * MINUTE), open: 0, high: 0, low: 0, close: 0, volume: 0 };
+  const before = evaluator.evaluateCompletedFrameWithDiagnostics(thirteenthFrame);
+  assert.equal(before.evaluation.atr14, null);
+  assert.equal(before.evaluation.reason, 'ATR_UNAVAILABLE');
+
+  // One more 3m bucket (offsets 39-41) => exactly the 14th completed 3m frame: the unchanged
+  // AtrIndicator calculation now runs normally, exactly as it does for a full session.
+  seed(evaluator, candlesAtOffsets('2026-08-14', minutes(39, 40, 41)));
+  const fourteenthFrame = { timestamp: new Date(sessionStart('2026-08-14') + 39 * MINUTE), open: 0, high: 0, low: 0, close: 0, volume: 0 };
+  const after = evaluator.evaluateCompletedFrameWithDiagnostics(fourteenthFrame);
+  assert.notEqual(after.evaluation.atr14, null);
+  assert.notEqual(after.evaluation.reason, 'ATR_UNAVAILABLE');
+});
+
+test('I4: full-session parity -- ATR14 remains available and unchanged once a target session is fully complete (guard is a no-op)', () => {
+  const evaluator = new V8BullishReclaimShadowEvaluatorService(v8TestConfig());
+  seed(evaluator, completeClosedSession('2026-08-13', 24_100));
+  // A fully-complete 375-row target: every timeframe already has far more than 14 bars everywhere.
+  seed(evaluator, completeClosedSession('2026-08-14', 24_100));
+  const frame = { timestamp: new Date(sessionStart('2026-08-14') + 40 * MINUTE), open: 0, high: 0, low: 0, close: 0, volume: 0 };
+  const result = evaluator.evaluateCompletedFrameWithDiagnostics(frame);
+  assert.equal(result.evaluation.atr14, 100); // constant true-range (high-low=100) across the flat closed session
+});
+
+test('I5: a genuine invalid-candle indicator error still propagates and is not masked by the insufficient-history guard', () => {
+  const evaluator = new V8BullishReclaimShadowEvaluatorService(v8TestConfig());
+  seed(evaluator, completeClosedSession('2026-08-13', 24_100));
+  // 30 minutes, all individually structurally invalid (high < low) -- but each row is still
+  // finite and minute-aligned, so it passes source-prefix/aggregation validation and only
+  // AtrIndicator's own candle check rejects it. The 2m frame has >=14 candles here, so the
+  // ATR calculation for it is NOT skipped by the insufficient-history guard.
+  const invalidMinutes: Candle[] = Array.from({ length: 30 }, (_, index) => ({
+    timestamp: new Date(sessionStart('2026-08-14') + index * MINUTE),
+    open: 24_000, high: 23_990, low: 24_010, close: 24_000, volume: 1,
+  }));
+  seed(evaluator, invalidMinutes);
+  const activeFrame = { timestamp: new Date(sessionStart('2026-08-14') + 28 * MINUTE), open: 0, high: 0, low: 0, close: 0, volume: 0 };
+  assert.throws(() => evaluator.evaluateCompletedFrameWithDiagnostics(activeFrame));
+});

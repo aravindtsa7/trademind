@@ -524,10 +524,13 @@ async function run(): Promise<void> {
         );
         connection.disconnect();
         // Status observability -- still close-out work, so it must finish (or fault the
-        // session) before the seal below, never after it.
+        // session) before the seal below, never after it. This runs before the arbiter
+        // resolves the authoritative outcome, so it must never assert a final status --
+        // the durable SUMMARY written below (from resolveSessionOutcome({ reason: finalReason }))
+        // remains the sole authoritative record of how the session actually ended.
         const value = counters.snapshot();
         console.log(
-          `[V8_EOD_SUMMARY] date=${date} completed2m=${value.completed2m} signals=${value.signals} closed=${value.closed} open=${tracker.getOpenCount()} status=COMPLETED`,
+          `[V8_EOD_SUMMARY] date=${date} completed2m=${value.completed2m} signals=${value.signals} closed=${value.closed} open=${tracker.getOpenCount()}`,
         );
       },
       (finalReason) => {
