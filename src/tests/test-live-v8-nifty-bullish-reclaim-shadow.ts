@@ -18,6 +18,7 @@ import TickProcessor, {
 import LiveCandleBuilderService from '../modules/market-data/services/live-candle-builder.service';
 import LiveCandleEventAdapterService from '../modules/market-data/services/live-candle-event-adapter.service';
 import MarketDataRecoveryCoordinatorService from '../modules/market-data/services/market-data-recovery-coordinator.service';
+import { SourceBoundaryEvaluationCoverageTracker } from '../modules/market-data/services/source-boundary-evaluation-coverage';
 import {
   NseSessionEodCoordinator,
   isAtOrAfterNseSessionClose,
@@ -186,6 +187,26 @@ async function run(): Promise<void> {
   console.log(`[V8_FORWARD_FINGERPRINT] strategyId=${STRATEGY} fingerprint=${fingerprint}`);
   const liveConstructionAlignmentMinutes = 2;
   const alignedHandoffWaitMs = liveConstructionAlignmentMinutes * 60_000;
+  // A7-H6 V8: V8 has no separate wall-clock-triggered final evaluation the way V2/V4 do (see
+  // v8-source-boundary-non-requirement.test.ts) -- its one required final opportunity is
+  // whichever 2m bucket is the LAST one its own 09:15-anchored grid can ever complete before
+  // the NIFTY 1m source horizon (15:29 IST): 15:27-15:28, becoming evaluable once the boundary
+  // at 15:29 is reached. Derived from the canonical nifty1mSourceCompletionBoundary utility
+  // (15:30) minus 1 minute (the coordinator's own boundary-1-minute convention) minus this
+  // strategy's own 2-minute alignment -- never a duplicate hardcoded literal.
+  const v8FinalBucketStart = new Date(nifty1mSourceCompletionBoundary(new Date()).getTime() - 60_000 - liveConstructionAlignmentMinutes * 60_000);
+  // Owned evidence for whether the one required final live evaluation of the 15:27-15:28 frame
+  // actually ran through the normal live evaluator path exactly once. Reuses
+  // SourceBoundaryEvaluationCoverageTracker (already proven correct for V2/V4's own once-per-
+  // session final-evaluation requirement) with a fixed, deliberately generation-INDEPENDENT
+  // token: this requirement, like V2/V4's, is a once-per-SESSION fact, not a once-per-
+  // connection-generation one -- an intervening, unrelated reconnect must never be able to
+  // silently orphan (or overwrite) a requirement/record that already reached EVALUATED, nor
+  // prevent a later live-tick-driven evaluation (which reads connection.getGenerationId() at
+  // evaluation time, not at arm time) from being able to mark it.
+  const v8FinalOpportunityToken = 1;
+  const v8FinalOpportunityCoverage = new SourceBoundaryEvaluationCoverageTracker('shadow:v8:reclaim', STRATEGY);
+  v8FinalOpportunityCoverage.require(v8FinalOpportunityToken, v8FinalBucketStart);
   const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000) + alignedHandoffWaitMs;
   const healthGraceMs = positiveTimeoutMs('MARKET_DATA_HEALTH_GRACE_MS', process.env.MARKET_DATA_HEALTH_GRACE_MS, 45_000) + alignedHandoffWaitMs;
   const reconnectDurationMs = positiveTimeoutMs('MARKET_DATA_MAX_RECONNECT_DURATION_MS', process.env.MARKET_DATA_MAX_RECONNECT_DURATION_MS, 60_000) + alignedHandoffWaitMs;
@@ -221,6 +242,11 @@ async function run(): Promise<void> {
   // READY/DEGRADED during startup, races start()'s own unconditional RUNNING
   // transition and produces an illegal RUNNING->RUNNING transition.
   let startupComplete = false;
+  // Decided once, at the START of each disconnect/reconnect episode, from the coordinator's OWN
+  // generation-independent authoritative truth (v8FinalOpportunityCoverage), and reused
+  // consistently through the matching reconnect -- never decided after the fact from a FAULTED
+  // coordinator. See health's onStall and connection.on('unexpectedDisconnect'/'reconnected') below.
+  let sourceRecoveryBypassActive = false;
   const eodCoordinator = new NseSessionEodCoordinator();
   let host: StrategyHostLifecycle | undefined;
   const latest = new Map<
@@ -280,6 +306,13 @@ async function run(): Promise<void> {
     if (!latestGenerationScope.accept(t.generationId, connection.getGenerationId(), () => latest.clear())) return;
     const at = new Date(t.timestamp);
     health.noteValidMarketEvent(t.generationId);
+    // Post-source-completion transport-readiness confirmation: any current-generation valid
+    // market event -- option quotes count exactly like NIFTY -- can prove the new connection is
+    // genuinely alive, since a NIFTY tick is not guaranteed to ever arrive again once source
+    // responsibility is complete (see PROVEN BLOCKER 2). No-op outside that one waiting state.
+    if (recovery.getState() === 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT' && health.confirmPostSourceTransportReady(t.generationId)) {
+      recovery.handleTransportReadySourceRecoveryNotRequired(t.generationId);
+    }
     if (isAtOrAfterNseSessionClose(at)) {
       void host?.eod('MARKET_EOD');
       return;
@@ -367,6 +400,15 @@ async function run(): Promise<void> {
       if (c.timeframe !== `${frozen.candidate.config.timeframe}m`) return;
       counters.markCompleted2m();
       const result = evaluator.evaluateCompletedFrameWithDiagnostics(candle);
+      // This is the actual normal live V8 evaluator path -- never historical backfill/recovered
+      // history (recoverHistoricalOneMinute, called from onRecovered below, seeds 1m indicator
+      // history only and never reaches this call). Mark the one required final opportunity
+      // EVALUATED only when the genuine, live-evaluated frame is exactly the 15:27-15:28 bucket.
+      // Idempotent: markEvaluated() is a no-op once already EVALUATED, so duplicate callbacks
+      // (there are none on this path, but as a general invariant) cannot produce a second mark.
+      if (candle.timestamp.getTime() === v8FinalBucketStart.getTime()) {
+        v8FinalOpportunityCoverage.markEvaluated(v8FinalOpportunityToken, candle.timestamp, 'V8_FINAL_OPPORTUNITY_EVALUATED');
+      }
       console.log(v8EvaluationLog(result.evaluation));
       const signal = result.signal;
       if (!signal) return;
@@ -472,18 +514,39 @@ async function run(): Promise<void> {
     // connects/reconnects mid-minute could silently emit a partial "completed" candle.
     onLiveConstructionBoundary: (boundary) => liveCandleBuilder.setLiveConstructionBoundary(NIFTY, boundary.getTime()),
     onLiveConstructionUnavailable: (sessionClose) => liveCandleBuilder.blockLiveConstructionForSession(NIFTY, sessionClose.getTime()),
-    onEvent: (type, details) => journal.appendEvent(date, type, [type], details),
+    onEvent: (type, details) => { journal.appendEvent(date, type, [type], details); },
   });
   const health = new MarketDataHealthMonitorService(connection, {
     generationGraceMs:healthGraceMs,
-    onStall: (s) => {
+    // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST
+    // source-completion boundary, well before the wider 09:15-15:40 operational session ends.
+    // A STALL detected at/after that boundary must not solicit a reconnect the recovery
+    // coordinator can never satisfy for a new candle. Reuses the canonical
+    // nifty1mSourceCompletionBoundary utility -- no duplicate hardcoded boundary here.
+    isSourceFresh: (value) => value.getTime() < nifty1mSourceCompletionBoundary(value).getTime(),
+    onStall: (s, { reason, reconnectSolicited }) => {
+      if (!reconnectSolicited) {
+        // Expected post-source-completion condition: transport (raw/option) traffic is
+        // genuinely healthy -- only the NIFTY source itself has naturally stopped. Must NOT
+        // start a coordinator disconnect episode or stop candle events for this (see PROVEN
+        // BLOCKER 1) -- retain observability only.
+        journal.appendEvent(date, 'MARKET_DATA_SOURCE_STALE_EXPECTED', ['MARKET_DATA_SOURCE_STALE_EXPECTED'], { ...s, reason });
+        return;
+      }
       candles.stop();
-      recovery.handleUnexpectedDisconnect({
+      // Fires (and calls handleUnexpectedDisconnect directly) BEFORE ConnectionManager's own
+      // 'unexpectedDisconnect' event -- this is the real first mover for a health-triggered
+      // STALL/HEALTH_GRACE_EXPIRED, so the bypass decision must be made identically here too
+      // (see connection.on('unexpectedDisconnect', ...) below for the full rationale).
+      sourceRecoveryBypassActive = v8FinalOpportunityCoverage.getRecord()?.disposition === 'EVALUATED';
+      const details = {
         generationId: s.generationId,
-        reason: 'STALL',
+        reason,
         lastMessageAgeMs: s.lastRawMessageAgeMs,
         lastTickAgeMs: s.lastNiftyTickAgeMs,
-      });
+      };
+      if (sourceRecoveryBypassActive) recovery.handleUnexpectedDisconnectSourceRecoveryNotRequired(details);
+      else recovery.handleUnexpectedDisconnect(details);
       journal.appendEvent(date, 'MARKET_DATA_DEGRADED', ['MARKET_DATA_DEGRADED'], s);
     },
   });
@@ -493,11 +556,11 @@ async function run(): Promise<void> {
       `[V8_SHADOW_STATUS] completed2m=${value.completed2m} signals=${value.signals} open=${tracker.getOpenCount()} closed=${value.closed}`,
     );
   };
-  const shutdown = async (reason: string) => {
+  const shutdown = async (reason: string, invalidData = false) => {
     // Proposed unconditionally, even if a different trigger already owns the close-out work
     // below -- this is the only way a racing fault can still escalate the eventual commit()'d
     // outcome.
-    terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason }).status);
+    terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason, invalidData }).status);
     if (closing) return;
     closing = true;
     eod = true;
@@ -538,7 +601,7 @@ async function run(): Promise<void> {
         // exact instant -- a fault that raced in via propose() any time before this line (including
         // during close-out itself) wins here even though this call originated from a different
         // trigger's own local `reason`.
-        const outcome = resolveSessionOutcome({ reason: finalReason });
+        const outcome = resolveSessionOutcome({ reason: finalReason, invalidData });
         // CLEAN_SHUTDOWN (non-authoritative) must be durable before SUMMARY (the A9-authoritative
         // eligibility record): a failure appending CLEAN_SHUTDOWN must never leave a durable
         // VALID_COMPLETED SUMMARY with no corresponding shutdown evidence.
@@ -559,13 +622,43 @@ async function run(): Promise<void> {
       },
     );
   };
+  /**
+   * EOD-specific wrapper: proves whether the one required final live evaluation of the
+   * 15:27-15:28 frame actually occurred before committing the durable outcome. Missing/still-
+   * pending coverage (the requirement was armed unconditionally at startup, so "absent" cannot
+   * occur here -- see v8FinalOpportunityCoverage.require() above) must never let the session
+   * reach VALID_COMPLETED; a genuinely EVALUATED disposition never forces invalidity on its
+   * own -- other, unrelated A9 requirements can still independently invalidate the session, but
+   * this evaluation-coverage check alone is not one of them.
+   */
+  const performV8EodExit = async (reason: string): Promise<void> => {
+    const v8FinalOpportunityLost = v8FinalOpportunityCoverage.getRecord()?.disposition !== 'EVALUATED';
+    if (v8FinalOpportunityLost) {
+      journal.appendEvent(date, 'V8_FINAL_OPPORTUNITY_LOST', ['V8_FINAL_OPPORTUNITY_LOST', 'CRITICAL_DATA_QUALITY'], { reason: v8FinalOpportunityCoverage.getRecord()?.reason ?? 'UNKNOWN', disposition: v8FinalOpportunityCoverage.disposition(v8FinalOpportunityToken) });
+      console.error(`[V8_FINAL_OPPORTUNITY] Live evaluation of the final 15:27-15:28 frame was not proven (${v8FinalOpportunityCoverage.disposition(v8FinalOpportunityToken)}); session will fail closed as INVALID_DATA.`);
+    }
+    await shutdown(reason, v8FinalOpportunityLost);
+  };
   connection.on('unexpectedDisconnect', (d: any) => {
     candles.stop();
-    recovery.handleUnexpectedDisconnect(d);
+    // Decided HERE, at disconnect time -- not after a doomed handleReconnected() has already
+    // faulted the coordinator. If the one required final live evaluation of the 15:27-15:28
+    // frame has ALREADY, positively, reached EVALUATED (sticky/terminal, independent of the
+    // connection generation), this transport episode can never need a NEW source-candle
+    // recovery regardless of when the matching reconnect lands -- so it is routed through the
+    // alternate handleUnexpectedDisconnectSourceRecoveryNotRequired()/
+    // handleReconnectedSourceRecoveryNotRequired() pair, which never creates/poisons a
+    // boundaryReconciliationObligation and never reaches FAULTED for this episode. Otherwise
+    // (LOST, still pending, or never armed) this is the ordinary, fully unchanged, fail-closed
+    // handleUnexpectedDisconnect()/handleReconnected() pair.
+    sourceRecoveryBypassActive = v8FinalOpportunityCoverage.getRecord()?.disposition === 'EVALUATED';
+    if (sourceRecoveryBypassActive) recovery.handleUnexpectedDisconnectSourceRecoveryNotRequired(d);
+    else recovery.handleUnexpectedDisconnect(d);
     journal.appendEvent(date, 'RECONNECT_STARTED', ['WEBSOCKET_DISCONNECTED']);
   });
   connection.on('reconnected', (d: any) => {
-    recovery.handleReconnected(d);
+    if (sourceRecoveryBypassActive) recovery.handleReconnectedSourceRecoveryNotRequired(d);
+    else recovery.handleReconnected(d);
     journal.appendEvent(date, 'RECONNECT_SUCCEEDED', ['WEBSOCKET_RECONNECTED']);
   });
   connection.on('reconnectFailed', () => {
@@ -606,7 +699,7 @@ async function run(): Promise<void> {
         await subscriptions.subscribe(NIFTY, MarketDataSubscriptionMode.FULL);
         await ready;
       },
-      onEod: (reason) => shutdown(reason ?? 'EOD'),
+      onEod: (reason) => performV8EodExit(reason ?? 'EOD'),
       onShutdown: (reason) => shutdown(reason ?? 'SIGINT'),
       onFault: () => shutdown('FAULTED'),
     },
@@ -624,6 +717,20 @@ async function run(): Promise<void> {
         void host?.recovered('MARKET_DATA_READY');
       }
     }
+    if (state === 'SOURCE_COMPLETE_READY') {
+      // Mirrors the READY branch above, but confirms via confirmPostSourceTransportReady()
+      // (transport evidence -- raw+valid, never a NIFTY tick, which is not guaranteed to ever
+      // arrive again once source responsibility is complete).
+      if (!health.confirmPostSourceTransportReady(recovery.getGenerationId())) {
+        connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');
+      } else if (startupComplete) {
+        void host?.recovered('MARKET_DATA_READY');
+      }
+    }
+    // A FAULTED coordinator here always means a source-candle recovery was genuinely attempted
+    // and genuinely failed -- a benign post-source-completion transport episode never reaches
+    // handleReconnected()/FAULTED at all; see the sourceRecoveryBypassActive-gated onStall/
+    // unexpectedDisconnect/reconnected handlers above.
     if (state === 'FAULTED') connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   });
   process.once('SIGINT', () => {

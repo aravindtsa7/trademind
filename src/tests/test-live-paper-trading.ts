@@ -303,6 +303,11 @@ async function run(): Promise<void> {
   let lastNiftyTickPrintedAt = 0;
   let shuttingDown = false;
   let eodRequested = false;
+  // Decided once, at the START of each disconnect/reconnect episode, from the coordinator's
+  // OWN generation-independent authoritative truth (sourceBoundaryEvaluationCoverage), and
+  // reused consistently through the matching reconnect -- never decided after the fact from a
+  // FAULTED coordinator. See connectionManager.on('unexpectedDisconnect'/'reconnected') below.
+  let sourceRecoveryBypassActive = false;
   let requestedShutdownReason = 'SESSION_END';
   // Separates each terminal trigger's own close-out work (still gated by the
   // `shuttingDown` latch below, run at most once) from the single durable
@@ -384,8 +389,15 @@ async function run(): Promise<void> {
     // reconciliation (see completePendingBoundaryReconciliation in performDurableEodExit)
     // can drive this coordinator to READY while shuttingDown is still false, and must never
     // be allowed to re-arm post-close strategy evaluation.
-    if (state === 'READY' && !shuttingDown && !eodRequested) {
-      if (!health.confirmRecoveryReady(recovery!.getGenerationId())) {
+    if ((state === 'READY' || state === 'SOURCE_COMPLETE_READY') && !shuttingDown && !eodRequested) {
+      // SOURCE_COMPLETE_READY confirms via confirmPostSourceTransportReady() (transport
+      // evidence -- raw+valid, never a NIFTY tick, which is not guaranteed to ever arrive
+      // again once source responsibility is complete); READY keeps the original
+      // confirmRecoveryReady() (which does require one).
+      const healthConfirmed = state === 'READY'
+        ? health.confirmRecoveryReady(recovery!.getGenerationId())
+        : health.confirmPostSourceTransportReady(recovery!.getGenerationId());
+      if (!healthConfirmed) {
         connectionManager.failRecovery(recovery!.getGenerationId(), 'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');
         return;
       }
@@ -396,6 +408,14 @@ async function run(): Promise<void> {
       // host.recovered() here. See startupComplete above.
       if (startupComplete) void host?.recovered('MARKET_DATA_READY');
     }
+    // A FAULTED coordinator here always means a source-candle recovery was genuinely attempted
+    // and genuinely failed (including the fail-closed NO_SAFE_LIVE_CONSTRUCTION_BOUNDARY_
+    // BEFORE_SESSION_CLOSE case) -- a benign post-source-completion transport episode never
+    // reaches handleReconnected()/FAULTED at all; see the sourceRecoveryBypassActive-gated
+    // unexpectedDisconnect/reconnected handlers below, which route it through
+    // handleUnexpectedDisconnectSourceRecoveryNotRequired()/handleReconnectedSourceRecoveryNotRequired()
+    // instead. So this escalation is unconditional and correct exactly as it was before the
+    // post-source-completion investigation.
     if (state === 'FAULTED') connectionManager.failRecovery(recovery!.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   };
   recovery = new MarketDataRecoveryCoordinatorService<RecoveryWarmup>({
@@ -417,8 +437,30 @@ async function run(): Promise<void> {
   });
   const health = new MarketDataHealthMonitorService(connectionManager, {
     generationGraceMs:healthGraceMs,
-    onStall: (snapshot) => {
-      recovery.handleUnexpectedDisconnect({ generationId: snapshot.generationId, reason: 'STALL', lastMessageAgeMs: snapshot.lastRawMessageAgeMs, lastTickAgeMs: snapshot.lastNiftyTickAgeMs });
+    // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST
+    // source-completion boundary, well before the wider 09:15-15:40 operational session ends.
+    // A STALL detected at/after that boundary must not solicit a reconnect the recovery
+    // coordinator can never satisfy for a new candle (see the coordinator's own, unchanged,
+    // no-safe-handoff fail-closed rule). Reuses the canonical nifty1mSourceCompletionBoundary
+    // utility -- no duplicate hardcoded boundary here.
+    isSourceFresh: (value) => value.getTime() < nifty1mSourceCompletionBoundary(value).getTime(),
+    onStall: (snapshot, { reason, reconnectSolicited }) => {
+      if (!reconnectSolicited) {
+        // Expected post-source-completion condition: transport (raw/option) traffic is
+        // genuinely healthy -- only the NIFTY source itself has naturally stopped. Must NOT
+        // start a coordinator disconnect episode, stop adapters, or disable market-data
+        // availability for this (see PROVEN BLOCKER 1) -- retain observability only.
+        forwardJournal.appendEvent(forwardDate, 'MARKET_DATA_SOURCE_STALE_EXPECTED', ['MARKET_DATA_SOURCE_STALE_EXPECTED'], { ...snapshot, reason });
+        return;
+      }
+      // Fires (and calls handleUnexpectedDisconnect directly) BEFORE ConnectionManager's own
+      // 'unexpectedDisconnect' event -- this is the real first mover for a health-triggered
+      // STALL/HEALTH_GRACE_EXPIRED, so the bypass decision must be made identically here too
+      // (see connectionManager.on('unexpectedDisconnect', ...) below for the full rationale).
+      sourceRecoveryBypassActive = sourceBoundaryEvaluationCoverage.getRecord()?.disposition === 'EVALUATED';
+      const details = { generationId: snapshot.generationId, reason, lastMessageAgeMs: snapshot.lastRawMessageAgeMs, lastTickAgeMs: snapshot.lastNiftyTickAgeMs };
+      if (sourceRecoveryBypassActive) recovery.handleUnexpectedDisconnectSourceRecoveryNotRequired(details);
+      else recovery.handleUnexpectedDisconnect(details);
       paperMarketDataAdapter.setMarketDataAvailable(false); paperRuntimeCandleAdapter.stop(); liveCandleEventAdapter.stop();
       forwardJournal.appendEvent(forwardDate, 'MARKET_DATA_DEGRADED', ['MARKET_DATA_DEGRADED'], { ...snapshot });
     },
@@ -531,6 +573,13 @@ async function run(): Promise<void> {
     if (Number.isNaN(timestamp.getTime())) return;
     if (isAtOrAfterNseSessionClose(timestamp)) { eodRequested = true; eodRequestedForRisk = true; paperRuntimeCandleAdapter.stop(); void host?.eod('MARKET_EOD'); return; }
     health.noteValidMarketEvent(tick.generationId);
+    // Post-source-completion transport-readiness confirmation: any current-generation valid
+    // market event -- option quotes count exactly like NIFTY -- can prove the new connection is
+    // genuinely alive, since a NIFTY tick is not guaranteed to ever arrive again once source
+    // responsibility is complete (see PROVEN BLOCKER 2). No-op outside that one waiting state.
+    if (recovery!.getState() === 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT' && health.confirmPostSourceTransportReady(tick.generationId)) {
+      recovery!.handleTransportReadySourceRecoveryNotRequired(tick.generationId);
+    }
     if (tick.instrumentKey === niftyInstrumentKey) { health.noteNiftyTick(tick.generationId, timestamp); recovery!.handleLiveTick({ sourceTimestamp: timestamp, receivedAt: new Date(), generationId: tick.generationId }); if (recovery!.isEvaluationReady()) health.confirmRecoveryReady(tick.generationId); }
     cacheCurrentLiveInstrumentValue(latestPremiumByInstrument, tick.instrumentKey, tick.ltp, tick.generationId, connectionManager.getGenerationId());
     if (tick.instrumentKey === niftyInstrumentKey && Date.now() - lastNiftyTickPrintedAt >= tickPrintIntervalMs) {
@@ -715,7 +764,24 @@ async function run(): Promise<void> {
     // NONE_PENDING is safe only when no aligned requirement ever existed; a previously
     // proven requirement remains RECOVERED. Required work invalidated by disconnect/stop/
     // generation change is retained as NOT_RECOVERED, never erased into a benign no-op.
-    const boundaryReconciliation = await recovery!.completePendingBoundaryReconciliation();
+    //
+    // A benign post-source-completion transport episode (see sourceRecoveryBypassActive in the
+    // unexpectedDisconnect/reconnected handlers above) can advance the connection generation
+    // AFTER the one required final evaluation already reached EVALUATED under an earlier
+    // generation. completePendingBoundaryReconciliation()'s own generation-equality check
+    // (obligation.generationId === activeGenerationId) would then report NOT_RECOVERED purely
+    // from that generation drift -- never from any actual invalidation -- because that check has
+    // no way to know about sourceBoundaryEvaluationCoverage's higher-level, session-scoped
+    // truth. sourceBoundaryEvaluationCoverage reaching EVALUATED is strictly stronger, more
+    // specific proof that the required work already completed (performSourceBoundaryEvaluation's
+    // own Path A/B can only ever mark it EVALUATED after either building the candle locally or,
+    // for Path B, after this exact barrier itself already returned RECOVERED) -- so it alone is
+    // authoritative here, and the barrier is skipped (never distrusted or reinterpreted) in that
+    // one case.
+    const alreadyEvaluatedThisSession = sourceBoundaryEvaluationCoverage.getRecord()?.disposition === 'EVALUATED';
+    const boundaryReconciliation = alreadyEvaluatedThisSession
+      ? { outcome: 'RECOVERED' as const, reason: 'SOURCE_BOUNDARY_EVALUATION_ALREADY_COMPLETE' }
+      : await recovery!.completePendingBoundaryReconciliation();
     const canonicalCloseRecoveryFailed = boundaryReconciliation.outcome === 'NOT_RECOVERED';
     if (canonicalCloseRecoveryFailed) {
       forwardJournal.appendEvent(istDate(eodAt), 'V2_CANONICAL_CLOSE_RECOVERY_FAILED', ['V2_CANONICAL_CLOSE_RECOVERY_FAILED', 'CRITICAL_DATA_QUALITY'], { reason: boundaryReconciliation.reason, recoveryState: recovery!.getState() });
@@ -726,10 +792,12 @@ async function run(): Promise<void> {
     // generation; if that trigger never ran at all (e.g. it never fired, or start-up happened
     // too late to arm it), this establishes REQUIRED_PENDING here, which is correctly
     // unsatisfied below -- a terminal-only recovery must never silently substitute for a
-    // missed real-time evaluation opportunity.
+    // missed real-time evaluation opportunity. Skip the re-arm for the same reason as above:
+    // an already-EVALUATED record must never be overwritten by a later generation's fresh
+    // REQUIRED_PENDING.
     const finalGenerationId = connectionManager.getGenerationId();
-    sourceBoundaryEvaluationCoverage.require(finalGenerationId, nifty1mSourceCompletionBoundary(eodAt));
-    const evaluationCoverageLost = !sourceBoundaryEvaluationCoverage.isSatisfiedFor(finalGenerationId);
+    if (!alreadyEvaluatedThisSession) sourceBoundaryEvaluationCoverage.require(finalGenerationId, nifty1mSourceCompletionBoundary(eodAt));
+    const evaluationCoverageLost = !alreadyEvaluatedThisSession && !sourceBoundaryEvaluationCoverage.isSatisfiedFor(finalGenerationId);
     if (evaluationCoverageLost) {
       forwardJournal.appendEvent(istDate(eodAt), 'V2_SOURCE_BOUNDARY_EVALUATION_LOST', ['V2_SOURCE_BOUNDARY_EVALUATION_LOST', 'CRITICAL_DATA_QUALITY'], { reason: sourceBoundaryEvaluationCoverage.getRecord()?.reason ?? 'UNKNOWN', disposition: sourceBoundaryEvaluationCoverage.disposition(finalGenerationId) });
       console.error(`[V2_SOURCE_BOUNDARY_EVALUATION] Forward-evaluation coverage for the final source-boundary candle was not proven (${sourceBoundaryEvaluationCoverage.disposition(finalGenerationId)}); session will fail closed as INVALID_DATA.`);
@@ -757,7 +825,19 @@ async function run(): Promise<void> {
     }, canonicalCloseRecoveryFailed || evaluationCoverageLost);
   };
   connectionManager.on('unexpectedDisconnect', (details: { code?: number; reason?: string; generationId?: number; disconnectClean?: boolean }) => {
-    recovery.handleUnexpectedDisconnect(details);
+    // Decided HERE, at disconnect time -- not after a doomed handleReconnected() has already
+    // faulted the coordinator. If the one required final source-boundary evaluation for this
+    // session has ALREADY, positively, reached EVALUATED (sticky/terminal, independent of which
+    // connection generation it happened under), this transport episode can never need a NEW
+    // source-candle recovery regardless of when the matching reconnect lands -- so it is routed
+    // through the alternate handleUnexpectedDisconnectSourceRecoveryNotRequired()/
+    // handleReconnectedSourceRecoveryNotRequired() pair, which never creates/poisons a
+    // boundaryReconciliationObligation and never reaches FAULTED for this episode. Otherwise
+    // (LOST, still pending, or never armed) this is the ordinary, fully unchanged, fail-closed
+    // handleUnexpectedDisconnect()/handleReconnected() pair.
+    sourceRecoveryBypassActive = sourceBoundaryEvaluationCoverage.getRecord()?.disposition === 'EVALUATED';
+    if (sourceRecoveryBypassActive) recovery.handleUnexpectedDisconnectSourceRecoveryNotRequired(details);
+    else recovery.handleUnexpectedDisconnect(details);
     paperMarketDataAdapter.setMarketDataAvailable(false);
     paperRuntimeCandleAdapter.stop(); liveCandleEventAdapter.stop();
     forwardJournal.appendEvent(forwardDate, 'WEBSOCKET_DISCONNECTED', ['WEBSOCKET_DISCONNECTED'], { code: details.code ?? null, reason: details.reason ?? null });
@@ -771,7 +851,11 @@ async function run(): Promise<void> {
     // start(): the eventual onRecovered -> liveCandleEventAdapter.start() call is a no-op.
     // paperRuntimeCandleAdapter stays stopped until the existing recovery READY path so no
     // strategy evaluation can happen before recovery actually completes.
-    recovery.handleReconnected(details);
+    if (sourceRecoveryBypassActive) recovery.handleReconnectedSourceRecoveryNotRequired(details);
+    else recovery.handleReconnected(details);
+    // Harmless either way: handleReconnectedSourceRecoveryNotRequired() already blocked live
+    // construction through session close (onLiveConstructionUnavailable), so the builder will
+    // never produce a "completed" candle for this episode regardless.
     liveCandleEventAdapter.start();
   });
   connectionManager.on('reconnectFailed', (details: { attempts?: number; downtimeMs?: number }) => {

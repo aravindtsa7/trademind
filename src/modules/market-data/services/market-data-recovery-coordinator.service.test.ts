@@ -1063,3 +1063,135 @@ test('A7-H2-R3: a no-safe-boundary fault is generation-terminal and stale reconn
   assert.equal(coordinator.getGenerationId(), 1);
   assert.equal(backfills, 0);
 });
+
+// ---- Terra correction: handleUnexpectedDisconnectSourceRecoveryNotRequired() /
+// handleReconnectedSourceRecoveryNotRequired() -- an alternate lifecycle pair a caller uses
+// ONLY once it has already, authoritatively, proven no further source-candle recovery is
+// required this session. Direct coordinator-level proof that this pair never reaches FAULTED,
+// never creates/poisons a boundaryReconciliationObligation, blocks live construction, and never
+// fakes READY -- and that handleUnexpectedDisconnect()/handleReconnected() themselves are
+// completely unaffected by this pair's existence.
+
+test('source-recovery-not-required: reaches SOURCE_COMPLETE_WAITING_FOR_TRANSPORT (never FAULTED, never a fabricated READY, never waits for a NIFTY tick) and only becomes SOURCE_COMPLETE_READY after genuine transport-evidence confirmation', () => {
+  const boundaryUnavailableCalls: Date[] = [];
+  const boundaryEstablishedCalls: Date[] = [];
+  const events: string[] = [];
+  const coordinator = new MarketDataRecoveryCoordinatorService<{ latest: Date }>({
+    nowMs: () => new Date('2026-08-24T15:33:00+05:30').getTime(),
+    getLastSeededCompletedMinute: () => new Date('2026-08-24T15:29:00+05:30'),
+    liveConstructionAlignmentMinutes: 5,
+    getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
+    getRecoveredCompletedMinute: (data) => data?.latest,
+    backfill: async () => { throw new Error('backfill must never be called for a source-recovery-not-required episode'); },
+    onLiveConstructionBoundary: (boundary) => boundaryEstablishedCalls.push(boundary),
+    onLiveConstructionUnavailable: (sessionClose) => boundaryUnavailableCalls.push(sessionClose),
+    onEvent: (event) => events.push(event),
+  });
+  coordinator.handleUnexpectedDisconnectSourceRecoveryNotRequired({ generationId: 0 });
+  coordinator.handleReconnectedSourceRecoveryNotRequired({ generationId: 1 });
+  assert.equal(coordinator.getState(), 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT');
+  assert.equal(coordinator.isEvaluationReady(), false, 'READY must never be claimed before genuine transport evidence is confirmed on the new connection');
+  assert.equal(coordinator.getGenerationId(), 1);
+  // No new strategy-aligned handoff is ever established, and construction is explicitly
+  // blocked through session close -- no candle, fabricated or otherwise, can be built.
+  assert.deepEqual(boundaryEstablishedCalls, []);
+  assert.equal(boundaryUnavailableCalls.length, 1);
+  assert.deepEqual(events, ['MARKET_DATA_DEGRADED', 'RECONNECT_STARTED', 'DATA_GAP_DETECTED', 'RECONNECT_SUCCEEDED', 'MARKET_DATA_SOURCE_RECOVERY_NOT_REQUIRED']);
+  // A NIFTY tick alone (handleLiveTick) must NOT complete this handshake -- only
+  // handleTransportReadySourceRecoveryNotRequired() (transport evidence) can.
+  coordinator.handleLiveTick(liveTick(new Date('2026-08-24T15:33:05+05:30'), 1));
+  assert.equal(coordinator.getState(), 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT', 'a NIFTY tick is not guaranteed post-completion and must never be required or accepted here');
+  assert.equal(coordinator.isEvaluationReady(), false);
+  // Wrong generation must not complete it either.
+  coordinator.handleTransportReadySourceRecoveryNotRequired(999);
+  assert.equal(coordinator.getState(), 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT');
+  coordinator.handleTransportReadySourceRecoveryNotRequired(1);
+  assert.equal(coordinator.getState(), 'SOURCE_COMPLETE_READY');
+  assert.equal(coordinator.isEvaluationReady(), true);
+  assert.deepEqual(events, ['MARKET_DATA_DEGRADED', 'RECONNECT_STARTED', 'DATA_GAP_DETECTED', 'RECONNECT_SUCCEEDED', 'MARKET_DATA_SOURCE_RECOVERY_NOT_REQUIRED', 'MARKET_DATA_READY']);
+});
+
+test('source-recovery-not-required: a second, unrelated episode after a completed benign one starts cleanly through the ordinary path -- no leaked SOURCE_COMPLETE_* state', () => {
+  const coordinator = new MarketDataRecoveryCoordinatorService<{ latest: Date }>({
+    nowMs: () => new Date('2026-08-24T15:33:00+05:30').getTime(),
+    getLastSeededCompletedMinute: () => new Date('2026-08-24T15:29:00+05:30'),
+    liveConstructionAlignmentMinutes: 5,
+    getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
+    getRecoveredCompletedMinute: (data) => data?.latest,
+    backfill: async () => ({ ready: true, reason: 'OK', missingMinutes: 0, duplicateMinutes: 0, recoveryData: { latest: new Date('2026-08-24T15:29:00+05:30') } }),
+  });
+  coordinator.handleUnexpectedDisconnectSourceRecoveryNotRequired({ generationId: 0 });
+  coordinator.handleReconnectedSourceRecoveryNotRequired({ generationId: 1 });
+  coordinator.handleTransportReadySourceRecoveryNotRequired(1);
+  assert.equal(coordinator.getState(), 'SOURCE_COMPLETE_READY');
+  // A later, genuinely unrelated dead-open STALL is routed through the ordinary
+  // (non-source-recovery-not-required) pair -- since a live-construction handoff no longer
+  // exists this late, it correctly still fails closed via the no-safe-handoff rule, proving
+  // nothing about the prior benign episode leaked into this one.
+  coordinator.handleUnexpectedDisconnect({ generationId: 1 });
+  assert.equal(coordinator.getState(), 'RECONNECTING');
+  coordinator.handleReconnected({ generationId: 2 });
+  assert.equal(coordinator.getState(), 'FAULTED');
+});
+
+test('source-recovery-not-required: does NOT poison an existing RECOVERED boundary-reconciliation obligation, unlike a disconnect routed through the ordinary handleUnexpectedDisconnect()', async () => {
+  const coordinator = new MarketDataRecoveryCoordinatorService<{ latest: Date }>({
+    nowMs: () => new Date('2026-08-24T15:24:00+05:30').getTime(),
+    getLastSeededCompletedMinute: () => new Date('2026-08-24T15:19:00+05:30'),
+    liveConstructionAlignmentMinutes: 5,
+    getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
+    getRecoveredCompletedMinute: (data) => data?.latest,
+    backfill: async (target) => ({ ready: true, reason: 'OK', missingMinutes: 0, duplicateMinutes: 0, recoveryData: { latest: target ?? new Date() } }),
+  });
+  // An ordinary reconnect establishes and satisfies a real boundary-reconciliation obligation.
+  coordinator.handleUnexpectedDisconnect({ generationId: 0 });
+  coordinator.handleReconnected({ generationId: 1 });
+  await new Promise((resolve) => setImmediate(resolve));
+  const before = await coordinator.completePendingBoundaryReconciliation();
+  assert.equal(before.outcome, 'RECOVERED');
+  // A LATER, benign, source-recovery-not-required transport episode must not retroactively
+  // poison that already-satisfied obligation.
+  coordinator.handleUnexpectedDisconnectSourceRecoveryNotRequired({ generationId: 1 });
+  coordinator.handleReconnectedSourceRecoveryNotRequired({ generationId: 2 });
+  // completePendingBoundaryReconciliation() itself is generation-scoped (obligation.generationId
+  // is still 1, activeGenerationId is now 2), so it correctly reports superseded-by-generation
+  // here -- this is exactly the drift the runner-level EOD guard (checking the higher-level
+  // sourceBoundaryEvaluationCoverage tracker's own EVALUATED disposition directly, never this
+  // generation-scoped barrier) is designed to see through. The proof that matters at THIS layer
+  // is narrower and unconditional: the obligation itself must still read RECOVERED, never FAILED.
+  assert.equal(coordinator.getState(), 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT', 'never FAULTED for the benign episode');
+});
+
+test('source-recovery-not-required: does not create a new pending boundary reconciliation, and stop() reaches STOPPED cleanly', async () => {
+  const coordinator = new MarketDataRecoveryCoordinatorService<{ latest: Date }>({
+    nowMs: () => new Date('2026-08-24T15:33:00+05:30').getTime(),
+    getLastSeededCompletedMinute: () => new Date('2026-08-24T15:29:00+05:30'),
+    liveConstructionAlignmentMinutes: 5,
+    getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
+    getRecoveredCompletedMinute: (data) => data?.latest,
+    backfill: async () => { throw new Error('backfill must never be called'); },
+  });
+  coordinator.handleUnexpectedDisconnectSourceRecoveryNotRequired({ generationId: 0 });
+  coordinator.handleReconnectedSourceRecoveryNotRequired({ generationId: 1 });
+  const result = await coordinator.completePendingBoundaryReconciliation();
+  assert.deepEqual(result, { outcome: 'NONE_PENDING', reason: 'NO_RECONCILIATION_REQUIREMENT' });
+  coordinator.stop();
+  assert.equal(coordinator.getState(), 'STOPPED');
+});
+
+test('source-recovery-not-required: handleUnexpectedDisconnect()/handleReconnected() themselves are completely unaffected -- a genuinely-attempted recovery at/after the source horizon still reaches NO_SAFE_LIVE_CONSTRUCTION_BOUNDARY_BEFORE_SESSION_CLOSE exactly as before', () => {
+  const failures: string[] = [];
+  const coordinator = new MarketDataRecoveryCoordinatorService<{ latest: Date }>({
+    nowMs: () => new Date('2026-08-24T15:33:00+05:30').getTime(),
+    getLastSeededCompletedMinute: () => new Date('2026-08-24T15:29:00+05:30'),
+    liveConstructionAlignmentMinutes: 5,
+    getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
+    getRecoveredCompletedMinute: (data) => data?.latest,
+    backfill: async () => ({ ready: true, reason: 'OK', missingMinutes: 0, duplicateMinutes: 0, recoveryData: { latest: new Date() } }),
+    onEvent: (event, details) => { if (event === 'MARKET_DATA_RECOVERY_FAILED') failures.push(String(details.reason)); },
+  });
+  coordinator.handleUnexpectedDisconnect({ generationId: 0 });
+  coordinator.handleReconnected({ generationId: 1 });
+  assert.equal(coordinator.getState(), 'FAULTED');
+  assert.deepEqual(failures, [NO_SAFE_LIVE_CONSTRUCTION_BOUNDARY_BEFORE_SESSION_CLOSE]);
+});

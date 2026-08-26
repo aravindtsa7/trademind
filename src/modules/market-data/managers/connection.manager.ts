@@ -177,13 +177,33 @@ export default class ConnectionManager extends EventEmitter {
   getState(): ConnectionState { return this.state; }
   getGenerationId(): number { return this.generationId; }
   getReconnectCircuitSnapshot(): ReconnectCircuitSnapshot { return { state:this.breakerState, attempts:this.reconnectAttempts, lastFailureReason:this.lastFailureReason ?? null, activeGenerationId:this.generationId, pendingRecoveryGenerationId:this.pendingRecoveryGenerationId ?? null, reconnectEpisodeActive:this.reconnectEpisodeActive, nextRetryAtMs:this.nextRetryAtMs ?? null }; }
-  confirmRecoveryReady(generationId: number): boolean {
+  /** Shared reconnect/breaker bookkeeping clear for both confirmRecoveryReady() and confirmTransportReady() -- purely mechanical, carries no observability semantics of its own. */
+  private clearRecoveryBookkeeping(generationId: number): boolean {
     if (this.breakerState === 'OPEN' || this.state !== ConnectionState.CONNECTED || generationId !== this.generationId) return false;
     if (this.reconnectStartedAt !== undefined && this.now() - this.reconnectStartedAt >= this.maximumReconnectDurationMs) { this.openCircuit('RECONNECT_DURATION_EXHAUSTED'); return false; }
     this.recoveryEpisodeToken += 1; this.clearRecoveryDeadline();
     this.reconnectAttempts = 0; this.reconnectStartedAt = undefined; this.recoveryReason = undefined; this.lastFailureReason = undefined; this.pendingRecoveryGenerationId = undefined; this.nextRetryAtMs = undefined;
+    return true;
+  }
+  confirmRecoveryReady(generationId: number): boolean {
+    if (!this.clearRecoveryBookkeeping(generationId)) return false;
     const confirmationToken=this.reconnectToken;const details = this.getReconnectCircuitSnapshot();
     logger.info('MARKET_DATA_RECOVERY_CONFIRMED', details); try { this.emit('recoveryConfirmed', details); } catch(error) { logger.error('Market data recovery-confirmed listener failed', { error, generationId:this.generationId }); }
+    return this.isCurrentConnectedGeneration(confirmationToken,generationId);
+  }
+  /**
+   * Transport-only analogue of confirmRecoveryReady() for MarketDataHealthMonitorService's
+   * post-source-completion bypass path (confirmPostSourceTransportReady()), where no
+   * source-candle recovery/backfill ever happened. Clears the identical reconnect/breaker
+   * bookkeeping so a benign post-source transport recovery is not left stuck mid-episode, but
+   * deliberately never logs/emits MARKET_DATA_RECOVERY_CONFIRMED/'recoveryConfirmed' -- that
+   * event means a genuine source recovery was confirmed, which is untrue here and would be
+   * misleading observability. confirmRecoveryReady()'s own contract/emission is untouched.
+   */
+  confirmTransportReady(generationId: number): boolean {
+    if (!this.clearRecoveryBookkeeping(generationId)) return false;
+    const confirmationToken=this.reconnectToken;const details = this.getReconnectCircuitSnapshot();
+    logger.info('MARKET_DATA_TRANSPORT_READY_CONFIRMED', details); try { this.emit('transportReadyConfirmed', details); } catch(error) { logger.error('Market data transport-ready-confirmed listener failed', { error, generationId:this.generationId }); }
     return this.isCurrentConnectedGeneration(confirmationToken,generationId);
   }
   failRecovery(generationId: number, reason = 'RECOVERY_FAILED'): boolean {

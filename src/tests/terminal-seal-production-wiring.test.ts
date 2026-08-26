@@ -155,7 +155,7 @@ test('V2/V4/V8: nothing potentially-throwing runs after sealAfterCloseOut() reso
   const declarations: Record<'V2' | 'V4' | 'V8', string> = {
     V2: 'const shutdown = async (reason: string, onCloseOutComplete?: () => void, invalidData = false): Promise<void> => {',
     V4: "const shutdown = async (reason = 'SESSION_END', onCloseOutComplete?: () => void, invalidData = false): Promise<void> => {",
-    V8: 'const shutdown = async (reason: string) => {',
+    V8: 'const shutdown = async (reason: string, invalidData = false) => {',
   };
   for (const [name, file] of Object.entries(runtimes)) {
     const text = source(file);
@@ -212,6 +212,29 @@ test('V2: performDurableEodExit() treats `await shutdown(...)` as its final exec
   assert.ok(shutdownArgsText.includes('V2_EOD_SUMMARY'), 'V2: expected the V2_EOD_SUMMARY log to be passed into shutdown() as pre-seal close-out observability');
   assert.ok(shutdownArgsText.includes('runtime.getStatus()'), 'V2: expected runtime.getStatus() to run pre-seal, inside the shutdown() call arguments');
   assert.ok(shutdownArgsText.includes('orderManager.getActiveOrders()'), 'V2: expected orderManager.getActiveOrders() to run pre-seal, inside the shutdown() call arguments');
+});
+
+test('V8: performV8EodExit() treats `await shutdown(...)` as its final executable statement -- the final-opportunity coverage check and its observability run BEFORE shutdown(), never after', () => {
+  const text = source(runtimes.V8);
+  const { start, end } = functionBody(text, 'const performV8EodExit = async (reason: string): Promise<void> => {');
+  const body = text.slice(start, end);
+
+  const shutdownCallIndex = body.indexOf('await shutdown(reason, v8FinalOpportunityLost)');
+  assert.ok(shutdownCallIndex >= 0, 'V8: expected an `await shutdown(reason, v8FinalOpportunityLost)` call inside performV8EodExit()');
+  const shutdownArgsOpen = body.indexOf('(', shutdownCallIndex + 'await shutdown'.length);
+  const shutdownArgsClose = matchParen(body, shutdownArgsOpen + 1);
+
+  const afterShutdownCall = body.slice(shutdownArgsClose).replace(/^;/, '');
+  assert.equal(
+    afterShutdownCall.trim(),
+    '',
+    `V8: found executable content in performV8EodExit() after \`await shutdown(...)\` -- a successful VALID_COMPLETED SUMMARY (already durably written by then) must never be followed by a statement whose failure could reject StrategyHostLifecycle's onEod and fault an already-completed host. Trailing content: ${JSON.stringify(afterShutdownCall.trim().slice(0, 300))}`,
+  );
+
+  // The final-opportunity coverage check/journal must run BEFORE shutdown(...), i.e. inside
+  // this function's own body prior to the call, not merely absent from after it.
+  const beforeShutdownCall = body.slice(0, shutdownCallIndex);
+  assert.ok(beforeShutdownCall.includes('v8FinalOpportunityCoverage.getRecord()'), 'V8: expected the final-opportunity coverage check to run before shutdown(...)');
 });
 
 test('V2/V4/V8: the real entrypoints do not reintroduce a post-SUMMARY statement via a differently-named wrapper (reportShutdownObservability, counters.snapshot, tracker reads, console.log, or an awaited call) anywhere after the sealAfterCloseOut() call', () => {

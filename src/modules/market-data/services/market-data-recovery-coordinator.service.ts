@@ -3,7 +3,7 @@ import { recordMarketReplayEvent } from '../../market-replay/market-replay-recor
 import { isCurrentLiveGeneration } from '../utils/live-generation';
 import { isWithinNseSession, nseSessionCalendar, NseSessionBoundary } from './nse-session-calendar.service';
 
-export type MarketDataRecoveryState = 'DISCONNECTED'|'CONNECTING'|'CONNECTED'|'DEGRADED'|'RECONNECTING'|'BACKFILLING'|'WAITING_FOR_FRESH_TICK'|'READY'|'STOPPING'|'STOPPED'|'FAULTED'|'AWAITING_LIVE_TICK'|'FAIL_CLOSED';
+export type MarketDataRecoveryState = 'DISCONNECTED'|'CONNECTING'|'CONNECTED'|'DEGRADED'|'RECONNECTING'|'BACKFILLING'|'WAITING_FOR_FRESH_TICK'|'READY'|'STOPPING'|'STOPPED'|'FAULTED'|'AWAITING_LIVE_TICK'|'FAIL_CLOSED'|'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT'|'SOURCE_COMPLETE_READY';
 export interface MarketDataRecoveryResult<TRecoveryData = undefined> { ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number; recoveryData?: TRecoveryData; }
 export interface MarketDataRecoveryDetails { generationId?: number; attempt?: number; reason?: string; code?: number; disconnectClean?: boolean; lastMessageAgeMs?: number | null; lastTickAgeMs?: number | null; durationMs?: number; missingMinutes?: number; }
 export interface MarketDataRecoveryCallbacks<TRecoveryData = undefined> {
@@ -55,7 +55,7 @@ export interface MarketDataRecoveryCallbacks<TRecoveryData = undefined> {
    * this is a fail-closed floor, not a fabricated strategy handoff boundary.
    */
   onLiveConstructionUnavailable?: (sessionClose: Date) => void;
-  onEvent?: (event: 'RECONNECT_STARTED'|'RECONNECT_SUCCEEDED'|'DATA_GAP_DETECTED'|'DATA_GAP_RECOVERED'|'DATA_GAP_UNRECOVERABLE'|'MARKET_DATA_DEGRADED'|'MARKET_DATA_BACKFILL_STARTED'|'MARKET_DATA_BACKFILL_COMPLETED'|'MARKET_DATA_FRESH_TICK_CONFIRMED'|'MARKET_DATA_READY'|'MARKET_DATA_RECOVERY_FAILED', details: Record<string, string|number|boolean|null>) => void;
+  onEvent?: (event: 'RECONNECT_STARTED'|'RECONNECT_SUCCEEDED'|'DATA_GAP_DETECTED'|'DATA_GAP_RECOVERED'|'DATA_GAP_UNRECOVERABLE'|'MARKET_DATA_DEGRADED'|'MARKET_DATA_BACKFILL_STARTED'|'MARKET_DATA_BACKFILL_COMPLETED'|'MARKET_DATA_FRESH_TICK_CONFIRMED'|'MARKET_DATA_READY'|'MARKET_DATA_RECOVERY_FAILED'|'MARKET_DATA_SOURCE_RECOVERY_NOT_REQUIRED', details: Record<string, string|number|boolean|null>) => void;
 }
 
 export const NO_SAFE_LIVE_CONSTRUCTION_BOUNDARY_BEFORE_SESSION_CLOSE = 'NO_SAFE_LIVE_CONSTRUCTION_BOUNDARY_BEFORE_SESSION_CLOSE';
@@ -172,7 +172,14 @@ export default class MarketDataRecoveryCoordinatorService<TRecoveryData = undefi
     this.isMarketSession = callbacks.isMarketSession ?? isWithinNseSession;
     this.getSessionBoundary = callbacks.getSessionBoundary ?? ((value) => nseSessionCalendar.boundaryFor(value));
   }
-  isEvaluationReady(): boolean { return this.state === 'READY'; }
+  /**
+   * SOURCE_COMPLETE_READY counts as evaluation-ready exactly like READY: exit/risk tracking for
+   * already-open positions, and any other non-NIFTY-candle evaluation, must keep running after
+   * a benign post-source-completion transport recovery -- only NIFTY-candle-driven strategy
+   * evaluation is naturally moot post-completion (no new NIFTY candle will ever form to gate),
+   * never blocked by this flag itself.
+   */
+  isEvaluationReady(): boolean { return this.state === 'READY' || this.state === 'SOURCE_COMPLETE_READY'; }
   getState(): MarketDataRecoveryState { return this.state; }
   getGenerationId(): number { return this.activeGenerationId; }
   /**
@@ -494,6 +501,84 @@ export default class MarketDataRecoveryCoordinatorService<TRecoveryData = undefi
       requiredCompletedMinuteMs: this.callbacks.liveConstructionAlignmentMinutes === undefined ? undefined : established.target.getTime(),
     };
     this.triggerBoundaryReconciliationIfDue();
+  }
+  /**
+   * Alternate to handleUnexpectedDisconnect() for a disconnect where the caller has ALREADY,
+   * authoritatively, proven -- before this disconnect -- that no further strategy-aligned
+   * source-candle recovery will ever be required for this session (e.g. the one required final
+   * source-boundary evaluation already reached EVALUATED). Performs the identical DEGRADED ->
+   * RECONNECTING transition and per-episode bookkeeping reset as handleUnexpectedDisconnect(),
+   * with exactly one deliberate difference: it never calls failBoundaryReconciliationObligation().
+   * An earlier, genuinely satisfied (RECOVERED) obligation must remain RECOVERED, not be
+   * retroactively poisoned by a transport episode that was never going to need it -- poisoning
+   * it here is exactly what would otherwise force a false INVALID_DATA at EOD via
+   * completePendingBoundaryReconciliation(), even though the required work was already done.
+   * Must be paired with a matching handleReconnectedSourceRecoveryNotRequired() call for the
+   * same episode, never handleReconnected(). handleUnexpectedDisconnect() itself is completely
+   * untouched by this method's existence.
+   */
+  handleUnexpectedDisconnectSourceRecoveryNotRequired(details: MarketDataRecoveryDetails = {}): void {
+    if (this.stopping || this.state === 'FAULTED' || this.state === 'FAIL_CLOSED' || this.state === 'STOPPED' || this.state === 'STOPPING') return;
+    if (details.generationId !== undefined && details.generationId < this.activeGenerationId) return;
+    if (this.state === 'RECONNECTING' || this.state === 'DEGRADED') return;
+    this.recoveringFromDisconnect = true;
+    this.recoveryStartedAt = this.nowMs();
+    this.recoveryToken += 1; this.backfillReady = false; this.freshLiveTick = false;
+    this.pendingReconciliation = null;
+    this.setState('DEGRADED'); this.emitEvent('MARKET_DATA_DEGRADED', details); this.setState('RECONNECTING');
+    this.emitEvent('RECONNECT_STARTED', details); this.emitEvent('DATA_GAP_DETECTED', details);
+  }
+  /**
+   * Alternate to handleReconnected() that closes an episode begun via
+   * handleUnexpectedDisconnectSourceRecoveryNotRequired() -- the caller has already proven no
+   * further source-candle recovery is required this session. Advances generation/state exactly
+   * like a successful reconnect, but deliberately skips establishLiveConstructionBoundary()/
+   * recover() entirely: no backfill is attempted, and -- critically -- no NEW
+   * boundaryReconciliationObligation is ever created (so this episode can never itself produce
+   * a NO_SAFE_LIVE_CONSTRUCTION_BOUNDARY_BEFORE_SESSION_CLOSE fault). backfillReady is granted
+   * immediately because there is no candle left to recover. This deliberately does NOT claim
+   * SOURCE_COMPLETE_READY here: that requires a genuine subsequent
+   * handleTransportReadySourceRecoveryNotRequired() call, proving current-generation TRANSPORT
+   * evidence (never a NIFTY tick, which is not guaranteed to ever arrive again -- see that
+   * method's own doc) -- so SOURCE_COMPLETE_READY still only ever means "this connection was
+   * actually proven alive", never a fabricated claim. Also blocks live candle construction
+   * through session close (exactly like the fail-closed no-safe-handoff path already does for a
+   * genuine fault), so a stray post-completion tick can never fabricate or extend a "completed"
+   * candle for this episode. handleReconnected() itself, and its fail-closed contract for a
+   * genuinely-attempted source recovery, are completely untouched by this method's existence.
+   */
+  handleReconnectedSourceRecoveryNotRequired(details: MarketDataRecoveryDetails = {}): void {
+    if (this.stopping || this.state !== 'RECONNECTING') return;
+    if (details.generationId !== undefined && details.generationId <= this.activeGenerationId) return;
+    this.activeGenerationId = details.generationId ?? this.activeGenerationId + 1;
+    this.backfillReady = true;
+    // Never WAITING_FOR_FRESH_TICK: that state's only exit (handleLiveTick) requires a NIFTY
+    // tick, which is not guaranteed to ever arrive again once source responsibility is
+    // complete. handleTransportReadySourceRecoveryNotRequired() is this episode's only path to
+    // SOURCE_COMPLETE_READY, driven by transport evidence instead.
+    this.setState('SOURCE_COMPLETE_WAITING_FOR_TRANSPORT');
+    this.emitEvent('RECONNECT_SUCCEEDED', details);
+    const sessionClose = this.getSessionBoundary(new Date(this.nowMs())).closeAt;
+    this.callbacks.onLiveConstructionUnavailable?.(new Date(sessionClose.getTime()));
+    this.emitEvent('MARKET_DATA_SOURCE_RECOVERY_NOT_REQUIRED', { generationId: this.activeGenerationId, reason: 'SOURCE_RESPONSIBILITY_ALREADY_COMPLETE' });
+  }
+  /**
+   * Closes the SOURCE_COMPLETE_WAITING_FOR_TRANSPORT half of a benign post-source-completion
+   * episode once the caller has independently confirmed current-generation TRANSPORT evidence
+   * (raw message AND a valid market event -- option quotes count exactly like NIFTY, see
+   * MarketDataHealthMonitorService.confirmPostSourceTransportReady()). Deliberately never
+   * requires or waits for a NIFTY tick: no further NIFTY source tick is guaranteed once source
+   * responsibility is complete, and handleLiveTick() is (in production wiring) only ever called
+   * for an accepted NIFTY tick -- so a WAITING_FOR_FRESH_TICK-style contract here would be
+   * exactly as unsatisfiable as the bug this replaces. No-op unless still in
+   * SOURCE_COMPLETE_WAITING_FOR_TRANSPORT for this exact generation, so a stale/duplicate
+   * confirmation from an already-superseded generation (or one that arrives after a real fault/
+   * stop) can never resurrect or fabricate readiness.
+   */
+  handleTransportReadySourceRecoveryNotRequired(generationId: number): void {
+    if (this.stopping || this.state !== 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT' || generationId !== this.activeGenerationId) return;
+    this.setState('SOURCE_COMPLETE_READY');
+    this.emitEvent('MARKET_DATA_READY', { generationId: this.activeGenerationId });
   }
   /**
    * `sourceTimestamp` (exchange/provider event time) and `receivedAt` (local

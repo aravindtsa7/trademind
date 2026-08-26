@@ -29,9 +29,41 @@ export interface MarketDataHealthMonitorOptions {
   generationGraceMs?: number;
   now?: () => number;
   isMarketSession?: (value: Date) => boolean;
-  onStall?: (snapshot: MarketDataHealthSnapshot) => void;
+  /**
+   * Narrower than isMarketSession: "is the underlying market-data SOURCE still expected to be
+   * producing fresh ticks right now?" Gates ONLY the narrow SOURCE_STALL classification inside
+   * check() -- raw/transport activity still fresh, but the accepted NIFTY sourceTimestamp has
+   * stopped advancing. A dead-open transport (STALL) or an unconfirmed grace period
+   * (HEALTH_GRACE_EXPIRED) always solicits a reconnect regardless of this predicate: this class
+   * still exists to detect a WebSocket that remains logically connected but has stopped
+   * delivering packets, and option quotes/marking/risk/exit data can still require a working
+   * socket up to the operational EOD, independent of whether NIFTY source candles are still
+   * being produced. Every other use of isMarketSession in this class (grace-period activation,
+   * confirmRecoveryReady, the overall check() gate) is untouched and keeps operating through
+   * the wider operational session. Defaults to isMarketSession, so a caller that does not
+   * configure this sees no behavior change. Live callers inject this as
+   * `now => now < nifty1mSourceCompletionBoundary(now)` (or equivalent) rather than this class
+   * hardcoding any source-specific boundary -- this class deliberately does not infer market
+   * data (see the class doc comment).
+   */
+  isSourceFresh?: (value: Date) => boolean;
+  /**
+   * `reason` is the SAME classification check() already computes internally
+   * (STALL/SOURCE_STALL/HEALTH_GRACE_EXPIRED) -- callers must never re-guess it from snapshot
+   * fields. `reconnectSolicited` is the exact same boolean this class used to decide whether it
+   * called connection.reconnectForHealth() for this event (see check()): true for STALL/
+   * HEALTH_GRACE_EXPIRED always, and for SOURCE_STALL only when isSourceFresh(now) was also
+   * true. A caller's own coordinator-disconnect handling (handleUnexpectedDisconnect(...) or
+   * its source-recovery-not-required alternate) must be gated on this SAME flag -- never
+   * invoked unconditionally -- so an expected post-source-completion SOURCE_STALL (transport
+   * healthy, only the NIFTY source itself naturally stopped) can never start an unpaired
+   * disconnect/reconnect episode the coordinator can never close out.
+   */
+  onStall?: (snapshot: MarketDataHealthSnapshot, context: { reason: MarketDataStallReason; reconnectSolicited: boolean }) => void;
   onHealthy?: (snapshot: MarketDataHealthSnapshot) => void;
 }
+
+export type MarketDataStallReason = 'STALL' | 'SOURCE_STALL' | 'HEALTH_GRACE_EXPIRED';
 
 /** Detects a dead-but-open transport. It deliberately does not infer market data. */
 export default class MarketDataHealthMonitorService extends EventEmitter {
@@ -40,6 +72,7 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
   private readonly generationGraceMs: number;
   private readonly now: () => number;
   private readonly isMarketSession: (value: Date) => boolean;
+  private readonly isSourceFresh: (value: Date) => boolean;
   private timer?: NodeJS.Timeout;
   private generationId = 0;
   private lastRawMessageAt?: number;
@@ -50,7 +83,25 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
   /** RECEIVE_TIME this monitor last observed a NIFTY source-timestamp advance -- the only value ever compared against this.now() for staleness. */
   private lastNiftySourceAdvanceAt?: number;
   private reconnectCount = 0;
-  private stalledGeneration?: number;
+  /**
+   * Generation for which a transport reconnect has actually been SOLICITED (STALL/
+   * HEALTH_GRACE_EXPIRED, or a SOURCE_STALL where isSourceFresh was also true) -- the ONLY
+   * latch that gates reconnect eligibility / duplicate-reconnect prevention. A benign
+   * SOURCE_STALL with reconnectSolicited=false must NEVER arm this: doing so previously hid a
+   * later same-generation transport STALL/HEALTH_GRACE_EXPIRED behind the early-return below,
+   * leaving a dead-open socket unrecoverable until EOD (see class doc "same-generation"
+   * correction). Cleared only by generation rotation (activateGeneration) or an explicit
+   * transport-readiness confirmation (confirmRecoveryReady/confirmPostSourceTransportReady).
+   */
+  private reconnectSolicitedGeneration?: number;
+  /**
+   * Generation for which a benign (reconnectSolicited=false) SOURCE_STALL has already been
+   * reported -- purely informational, so a heartbeat that keeps observing the identical benign
+   * condition does not re-emit 'stalled'/onStall every cycle. Must NEVER participate in
+   * reconnect eligibility -- see reconnectSolicitedGeneration above, which is the only latch
+   * check() consults before classifying/soliciting a reconnect.
+   */
+  private sourceStallObservedGeneration?: number;
   private generationActivatedAt?: number;
   private healthState: MarketDataHealthState = 'RECOVERING';
 
@@ -64,6 +115,7 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
     if (!Number.isFinite(this.generationGraceMs) || this.generationGraceMs <= 0) throw new Error('generationGraceMs must be a positive finite number.');
     this.now = options.now ?? Date.now;
     this.isMarketSession = options.isMarketSession ?? isWithinIstMarketSession;
+    this.isSourceFresh = options.isSourceFresh ?? this.isMarketSession;
     connection.on('connected', (details: { generationId: number }) => this.activateGeneration(details.generationId));
     connection.on('reconnected', () => { this.reconnectCount += 1; });
     connection.on('message', (_message: Buffer, details: { generationId: number }) => this.noteRawMessage(details.generationId));
@@ -99,8 +151,35 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
     if (![this.lastRawMessageAt,this.lastValidMarketEventAt,this.lastNiftyTickAt].every((value) => value !== undefined && now - value <= this.stallMs)) return false;
     const confirmed = this.connection.confirmRecoveryReady(generationId);
     if (!confirmed) return false;
-    this.healthState = 'HEALTHY'; this.generationActivatedAt = undefined; this.stalledGeneration = undefined;
+    this.healthState = 'HEALTHY'; this.generationActivatedAt = undefined; this.reconnectSolicitedGeneration = undefined; this.sourceStallObservedGeneration = undefined;
     const snapshot=this.getSnapshot(); this.emit('healthy',snapshot); this.options.onHealthy?.(snapshot); return true;
+  }
+  /**
+   * Post-source-completion analogue of confirmRecoveryReady(): proves the same current-
+   * generation, CONNECTED transport evidence -- a raw message AND a valid market event, option
+   * quotes count exactly as well as NIFTY -- but deliberately never requires lastNiftyTickAt.
+   * Once the source horizon has passed, a further NIFTY tick is no longer guaranteed at all, so
+   * requiring one here would make this contract just as unsatisfiable as confirmRecoveryReady()
+   * is post-completion. A raw message alone is still insufficient: lastValidMarketEventAt must
+   * independently also be current-generation-fresh, exactly mirroring confirmRecoveryReady's
+   * own two-signals-of-three floor. Internally re-verifies the evidence itself (never trusts
+   * the caller's assertion), and reuses ConnectionManager's confirmTransportReady() to clear
+   * the identical reconnect-circuit bookkeeping confirmRecoveryReady() would -- but that call is
+   * about the TRANSPORT's reconnect breaker, not source-candle recovery, so it deliberately
+   * never emits MARKET_DATA_RECOVERY_CONFIRMED: no source-candle recovery/backfill happened on
+   * this bypass path, and claiming so would be misleading observability.
+   */
+  confirmPostSourceTransportReady(generationId: number): boolean {
+    if (generationId !== this.generationId || this.connection.getState() !== ConnectionState.CONNECTED) return false;
+    if (this.healthState === 'HEALTHY') return true;
+    const now = this.now();
+    if (!this.isMarketSession(new Date(now))) return false;
+    if (![this.lastRawMessageAt, this.lastValidMarketEventAt].every((value) => value !== undefined && now - value <= this.stallMs)) return false;
+    const confirmed = this.connection.confirmTransportReady(generationId);
+    if (!confirmed) return false;
+    this.healthState = 'HEALTHY'; this.generationActivatedAt = undefined; this.reconnectSolicitedGeneration = undefined; this.sourceStallObservedGeneration = undefined;
+    const snapshot = this.getSnapshot(); this.emit('healthy', snapshot); this.options.onHealthy?.(snapshot);
+    return true;
   }
   isHealthy(): boolean { return this.healthState === 'HEALTHY' && this.connection.getState() === ConnectionState.CONNECTED; }
   checkNow(): void { this.check(); }
@@ -110,7 +189,7 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
     return { generationId:this.generationId, state:this.connection.getState(), healthState:this.healthState, insideGrace, graceRemainingMs:this.healthState==='GRACE'&&this.generationActivatedAt!==undefined?Math.max(0,this.generationGraceMs-(now-this.generationActivatedAt)):null, lastRawMessageAgeMs:age(this.lastRawMessageAt), lastValidMarketEventAgeMs:age(this.lastValidMarketEventAt), lastNiftyTickAgeMs:age(this.lastNiftyTickAt), lastNiftySourceAdvanceAgeMs:age(this.lastNiftySourceAdvanceAt), reconnectCount:this.reconnectCount, reconnectAttemptCount:circuit.attempts, breakerState:circuit.state, lastFailureReason:circuit.lastFailureReason, nextRetryAtMs:circuit.nextRetryAtMs };
   }
   private activateGeneration(generationId: number): void {
-    this.generationId=generationId; this.stalledGeneration=undefined; this.healthState='GRACE'; this.lastRawMessageAt=undefined; this.lastValidMarketEventAt=undefined; this.lastNiftyTickAt=undefined; this.lastAcceptedNiftySourceTimestampMs=undefined; this.lastNiftySourceAdvanceAt=undefined;
+    this.generationId=generationId; this.reconnectSolicitedGeneration=undefined; this.sourceStallObservedGeneration=undefined; this.healthState='GRACE'; this.lastRawMessageAt=undefined; this.lastValidMarketEventAt=undefined; this.lastNiftyTickAt=undefined; this.lastAcceptedNiftySourceTimestampMs=undefined; this.lastNiftySourceAdvanceAt=undefined;
     const now=this.now(); this.generationActivatedAt=this.isMarketSession(new Date(now))?now:undefined;
     if(this.generationActivatedAt!==undefined)this.emit('graceStarted',this.getSnapshot());
   }
@@ -119,8 +198,24 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
     if (!this.isMarketSession(new Date(this.now())) || this.connection.getState() !== ConnectionState.CONNECTED) return;
     if (this.healthState === 'GRACE' && this.generationActivatedAt === undefined) { this.generationActivatedAt=this.now(); this.emit('graceStarted',this.getSnapshot()); return; }
     if (this.healthState === 'GRACE' && this.generationActivatedAt !== undefined && this.now()-this.generationActivatedAt < this.generationGraceMs) return;
-    const snapshot = this.getSnapshot(); const referenceAge = Math.max(snapshot.lastRawMessageAgeMs ?? Infinity, snapshot.lastValidMarketEventAgeMs ?? Infinity, snapshot.lastNiftyTickAgeMs ?? Infinity);
-    if (this.stalledGeneration === snapshot.generationId) return;
+    const snapshot = this.getSnapshot();
+    // The ONLY latch gating check()'s early exit: a reconnect already SOLICITED for this
+    // generation. A benign SOURCE_STALL (reconnectSolicited=false, below) never arms this, so a
+    // later same-generation STALL/HEALTH_GRACE_EXPIRED remains fully eligible for detection and
+    // a real reconnect -- see reconnectSolicitedGeneration's own doc for why this must stay
+    // separate from sourceStallObservedGeneration.
+    if (this.reconnectSolicitedGeneration === snapshot.generationId) return;
+    const sourceFresh = this.isSourceFresh(new Date(this.now()));
+    // Once the source horizon has passed, a further NIFTY tick is no longer guaranteed AT ALL
+    // (see MarketDataRecoveryCoordinatorService's own post-source-completion contract) -- a
+    // permanently-null/stale lastNiftyTickAgeMs must never, by itself, manufacture a STALL/
+    // HEALTH_GRACE_EXPIRED for an otherwise perfectly healthy transport, or check() would keep
+    // re-flagging every heartbeat forever purely because NIFTY naturally went silent. Before
+    // the boundary this is completely untouched: an absent/stale NIFTY tick is exactly as
+    // meaningful as before, so normal intraday recovery readiness is not weakened.
+    const referenceAge = sourceFresh
+      ? Math.max(snapshot.lastRawMessageAgeMs ?? Infinity, snapshot.lastValidMarketEventAgeMs ?? Infinity, snapshot.lastNiftyTickAgeMs ?? Infinity)
+      : Math.max(snapshot.lastRawMessageAgeMs ?? Infinity, snapshot.lastValidMarketEventAgeMs ?? Infinity);
     // Packets can keep arriving (referenceAge healthy) while the accepted NIFTY
     // sourceTimestamp itself stops advancing; a receive-time-only view would
     // report that as healthy forever. lastNiftySourceAdvanceAgeMs is only
@@ -130,6 +225,37 @@ export default class MarketDataHealthMonitorService extends EventEmitter {
     // threshold -- stays exempt from this check.
     const sourceStalled = snapshot.lastNiftySourceAdvanceAgeMs !== null && snapshot.lastNiftySourceAdvanceAgeMs > this.stallMs;
     if (snapshot.healthState !== 'GRACE' && referenceAge <= this.stallMs && !sourceStalled) return;
-    this.healthState='UNHEALTHY'; this.stalledGeneration=snapshot.generationId; const reason=snapshot.healthState==='GRACE'?'HEALTH_GRACE_EXPIRED':(referenceAge>this.stallMs?'STALL':'SOURCE_STALL'); const unhealthy=this.getSnapshot(); this.emit('stalled',unhealthy); this.options.onStall?.(unhealthy); this.connection.reconnectForHealth(reason,snapshot.generationId);
+    const reason: MarketDataStallReason = snapshot.healthState==='GRACE'?'HEALTH_GRACE_EXPIRED':(referenceAge>this.stallMs?'STALL':'SOURCE_STALL');
+    // isSourceFresh gates ONLY the narrow SOURCE_STALL case -- raw/transport activity is still
+    // fresh, but the accepted NIFTY sourceTimestamp itself has stopped advancing because its
+    // canonical source horizon ended. That specific condition must not solicit a reconnect the
+    // recovery coordinator can never satisfy for a new candle. A dead-open transport (STALL) or
+    // an unconfirmed grace period (HEALTH_GRACE_EXPIRED) is a genuine transport-health problem
+    // -- option quotes/marking/risk/exit data can still require a working socket up to the
+    // 15:40 operational EOD -- so those must always solicit a reconnect, exactly as before this
+    // gate existed. ConnectionManager itself, and any genuine (non-health-monitor) transport-
+    // level disconnect/reconnect, are untouched regardless.
+    const reconnectSolicited = reason !== 'SOURCE_STALL' || sourceFresh;
+    if (reason === 'SOURCE_STALL' && !reconnectSolicited) {
+      // Benign, observability-only: reported once per generation (never re-emitted every
+      // heartbeat for the SAME still-benign condition), but deliberately never arms
+      // reconnectSolicitedGeneration -- see that field's doc. This is what lets a later
+      // same-generation STALL/HEALTH_GRACE_EXPIRED still be detected and reconnected below.
+      if (this.sourceStallObservedGeneration === snapshot.generationId) return;
+      this.sourceStallObservedGeneration = snapshot.generationId;
+      this.healthState = 'UNHEALTHY';
+      const unhealthy = this.getSnapshot(); this.emit('stalled', unhealthy);
+      this.options.onStall?.(unhealthy, { reason, reconnectSolicited });
+      return;
+    }
+    this.healthState='UNHEALTHY'; this.reconnectSolicitedGeneration=snapshot.generationId;
+    const unhealthy=this.getSnapshot(); this.emit('stalled',unhealthy);
+    // The classification (and whether a reconnect was solicited for it) must reach the caller
+    // BEFORE any coordinator-disconnect handling the caller performs in response -- see the
+    // onStall doc above. Passing anything less specific here is exactly what previously let
+    // every runner's onStall callback start an unpaired coordinator episode for an expected,
+    // benign post-source SOURCE_STALL.
+    this.options.onStall?.(unhealthy, { reason, reconnectSolicited });
+    this.connection.reconnectForHealth(reason,snapshot.generationId);
   }
 }
