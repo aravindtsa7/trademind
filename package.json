@@ -24,7 +24,8 @@
     "replay:record": "tsx src/tests/replay-record-help.ts",
     "replay:session": "tsx src/tests/replay-market-session.ts",
     "replay:verify": "tsx src/tests/replay-market-session.ts --verify",
-    "research:nifty-history": "tsx src/tests/research-nifty-underlying-acquisition.ts"
+    "research:nifty-history": "tsx src/tests/research-nifty-underlying-acquisition.ts",
+    "research:nifty-contract-catalog": "tsx src/tests/research-nifty-contract-catalog.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",

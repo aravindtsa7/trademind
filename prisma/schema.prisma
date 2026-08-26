@@ -115,6 +115,43 @@ model HistoricalOptionCandle {
   @@index([candleTime])
 }
 
+// B-F3: point-in-time historical option-contract catalog (discovery only,
+// no candle data). Deliberately separate from `Instrument` (current-state
+// live master, must never stand in for historical truth of an expired
+// contract) and from `HistoricalOptionCandle` (candle rows, not identity).
+// `provider` + `providerContractId` is the idempotency key: the provider's
+// own native contract identifier, never `expiry`+`strikePrice`+`optionType`
+// alone, which could collide across providers/underlyings/exchanges.
+// `exchangeTradingSymbol` / `lotSize` / `tickSize` are nullable because
+// discovery alone frequently cannot prove them; `metadataState` records
+// whether B-F1's identity-completeness contract was actually satisfied
+// (CATALOG_KNOWN) or not (METADATA_INCOMPLETE) -- this table never stores
+// OBSERVED_TRADING/SESSION_COVERED, those require candle evidence (B-F4+).
+model HistoricalOptionContractCatalog {
+  id                    String    @id @default(uuid())
+  provider              String
+  providerContractId    String
+  underlyingSymbol      String
+  exchange              String
+  expiry                DateTime
+  strikePrice           Decimal
+  optionType            String
+  exchangeTradingSymbol String?
+  lotSize               Int?
+  tickSize              Decimal?
+  metadataState         String
+  discoveredAt          DateTime
+  sourceCatalogAsOf     DateTime
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([provider, providerContractId])
+  @@index([underlyingSymbol, exchange])
+  @@index([expiry])
+  @@index([optionType])
+  @@index([metadataState])
+}
+
 // Durable broker-neutral execution audit.  Paper execution uses this schema
 // through the execution repository deployment adapter; no broker credentials
 // or order-routing fields are persisted here.
