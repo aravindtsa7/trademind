@@ -991,6 +991,118 @@ test('A7-H4 race 10: a new generation cannot inherit a prior generation\'s succe
   assert.equal(harness.coordinator.getGenerationId(), 2);
 });
 
+// ---- 2026-08-26 fix: boundary-scoped completePendingBoundaryReconciliation() --------------
+// PROVEN DEFECT: an obligation resolved for an EARLIER aligned boundary (e.g. the first
+// post-connect boundary, near market open) stayed RECOVERED for the rest of the generation.
+// Hours later, with no intervening disconnect, a caller needing a DIFFERENT, LATER boundary
+// (V2/V4's 15:30 terminal source-completion evaluation) received that stale cached RECOVERED
+// result instead of a fresh recovery for the minute it actually needed -- producing
+// TERMINAL_CANDLE_NOT_RECONSTRUCTED for both V2 and V4 on 2026-08-26. These tests drive the
+// new boundary-aware request contract directly against the real coordinator class.
+
+function boundaryAwareHarness(overrides: { backfill?: (target?: Date) => Promise<{ ready: boolean; reason: string; missingMinutes: number; duplicateMinutes: number; recoveryData?: { latest: Date } }> } = {}) {
+  let now = new Date('2026-08-24T09:16:00+05:30').getTime();
+  let backfills = 0;
+  const coordinator = new MarketDataRecoveryCoordinatorService<{ latest: Date }>({
+    nowMs: () => now,
+    // Covers the FIRST aligned boundary's target (09:19, one minute before the 09:20 boundary
+    // at 5-minute alignment) exactly -- the "already covered" cold-start fast path, just like
+    // a real warmup that ran moments before market open.
+    getLastSeededCompletedMinute: () => new Date('2026-08-24T09:19:00+05:30'),
+    liveConstructionAlignmentMinutes: 5,
+    getRecoveredCompletedMinute: (data) => data?.latest,
+    backfill: overrides.backfill ?? (async (target) => {
+      backfills += 1;
+      return { ready: true, reason: 'OK', missingMinutes: 0, duplicateMinutes: 0, recoveryData: { latest: target ?? new Date('2026-08-24T15:29:00+05:30') } };
+    }),
+  });
+  coordinator.handleInitialConnected({ generationId: 1, connectedAt: new Date(now) });
+  return { coordinator, setNow: (d: Date) => { now = d.getTime(); }, getBackfills: () => backfills };
+}
+
+test('BOUNDARY-AWARE A: an early aligned boundary already RECOVERED must not satisfy a later, distinct boundary request -- a fresh recovery runs exactly once for the later boundary', async () => {
+  const harness = boundaryAwareHarness();
+  // The cold-start (09:20) boundary resolved instantly via the "already covered" fast path --
+  // zero backfills for it, exactly like a real warmup that already had the data.
+  assert.equal(harness.getBackfills(), 0);
+
+  // Hours pass, no disconnect at all -- same generation throughout, exactly the 2026-08-26 shape.
+  harness.setNow(new Date('2026-08-24T15:30:00+05:30'));
+  const result = await harness.coordinator.completePendingBoundaryReconciliation({
+    generationId: harness.coordinator.getGenerationId(),
+    boundaryAt: new Date('2026-08-24T15:30:00+05:30'),
+    requiredCompletedMinute: new Date('2026-08-24T15:29:00+05:30'),
+  });
+  assert.equal(result.outcome, 'RECOVERED');
+  assert.equal(harness.getBackfills(), 1, 'a fresh backfill must run for the distinct later boundary -- the stale 09:20 cached RECOVERED result must never satisfy it');
+});
+
+test('BOUNDARY-AWARE B: requesting the SAME boundary twice remains idempotent -- exactly one backfill, the second call returns the cached result for that exact boundary', async () => {
+  const harness = boundaryAwareHarness();
+  const request = {
+    generationId: harness.coordinator.getGenerationId(),
+    boundaryAt: new Date('2026-08-24T15:30:00+05:30'),
+    requiredCompletedMinute: new Date('2026-08-24T15:29:00+05:30'),
+  };
+  harness.setNow(new Date('2026-08-24T15:30:00+05:30'));
+  const first = await harness.coordinator.completePendingBoundaryReconciliation(request);
+  const second = await harness.coordinator.completePendingBoundaryReconciliation(request);
+  assert.equal(first.outcome, 'RECOVERED');
+  assert.equal(second.outcome, 'RECOVERED');
+  assert.equal(harness.getBackfills(), 1, 'the already-owned success for THIS exact boundary must not be re-fetched');
+});
+
+test('BOUNDARY-AWARE C: an earlier, still-unresolved boundary obligation must not be silently superseded by a later boundary request -- fails closed instead', async () => {
+  const controllable = controllableBackfill();
+  let now = new Date('2026-08-24T09:16:00+05:30').getTime();
+  const coordinator = new MarketDataRecoveryCoordinatorService<{ latest: Date }>({
+    nowMs: () => now,
+    // Does NOT cover the first boundary's target -- forces the deferred/pending path instead
+    // of the instant "already covered" shortcut, so the first recovery genuinely stays
+    // in flight until the controllable backfill is resolved.
+    getLastSeededCompletedMinute: () => new Date('2026-08-24T09:10:00+05:30'),
+    liveConstructionAlignmentMinutes: 5,
+    getRecoveredCompletedMinute: (data) => data?.latest,
+    backfill: controllable.backfill,
+  });
+  coordinator.handleInitialConnected({ generationId: 1, connectedAt: new Date(now) });
+
+  // Wall clock reaches the FIRST boundary (09:20); a live tick fires the still-pending
+  // reconciliation, starting a real (never-yet-resolved) recovery attempt for it.
+  now = new Date('2026-08-24T09:20:00+05:30').getTime();
+  coordinator.handleLiveTick({ sourceTimestamp: new Date(now), receivedAt: new Date(now), generationId: 1 });
+  assert.equal(controllable.getCalls(), 1);
+
+  // Hours later, a DIFFERENT (terminal) boundary is requested while the earlier one is still
+  // genuinely in flight/unresolved -- must fail closed, never silently establish a competing
+  // obligation that would race the single-flight currentRecoveryAttempt/recoveryToken
+  // bookkeeping the in-flight attempt still owns.
+  now = new Date('2026-08-24T15:30:00+05:30').getTime();
+  const result = await coordinator.completePendingBoundaryReconciliation({
+    generationId: coordinator.getGenerationId(),
+    boundaryAt: new Date('2026-08-24T15:30:00+05:30'),
+    requiredCompletedMinute: new Date('2026-08-24T15:29:00+05:30'),
+  });
+  assert.equal(result.outcome, 'NOT_RECOVERED');
+  assert.equal(result.reason, 'EARLIER_BOUNDARY_RECONCILIATION_STILL_UNRESOLVED');
+  assert.equal(controllable.getCalls(), 1, 'the still-in-flight earlier attempt must never be re-triggered or duplicated');
+
+  // Resolve the dangling in-flight attempt so the test doesn't leak a pending promise.
+  controllable.resolve()({ ready: true, reason: 'OK', missingMinutes: 0, duplicateMinutes: 0, recoveryData: { latest: new Date('2026-08-24T09:19:00+05:30') } });
+});
+
+test('BOUNDARY-AWARE: a generation mismatch on an explicit request fails closed exactly like the legacy contract', async () => {
+  const harness = boundaryAwareHarness();
+  const result = await harness.coordinator.completePendingBoundaryReconciliation({
+    generationId: harness.coordinator.getGenerationId() + 1,
+    boundaryAt: new Date('2026-08-24T15:30:00+05:30'),
+    requiredCompletedMinute: new Date('2026-08-24T15:29:00+05:30'),
+  });
+  assert.equal(result.outcome, 'NOT_RECOVERED');
+  assert.equal(result.reason, 'RECOVERY_GENERATION_OR_TOKEN_SUPERSEDED');
+  assert.equal(harness.getBackfills(), 0);
+});
+
 test('A7-H5 obligation 1: disconnect before pending recovery starts cannot erase the requirement into NONE_PENDING', async () => {
   const harness = raceHarness();
   harness.coordinator.handleUnexpectedDisconnect({ generationId: 1 });

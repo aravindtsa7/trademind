@@ -63,7 +63,7 @@ class OrchestratorSpy implements LivePaperOrchestrator {
   async createFromSignal(): ReturnType<LivePaperOrchestrator['createFromSignal']> { this.calls += 1; return { order: { id: `order-${this.calls}` } } as Awaited<ReturnType<LivePaperOrchestrator['createFromSignal']>>; }
 }
 
-function createHarness(options: { backfillReady?: boolean; withPriorHistory?: boolean } = {}) {
+function createHarness(options: { backfillReady?: boolean; withPriorHistory?: boolean; lastSeededCompletedMinute?: Date; initialNow?: Date } = {}) {
   const liveCandleBuilder = new LiveCandleBuilderService();
   const orchestrator = new OrchestratorSpy();
   const strategyAdapter = new LivePaperStrategyAdapterService(orchestrator, new EngineStub(), new CrossStub());
@@ -71,8 +71,9 @@ function createHarness(options: { backfillReady?: boolean; withPriorHistory?: bo
   let pendingSourceBoundaryCandle: Candle | undefined;
   let backfillCalls = 0;
   let evaluationCalls = 0;
-  let now = new Date('2026-08-24T15:27:30+05:30').getTime();
+  let now = (options.initialNow ?? new Date('2026-08-24T15:27:30+05:30')).getTime();
   const backfillReady = options.backfillReady ?? true;
+  const lastSeededCompletedMinute = options.lastSeededCompletedMinute ?? new Date('2026-08-24T15:20:00+05:30');
 
   if (options.withPriorHistory !== false) {
     // Enough warm-up history for LivePaperStrategyAdapterService's minimumHistory gate (36).
@@ -91,7 +92,7 @@ function createHarness(options: { backfillReady?: boolean; withPriorHistory?: bo
     getSessionBoundary: () => ({ openAt, closeAt }),
     liveConstructionAlignmentMinutes: alignmentMinutes,
     getSourceCompletionBoundary: nifty1mSourceCompletionBoundary,
-    getLastSeededCompletedMinute: () => new Date('2026-08-24T15:20:00+05:30'),
+    getLastSeededCompletedMinute: () => lastSeededCompletedMinute,
     getRecoveredCompletedMinute: (data) => data?.latestMinute,
     backfill: async () => {
       backfillCalls += 1;
@@ -119,6 +120,7 @@ function createHarness(options: { backfillReady?: boolean; withPriorHistory?: bo
     if (shuttingDown || eodRequested) return;
     const generationId = currentGenerationId;
     const boundaryAt = nifty1mSourceCompletionBoundary(new Date(now));
+    const requiredCompletedMinute = new Date(boundaryAt.getTime() - 60_000);
     const finalBucketStart = new Date(boundaryAt.getTime() - alignmentMinutes * 60_000);
     coverage.require(generationId, boundaryAt);
 
@@ -128,7 +130,11 @@ function createHarness(options: { backfillReady?: boolean; withPriorHistory?: bo
       candle = { timestamp: new Date(active.candleTime.getTime()), open: active.open, high: active.high, low: active.low, close: active.close, volume: 0 };
       liveCandleBuilder.reset(NIFTY, '5m');
     } else {
-      const result = await recovery.completePendingBoundaryReconciliation();
+      // The coordinator's own request must be scoped to ITS generation (mirroring production,
+      // where connectionManager.getGenerationId() and recovery's internal generation are the
+      // same underlying counter) -- this harness's separate `generationId`/`currentGenerationId`
+      // mock the OUTER connection-generation view for supersession checks and coverage bookkeeping.
+      const result = await recovery.completePendingBoundaryReconciliation({ generationId: recovery.getGenerationId(), boundaryAt, requiredCompletedMinute });
       if (shuttingDown || eodRequested || currentGenerationId !== generationId) { coverage.markLost(generationId, 'TERMINALIZED_OR_SUPERSEDED_DURING_RECOVERY'); return; }
       if (result.outcome !== 'RECOVERED') { coverage.markLost(generationId, result.reason); return; }
       candle = pendingSourceBoundaryCandle;
@@ -175,7 +181,11 @@ test('A7-H6 V2 scenario A: happy path -- source-boundary trigger reconstructs an
 
   // 15:40 terminal barrier: DATA complete + EVALUATION complete -> eligible for VALID_COMPLETED.
   value.beginTerminalization();
-  const boundaryReconciliation = await value.recovery.completePendingBoundaryReconciliation();
+  const boundaryReconciliation = await value.recovery.completePendingBoundaryReconciliation({
+    generationId: value.recovery.getGenerationId(),
+    boundaryAt: new Date('2026-08-24T15:30:00+05:30'),
+    requiredCompletedMinute: new Date('2026-08-24T15:29:00+05:30'),
+  });
   assert.equal(boundaryReconciliation.outcome, 'RECOVERED');
   value.coverage.require(value.getGenerationId(), new Date('2026-08-24T15:30:00+05:30'));
   assert.equal(value.coverage.isSatisfiedFor(value.getGenerationId()), true);
@@ -206,7 +216,11 @@ test('A7-H6 V2 scenario C: the source-boundary trigger never executes -- 15:40 t
   value.beginTerminalization();
   value.setNow(new Date('2026-08-24T15:40:00+05:30'));
 
-  const boundaryReconciliation = await value.recovery.completePendingBoundaryReconciliation();
+  const boundaryReconciliation = await value.recovery.completePendingBoundaryReconciliation({
+    generationId: value.recovery.getGenerationId(),
+    boundaryAt: new Date('2026-08-24T15:30:00+05:30'),
+    requiredCompletedMinute: new Date('2026-08-24T15:29:00+05:30'),
+  });
   assert.equal(boundaryReconciliation.outcome, 'RECOVERED', 'terminal-only DATA recovery may still succeed');
   assert.equal(value.getEvaluationCalls(), 0, 'evaluation must never run at the 15:40 terminal barrier');
 
@@ -281,4 +295,40 @@ test('A7-H6 V2: stop() before evaluation retains LOST, never silently re-labelle
   // Terminalization must never erase the pending/lost evidence already on record.
   assert.equal(value.coverage.disposition(value.getGenerationId()), 'LOST');
   assert.equal(value.coverage.isSatisfiedFor(value.getGenerationId()), false);
+});
+
+test('A7-H6 V2 regression (2026-08-26 production shape): a cold-start-only generation with an early aligned boundary already RECOVERED must still run a fresh recovery for the distinct 15:30 terminal boundary, never reuse the stale cached result', async () => {
+  const value = createHarness({
+    // Cold-start-only session: exactly what production ran on 2026-08-26 for both V2 and V4 --
+    // ONE unbroken generation for the whole day, established via handleInitialConnected only.
+    // No handleUnexpectedDisconnect/handleReconnected anywhere in this test (that would
+    // re-arm requireBoundaryReconciliation() itself and mask the defect this proves fixed).
+    initialNow: new Date('2026-08-24T09:16:00+05:30'),
+    // Warm-up already covers exactly through the FIRST aligned boundary's target (09:19,
+    // one minute before the 09:20 boundary) -- the "already covered" cold-start fast path,
+    // just like a real warmup that ran moments before market open.
+    lastSeededCompletedMinute: new Date('2026-08-24T09:19:00+05:30'),
+  });
+  value.recovery.handleInitialConnected({ generationId: 1, connectedAt: new Date('2026-08-24T09:16:00+05:30') });
+  assert.equal(value.getGenerationId(), 1);
+  // The early boundary obligation is RECOVERED instantly via STARTUP_SEED_COVERAGE_CONFIRMED --
+  // zero backfills for it, exactly like a real warmup that already had the data.
+  assert.equal(value.getBackfillCalls(), 0);
+
+  // Hours pass in the SAME generation, no disconnect at all -- NIFTY_INDEX stops ticking
+  // before the final 15:25-15:29 bucket ever forms locally, so Path A has nothing to flush.
+  value.setNow(new Date('2026-08-24T15:30:00+05:30'));
+  await value.performSourceBoundaryEvaluation();
+
+  // PROVEN 2026-08-26 DEFECT: before the fix, completePendingBoundaryReconciliation() found
+  // the generation-scoped obligation already RECOVERED (from the 09:20 boundary, hours
+  // earlier) and returned that cached result WITHOUT ever calling backfill() again for the
+  // 15:29 terminal minute -- pendingSourceBoundaryCandle stayed unset and the session was
+  // marked LOST with reason TERMINAL_CANDLE_NOT_RECONSTRUCTED. The fix requires a NEW,
+  // boundary-scoped recovery attempt here.
+  assert.equal(value.getBackfillCalls(), 1, 'the distinct 15:30/15:29 terminal boundary must trigger its own fresh backfill, never reuse the stale 09:20 cached RECOVERED result');
+  assert.equal(value.getEvaluationCalls(), 1, 'the final 5m candle must be evaluated exactly once through the actionable processCompletedCandle path');
+  assert.equal(value.coverage.disposition(value.getGenerationId()), 'EVALUATED');
+  assert.notEqual(value.coverage.getRecord()?.reason, 'TERMINAL_CANDLE_NOT_RECONSTRUCTED');
+  assert.equal(value.coverage.getRecord()?.completedCandleTime?.toISOString(), new Date('2026-08-24T15:25:00+05:30').toISOString());
 });

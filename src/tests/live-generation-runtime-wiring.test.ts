@@ -256,9 +256,13 @@ test('A7-H5: V4 consumes the positive source-close barrier before shutdown can s
   const finishEnd = v4.indexOf("connection.on('unexpectedDisconnect'", finishStart);
   assert.ok(finishStart >= 0 && finishEnd > finishStart);
   const finishEod = v4.slice(finishStart, finishEnd);
-  const barrier = finishEod.indexOf('await recovery.completePendingBoundaryReconciliation()');
+  // 2026-08-26 fix: the EOD barrier now requests the terminal boundary explicitly (generationId
+  // + boundaryAt + requiredCompletedMinute) rather than relying on the coordinator's cached
+  // per-generation obligation -- see market-data-recovery-coordinator.service.ts's
+  // completePendingBoundaryReconciliation() doc for why an implicit, unscoped call is unsafe.
+  const barrier = finishEod.indexOf('await recovery.completePendingBoundaryReconciliation({');
   const shutdown = finishEod.indexOf('await shutdown(');
-  assert.ok(barrier >= 0, 'V4 EOD must consume the shared positive reconciliation result');
+  assert.ok(barrier >= 0, 'V4 EOD must consume the shared positive reconciliation result, explicitly scoped to the terminal source boundary');
   assert.ok(shutdown > barrier, 'V4 must consume the result before shutdown calls recovery.stop()');
   assert.ok(finishEod.includes("boundaryReconciliation.outcome === 'NOT_RECOVERED'"));
   assert.ok(finishEod.includes('sourceCloseRecoveryFailed'));

@@ -70,6 +70,22 @@ export const NO_SAFE_LIVE_CONSTRUCTION_BOUNDARY_BEFORE_SESSION_CLOSE = 'NO_SAFE_
  */
 export type BoundaryReconciliationOutcome = 'NONE_PENDING' | 'RECOVERED' | 'NOT_RECOVERED';
 export interface BoundaryReconciliationResult { outcome: BoundaryReconciliationOutcome; reason: string; }
+/**
+ * Explicit, boundary-scoped request for `completePendingBoundaryReconciliation()`. A caller
+ * that already knows exactly which aligned boundary/required completed minute it needs (e.g.
+ * V2/V4's 15:30 IST source-completion terminal evaluation, requiring the 15:29 IST completed
+ * minute) must pass it here rather than relying on whatever obligation happens to be cached --
+ * a cached RECOVERED result may satisfy ONLY the exact boundary/requiredCompletedMinute it was
+ * itself recovered for (see the method's own doc for the full ownership defect this closes).
+ */
+export interface BoundaryReconciliationRequest {
+  /** Must match the coordinator's current activeGenerationId; a mismatch fails closed. */
+  generationId: number;
+  /** The exact aligned boundary this caller needs proven (e.g. 15:30 IST). */
+  boundaryAt: Date;
+  /** The exact completed source minute REST must prove (e.g. 15:29 IST) -- never inferred. */
+  requiredCompletedMinute: Date;
+}
 
 type BoundaryReconciliationDisposition = 'REQUIRED_UNRESOLVED' | 'RECOVERED' | 'FAILED';
 interface BoundaryReconciliationObligation {
@@ -364,9 +380,60 @@ export default class MarketDataRecoveryCoordinatorService<TRecoveryData = undefi
    * the coordinator RECONNECTING (not FAULTED) while silently abandoning the in-flight
    * attempt, and a stop() leaves it STOPPED -- neither is evidence the awaited recovery
    * actually happened.
+   *
+   * Boundary-scoped overload: pass `request` when the caller already knows exactly which
+   * aligned boundary/requiredCompletedMinute it needs (V2/V4's 15:30 terminal evaluation).
+   * `boundaryReconciliationObligation` tracks only ONE obligation per generation at a time,
+   * and earlier callers (`handleInitialConnected`/`handleReconnected`) establish it for the
+   * FIRST aligned boundary after connect -- not necessarily the boundary THIS caller needs.
+   * Without `request`, a cached RECOVERED left over from that much-earlier boundary would
+   * incorrectly satisfy a later, distinct boundary requirement purely because the generation
+   * hadn't changed (the proven 2026-08-26 V2/V4 TERMINAL_CANDLE_NOT_RECONSTRUCTED defect).
+   * With `request`, a cached result may only satisfy a request for the SAME exact
+   * boundary/requiredCompletedMinute it was itself established/recovered for; a mismatch
+   * (including "nothing cached at all") establishes a fresh, explicitly-scoped obligation and
+   * runs a real recovery attempt for THIS boundary instead of trusting the stale one. An
+   * earlier, still-unresolved (REQUIRED_UNRESOLVED) obligation for a DIFFERENT boundary is
+   * never silently superseded -- the single-flight `currentRecoveryAttempt`/`recoveryToken`
+   * bookkeeping it owns must not be raced by a second, competing obligation, so that case
+   * fails closed instead. Called with no argument, behavior is byte-identical to the
+   * pre-existing generation-only contract (used by every caller that only ever tracks one
+   * boundary per generation).
    */
-  async completePendingBoundaryReconciliation(): Promise<BoundaryReconciliationResult> {
+  async completePendingBoundaryReconciliation(request?: BoundaryReconciliationRequest): Promise<BoundaryReconciliationResult> {
     if (this.stopping) return { outcome: 'NOT_RECOVERED', reason: 'COORDINATOR_STOPPED' };
+    if (request !== undefined) {
+      if (request.generationId !== this.activeGenerationId) {
+        return { outcome: 'NOT_RECOVERED', reason: 'RECOVERY_GENERATION_OR_TOKEN_SUPERSEDED' };
+      }
+      const boundaryMs = request.boundaryAt.getTime();
+      const requiredCompletedMinuteMs = request.requiredCompletedMinute.getTime();
+      const obligation = this.boundaryReconciliationObligation;
+      const sameBoundary = obligation !== null
+        && obligation.generationId === this.activeGenerationId
+        && obligation.boundaryMs === boundaryMs
+        && obligation.requiredCompletedMinuteMs === requiredCompletedMinuteMs;
+      if (!sameBoundary) {
+        if (obligation !== null && obligation.generationId === this.activeGenerationId && obligation.disposition === 'REQUIRED_UNRESOLVED') {
+          // A DIFFERENT (earlier) boundary is still genuinely unresolved/in-flight for this
+          // exact generation -- the single-flight recovery bookkeeping is still owned by that
+          // attempt. Never silently supersede it with a competing obligation for a later
+          // boundary; fail closed instead of guessing which requirement should win.
+          return { outcome: 'NOT_RECOVERED', reason: 'EARLIER_BOUNDARY_RECONCILIATION_STILL_UNRESOLVED' };
+        }
+        // Nothing tracked yet, or a stale TERMINAL (RECOVERED/FAILED) record for a DIFFERENT
+        // boundary/requiredCompletedMinute: establish an explicitly-scoped obligation for THIS
+        // boundary and run a real, fresh recovery attempt for it. isCurrentRecovery() inside
+        // recover() still fails this closed if the coordinator is FAULTED/STOPPED/STOPPING.
+        this.requireBoundaryReconciliation(request.boundaryAt, request.requiredCompletedMinute);
+        const token = ++this.recoveryToken;
+        this.startRecovery(this.activeGenerationId, token, request.requiredCompletedMinute);
+      }
+    }
+    return this.awaitOwnedBoundaryReconciliation();
+  }
+  /** Shared tail of `completePendingBoundaryReconciliation()` -- awaits (or reads) whatever obligation/attempt is current for `this.activeGenerationId` at the moment it's called. */
+  private async awaitOwnedBoundaryReconciliation(): Promise<BoundaryReconciliationResult> {
     const obligation = this.boundaryReconciliationObligation;
     if (obligation === null) return { outcome: 'NONE_PENDING', reason: 'NO_RECONCILIATION_REQUIREMENT' };
     if (obligation.disposition === 'FAILED') return { outcome: 'NOT_RECOVERED', reason: obligation.reason };

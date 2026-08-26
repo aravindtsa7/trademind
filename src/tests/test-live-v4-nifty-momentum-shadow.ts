@@ -226,12 +226,21 @@ async function run(): Promise<void> {
    * non-evaluating terminal recovery. Reads connection.getGenerationId() fresh at fire time
    * (never a value captured at arm time).
    */
+  const markSourceBoundaryLost = (generationId: number, reason: string): void => {
+    sourceBoundaryEvaluationCoverage.markLost(generationId, reason);
+    forwardJournal.appendEvent(forwardDate, 'V4_SOURCE_BOUNDARY_LOST', ['V4_SOURCE_BOUNDARY_LOST', 'CRITICAL_DATA_QUALITY'], { reason, generationId });
+  };
   const performSourceBoundaryEvaluation = async (): Promise<void> => {
     if (eodStarted || closing) return;
     const generationId = connection.getGenerationId();
     const boundaryAt = nifty1mSourceCompletionBoundary(new Date());
+    // The one authoritative REST target this terminal evaluation may ever accept -- exactly
+    // one minute before the source-completion boundary (15:29 IST for the 15:30 boundary).
+    // Never inferred from wall clock at recovery time; always this exact instant.
+    const requiredCompletedMinute = new Date(boundaryAt.getTime() - 60_000);
     const finalBucketStart = new Date(boundaryAt.getTime() - v4MomentumShadowConfig.timeframeMinutes * 60_000);
     sourceBoundaryEvaluationCoverage.require(generationId, boundaryAt);
+    forwardJournal.appendEvent(forwardDate, 'V4_SOURCE_BOUNDARY_EVALUATION_STARTED', ['V4_SOURCE_BOUNDARY_EVALUATION_STARTED'], { generationId, boundaryAt: boundaryAt.toISOString(), requiredCompletedMinute: requiredCompletedMinute.toISOString() });
 
     let candle: Candle | undefined;
     // Path A: ticks flowed normally all session and already built this exact final 3m bucket
@@ -241,30 +250,38 @@ async function run(): Promise<void> {
       candle = { timestamp: new Date(active.candleTime.getTime()), open: active.open, high: active.high, low: active.low, close: active.close, volume: 0 };
       // Consumed here -- must not also be flushed a second time by the 15:40 EOD finishSession().
       liveCandleBuilder.reset(nifty, '3m');
+      forwardJournal.appendEvent(forwardDate, 'V4_PATH_A_LOCAL_CANDLE_USED', ['V4_PATH_A_LOCAL_CANDLE_USED'], { candleTime: candle.timestamp.toISOString() });
     } else {
       // Path B: no locally-built candle exists for this bucket -- positively recover/confirm
-      // authoritative source through 15:29 via the exact same barrier the 15:40 EOD path uses.
-      // Idempotent: a second call from EOD after this one already succeeded returns the same
-      // RECOVERED outcome without re-running backfill.
-      const result = await recovery.completePendingBoundaryReconciliation();
+      // authoritative source through 15:29 via the exact same barrier the 15:40 EOD path uses,
+      // scoped explicitly to THIS boundary/requiredCompletedMinute so a cached RECOVERED left
+      // over from an earlier (e.g. startup) aligned boundary can never satisfy this terminal
+      // requirement. Idempotent for repeat calls that already match this exact boundary (a
+      // second call from EOD, after this one already succeeded, returns the same RECOVERED
+      // outcome without re-running backfill); a mismatched cached obligation instead triggers a
+      // fresh recovery attempt.
+      forwardJournal.appendEvent(forwardDate, 'V4_PATH_B_RECOVERY_REQUIRED', ['V4_PATH_B_RECOVERY_REQUIRED'], { boundaryAt: boundaryAt.toISOString(), requiredCompletedMinute: requiredCompletedMinute.toISOString() });
+      const result = await recovery.completePendingBoundaryReconciliation({ generationId, boundaryAt, requiredCompletedMinute });
       if (eodStarted || closing || connection.getGenerationId() !== generationId) {
-        sourceBoundaryEvaluationCoverage.markLost(generationId, 'TERMINALIZED_OR_SUPERSEDED_DURING_RECOVERY');
+        markSourceBoundaryLost(generationId, 'TERMINALIZED_OR_SUPERSEDED_DURING_RECOVERY');
         return;
       }
       if (result.outcome !== 'RECOVERED') {
-        sourceBoundaryEvaluationCoverage.markLost(generationId, result.reason);
+        forwardJournal.appendEvent(forwardDate, 'V4_PATH_B_RECOVERY_FAILED', ['V4_PATH_B_RECOVERY_FAILED', 'CRITICAL_DATA_QUALITY'], { reason: result.reason });
+        markSourceBoundaryLost(generationId, result.reason);
         return;
       }
+      forwardJournal.appendEvent(forwardDate, 'V4_PATH_B_RECOVERY_COMPLETED', ['V4_PATH_B_RECOVERY_COMPLETED'], {});
       candle = pendingSourceBoundaryCandle;
       pendingSourceBoundaryCandle = undefined;
       if (!candle) {
-        sourceBoundaryEvaluationCoverage.markLost(generationId, 'TERMINAL_CANDLE_NOT_RECONSTRUCTED');
+        markSourceBoundaryLost(generationId, 'TERMINAL_CANDLE_NOT_RECONSTRUCTED');
         return;
       }
     }
 
     if (eodStarted || closing || !host?.canEvaluate() || !recovery.isEvaluationReady() || connection.getGenerationId() !== generationId) {
-      sourceBoundaryEvaluationCoverage.markLost(generationId, 'HOST_NOT_RUNNING_AT_SOURCE_BOUNDARY');
+      markSourceBoundaryLost(generationId, 'HOST_NOT_RUNNING_AT_SOURCE_BOUNDARY');
       return;
     }
     try {
@@ -273,8 +290,9 @@ async function run(): Promise<void> {
       // NO_TRADE/a rejected signal still counts as evaluated -- the opportunity was genuinely
       // evaluated through the actionable path exactly once.
       sourceBoundaryEvaluationCoverage.markEvaluated(generationId, candle.timestamp, 'SOURCE_BOUNDARY_EVALUATION_COMPLETED');
+      forwardJournal.appendEvent(forwardDate, 'V4_SOURCE_BOUNDARY_EVALUATED', ['V4_SOURCE_BOUNDARY_EVALUATED'], { candleTimestamp: candle.timestamp.toISOString() });
     } catch (error) {
-      sourceBoundaryEvaluationCoverage.markLost(generationId, error instanceof Error ? error.message : 'SOURCE_BOUNDARY_EVALUATION_FAILED');
+      markSourceBoundaryLost(generationId, error instanceof Error ? error.message : 'SOURCE_BOUNDARY_EVALUATION_FAILED');
     }
   };
   const interval = setInterval(() => { if (recovery.isEvaluationReady()) flush(tracker.advance(new Date())); }, 15_000); interval.unref();
@@ -376,9 +394,14 @@ async function run(): Promise<void> {
       // authoritative here, and the barrier is skipped (never distrusted or reinterpreted) in
       // that one case.
       const alreadyEvaluatedThisSession = sourceBoundaryEvaluationCoverage.getRecord()?.disposition === 'EVALUATED';
+      const eodSourceBoundaryAt = nifty1mSourceCompletionBoundary(new Date());
       const boundaryReconciliation = alreadyEvaluatedThisSession
         ? { outcome: 'RECOVERED' as const, reason: 'SOURCE_BOUNDARY_EVALUATION_ALREADY_COMPLETE' }
-        : await recovery.completePendingBoundaryReconciliation();
+        : await recovery.completePendingBoundaryReconciliation({
+          generationId: connection.getGenerationId(),
+          boundaryAt: eodSourceBoundaryAt,
+          requiredCompletedMinute: new Date(eodSourceBoundaryAt.getTime() - 60_000),
+        });
       const sourceCloseRecoveryFailed = boundaryReconciliation.outcome === 'NOT_RECOVERED';
       if (sourceCloseRecoveryFailed) {
         forwardJournal.appendEvent(forwardDate, 'V4_SOURCE_CLOSE_RECOVERY_FAILED', ['V4_SOURCE_CLOSE_RECOVERY_FAILED', 'CRITICAL_DATA_QUALITY'], { reason: boundaryReconciliation.reason, recoveryState: recovery.getState() });
