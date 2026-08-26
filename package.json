@@ -23,7 +23,8 @@
     "collect:v12:order-flow": "tsx src/tests/collect-v12-nifty-option-order-flow.ts",
     "replay:record": "tsx src/tests/replay-record-help.ts",
     "replay:session": "tsx src/tests/replay-market-session.ts",
-    "replay:verify": "tsx src/tests/replay-market-session.ts --verify"
+    "replay:verify": "tsx src/tests/replay-market-session.ts --verify",
+    "research:nifty-history": "tsx src/tests/research-nifty-underlying-acquisition.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
