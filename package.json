@@ -26,7 +26,9 @@
     "replay:verify": "tsx src/tests/replay-market-session.ts --verify",
     "research:nifty-history": "tsx src/tests/research-nifty-underlying-acquisition.ts",
     "research:nifty-contract-catalog": "tsx src/tests/research-nifty-contract-catalog.ts",
-    "research:nifty-option-candles": "tsx src/tests/research-nifty-option-candle-acquisition.ts"
+    "research:nifty-option-candles": "tsx src/tests/research-nifty-option-candle-acquisition.ts",
+    "research:manifest:generate": "tsx src/tests/research-dataset-manifest-generate.ts",
+    "research:manifest:verify": "tsx src/tests/research-dataset-manifest-verify.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",

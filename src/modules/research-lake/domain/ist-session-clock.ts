@@ -32,3 +32,20 @@ export function istMinuteOfDay(value: Date): number {
 }
 
 export const NORMAL_SESSION_START_MINUTE = 9 * 60 + 15; // 09:15 IST
+
+/**
+ * Full IST calendar-day bounds for `tradingDate` (`YYYY-MM-DD`), expressed as
+ * absolute instants. IST has a fixed +05:30 offset (no DST), so an explicit
+ * offset string suffices -- no host-timezone dependence (B-F5 task section
+ * 2). Used to re-fetch exactly the persisted rows recorded against one
+ * trading date for manifest generation/verification, independent of the
+ * narrower 09:15-15:29 canonical session window (this covers the whole
+ * calendar day, so an unexpected out-of-window row is still detected rather
+ * than silently excluded from the re-read).
+ */
+export function istTradingDayUtcBounds(tradingDate: string): { start: Date; end: Date } {
+  return {
+    start: new Date(`${tradingDate}T00:00:00.000+05:30`),
+    end: new Date(`${tradingDate}T23:59:59.999+05:30`),
+  };
+}
