@@ -198,6 +198,172 @@ test('constructing the client without a token throws immediately', () => {
   assert.throws(() => new GrowwHistoricalClient('   '));
 });
 
+// ---- B-F4: fetchOptionCandles ---------------------------------------------
+
+/** Official documented envelope (task B-F4 section 1): `payload.candles` is a 7-element-array array. */
+function successCandles(candles: unknown): Promise<MockResponse> {
+  return success({ candles, closing_price: 0, start_time: '2022-01-03 09:15:00', end_time: '2022-01-03 15:30:00', interval_in_minutes: 1 });
+}
+
+test('fetchOptionCandles calls the correct endpoint/query with groww_symbol/start_time/end_time/candle_interval', async () => {
+  const { client, axios } = createClient(() => successCandles([]));
+  await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'NSE-NIFTY-06Jan22-17200-PE', startTime: '2022-01-03 09:15:00', endTime: '2022-01-03 15:30:00', candleInterval: '1minute' });
+  assert.equal(axios.calls[0].url, '/v1/historical/candles');
+  assert.deepEqual(axios.calls[0].config.params, {
+    exchange: 'NSE',
+    segment: 'FNO',
+    groww_symbol: 'NSE-NIFTY-06Jan22-17200-PE',
+    start_time: '2022-01-03 09:15:00',
+    end_time: '2022-01-03 15:30:00',
+    candle_interval: '1minute',
+  });
+});
+
+test('(A) exact Groww candle SUCCESS envelope: 7-element row maps OHLCV/OI/timestamp exactly', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100.5, 101, 100, 100.75, 1200, 5000]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'NSE-NIFTY-06Jan22-17200-PE', startTime: '2022-01-03 09:15:00', endTime: '2022-01-03 15:30:00', candleInterval: '1minute' });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].open, 100.5);
+  assert.equal(rows[0].high, 101);
+  assert.equal(rows[0].low, 100);
+  assert.equal(rows[0].close, 100.75);
+  assert.equal(rows[0].volume, 1200n);
+  assert.equal(rows[0].openInterest, 5000n);
+});
+
+test('(B) malformed envelope (payload.candles missing) is rejected', async () => {
+  const { client } = createClient(() => success({ closing_price: 0 }));
+  await assert.rejects(
+    client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('(C) malformed candle row (wrong element count) is rejected', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5]]));
+  await assert.rejects(
+    client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('(D) timestamp is parsed explicitly as Asia/Kolkata, never host-local', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, null]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].candleTime.toISOString(), '2022-01-03T03:45:00.000Z'); // 09:15 IST == 03:45 UTC
+});
+
+test('(D) LIVE-CONFIRMED shape: a T-separated timestamp with no offset ("2022-01-03T09:15:00", the real response format) is also parsed explicitly as Asia/Kolkata', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03T09:15:00', 59.9, 62.95, 43.75, 46.4, 428903, 3640950]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'NSE-NIFTY-06Jan22-17200-PE', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].candleTime.toISOString(), '2022-01-03T03:45:00.000Z');
+  assert.equal(rows[0].openInterest, 3640950n);
+});
+
+test('a syntactically-shaped but calendar-invalid timestamp is rejected, never silently rolled over', async () => {
+  const { client } = createClient(() => successCandles([['2022-13-40 25:70:00', 100, 101, 100, 100.5, 10, null]]));
+  await assert.rejects(
+    client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('(E)/(F) OHLC and volume are mapped exactly, with no unit/precision coercion', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:16:00', 12.34, 12.99, 12.01, 12.5, 987654, null]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].open, 12.34);
+  assert.equal(rows[0].high, 12.99);
+  assert.equal(rows[0].low, 12.01);
+  assert.equal(rows[0].close, 12.5);
+  assert.equal(rows[0].volume, 987654n);
+});
+
+test('a non-finite OHLC value (NaN/Infinity) is rejected, never coerced', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', Number.NaN, 101, 100, 100.5, 10, null]]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+
+  const { client: infClient } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, Number.POSITIVE_INFINITY, 100, 100.5, 10, null]]));
+  await assert.rejects(infClient.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('negative volume is rejected, never coerced', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, -1, null]]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('(G) numeric OI is preserved exactly as a bigint', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, 123456]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].openInterest, 123456n);
+});
+
+test('(H) OI of zero is valid and distinct from null', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, 0]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].openInterest, 0n);
+  assert.notEqual(rows[0].openInterest, null);
+});
+
+test('(I) OI null on an exact 7-element row is accepted and preserved as null, never fabricated', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, null]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].openInterest, null);
+});
+
+test('a 6-element row (7th/openInterest element entirely missing) is rejected, never coerced to null OI', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10]]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('an 8-element row (extra trailing element) is rejected', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, 5000, 'unexpected']]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('(J) negative OI is rejected, never coerced', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, -5]]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('non-integer (fractional) OI is rejected, never truncated', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, 5.5]]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('malformed/non-finite OI (NaN/Infinity) is rejected, never coerced', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, Number.NaN]]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+
+  const { client: infClient } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, Number.POSITIVE_INFINITY]]));
+  await assert.rejects(infClient.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('candle rows are returned in exactly the order the provider sent them -- never sorted or reversed by the client', async () => {
+  const { client } = createClient(() =>
+    successCandles([
+      ['2022-01-03 09:16:00', 100, 101, 100, 100.5, 10, null],
+      ['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, null], // out of order on purpose
+    ])
+  );
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].candleTime.toISOString() < rows[1].candleTime.toISOString(), false); // first row is still the later timestamp -- proves no reordering happened
+});
+
+test('(T) a 401 on the candle endpoint is a typed GrowwAuthenticationError with no token leakage', async () => {
+  const { client } = createClient(() => axiosFailure(401, { status: 'FAILURE', error: { code: '401', message: 'unauthorized' } }));
+  let message = '';
+  await assert.rejects(
+    client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    (error: unknown) => {
+      assert.ok(error instanceof GrowwAuthenticationError);
+      assert.equal(error.httpStatus, 401);
+      message = error.message;
+      return true;
+    }
+  );
+  assert.ok(!message.includes(SECRET_TOKEN));
+});
+
 test('SECURITY: the token never appears in a successful result or in any thrown error message/serialization', async () => {
   const { client: okClient } = createClient(() => successExpiries(['2022-01-06']));
   const expiries = await okClient.fetchExpiries({ exchange: 'NSE', underlyingSymbol: 'NIFTY', year: 2022 });
@@ -207,6 +373,21 @@ test('SECURITY: the token never appears in a successful result or in any thrown 
   let message = '';
   try {
     await failClient.fetchExpiries({ exchange: 'NSE', underlyingSymbol: 'NIFTY', year: 2022 });
+  } catch (error) {
+    message = error instanceof Error ? error.message : String(error);
+  }
+  assert.ok(!message.includes(SECRET_TOKEN));
+});
+
+test('SECURITY: the token never appears in a successful candle result or in any thrown error message/serialization', async () => {
+  const { client: okClient } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, null]]));
+  const rows = await okClient.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'NSE-NIFTY-06Jan22-17200-PE', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.ok(!JSON.stringify(rows, (_key, value) => (typeof value === 'bigint' ? value.toString() : value)).includes(SECRET_TOKEN));
+
+  const { client: failClient } = createClient(() => axiosFailure(401, {}));
+  let message = '';
+  try {
+    await failClient.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
   } catch (error) {
     message = error instanceof Error ? error.message : String(error);
   }

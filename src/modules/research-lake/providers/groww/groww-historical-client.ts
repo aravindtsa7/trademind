@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import logger from '../../../../core/logger/logger';
 import { GrowwApiEnvelope } from './groww-historical-api.dto';
+import { GrowwCandlePayload, GrowwCandleRow, GrowwValidatedCandleRow, parseGrowwCandleTimestamp } from './groww-historical-candle.dto';
 
 const growwApiBaseUrl = 'https://api.groww.in';
 const growwApiVersion = '1.0';
@@ -48,8 +49,9 @@ export class GrowwSchemaValidationError extends Error {
 
 /**
  * Narrowly-scoped HTTP client for Groww's CURRENT Backtesting historical
- * APIs (`/v1/historical/expiries`, `/v1/historical/contracts`) -- never the
- * deprecated `/v1/historical/candle/range`. Does not use the Groww SDK: a
+ * APIs (`/v1/historical/expiries`, `/v1/historical/contracts`,
+ * `/v1/historical/candles` -- task B-F4) -- never the deprecated
+ * `/v1/historical/candle/range`. Does not use the Groww SDK: a
  * small typed axios client is sufficient for these two read-only GET
  * endpoints and avoids an unnecessary dependency, matching the existing
  * repo convention (UpstoxHistoricalClient / UpstoxExpiredOptionClient are
@@ -118,6 +120,52 @@ export default class GrowwHistoricalClient {
       return contracts;
     } catch (error) {
       throw this.classifyAndRethrow(error, 'Groww historical contracts', { expiryDate: params.expiryDate, durationMs: Date.now() - startedAt });
+    }
+  }
+
+  /**
+   * Fetches and strictly validates one page of 1-minute FNO candles for a
+   * single Groww-native option/future symbol (task B-F4, section 1-2).
+   * `startTime`/`endTime` must already be `YYYY-MM-DD HH:mm:ss` wall-clock
+   * strings (never a `Date` -- callers own IST-vs-host-local formatting
+   * before calling this method, matching every other plain-string
+   * date/time convention already used in this module). Never chunks or
+   * re-requests on the caller's behalf: a single call is a single HTTP
+   * request, exactly like `fetchExpiries`/`fetchContracts`. Rows are
+   * returned in EXACTLY the order Groww delivered them -- never sorted or
+   * reversed here -- so `sourceIndex`/`CanonicalSourceOrderAnomaly`
+   * evidence at the caller boundary can still detect a genuine
+   * out-of-order delivery (task section 7).
+   */
+  async fetchOptionCandles(params: {
+    exchange: string;
+    segment: string;
+    growwSymbol: string;
+    startTime: string;
+    endTime: string;
+    candleInterval: string;
+  }): Promise<readonly GrowwValidatedCandleRow[]> {
+    const startedAt = Date.now();
+    const context = { exchange: params.exchange, segment: params.segment, growwSymbol: params.growwSymbol, startTime: params.startTime, endTime: params.endTime, candleInterval: params.candleInterval };
+    try {
+      logger.info('Requesting Groww historical candles', context);
+      const response = await this.axios.get<GrowwApiEnvelope>('/v1/historical/candles', {
+        params: {
+          exchange: params.exchange,
+          segment: params.segment,
+          groww_symbol: params.growwSymbol,
+          start_time: params.startTime,
+          end_time: params.endTime,
+          candle_interval: params.candleInterval,
+        },
+        headers: this.headers(),
+      });
+      const payload = this.validateSuccessEnvelope(response.data, 'historical candles');
+      const candles = this.extractCandleRows(payload, params.growwSymbol);
+      logger.info('Groww historical candles received', { ...context, count: candles.length, durationMs: Date.now() - startedAt });
+      return candles;
+    } catch (error) {
+      throw this.classifyAndRethrow(error, 'Groww historical candles', { ...context, durationMs: Date.now() - startedAt });
     }
   }
 
@@ -211,5 +259,73 @@ export default class GrowwHistoricalClient {
       if (typeof entry === 'string' && entry.length > 0) return entry;
       throw new GrowwSchemaValidationError(`Groww historical contracts payload.contracts[${index}] was not a non-empty string.`);
     });
+  }
+
+  /**
+   * Documented shape: `payload.candles` is an array of exactly-7-element
+   * arrays (FNO always reports openInterest in the 7th position, explicit
+   * `null` included) -- `payload` itself is never the array. Every row is
+   * validated strictly and independently (task section 2); a single
+   * malformed row fails the WHOLE response closed rather than silently
+   * dropping or coercing just that row, since a provider that got one row
+   * wrong cannot be trusted to have gotten the others right either.
+   */
+  private extractCandleRows(payload: unknown, growwSymbol: string): GrowwValidatedCandleRow[] {
+    const candles = (payload as Partial<GrowwCandlePayload>).candles;
+    if (!Array.isArray(candles)) {
+      throw new GrowwSchemaValidationError("Groww historical candles 'payload.candles' was not an array.");
+    }
+    return candles.map((row, index) => this.parseCandleRow(row, index, growwSymbol));
+  }
+
+  private parseCandleRow(row: GrowwCandleRow, index: number, growwSymbol: string): GrowwValidatedCandleRow {
+    const fail = (detail: string): never => {
+      throw new GrowwSchemaValidationError(`Groww historical candles for '${growwSymbol}': payload.candles[${index}] ${detail}`);
+    };
+    if (!Array.isArray(row) || row.length !== 7) {
+      return fail(`must be a 7-element array; received ${Array.isArray(row) ? `${row.length}-element array` : typeof row}.`);
+    }
+
+    const candleTime = parseGrowwCandleTimestamp(row[0]);
+    if (!candleTime) return fail(`has an invalid/malformed timestamp (received ${JSON.stringify(row[0])}).`);
+
+    const open = this.parseFiniteNumber(row[1], fail, 'open');
+    const high = this.parseFiniteNumber(row[2], fail, 'high');
+    const low = this.parseFiniteNumber(row[3], fail, 'low');
+    const close = this.parseFiniteNumber(row[4], fail, 'close');
+    const volume = this.parseNonNegativeIntegerBigInt(row[5], fail, 'volume', false);
+    const openInterest = this.parseNonNegativeIntegerBigInt(row[6], fail, 'openInterest', true);
+
+    return { candleTime, open, high, low, close, volume: volume as bigint, openInterest };
+  }
+
+  private parseFiniteNumber(raw: unknown, fail: (detail: string) => never, field: string): number {
+    if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+      return fail(`has a non-finite/non-numeric '${field}' value (received ${JSON.stringify(raw)}).`);
+    }
+    return raw;
+  }
+
+  /**
+   * `volume` is never nullable (`allowNull=false`); `openInterest` may
+   * legitimately be `null` or entirely absent -- both mean "provider did
+   * not supply OI", collapsed to `null` (task section 9: never fabricated,
+   * never treated as zero). `0` is always a valid, distinct value from
+   * `null` for both fields. Rejects `NaN`/`Infinity`, negative values, and
+   * non-integers (a fractional lot count/OI is malformed provider data,
+   * never silently rounded/truncated).
+   */
+  private parseNonNegativeIntegerBigInt(raw: unknown, fail: (detail: string) => never, field: string, allowNull: boolean): bigint | null {
+    if (raw === null || raw === undefined) {
+      if (allowNull) return null;
+      return fail(`has a missing/null '${field}' value, which is not permitted for '${field}'.`);
+    }
+    if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw)) {
+      return fail(`has a non-finite/non-integer '${field}' value (received ${JSON.stringify(raw)}).`);
+    }
+    if (raw < 0) {
+      return fail(`has a negative '${field}' value (${raw}), which is invalid.`);
+    }
+    return BigInt(raw);
   }
 }

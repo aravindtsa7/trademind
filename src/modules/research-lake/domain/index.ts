@@ -6,3 +6,4 @@ export * from './historical-option-identity.types';
 export * from './ist-session-clock';
 export * from './calendar-month-chunking.util';
 export * from './historical-option-contract-catalog.types';
+export * from './historical-option-candle-observation.types';

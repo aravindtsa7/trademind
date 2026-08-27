@@ -4,3 +4,8 @@ export { default as GrowwHistoricalContractProviderService } from './groww-histo
 export * from './groww-historical-contract-provider.service';
 export * from './groww-contract-symbol-parser';
 export * from './groww-historical-api.dto';
+export * from './groww-historical-candle.dto';
+export { default as GrowwOptionHistoricalDataProviderService } from './groww-option-historical-data-provider.service';
+export * from './groww-option-historical-data-provider.service';
+export { default as GrowwAccessTokenProviderService } from './groww-access-token-provider.service';
+export * from './groww-access-token-provider.service';

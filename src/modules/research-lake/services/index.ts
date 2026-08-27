@@ -7,3 +7,5 @@ export { default as NiftyUnderlyingAcquisitionService } from './nifty-underlying
 export * from './nifty-underlying-acquisition.service';
 export { default as NiftyHistoricalContractCatalogAcquisitionService } from './nifty-historical-contract-catalog.service';
 export * from './nifty-historical-contract-catalog.service';
+export { default as GrowwOptionCandleAcquisitionService } from './groww-option-candle-acquisition.service';
+export * from './groww-option-candle-acquisition.service';
