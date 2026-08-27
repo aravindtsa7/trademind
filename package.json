@@ -28,7 +28,9 @@
     "research:nifty-contract-catalog": "tsx src/tests/research-nifty-contract-catalog.ts",
     "research:nifty-option-candles": "tsx src/tests/research-nifty-option-candle-acquisition.ts",
     "research:manifest:generate": "tsx src/tests/research-dataset-manifest-generate.ts",
-    "research:manifest:verify": "tsx src/tests/research-dataset-manifest-verify.ts"
+    "research:manifest:verify": "tsx src/tests/research-dataset-manifest-verify.ts",
+    "research:parquet:export": "tsx src/tests/research-parquet-export.ts",
+    "research:parquet:verify": "tsx src/tests/research-parquet-verify.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
@@ -36,6 +38,8 @@
     "bullmq": "^6.0.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.4",
+    "hyparquet": "1.29.2",
+    "hyparquet-writer": "0.16.6",
     "protobufjs": "^8.7.1",
     "redis": "^6.2.0",
     "winston": "^3.9.0"
@@ -52,5 +56,10 @@
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.23.7",
     "typescript": "^5.6.0"
+  },
+  "overrides": {
+    "hyparquet-writer": {
+      "hyparquet": "$hyparquet"
+    }
   }
 }
