@@ -38,6 +38,30 @@ export default class LiveCandleBuilderService {
     this.liveConstructionBoundaries.set(instrumentKey, boundaryMs);
   }
 
+  // Per-instrument authoritative SOURCE-completion boundary (epoch ms, end-exclusive -- the
+  // first instant for which the underlying source publishes no candle at all, e.g. 15:30 IST
+  // for NSE_INDEX|Nifty 50; see nifty1mSourceCompletionBoundary). Distinct from, and always
+  // tighter than, the shared 09:15-15:40 operational session boundary enforced in processTick
+  // below (OUTSIDE_MARKET_SESSION), which continues to gate every instrument identically and is
+  // never changed by this. Unset (no entry) means no gating -- preserves existing behavior for
+  // every instrument that no caller explicitly opts in here (options, other indices, market
+  // replay, etc.), since the 15:30 source horizon is authoritative specifically for the
+  // canonical NIFTY_INDEX source, not for every instrument a shared builder happens to process.
+  private readonly sourceCompletionBoundaries = new Map<string, number>();
+
+  /**
+   * Registers `instrumentKey`'s source-completion boundary. At or after it, no further tick for
+   * that instrument may contribute its LTP to candle OHLC or open a new active candle, on any
+   * timeframe (see processTick). That same tick still acts as the trigger that finalizes --
+   * exactly once -- an already-active candle whose own bucket lies entirely within the horizon,
+   * and discards (never completes) one that doesn't, because its expected bucket would need a
+   * source minute that will never exist. finishSession applies the identical rule when no
+   * post-boundary tick ever arrives.
+   */
+  setSourceCompletionBoundary(instrumentKey: string, boundaryMs: number): void {
+    this.sourceCompletionBoundaries.set(instrumentKey, boundaryMs);
+  }
+
   /**
    * Fail-closed end-of-session sentinel used when recovery cannot find a strictly-future
    * strategy-aligned handoff before the canonical close. This does not claim that the close
@@ -62,6 +86,25 @@ export default class LiveCandleBuilderService {
     const previousTickTimestamp = this.lastAcceptedTickTimestamps.get(key);
     if (previousTickTimestamp !== undefined && tickTimestamp <= previousTickTimestamp) {
       return { ignored: true, ignoreReason: tickTimestamp === previousTickTimestamp ? 'DUPLICATE_TICK' : 'OUT_OF_ORDER_TICK' };
+    }
+
+    const sourceCompletionBoundary = this.sourceCompletionBoundaries.get(tick.instrumentKey);
+    if (sourceCompletionBoundary !== undefined && tickTimestamp >= sourceCompletionBoundary) {
+      // At/after the instrument's source-completion boundary: this tick's LTP must never update
+      // OHLC or open a new active candle. The watermark is still advanced so a later out-of-order
+      // PRE-boundary tick cannot resurrect or rebuild a bucket this branch just finalized/discarded.
+      this.lastAcceptedTickTimestamps.set(key, tickTimestamp);
+      const activeAtBoundary = this.activeCandles.get(key);
+      if (!activeAtBoundary) return { ignored: true, ignoreReason: 'AFTER_SOURCE_COMPLETION_BOUNDARY' };
+      this.activeCandles.delete(key);
+      const bucketEnd = activeAtBoundary.candleTime.getTime() + interval * 60_000;
+      if (bucketEnd > sourceCompletionBoundary) {
+        // Partial source-horizon tail: its bucket needs a source minute that will never exist.
+        return { ignored: true, ignoreReason: 'AFTER_SOURCE_COMPLETION_BOUNDARY' };
+      }
+      // The whole bucket lies within the source horizon -- the boundary tick is the trigger that
+      // finalizes it exactly once, using only the OHLC already accumulated from <=horizon ticks.
+      return { ignored: true, ignoreReason: 'AFTER_SOURCE_COMPLETION_BOUNDARY', completedCandle: { ...cloneCandle(activeAtBoundary), completed: true } };
     }
 
     const candleTime = getBucketStart(market, interval, session.openMinute);
@@ -109,11 +152,23 @@ export default class LiveCandleBuilderService {
     return active ? cloneCandle(active) : undefined;
   }
 
-  /** Completes only already-observed in-session candles at the official session boundary. */
+  /**
+   * Completes already-observed in-session candles at the official session boundary. A candle
+   * whose instrument has a registered source-completion boundary (see
+   * `setSourceCompletionBoundary`) and whose own bucket extends beyond it is a partial
+   * source-horizon tail -- discarded here, never fabricated as completed, exactly like the
+   * matching in-line discard in `processTick` for the case where a post-boundary tick does
+   * arrive.
+   */
   finishSession(instrumentKey?: string): LiveCandleDto[] {
     const completed: LiveCandleDto[] = [];
     for (const [key, candle] of this.activeCandles) {
       if (instrumentKey !== undefined && candle.instrumentKey !== instrumentKey) continue;
+      const boundary = this.sourceCompletionBoundaries.get(candle.instrumentKey);
+      if (boundary !== undefined && candle.candleTime.getTime() + timeframeMinutes[candle.timeframe] * 60_000 > boundary) {
+        this.activeCandles.delete(key);
+        continue;
+      }
       completed.push({ ...cloneCandle(candle), completed: true });
       this.activeCandles.delete(key);
     }
