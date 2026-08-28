@@ -97,7 +97,13 @@ async function run(): Promise<void> {
   forwardJournal.append({ recordType: 'SESSION', tradingDate: forwardDate, strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, runtimeStartedAt: new Date().toISOString(), warmupReadyAt: new Date().toISOString(), marketDataHealthy: true, sessionCompleted: false, flags: ['FORWARD_EVALUATION_ONLY', 'SHADOW_ONLY'] });
   evaluator.seedHistoricalOneMinute(warmup.seededOneMinuteCandles);
 
-  const websocket = new MarketDataWebSocketClient(token); const connection = new ConnectionManager(token, websocket, { maximumReconnectDurationMs:reconnectDurationMs }); const subscriptions = new SubscriptionManager(token, connection); const decoder = new ProtobufDecoder(); const ticks = new TickProcessor(); const liveCandleBuilder = new LiveCandleBuilderService(); const candleEvents = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId()); const tracker = new V4MomentumShadowTrackerService(); const contracts = new CurrentNiftyPeContracts();
+  const websocket = new MarketDataWebSocketClient(token); const connection = new ConnectionManager(token, websocket, { maximumReconnectDurationMs:reconnectDurationMs }); const subscriptions = new SubscriptionManager(token, connection); const decoder = new ProtobufDecoder(); const ticks = new TickProcessor(); const liveCandleBuilder = new LiveCandleBuilderService();
+  // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST source
+  // horizon -- scoped to this instrument only (never the option contract subscribed on a
+  // signal) via the canonical nifty1mSourceCompletionBoundary utility, computed once for this
+  // session's trading day.
+  liveCandleBuilder.setSourceCompletionBoundary(nifty, nifty1mSourceCompletionBoundary(new Date()).getTime());
+  const candleEvents = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId()); const tracker = new V4MomentumShadowTrackerService(); const contracts = new CurrentNiftyPeContracts();
   let completed3m = 0; let opportunities = 0; let signals = 0; let closing = false; let eodStarted = false; let eodTimer: NodeJS.Timeout | undefined; let eodWatchdog: NodeJS.Timeout | undefined; let host: StrategyHostLifecycle | undefined;
   // Separates each terminal trigger's own close-out work (still gated by the `closing` latch
   // below, run at most once) from the single durable SUMMARY/CLEAN_SHUTDOWN write: a racing

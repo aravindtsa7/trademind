@@ -163,6 +163,11 @@ async function run(): Promise<void> {
   const protobufDecoder = new ProtobufDecoder();
   const tickProcessor = new TickProcessor();
   const liveCandleBuilder = new LiveCandleBuilderService();
+  // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST source
+  // horizon -- scoped to this instrument only (never every instrument the shared builder
+  // processes, e.g. the option contract subscribed on a signal) via the canonical
+  // nifty1mSourceCompletionBoundary utility, computed once for this session's trading day.
+  liveCandleBuilder.setSourceCompletionBoundary(niftyInstrumentKey, nifty1mSourceCompletionBoundary(new Date()).getTime());
   const liveCandleEventAdapter = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connectionManager.getGenerationId());
 
   const orderManager = new PaperOrderManagerService();

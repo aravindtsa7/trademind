@@ -215,8 +215,13 @@ async function run(): Promise<void> {
     subscriptions = new SubscriptionManager(token, connection),
     decoder = new ProtobufDecoder(),
     ticks = new TickProcessor(),
-    liveCandleBuilder = new LiveCandleBuilderService(),
-    candles = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId()),
+    liveCandleBuilder = new LiveCandleBuilderService();
+  // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST source
+  // horizon -- scoped to this instrument only (never the option contract subscribed on a
+  // signal) via the canonical nifty1mSourceCompletionBoundary utility, computed once for this
+  // session's trading day.
+  liveCandleBuilder.setSourceCompletionBoundary(NIFTY, nifty1mSourceCompletionBoundary(new Date()).getTime());
+  const candles = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId()),
     tracker = new V8ShadowObservationTracker(frozen.candidate.policy),
     contracts = new CurrentNiftyCeContracts(),
     counters = new V8ShadowRuntimeCounters();
