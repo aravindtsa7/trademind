@@ -11,3 +11,8 @@ export * from './dataset-manifest-canonical-json';
 export * from './dataset-manifest.types';
 export * from './resampled-candle.types';
 export * from './research-year-run.types';
+export * from './exchange-calendar.types';
+export * from './exchange-calendar-date';
+export * from './exchange-calendar-checksum';
+export * from './exchange-calendar-fixture.types';
+export * from './exchange-calendar-resolution.types';

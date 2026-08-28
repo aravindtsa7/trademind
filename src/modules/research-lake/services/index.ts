@@ -20,3 +20,9 @@ export { default as ResearchYearRunCheckpointService, DEFAULT_RESEARCH_YEAR_RUN_
 export { default as ResearchYearRunnerService } from './research-year-runner.service';
 export * from './research-year-runner.service';
 export * from './research-year-run-cli-exit-policy.util';
+export { default as ExchangeCalendarResolverService } from './exchange-calendar-resolver.service';
+export * from './exchange-calendar-resolver.service';
+export { default as ExchangeCalendarImporterService } from './exchange-calendar-importer.service';
+export * from './exchange-calendar-importer.service';
+export { default as ExchangeCalendarCertificationService } from './exchange-calendar-certification.service';
+export * from './exchange-calendar-certification.service';

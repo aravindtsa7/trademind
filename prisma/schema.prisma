@@ -254,6 +254,115 @@ model ExecutionFill {
   @@index([executionOrderId, timestamp])
 }
 
+// B-F7A CORE: authoritative, provider-agnostic exchange trading-calendar
+// truth. Deliberately separate from any live `nse-session-calendar.service.ts`
+// runtime code (out of scope for this pass) and from Upstox/Groww identifiers
+// (exchange/segment are stable domain concepts, never provider-coupled).
+//
+// Coverage versions are year-scoped. `coverageFrom`/`coverageTo` remain
+// explicit because a current-year snapshot may certify only part of its
+// `calendarYear`; application validation requires both boundaries to belong
+// to that year. Version identity is therefore
+// `(exchange, segment, calendarYear, version)`.
+model ExchangeCalendarCoverage {
+  id                   String                           @id @default(uuid())
+  exchange             String
+  segment              String
+  calendarYear         Int
+  coverageFrom         DateTime
+  coverageTo           DateTime
+  version              Int
+  status               String
+  sourceAuthority      String
+  sourceBundleChecksum String
+  createdAt            DateTime                         @default(now())
+  updatedAt            DateTime                         @updatedAt
+  sourceDocuments      ExchangeCalendarSourceDocument[]
+  days                 ExchangeCalendarDay[]
+
+  @@unique([exchange, segment, calendarYear, version])
+  @@index([exchange, segment, calendarYear, status])
+  @@index([exchange, segment, calendarYear, coverageFrom, coverageTo])
+}
+
+// Stable serialization target for certification/activation. Repository code
+// ensures this exact scope row exists, locks it with SELECT ... FOR UPDATE,
+// then performs the complete DRAFT/CERTIFIED/DEPRECATED transition atomically.
+model ExchangeCalendarScopeLock {
+  id           String   @id @default(uuid())
+  exchange     String
+  segment      String
+  calendarYear Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([exchange, segment, calendarYear])
+}
+
+// One official NSE source document contributing to a coverage version's
+// provenance. A coverage version is deliberately allowed 1..N of these (task
+// correction: a year's calendar truth may derive from an annual circular PLUS
+// amendments/extraordinary-closure notices/special-session circulars) --
+// never modeled as exactly one circular per version.
+model ExchangeCalendarSourceDocument {
+  id                    String                   @id @default(uuid())
+  coverageId            String
+  documentReference     String
+  documentType          String
+  contentChecksumSha256 String
+  referenceUrl          String?
+  createdAt             DateTime                 @default(now())
+  coverage              ExchangeCalendarCoverage @relation(fields: [coverageId], references: [id], onDelete: Cascade)
+  days                  ExchangeCalendarDay[]
+
+  @@unique([coverageId, documentReference])
+}
+
+// One explicit, authoritative date definition within a coverage version.
+// Only ever holds the classifications that can be authoritatively declared
+// (`REGULAR_SESSION` / `EXCHANGE_HOLIDAY` / `SPECIAL_SESSION` /
+// `EXCEPTIONAL_CLOSURE`) -- `WEEKEND` and `UNCERTIFIED` are never persisted
+// rows, they are always resolver-inferred (see
+// `exchange-calendar-resolution.types.ts`). `sourceDocumentId` remains
+// nullable only because explicit REGULAR_SESSION attribution is optional;
+// application validation requires it for every explicit holiday, special
+// session, and exceptional closure.
+model ExchangeCalendarDay {
+  id               String                          @id @default(uuid())
+  coverageId       String
+  tradingDate      DateTime
+  classification   String
+  reason           String?
+  sourceDocumentId String?
+  createdAt        DateTime                        @default(now())
+  coverage         ExchangeCalendarCoverage        @relation(fields: [coverageId], references: [id], onDelete: Cascade)
+  sourceDocument   ExchangeCalendarSourceDocument? @relation(fields: [sourceDocumentId], references: [id], onDelete: Restrict)
+  windows          ExchangeCalendarSessionWindow[]
+
+  @@unique([coverageId, tradingDate])
+  @@index([tradingDate])
+  @@index([sourceDocumentId])
+}
+
+// One deterministic session window for an explicit `SPECIAL_SESSION` day.
+// Canonical representation only: `openMinuteIst`/`closeMinuteIst` (minutes
+// since IST midnight) are the sole stored form -- there is deliberately no
+// parallel `"HH:mm"` string field, since two stored forms of the same fact
+// can drift; a presentation format is derived on read, never persisted.
+// `closeMinuteIst` is an EXCLUSIVE session boundary (see
+// `exchange-calendar.types.ts` doc on `SessionWindow`).
+model ExchangeCalendarSessionWindow {
+  id             String              @id @default(uuid())
+  calendarDayId  String
+  windowIndex    Int
+  openMinuteIst  Int
+  closeMinuteIst Int
+  createdAt      DateTime            @default(now())
+  calendarDay    ExchangeCalendarDay @relation(fields: [calendarDayId], references: [id], onDelete: Cascade)
+
+  @@unique([calendarDayId, windowIndex])
+}
+
 model ExecutionStateTransition {
   transitionId     String   @id
   executionOrderId String
