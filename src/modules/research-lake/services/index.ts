@@ -13,3 +13,5 @@ export { default as DatasetSessionManifestBuilderService } from './dataset-sessi
 export * from './dataset-session-manifest-builder.service';
 export { default as DatasetManifestService } from './dataset-manifest.service';
 export * from './dataset-manifest.service';
+export { default as HistoricalCandleResamplerService } from './historical-candle-resampler.service';
+export * from './historical-candle-resampler.service';

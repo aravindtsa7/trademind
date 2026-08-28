@@ -30,7 +30,8 @@
     "research:manifest:generate": "tsx src/tests/research-dataset-manifest-generate.ts",
     "research:manifest:verify": "tsx src/tests/research-dataset-manifest-verify.ts",
     "research:parquet:export": "tsx src/tests/research-parquet-export.ts",
-    "research:parquet:verify": "tsx src/tests/research-parquet-verify.ts"
+    "research:parquet:verify": "tsx src/tests/research-parquet-verify.ts",
+    "research:resample": "tsx src/tests/research-resample.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
