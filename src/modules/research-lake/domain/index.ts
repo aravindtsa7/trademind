@@ -10,3 +10,4 @@ export * from './historical-option-candle-observation.types';
 export * from './dataset-manifest-canonical-json';
 export * from './dataset-manifest.types';
 export * from './resampled-candle.types';
+export * from './research-year-run.types';

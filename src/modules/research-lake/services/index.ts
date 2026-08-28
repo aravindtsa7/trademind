@@ -15,3 +15,8 @@ export { default as DatasetManifestService } from './dataset-manifest.service';
 export * from './dataset-manifest.service';
 export { default as HistoricalCandleResamplerService } from './historical-candle-resampler.service';
 export * from './historical-candle-resampler.service';
+export { default as ResearchYearPlanService, UnavailableRequiredOptionSessionSource } from './research-year-plan.service';
+export { default as ResearchYearRunCheckpointService, DEFAULT_RESEARCH_YEAR_RUN_CHECKPOINT_ROOT } from './research-year-run-checkpoint.service';
+export { default as ResearchYearRunnerService } from './research-year-runner.service';
+export * from './research-year-runner.service';
+export * from './research-year-run-cli-exit-policy.util';
