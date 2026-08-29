@@ -32,7 +32,8 @@
     "research:parquet:export": "tsx src/tests/research-parquet-export.ts",
     "research:parquet:verify": "tsx src/tests/research-parquet-verify.ts",
     "research:resample": "tsx src/tests/research-resample.ts",
-    "research:year": "tsx src/tests/research-year-runner.ts"
+    "research:year": "tsx src/tests/research-year-runner.ts",
+    "research:archive:2024-pilot": "tsx src/tests/research-nse-2024-raw-source-archive.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
@@ -42,6 +43,7 @@
     "express": "^4.18.4",
     "hyparquet": "1.29.2",
     "hyparquet-writer": "0.16.6",
+    "pdf-lib": "1.17.1",
     "protobufjs": "^8.7.1",
     "redis": "^6.2.0",
     "winston": "^3.9.0"

@@ -26,3 +26,8 @@ export { default as ExchangeCalendarImporterService } from './exchange-calendar-
 export * from './exchange-calendar-importer.service';
 export { default as ExchangeCalendarCertificationService } from './exchange-calendar-certification.service';
 export * from './exchange-calendar-certification.service';
+export { default as NseRawSourceHttpDownloaderService } from './nse-raw-source-downloader.service';
+export * from './nse-raw-source-downloader.service';
+export { default as RawSourceArchiverService } from './nse-raw-source-archiver.service';
+export * from './nse-raw-source-archiver.service';
+export * from './nse-2024-pilot-archive-runner';
