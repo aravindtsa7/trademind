@@ -10,6 +10,7 @@ import {
   CanonicalSourceOrderAnomaly,
   CanonicalSourceOrderAnomalyReason,
 } from '../domain/canonical-session.types';
+import { SessionWindow, validateSessionWindows } from '../domain/exchange-calendar.types';
 import { NIFTY_1M_SOURCE_HORIZON_END_MINUTE } from '../../historical-candles/utils/historical-session-completeness.util';
 import { istCalendarDate, istMinuteOfDay, NORMAL_SESSION_START_MINUTE } from '../domain/ist-session-clock';
 
@@ -40,12 +41,19 @@ export default class CanonicalSessionProjectorService {
       };
     }
 
+    const calendarWindows =
+      sessionDeclaration === CanonicalSessionDeclaration.CALENDAR_DECLARED_SESSION
+        ? this.assertCalendarWindows(request.sessionWindows)
+        : null;
+
     const accepted: CanonicalHistoricalCandle[] = [];
     const excluded: CanonicalSessionExclusion[] = [];
     const sourceOrderAnomalies = this.detectSourceOrderAnomalies(sourceRows);
 
     for (const row of sourceRows) {
-      const reason = this.classify(row, assetType, tradingDate);
+      const reason = calendarWindows
+        ? this.classifyAgainstCalendarWindows(row, tradingDate, calendarWindows)
+        : this.classify(row, assetType, tradingDate);
       if (reason === null) {
         accepted.push({
           assetType,
@@ -101,6 +109,41 @@ export default class CanonicalSessionProjectorService {
       }
     }
     return anomalies;
+  }
+
+  /**
+   * Fails closed rather than defaulting to an empty/implicit window set: a
+   * `CALENDAR_DECLARED_SESSION` request with no (or malformed) windows is a
+   * caller bug, not a legitimate "no session" state -- `CLOSED_*`/
+   * `BLOCKED_UNCERTIFIED` dates must never reach the projector at all (task
+   * B-F2-CAL-2 section 12/15).
+   */
+  private assertCalendarWindows(sessionWindows: readonly SessionWindow[] | undefined): readonly SessionWindow[] {
+    if (!sessionWindows || sessionWindows.length === 0) {
+      throw new Error('CanonicalSessionProjectorService: CALENDAR_DECLARED_SESSION requires a non-empty sessionWindows array.');
+    }
+    return validateSessionWindows(sessionWindows);
+  }
+
+  /**
+   * Classifies one row against an explicit, calendar-certified window set
+   * (task section 10/11/19): accepted only if it falls on the declared
+   * trading date AND inside at least one half-open `[openMinuteIst,
+   * closeMinuteIst)` window -- a row in the gap between two disjoint windows
+   * (e.g. [600,690) between a multi-window special session's two windows)
+   * is excluded, never bridged.
+   */
+  private classifyAgainstCalendarWindows(
+    row: HistoricalSourceCandleRow,
+    tradingDate: string,
+    windows: readonly SessionWindow[]
+  ): CanonicalExclusionReason | null {
+    if (istCalendarDate(row.candleTime) !== tradingDate) {
+      return CanonicalExclusionReason.OUTSIDE_DECLARED_SESSION;
+    }
+    const minuteOfDay = istMinuteOfDay(row.candleTime);
+    const insideAWindow = windows.some((window) => minuteOfDay >= window.openMinuteIst && minuteOfDay < window.closeMinuteIst);
+    return insideAWindow ? null : CanonicalExclusionReason.OUTSIDE_CALENDAR_SESSION_WINDOW;
   }
 
   private classify(

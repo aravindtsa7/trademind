@@ -77,6 +77,7 @@ function underlyingResult(overrides: {
       invalid: overrides.invalid ?? [],
       specialSessionExcluded: [],
       unresolvedNoData: overrides.unresolvedNoData ?? [],
+      closedNoDataExpected: [],
     },
     sessionDetails: [],
     retryCount: 0,

@@ -150,6 +150,7 @@ async function run(): Promise<void> {
           invalid: result.sessions.invalid.length,
           specialSessionExcluded: result.sessions.specialSessionExcluded.length,
           unresolvedNoData: result.sessions.unresolvedNoData.length,
+          closedNoDataExpected: result.sessions.closedNoDataExpected.length,
         },
         retryCount: result.retryCount,
         rateLimitBackoffCount: result.rateLimitBackoffCount,

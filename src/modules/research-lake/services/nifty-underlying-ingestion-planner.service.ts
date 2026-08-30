@@ -11,7 +11,7 @@ import { CalendarDateRange, splitIntoCalendarMonthChunks } from '../domain/calen
 import { ExchangeCalendarDateInvariantError, parseExchangeCalendarDate } from '../domain/exchange-calendar-date';
 import { expectedMinutesForWindow, expectedMinutesForWindows, regularSessionWindow } from '../domain/session-window-expected-minutes.util';
 import ExchangeCalendarResolverService from './exchange-calendar-resolver.service';
-import { NIFTY_INDEX_INSTRUMENT_KEY } from './nifty-underlying-acquisition.service';
+import { NIFTY_INDEX_INSTRUMENT_KEY } from './nifty-underlying-identity';
 
 /**
  * The certified calendar identity that governs the NIFTY 50 UNDERLYING/INDEX
@@ -102,7 +102,14 @@ export interface NiftyUnderlyingIngestionPlannerServiceDependencies {
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-const CLOSED_DISPOSITIONS: ReadonlySet<NiftyPlannedDateDisposition> = new Set([
+/**
+ * Exported (task B-F2-CAL-2) so `NiftyUnderlyingAcquisitionService` consumes
+ * this SAME set to decide which dates require no provider request, rather
+ * than re-deriving its own closed/open disposition split -- the core CAL-2
+ * invariant that planner calendar truth and acquisition calendar truth must
+ * never independently diverge.
+ */
+export const CLOSED_DISPOSITIONS: ReadonlySet<NiftyPlannedDateDisposition> = new Set([
   NiftyPlannedDateDisposition.CLOSED_HOLIDAY,
   NiftyPlannedDateDisposition.CLOSED_EXCEPTIONAL,
   NiftyPlannedDateDisposition.CLOSED_WEEKEND,

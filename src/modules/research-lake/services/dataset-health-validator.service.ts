@@ -47,25 +47,36 @@ const BLOCKING_ISSUE_REASONS = new Set<DatasetHealthIssueReason>([
  * ...) so the same 375-row contract is never redefined, only explained.
  */
 export default class DatasetHealthValidatorService {
-  validate(projection: CanonicalSessionProjectionResult): DatasetHealthReport {
+  /**
+   * `expectedMinutesIst`: optional calendar-declared expected minute-of-day
+   * (IST) set for `tradingDate` (task B-F2-CAL-2 section 17/18). Omitted
+   * (the default, preserving every pre-CAL-2 caller's behavior exactly):
+   * the fixed 09:15-15:29/375-row regular-session contract. Supplied (by
+   * `NiftyUnderlyingAcquisitionService` for a `SPECIAL_SESSION_DAY`, sourced
+   * from the certified calendar plan): the completeness/missing-minute check
+   * runs against that EXACT set instead -- never against the fixed 375
+   * default -- so a 105-minute multi-window special session is never scored
+   * against a spurious 270-minute "shortfall".
+   */
+  validate(projection: CanonicalSessionProjectionResult, expectedMinutesIst?: readonly number[]): DatasetHealthReport {
     const { instrumentKey, tradingDate, sourceRowCount, acceptedRows, excludedRows, outcome } = projection;
 
     if (outcome === CanonicalSessionProjectionOutcome.SPECIAL_SESSION_EXCLUDED) {
-      return this.report(DatasetHealthStatus.SPECIAL_SESSION_EXCLUDED, projection, [], 0, 0);
+      return this.report(DatasetHealthStatus.SPECIAL_SESSION_EXCLUDED, projection, [], 0, 0, expectedMinutesIst);
     }
 
     if (!this.hasUsableIdentity(instrumentKey, tradingDate)) {
-      return this.report(DatasetHealthStatus.METADATA_INCOMPLETE, projection, [], 0, 0);
+      return this.report(DatasetHealthStatus.METADATA_INCOMPLETE, projection, [], 0, 0, expectedMinutesIst);
     }
 
     if (sourceRowCount === 0) {
-      return this.report(DatasetHealthStatus.PROVIDER_UNAVAILABLE, projection, [], 0, 0);
+      return this.report(DatasetHealthStatus.PROVIDER_UNAVAILABLE, projection, [], 0, 0, expectedMinutesIst);
     }
 
     const candleIssues = this.checkCandleValues(acceptedRows);
     const sourceOrderIssues = this.checkSourceOrderAnomalies(projection.sourceOrderAnomalies);
-    const structurallyComplete = isCompleteHistoricalSession(acceptedRows);
-    const structuralIssues = structurallyComplete ? [] : this.checkStructure(acceptedRows, tradingDate);
+    const structurallyComplete = expectedMinutesIst === undefined && isCompleteHistoricalSession(acceptedRows);
+    const structuralIssues = structurallyComplete ? [] : this.checkStructure(acceptedRows, tradingDate, expectedMinutesIst);
 
     const issues = [...structuralIssues, ...candleIssues, ...sourceOrderIssues].sort(this.byCandleTime);
     const duplicateTimestampCount = structuralIssues.filter(
@@ -84,7 +95,7 @@ export default class DatasetHealthValidatorService {
           ? DatasetHealthStatus.NORMALIZED_WITH_EXCLUSIONS
           : DatasetHealthStatus.HEALTHY;
 
-    return this.report(status, projection, issues, duplicateTimestampCount, missingMinuteCount);
+    return this.report(status, projection, issues, duplicateTimestampCount, missingMinuteCount, expectedMinutesIst);
   }
 
   private report(
@@ -92,7 +103,8 @@ export default class DatasetHealthValidatorService {
     projection: CanonicalSessionProjectionResult,
     issues: readonly DatasetHealthIssue[],
     duplicateTimestampCount: number,
-    missingMinuteCount: number
+    missingMinuteCount: number,
+    expectedMinutesIst?: readonly number[]
   ): DatasetHealthReport {
     return {
       status,
@@ -101,7 +113,7 @@ export default class DatasetHealthValidatorService {
       tradingDate: projection.tradingDate,
       sourceRowCount: projection.sourceRowCount,
       canonicalRowCount: projection.acceptedRows.length,
-      expectedRowCount: HISTORICAL_SESSION_ROW_COUNT,
+      expectedRowCount: expectedMinutesIst?.length ?? HISTORICAL_SESSION_ROW_COUNT,
       excludedRowCount: projection.excludedRows.length,
       exclusions: projection.excludedRows,
       duplicateTimestampCount,
@@ -115,7 +127,11 @@ export default class DatasetHealthValidatorService {
     return instrumentKey.length > 0 && /^\d{4}-\d{2}-\d{2}$/.test(tradingDate);
   }
 
-  private checkStructure(rows: readonly CanonicalHistoricalCandle[], tradingDate: string): DatasetHealthIssue[] {
+  private checkStructure(
+    rows: readonly CanonicalHistoricalCandle[],
+    tradingDate: string,
+    expectedMinutesIst?: readonly number[]
+  ): DatasetHealthIssue[] {
     const issues: DatasetHealthIssue[] = [];
     const countByTimestamp = new Map<number, number>();
     for (const row of rows) {
@@ -158,7 +174,7 @@ export default class DatasetHealthValidatorService {
       previousTimestamp = timestamp;
     }
 
-    for (const expected of this.expectedCanonicalMinutes(tradingDate)) {
+    for (const expected of this.expectedCanonicalMinutes(tradingDate, expectedMinutesIst)) {
       if (!countByTimestamp.has(expected.getTime())) {
         issues.push({
           reason: DatasetHealthIssueReason.MISSING_CANONICAL_MINUTE,
@@ -227,7 +243,11 @@ export default class DatasetHealthValidatorService {
     }));
   }
 
-  private expectedCanonicalMinutes(tradingDate: string): Date[] {
+  private expectedCanonicalMinutes(tradingDate: string, expectedMinutesIst?: readonly number[]): Date[] {
+    if (expectedMinutesIst) {
+      const dayStart = new Date(`${tradingDate}T00:00:00+05:30`).getTime();
+      return expectedMinutesIst.map((minuteOfDay) => new Date(dayStart + minuteOfDay * MINUTE_MS));
+    }
     const start = new Date(`${tradingDate}T09:15:00+05:30`).getTime();
     return Array.from({ length: HISTORICAL_SESSION_ROW_COUNT }, (_, index) => new Date(start + index * MINUTE_MS));
   }

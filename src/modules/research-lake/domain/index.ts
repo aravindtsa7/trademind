@@ -17,6 +17,7 @@ export * from './exchange-calendar-checksum';
 export * from './exchange-calendar-fixture.types';
 export * from './exchange-calendar-resolution.types';
 export * from './session-window-expected-minutes.util';
+export * from './calendar-session-completeness.util';
 export * from './raw-source-archive.types';
 export * from './raw-source-lifecycle-graph';
 export * from './raw-source-url-policy';

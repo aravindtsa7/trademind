@@ -198,3 +198,110 @@ test('a well-ordered raw source produces no source-order anomalies', () => {
 
   assert.equal(result.sourceOrderAnomalies.length, 0);
 });
+
+// ============================================================================
+// B-F2-CAL-2: CALENDAR_DECLARED_SESSION
+// ============================================================================
+
+function minuteRow(sourceIndex: number, minuteOfDay: number): HistoricalSourceCandleRow {
+  const dayStart = new Date(`${TRADING_DATE}T00:00:00+05:30`).getTime();
+  return row(sourceIndex, new Date(dayStart + minuteOfDay * 60_000).toISOString());
+}
+
+function calendarRequest(sourceRows: readonly HistoricalSourceCandleRow[], sessionWindows: readonly { windowIndex: number; openMinuteIst: number; closeMinuteIst: number }[]): CanonicalSessionProjectionRequest {
+  return { ...request(sourceRows), sessionDeclaration: CanonicalSessionDeclaration.CALENDAR_DECLARED_SESSION, sessionWindows };
+}
+
+test('CAL-2: a single-window CALENDAR_DECLARED_SESSION accepts rows inside the window and excludes rows outside it as OUTSIDE_CALENDAR_SESSION_WINDOW', () => {
+  const window = { windowIndex: 0, openMinuteIst: 1080, closeMinuteIst: 1140 }; // [18:00, 19:00)
+  const inWindow = Array.from({ length: 60 }, (_, index) => minuteRow(index, 1080 + index));
+  const outsideWindow = minuteRow(999, 555); // 09:15, unrelated regular-hours minute
+  const projector = new CanonicalSessionProjectorService();
+
+  const result = projector.project(calendarRequest([outsideWindow, ...inWindow], [window]));
+
+  assert.equal(result.acceptedRows.length, 60);
+  assert.equal(result.excludedRows.length, 1);
+  assert.equal(result.excludedRows[0].reason, CanonicalExclusionReason.OUTSIDE_CALENDAR_SESSION_WINDOW);
+});
+
+test('CAL-2: a multi-window CALENDAR_DECLARED_SESSION never bridges the gap between disjoint windows', () => {
+  const windows = [
+    { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+    { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+  ];
+  const window0Rows = Array.from({ length: 45 }, (_, index) => minuteRow(index, 555 + index));
+  const window1Rows = Array.from({ length: 60 }, (_, index) => minuteRow(45 + index, 690 + index));
+  const gapRow = minuteRow(999, 645); // squarely inside the [600,690) gap
+  const projector = new CanonicalSessionProjectorService();
+
+  const result = projector.project(calendarRequest([...window0Rows, gapRow, ...window1Rows], windows));
+
+  assert.equal(result.acceptedRows.length, 105);
+  assert.equal(result.excludedRows.length, 1);
+  assert.equal(result.excludedRows[0].reason, CanonicalExclusionReason.OUTSIDE_CALENDAR_SESSION_WINDOW);
+  assert.equal(result.excludedRows[0].candleTime.toISOString(), gapRow.candleTime.toISOString());
+});
+
+test('CAL-2: half-open window boundary -- the last minute before closeMinuteIst is accepted, closeMinuteIst itself is excluded', () => {
+  const window = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 };
+  const lastAccepted = minuteRow(0, 599); // 09:59, the final in-window minute
+  const firstExcluded = minuteRow(1, 600); // 10:00, exactly closeMinuteIst -- half-open, must be excluded
+  const projector = new CanonicalSessionProjectorService();
+
+  const result = projector.project(calendarRequest([lastAccepted, firstExcluded], [window]));
+
+  assert.equal(result.acceptedRows.length, 1);
+  assert.equal(result.acceptedRows[0].candleTime.toISOString(), lastAccepted.candleTime.toISOString());
+  assert.equal(result.excludedRows.length, 1);
+  assert.equal(result.excludedRows[0].candleTime.toISOString(), firstExcluded.candleTime.toISOString());
+  assert.equal(result.excludedRows[0].reason, CanonicalExclusionReason.OUTSIDE_CALENDAR_SESSION_WINDOW);
+});
+
+test('CAL-2: openMinuteIst itself IS accepted (half-open window is inclusive of its own open boundary)', () => {
+  const window = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 };
+  const firstAccepted = minuteRow(0, 555);
+  const projector = new CanonicalSessionProjectorService();
+
+  const result = projector.project(calendarRequest([firstAccepted], [window]));
+
+  assert.equal(result.acceptedRows.length, 1);
+  assert.equal(result.excludedRows.length, 0);
+});
+
+test('CAL-2: a row on a different IST calendar date is OUTSIDE_DECLARED_SESSION even under CALENDAR_DECLARED_SESSION (cross-session contamination takes priority over window membership)', () => {
+  const window = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 };
+  const wrongDateRow = row(0, '2026-08-18T09:15:00+05:30'); // TRADING_DATE is 2026-08-17
+  const projector = new CanonicalSessionProjectorService();
+
+  const result = projector.project(calendarRequest([wrongDateRow], [window]));
+
+  assert.equal(result.acceptedRows.length, 0);
+  assert.equal(result.excludedRows.length, 1);
+  assert.equal(result.excludedRows[0].reason, CanonicalExclusionReason.OUTSIDE_DECLARED_SESSION);
+});
+
+test('CAL-2: CALENDAR_DECLARED_SESSION with no sessionWindows fails closed rather than silently projecting an empty/implicit session', () => {
+  const projector = new CanonicalSessionProjectorService();
+  assert.throws(() => projector.project(calendarRequest(normalSessionRows(), [])));
+  assert.throws(() =>
+    projector.project({ ...request(normalSessionRows()), sessionDeclaration: CanonicalSessionDeclaration.CALENDAR_DECLARED_SESSION })
+  );
+});
+
+test('CAL-2: CALENDAR_DECLARED_SESSION with overlapping windows fails closed (delegated to validateSessionWindows)', () => {
+  const overlapping = [
+    { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 700 },
+    { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+  ];
+  const projector = new CanonicalSessionProjectorService();
+  assert.throws(() => projector.project(calendarRequest(normalSessionRows(), overlapping)));
+});
+
+test('CAL-2: outcome for a CALENDAR_DECLARED_SESSION is NORMAL_SESSION_PROJECTED (a real per-row projection occurred, not a wholesale exclusion)', () => {
+  const window = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 };
+  const projector = new CanonicalSessionProjectorService();
+  const result = projector.project(calendarRequest([minuteRow(0, 555)], [window]));
+
+  assert.equal(result.outcome, CanonicalSessionProjectionOutcome.NORMAL_SESSION_PROJECTED);
+});

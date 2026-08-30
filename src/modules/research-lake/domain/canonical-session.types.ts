@@ -1,5 +1,6 @@
 import { HistoricalAssetType } from './historical-asset.types';
 import { CanonicalHistoricalCandle, HistoricalSourceCandleRow } from './canonical-historical-candle';
+import { SessionWindow } from './exchange-calendar.types';
 
 /**
  * Typed, machine-readable reason a source row was excluded from the
@@ -24,6 +25,16 @@ export enum CanonicalExclusionReason {
   POST_SOURCE_ROW = 'POST_SOURCE_ROW',
   POST_MARKET_ROW = 'POST_MARKET_ROW',
   OUTSIDE_DECLARED_SESSION = 'OUTSIDE_DECLARED_SESSION',
+  /**
+   * B-F2-CAL-2: a row on the correct IST trading date but outside every
+   * `SessionWindow` a `CALENDAR_DECLARED_SESSION` declared -- e.g. a candle
+   * falling in the [600,690) gap between a multi-window special session's
+   * two windows. This is the typed quality classification for "provider
+   * returned data outside the certified calendar session windows" (task
+   * section 16): the row is retained as excluded evidence, never silently
+   * accepted into the canonical/persisted set and never silently dropped.
+   */
+  OUTSIDE_CALENDAR_SESSION_WINDOW = 'OUTSIDE_CALENDAR_SESSION_WINDOW',
 }
 
 /**
@@ -38,6 +49,19 @@ export enum CanonicalExclusionReason {
 export enum CanonicalSessionDeclaration {
   NORMAL_NIFTY_SESSION = 'NORMAL_NIFTY_SESSION',
   UNDECLARED_SPECIAL_SESSION = 'UNDECLARED_SPECIAL_SESSION',
+  /**
+   * B-F2-CAL-2: the caller supplies the EXACT certified `SessionWindow`s for
+   * this trading date (from `ExchangeCalendarResolverService`/
+   * `NiftyUnderlyingIngestionPlannerService` -- one authoritative source,
+   * never re-derived here), via `CanonicalSessionProjectionRequest.
+   * sessionWindows`. Used for BOTH a certified regular day (windows =
+   * `[regularSessionWindow()]`) and a certified special day (windows = the
+   * calendar's explicit, possibly multi-window, set) so there is exactly one
+   * per-row classification code path for every calendar-resolved date,
+   * rather than a second implicit 09:15-15:29 derivation living alongside
+   * the calendar's own truth.
+   */
+  CALENDAR_DECLARED_SESSION = 'CALENDAR_DECLARED_SESSION',
 }
 
 export enum CanonicalSessionProjectionOutcome {
@@ -88,6 +112,14 @@ export interface CanonicalSessionProjectionRequest {
   /** Declared IST trading date (YYYY-MM-DD) this projection is for. */
   readonly tradingDate: string;
   readonly sessionDeclaration: CanonicalSessionDeclaration;
+  /**
+   * Required (and non-empty) if and only if `sessionDeclaration ===
+   * CALENDAR_DECLARED_SESSION`; ignored for every other declaration. Passed
+   * through `validateSessionWindows` (task section 6 half-open/overlap
+   * rules) before use, so a malformed set fails closed rather than silently
+   * projecting against an unchecked window shape.
+   */
+  readonly sessionWindows?: readonly SessionWindow[];
   readonly sourceRows: readonly HistoricalSourceCandleRow[];
 }
 

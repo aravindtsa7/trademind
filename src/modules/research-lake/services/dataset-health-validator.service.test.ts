@@ -237,6 +237,75 @@ test('BLOCKER 1 regression: 375 otherwise-perfect rows with one adjacent raw swa
   assert.ok(report.issues.some((issue) => issue.reason === DatasetHealthIssueReason.NON_MONOTONIC_ORDER));
 });
 
+// ============================================================================
+// B-F2-CAL-2: calendar-declared (special-session) expected-minute sets
+// ============================================================================
+
+function calendarRow(sourceIndex: number, minuteOfDay: number): HistoricalSourceCandleRow {
+  const dayStart = new Date(`${TRADING_DATE}T00:00:00+05:30`).getTime();
+  return sourceRow(sourceIndex, new Date(dayStart + minuteOfDay * 60_000).toISOString());
+}
+
+function projectCalendar(sourceRows: readonly HistoricalSourceCandleRow[], windows: readonly { windowIndex: number; openMinuteIst: number; closeMinuteIst: number }[]): CanonicalSessionProjectionResult {
+  return projector.project({
+    assetType: HistoricalAssetType.NIFTY_INDEX,
+    instrumentKey: INSTRUMENT_KEY,
+    tradingDate: TRADING_DATE,
+    sessionDeclaration: CanonicalSessionDeclaration.CALENDAR_DECLARED_SESSION,
+    sessionWindows: windows,
+    sourceRows,
+  });
+}
+
+test('CAL-2: a multi-window special session with exactly its 105 expected minutes present is HEALTHY, with expectedRowCount 105 (never the fixed 375 default)', () => {
+  const windows = [
+    { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+    { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+  ];
+  const expectedMinutes = [
+    ...Array.from({ length: 45 }, (_, i) => 555 + i),
+    ...Array.from({ length: 60 }, (_, i) => 690 + i),
+  ];
+  const rows = expectedMinutes.map((minute, index) => calendarRow(index, minute));
+
+  const projection = projectCalendar(rows, windows);
+  const report = validator.validate(projection, expectedMinutes);
+
+  assert.equal(report.status, DatasetHealthStatus.HEALTHY);
+  assert.equal(report.canonicalRowCount, 105);
+  assert.equal(report.expectedRowCount, 105);
+  assert.equal(report.missingMinuteCount, 0);
+});
+
+test('CAL-2: a special session missing exactly one of ITS OWN expected minutes is INCOMPLETE against the 105-minute set, never scored as "270 minutes missing" against the fixed 375 default', () => {
+  const windows = [
+    { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+    { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+  ];
+  const expectedMinutes = [
+    ...Array.from({ length: 45 }, (_, i) => 555 + i),
+    ...Array.from({ length: 60 }, (_, i) => 690 + i),
+  ];
+  const rows = expectedMinutes.filter((minute) => minute !== 700).map((minute, index) => calendarRow(index, minute));
+
+  const projection = projectCalendar(rows, windows);
+  const report = validator.validate(projection, expectedMinutes);
+
+  assert.equal(report.status, DatasetHealthStatus.INCOMPLETE);
+  assert.equal(report.canonicalRowCount, 104);
+  assert.equal(report.expectedRowCount, 105);
+  assert.equal(report.missingMinuteCount, 1);
+  const missing = report.issues.find((issue) => issue.reason === DatasetHealthIssueReason.MISSING_CANONICAL_MINUTE);
+  assert.ok(missing);
+  assert.equal(missing!.candleTime!.toISOString(), new Date(`${TRADING_DATE}T11:40:00+05:30`).toISOString()); // minute 700 = 11:40 IST
+});
+
+test('CAL-2: omitting expectedMinutesIst preserves the exact pre-CAL-2 default (09:15-15:29/375) -- backward compatible for every existing caller', () => {
+  const report = validator.validate(project(normalSessionSourceRows()));
+  assert.equal(report.expectedRowCount, 375);
+  assert.equal(report.status, DatasetHealthStatus.HEALTHY);
+});
+
 test('BLOCKER 1 regression: the INVALID result for a swapped raw source is deterministic across repeated validation calls', () => {
   const rows = normalSessionSourceRows();
   const swappedRaw = [...rows];

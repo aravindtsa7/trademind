@@ -5,7 +5,6 @@ import {
   HISTORICAL_SESSION_ROW_COUNT,
   isCompleteHistoricalSession,
 } from '../../historical-candles/utils/historical-session-completeness.util';
-import { calendarWeekdays } from '../../research/banknifty-data-audit';
 import {
   CanonicalHistoricalCandle,
   CanonicalSessionDeclaration,
@@ -13,9 +12,13 @@ import {
   DatasetHealthIssue,
   DatasetHealthReport,
   DatasetHealthStatus,
+  expectedMinutesForWindows,
   HistoricalAssetType,
   HistoricalSourceCandleRow,
+  isCompleteCalendarSession,
   istCalendarDate,
+  SessionWindow,
+  validateSessionWindows,
 } from '../domain';
 import { CalendarDateRange, splitIntoCalendarMonthChunks } from '../domain/calendar-month-chunking.util';
 import { HistoricalDataProvider } from '../interfaces/historical-data-provider.interface';
@@ -30,9 +33,120 @@ import {
   withHistoricalProviderRetry,
 } from './historical-provider-retry.util';
 import UpstoxHistoricalDataProviderService from '../providers/upstox/upstox-historical-data-provider.service';
+import NiftyUnderlyingIngestionPlannerService, {
+  CLOSED_DISPOSITIONS,
+  NiftyIngestionPlan,
+  NiftyPlannedDate,
+  NiftyPlannedDateDisposition,
+} from './nifty-underlying-ingestion-planner.service';
+import { NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME } from './nifty-underlying-identity';
 
-export const NIFTY_INDEX_INSTRUMENT_KEY = 'NSE_INDEX|Nifty 50';
-export const NIFTY_UNDERLYING_TIMEFRAME = '1minute';
+export { NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME };
+
+const FETCH_ELIGIBLE_DISPOSITIONS: ReadonlySet<NiftyPlannedDateDisposition> = new Set([
+  NiftyPlannedDateDisposition.REGULAR_TRADING_DAY,
+  NiftyPlannedDateDisposition.SPECIAL_SESSION_DAY,
+]);
+
+/**
+ * Thrown BEFORE any provider construction/call (task B-F2-CAL-2 section
+ * 12/13/33) when the calendar plan for the FULL requested range contains one
+ * or more `BLOCKED_UNCERTIFIED` dates. Deliberately whole-range fail-closed,
+ * never a partial per-date skip/clamp: a blocked date anywhere in the range
+ * means the entire acquisition request is not execution-ready, exactly
+ * mirroring the CAL-1 plan-only CLI's `hasBlockedDates` contract.
+ */
+export class NiftyAcquisitionCalendarBlockedError extends Error {
+  readonly blockedDates: readonly string[];
+
+  constructor(plan: NiftyIngestionPlan) {
+    const blockedDates = plan.dates
+      .filter((date) => date.disposition === NiftyPlannedDateDisposition.BLOCKED_UNCERTIFIED)
+      .map((date) => date.tradingDate);
+    const preview = blockedDates.slice(0, 5).join(', ');
+    const suffix = blockedDates.length > 5 ? ', ...' : '';
+    super(
+      `NiftyUnderlyingAcquisitionService: requested range ${plan.requestedFromDate}..${plan.requestedToDate} contains ` +
+        `${blockedDates.length} BLOCKED_UNCERTIFIED date(s) (${preview}${suffix}); acquisition fails closed before any provider call.`
+    );
+    this.name = 'NiftyAcquisitionCalendarBlockedError';
+    this.blockedDates = blockedDates;
+  }
+}
+
+/**
+ * B-F2-CAL-2-FIX-1: `NiftyPlannedDate` carries three independent
+ * representations of the same session truth (`sessionWindows`,
+ * `expectedMinutesIst`, `expectedMinuteCount`). Terra's review found that
+ * production consumers each trusted a different one of these fields without
+ * ever proving they agree, so an internally-inconsistent plan entry (e.g. a
+ * [555,600) window whose `expectedMinuteCount` lies as 44 instead of 45)
+ * could reach the provider, persist, and only be caught by AFTER-THE-FACT
+ * post-persist reconciliation -- never before acquisition. Typed reason for
+ * the corresponding fail-closed error.
+ */
+export enum NiftyAcquisitionCalendarPlanInvariantReason {
+  SESSION_WINDOWS_MISSING = 'SESSION_WINDOWS_MISSING',
+  EXPECTED_MINUTE_COUNT_MISMATCH = 'EXPECTED_MINUTE_COUNT_MISMATCH',
+  EXPECTED_MINUTE_SET_MISMATCH = 'EXPECTED_MINUTE_SET_MISMATCH',
+  CLOSED_DATE_HAS_SESSION_EXPECTATION = 'CLOSED_DATE_HAS_SESSION_EXPECTATION',
+}
+
+/**
+ * Thrown BEFORE any provider construction/call, immediately after the whole
+ * plan is built and the `BLOCKED_UNCERTIFIED` check passes (task B-F2-CAL-2
+ * -FIX-1 section 4/7): whole-plan, whole-request fail-closed -- exactly one
+ * inconsistent date anywhere in the requested range aborts the entire
+ * acquisition, never a partial/per-date skip. Deliberately exposes only
+ * counts/identifiers, never the full minute arrays (section 11: "do not
+ * dump huge minute arrays into normal logs").
+ */
+export class NiftyAcquisitionCalendarPlanInvariantError extends Error {
+  readonly tradingDate: string;
+  readonly disposition: NiftyPlannedDateDisposition;
+  readonly reason: NiftyAcquisitionCalendarPlanInvariantReason;
+  readonly expectedMinuteCount: number;
+  readonly derivedMinuteCount: number;
+
+  constructor(
+    tradingDate: string,
+    disposition: NiftyPlannedDateDisposition,
+    reason: NiftyAcquisitionCalendarPlanInvariantReason,
+    expectedMinuteCount: number,
+    derivedMinuteCount: number
+  ) {
+    super(
+      `NiftyUnderlyingAcquisitionService: calendar plan invariant violated for ${tradingDate} (${disposition}): ${reason} ` +
+        `(plan.expectedMinuteCount=${expectedMinuteCount}, canonically-derived minute count=${derivedMinuteCount}); ` +
+        'acquisition fails closed before any provider call.'
+    );
+    this.name = 'NiftyAcquisitionCalendarPlanInvariantError';
+    this.tradingDate = tradingDate;
+    this.disposition = disposition;
+    this.reason = reason;
+    this.expectedMinuteCount = expectedMinuteCount;
+    this.derivedMinuteCount = derivedMinuteCount;
+  }
+}
+
+/**
+ * The ONE authoritative internal representation an acquisition run may
+ * trust downstream of whole-plan validation (task section 5/6): a
+ * `NiftyPlannedDate` that has been proven internally consistent (or, for a
+ * closed disposition, proven to carry zero session expectation) and whose
+ * `sessionWindows`/`expectedMinutesIst`/`expectedMinuteCount` are the
+ * CANONICAL, mutually-derived values -- never the raw, independently-typed
+ * plan fields. `CanonicalSessionProjectorService`, `DatasetHealthValidatorService`,
+ * `isCompleteCalendarSession`, and post-persist reconciliation all consume
+ * ONLY this type from this point on.
+ */
+interface ValidatedNiftyPlannedDate {
+  readonly tradingDate: string;
+  readonly disposition: NiftyPlannedDateDisposition;
+  readonly sessionWindows: readonly SessionWindow[];
+  readonly expectedMinutesIst: readonly number[];
+  readonly expectedMinuteCount: number;
+}
 
 /** Upstox's documented sustained rate for the historical-candle endpoint: 1 request/second. */
 export const UPSTOX_HISTORICAL_MIN_REQUEST_INTERVAL_MS = 1_000;
@@ -59,7 +173,8 @@ export type NiftySessionAcquisitionBucket =
   | 'INCOMPLETE'
   | 'INVALID'
   | 'SPECIAL_SESSION_EXCLUDED'
-  | 'UNRESOLVED_NO_DATA';
+  | 'UNRESOLVED_NO_DATA'
+  | 'CLOSED_NO_DATA_EXPECTED';
 
 /**
  * Typed reason for an orchestrator-level (not B-F1 validator-level) failure
@@ -118,6 +233,14 @@ export interface NiftyUnderlyingAcquisitionResult {
      */
     readonly specialSessionExcluded: readonly string[];
     readonly unresolvedNoData: readonly string[];
+    /**
+     * B-F2-CAL-2: dates the certified calendar resolved as `CLOSED_HOLIDAY`,
+     * `CLOSED_EXCEPTIONAL`, or `CLOSED_WEEKEND` -- zero expected minutes, no
+     * provider request issued, never persisted, and NEVER conflated with
+     * `unresolvedNoData` (which means the calendar expected real trading
+     * data and none arrived).
+     */
+    readonly closedNoDataExpected: readonly string[];
   };
   /** Full typed detail for every date this run touched -- not just the problematic ones -- so nothing is free-form-only. */
   readonly sessionDetails: readonly NiftySessionAcquisitionDetail[];
@@ -134,6 +257,16 @@ export interface NiftyUnderlyingAcquisitionServiceDependencies {
   readonly repository?: HistoricalCandleRepository;
   readonly rateLimiter?: HistoricalProviderRateLimiterService;
   readonly retryOptions?: HistoricalProviderRetryOptions;
+  /**
+   * B-F2-CAL-2: the single authoritative source of each requested date's
+   * trading-day disposition and session windows (task section 3's core
+   * architectural invariant). Defaults to a real
+   * `NiftyUnderlyingIngestionPlannerService` (itself defaulting to a real,
+   * Prisma-backed `ExchangeCalendarResolverService`) -- the same default
+   * pattern already used for `provider`/`repository` above. Tests inject a
+   * fake/duck-typed planner so no unit test touches a live database.
+   */
+  readonly plannerService?: NiftyUnderlyingIngestionPlannerService;
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -146,6 +279,7 @@ const BUCKET_TO_SESSIONS_KEY: Record<NiftySessionAcquisitionBucket, keyof NiftyU
   INVALID: 'invalid',
   SPECIAL_SESSION_EXCLUDED: 'specialSessionExcluded',
   UNRESOLVED_NO_DATA: 'unresolvedNoData',
+  CLOSED_NO_DATA_EXPECTED: 'closedNoDataExpected',
 };
 
 /**
@@ -171,6 +305,7 @@ export default class NiftyUnderlyingAcquisitionService {
   private readonly repository: HistoricalCandleRepository;
   private readonly rateLimiter: HistoricalProviderRateLimiterService;
   private readonly retryOptions: HistoricalProviderRetryOptions;
+  private readonly plannerService: NiftyUnderlyingIngestionPlannerService;
 
   constructor(dependencies: NiftyUnderlyingAcquisitionServiceDependencies = {}) {
     this.provider = dependencies.provider ?? new UpstoxHistoricalDataProviderService();
@@ -179,6 +314,7 @@ export default class NiftyUnderlyingAcquisitionService {
     this.repository = dependencies.repository ?? new HistoricalCandleRepository();
     this.rateLimiter = dependencies.rateLimiter ?? new HistoricalProviderRateLimiterService(UPSTOX_HISTORICAL_MIN_REQUEST_INTERVAL_MS);
     this.retryOptions = dependencies.retryOptions ?? {};
+    this.plannerService = dependencies.plannerService ?? new NiftyUnderlyingIngestionPlannerService();
   }
 
   async acquire(request: NiftyUnderlyingAcquisitionRequest): Promise<NiftyUnderlyingAcquisitionResult> {
@@ -195,6 +331,25 @@ export default class NiftyUnderlyingAcquisitionService {
       throw new Error(`fromDate (${fromDate}) must not be after toDate (${request.toDate}).`);
     }
     const dryRun = request.dryRun === true;
+
+    // B-F2-CAL-2 core invariant (task section 3): build ONE authoritative
+    // calendar plan for the FULL requested range before any provider
+    // construction/call, and consult it exclusively for every date's
+    // disposition/session-windows/expected-minutes -- never re-derived by
+    // weekday heuristic or a second hardcoded session window. A blocked
+    // (UNCERTIFIED) date anywhere in the range fails the WHOLE request
+    // closed before any network acquisition (task section 12/13/33).
+    const plan = await this.plannerService.buildPlan({ fromDate, toDate: request.toDate });
+    if (plan.hasBlockedDates) {
+      throw new NiftyAcquisitionCalendarBlockedError(plan);
+    }
+    // B-F2-CAL-2-FIX-1 (task section 4/7): prove every planned date's
+    // sessionWindows/expectedMinutesIst/expectedMinuteCount agree with each
+    // other BEFORE any provider work -- not lazily inside processCandidateDate,
+    // and not only for the date that happens to be fetched first. A single
+    // inconsistent date anywhere in the range fails the WHOLE request closed.
+    const validatedDates = this.validateAndCanonicalizePlan(plan);
+    const validatedByDate = new Map(validatedDates.map((validated) => [validated.tradingDate, validated]));
 
     const stats: HistoricalProviderRetryStats = { retryCount: 0, rateLimitBackoffCount: 0 };
     const monthlyChunks = splitIntoCalendarMonthChunks(fromDate, request.toDate);
@@ -214,23 +369,36 @@ export default class NiftyUnderlyingAcquisitionService {
       invalid: [] as string[],
       specialSessionExcluded: [] as string[],
       unresolvedNoData: [] as string[],
+      closedNoDataExpected: [] as string[],
     };
     const pushBucket = (bucket: NiftySessionAcquisitionBucket, date: string): void => {
       sessions[BUCKET_TO_SESSIONS_KEY[bucket]].push(date);
     };
 
     for (const chunk of monthlyChunks) {
-      const alreadyCompleteInChunk = await this.findAlreadyCompleteDatesInRange(chunk.fromDate, chunk.toDate);
+      const chunkPlannedDates = this.plannedDatesInRange(validatedDates, chunk.fromDate, chunk.toDate);
+      const alreadyCompleteInChunk = await this.findAlreadyCompleteDatesInRange(chunk.fromDate, chunk.toDate, validatedByDate);
 
-      // Provable-without-a-calendar special case (task section 8: "ideally
-      // no unnecessary fetch where plan can prove coverage"): a single-date
-      // chunk whose one candidate date is already DB-complete needs no
-      // fetch at all. A multi-date chunk cannot be proven fully covered
-      // without an NSE trading-day calendar (explicitly out of scope), so
-      // it is always fetched.
-      if (chunk.fromDate === chunk.toDate && alreadyCompleteInChunk.has(chunk.fromDate)) {
-        sessionDetails.push(this.alreadyCompleteDetail(chunk.fromDate));
-        pushBucket('ALREADY_COMPLETE', chunk.fromDate);
+      // Calendar-certified closed dates (task section 7/8/9/15) never cause
+      // a provider request and are never treated as missing data.
+      for (const planned of chunkPlannedDates) {
+        if (!CLOSED_DISPOSITIONS.has(planned.disposition)) continue;
+        sessionDetails.push(this.closedNoDataDetail(planned.tradingDate));
+        pushBucket('CLOSED_NO_DATA_EXPECTED', planned.tradingDate);
+      }
+
+      const pendingFetchEligible = chunkPlannedDates.filter(
+        (planned) => FETCH_ELIGIBLE_DISPOSITIONS.has(planned.disposition) && !alreadyCompleteInChunk.has(planned.tradingDate)
+      );
+
+      for (const date of alreadyCompleteInChunk) {
+        sessionDetails.push(this.alreadyCompleteDetail(date, validatedByDate.get(date)));
+        pushBucket('ALREADY_COMPLETE', date);
+      }
+
+      if (pendingFetchEligible.length === 0) {
+        // Every date in this chunk is either already complete or certified
+        // closed -- no provider request is needed at all (task section 15).
         monthlyChunksSucceeded += 1;
         continue;
       }
@@ -248,24 +416,21 @@ export default class NiftyUnderlyingAcquisitionService {
 
       const byDate = this.groupRowsByTradingDate(rawRows);
 
-      for (const date of [...byDate.keys()].sort()) {
-        if (alreadyCompleteInChunk.has(date)) {
-          sessionDetails.push(this.alreadyCompleteDetail(date));
-          pushBucket('ALREADY_COMPLETE', date);
-          continue;
-        }
+      for (const planned of pendingFetchEligible) {
+        const date = planned.tradingDate;
+        if (!byDate.has(date)) continue; // handled by the UNRESOLVED_NO_DATA pass below
         // eslint-disable-next-line no-await-in-loop -- persistence must stay ordered per date, one date's write must complete/reconcile before the next begins
-        const detail = await this.processCandidateDate(date, byDate.get(date) ?? [], dryRun);
+        const detail = await this.processCandidateDate(planned, byDate.get(date) ?? [], dryRun);
         sessionDetails.push(detail);
         pushBucket(detail.bucket, date);
         canonicalRowsAccepted += detail.canonicalRowCount;
         excludedRowsTotal += detail.excludedRowCount;
       }
 
-      for (const date of calendarWeekdays(chunk.fromDate, chunk.toDate)) {
-        if (alreadyCompleteInChunk.has(date) || byDate.has(date)) continue;
-        sessionDetails.push(this.unresolvedDetail(date));
-        pushBucket('UNRESOLVED_NO_DATA', date);
+      for (const planned of pendingFetchEligible) {
+        if (byDate.has(planned.tradingDate)) continue;
+        sessionDetails.push(this.unresolvedDetail(planned.tradingDate));
+        pushBucket('UNRESOLVED_NO_DATA', planned.tradingDate);
       }
     }
 
@@ -307,26 +472,36 @@ export default class NiftyUnderlyingAcquisitionService {
 
   /**
    * Runs one candidate trading date's raw rows through the B-F1
-   * projector/validator, then persists ONLY if the resulting health is
-   * `HEALTHY` or `NORMALIZED_WITH_EXCLUSIONS` (section 5's "normal healthy
-   * acceptance") and `dryRun` is not set. After a real write, re-reads the
-   * date from the repository and re-checks `isCompleteHistoricalSession` --
-   * a session is never reported complete on the strength of the in-memory
-   * write alone (section 8).
+   * projector/validator -- ALWAYS via `CALENDAR_DECLARED_SESSION` using the
+   * plan's own `sessionWindows`/`expectedMinutesIst` (task section 3/6/10/11:
+   * one authoritative window derivation for both a regular day, where the
+   * plan's window already equals the classic [555,930), and a special day)
+   * -- then persists ONLY if the resulting health is `HEALTHY` or
+   * `NORMALIZED_WITH_EXCLUSIONS` (section 5's "normal healthy acceptance")
+   * and `dryRun` is not set. After a real write, re-reads the date from the
+   * repository and re-checks completeness against that SAME expected-minute
+   * set -- a session is never reported complete on the strength of the
+   * in-memory write alone (section 8), and a special session is never
+   * scored against the fixed 375-row regular contract (task section 22:
+   * `REGULAR_TRADING_DAY` keeps using `isCompleteHistoricalSession` byte-for
+   * -byte unchanged, so already-persisted regular-session data is never
+   * reinterpreted).
    */
   private async processCandidateDate(
-    date: string,
+    planned: ValidatedNiftyPlannedDate,
     rows: readonly HistoricalSourceCandleRow[],
     dryRun: boolean
   ): Promise<NiftySessionAcquisitionDetail> {
+    const date = planned.tradingDate;
     const projection = this.projector.project({
       assetType: HistoricalAssetType.NIFTY_INDEX,
       instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
       tradingDate: date,
-      sessionDeclaration: CanonicalSessionDeclaration.NORMAL_NIFTY_SESSION,
+      sessionDeclaration: CanonicalSessionDeclaration.CALENDAR_DECLARED_SESSION,
+      sessionWindows: planned.sessionWindows,
       sourceRows: rows,
     });
-    const report = this.validator.validate(projection);
+    const report = this.validator.validate(projection, planned.expectedMinutesIst);
     const isPersistable = report.status === DatasetHealthStatus.HEALTHY || report.status === DatasetHealthStatus.NORMALIZED_WITH_EXCLUSIONS;
 
     if (!isPersistable || dryRun) {
@@ -344,15 +519,31 @@ export default class NiftyUnderlyingAcquisitionService {
     const { from, to } = this.istRangeBounds(date, date);
     const reread = await this.repository.findRange(NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME, from, to);
 
-    if (!isCompleteHistoricalSession(reread)) {
+    if (!this.isSessionComplete(reread, date, planned)) {
       const acquisitionIssue: NiftyAcquisitionIssue = {
         reason: NiftyAcquisitionIssueReason.POST_PERSIST_RECONCILIATION_FAILED,
-        detail: `Post-persist reconciliation read for ${date} found ${reread.length} row(s), not a complete ${HISTORICAL_SESSION_ROW_COUNT}-row session; not marked complete.`,
+        detail: `Post-persist reconciliation read for ${date} found ${reread.length} row(s), not a complete ${planned.expectedMinuteCount}-row session; not marked complete.`,
       };
       return this.buildDetail(date, report, true, [acquisitionIssue], 'INCOMPLETE');
     }
 
     return this.buildDetail(date, report, true, []);
+  }
+
+  /**
+   * `REGULAR_TRADING_DAY` keeps the existing shared
+   * `isCompleteHistoricalSession` contract exactly (task section 22:
+   * preserves compatibility with already-persisted regular-session data and
+   * every other caller of that shared 375-row completeness contract, e.g.
+   * the V8 strategy shadow service). `SPECIAL_SESSION_DAY` uses the
+   * calendar-parameterized `isCompleteCalendarSession` against the plan's
+   * own `expectedMinutesIst` -- never the fixed 375-row shape.
+   */
+  private isSessionComplete(rows: readonly { candleTime: Date }[], date: string, planned: ValidatedNiftyPlannedDate): boolean {
+    if (planned.disposition === NiftyPlannedDateDisposition.REGULAR_TRADING_DAY) {
+      return isCompleteHistoricalSession(rows);
+    }
+    return isCompleteCalendarSession(rows, date, planned.expectedMinutesIst);
   }
 
   private buildDetail(
@@ -402,7 +593,8 @@ export default class NiftyUnderlyingAcquisitionService {
     }
   }
 
-  private alreadyCompleteDetail(date: string): NiftySessionAcquisitionDetail {
+  /** `expectedRowCount` defaults to the classic 375 only when no plan entry is available (should not occur in practice: every date in range has a planned entry). */
+  private alreadyCompleteDetail(date: string, planned: ValidatedNiftyPlannedDate | undefined): NiftySessionAcquisitionDetail {
     return {
       tradingDate: date,
       bucket: 'ALREADY_COMPLETE',
@@ -410,7 +602,7 @@ export default class NiftyUnderlyingAcquisitionService {
       issues: [],
       acquisitionIssues: [],
       sourceRowCount: 0,
-      canonicalRowCount: HISTORICAL_SESSION_ROW_COUNT,
+      canonicalRowCount: planned?.expectedMinuteCount ?? HISTORICAL_SESSION_ROW_COUNT,
       excludedRowCount: 0,
       exclusions: [],
       persisted: false, // not persisted BY THIS RUN -- it was already complete from a prior run
@@ -432,13 +624,149 @@ export default class NiftyUnderlyingAcquisitionService {
     };
   }
 
-  private async findAlreadyCompleteDatesInRange(fromDate: string, toDate: string): Promise<Set<string>> {
+  /**
+   * Calendar-certified closed date (task section 7/8/9): zero expected
+   * minutes, never persisted, never an error -- distinct from
+   * `UNRESOLVED_NO_DATA`, which means the calendar expected a real trading
+   * session and none arrived.
+   */
+  private closedNoDataDetail(date: string): NiftySessionAcquisitionDetail {
+    return {
+      tradingDate: date,
+      bucket: 'CLOSED_NO_DATA_EXPECTED',
+      healthStatus: null,
+      issues: [],
+      acquisitionIssues: [],
+      sourceRowCount: 0,
+      canonicalRowCount: 0,
+      excludedRowCount: 0,
+      exclusions: [],
+      persisted: false,
+    };
+  }
+
+  /**
+   * B-F2-CAL-2-FIX-1 core correction (task section 4/5/7/8/9): proves every
+   * date's `sessionWindows`/`expectedMinutesIst`/`expectedMinuteCount`
+   * agree with each other, for the WHOLE requested plan, before any
+   * provider/chunk/persistence work begins. Throws
+   * `NiftyAcquisitionCalendarPlanInvariantError` on the FIRST inconsistent
+   * date found (deterministic ascending order, since `plan.dates` is
+   * already ascending) -- the entire request fails closed, never a partial
+   * per-date skip.
+   */
+  private validateAndCanonicalizePlan(plan: NiftyIngestionPlan): ValidatedNiftyPlannedDate[] {
+    return plan.dates.map((planned) => this.validateAndCanonicalizePlannedDate(planned));
+  }
+
+  private validateAndCanonicalizePlannedDate(planned: NiftyPlannedDate): ValidatedNiftyPlannedDate {
+    if (CLOSED_DISPOSITIONS.has(planned.disposition)) {
+      if (planned.sessionWindows.length > 0 || planned.expectedMinutesIst.length > 0 || planned.expectedMinuteCount !== 0) {
+        throw new NiftyAcquisitionCalendarPlanInvariantError(
+          planned.tradingDate,
+          planned.disposition,
+          NiftyAcquisitionCalendarPlanInvariantReason.CLOSED_DATE_HAS_SESSION_EXPECTATION,
+          planned.expectedMinuteCount,
+          0
+        );
+      }
+      return { tradingDate: planned.tradingDate, disposition: planned.disposition, sessionWindows: [], expectedMinutesIst: [], expectedMinuteCount: 0 };
+    }
+
+    if (!FETCH_ELIGIBLE_DISPOSITIONS.has(planned.disposition)) {
+      // BLOCKED_UNCERTIFIED cannot reach here: `acquire()` already returned
+      // via `NiftyAcquisitionCalendarBlockedError` whenever `plan.hasBlockedDates`
+      // is true, and that flag is derived from these exact same `plan.dates`.
+      // Passed through unvalidated/uncanonicalized defensively rather than
+      // asserted unreachable, since this disposition carries no session
+      // expectation this invariant governs either way.
+      return {
+        tradingDate: planned.tradingDate,
+        disposition: planned.disposition,
+        sessionWindows: planned.sessionWindows,
+        expectedMinutesIst: planned.expectedMinutesIst,
+        expectedMinuteCount: planned.expectedMinuteCount,
+      };
+    }
+
+    if (planned.sessionWindows.length === 0) {
+      throw new NiftyAcquisitionCalendarPlanInvariantError(
+        planned.tradingDate,
+        planned.disposition,
+        NiftyAcquisitionCalendarPlanInvariantReason.SESSION_WINDOWS_MISSING,
+        planned.expectedMinuteCount,
+        0
+      );
+    }
+
+    // Reuses the existing production calendar-core window validator/expected-
+    // minute deriver (task section 4: "using the existing production utility
+    // expectedMinutesForWindows") -- never a re-implementation of window
+    // shape/overlap rules or minute expansion.
+    const validatedWindows = validateSessionWindows(planned.sessionWindows);
+    const canonicalExpectedMinutesIst = expectedMinutesForWindows(validatedWindows);
+
+    if (planned.expectedMinuteCount !== canonicalExpectedMinutesIst.length) {
+      throw new NiftyAcquisitionCalendarPlanInvariantError(
+        planned.tradingDate,
+        planned.disposition,
+        NiftyAcquisitionCalendarPlanInvariantReason.EXPECTED_MINUTE_COUNT_MISMATCH,
+        planned.expectedMinuteCount,
+        canonicalExpectedMinutesIst.length
+      );
+    }
+
+    if (!this.exactPositionalEquality(planned.expectedMinutesIst, canonicalExpectedMinutesIst)) {
+      throw new NiftyAcquisitionCalendarPlanInvariantError(
+        planned.tradingDate,
+        planned.disposition,
+        NiftyAcquisitionCalendarPlanInvariantReason.EXPECTED_MINUTE_SET_MISMATCH,
+        planned.expectedMinuteCount,
+        canonicalExpectedMinutesIst.length
+      );
+    }
+
+    return {
+      tradingDate: planned.tradingDate,
+      disposition: planned.disposition,
+      sessionWindows: validatedWindows,
+      expectedMinutesIst: canonicalExpectedMinutesIst,
+      expectedMinuteCount: canonicalExpectedMinutesIst.length,
+    };
+  }
+
+  /**
+   * Strict positional (same length, same order, same values) equality --
+   * deliberately NOT a `Set`-based comparison (task section 12/18: a
+   * duplicate-plus-missing or reordered array must never be silently
+   * normalized into a false match).
+   */
+  private exactPositionalEquality(a: readonly number[], b: readonly number[]): boolean {
+    if (a.length !== b.length) return false;
+    for (let index = 0; index < a.length; index += 1) {
+      if (a[index] !== b[index]) return false;
+    }
+    return true;
+  }
+
+  /** Every date in `[fromDate, toDate]`, ascending, restricted to the FULL, already-validated plan's own entries (the chunk is always a sub-range of the plan's requested range). */
+  private plannedDatesInRange(validatedDates: readonly ValidatedNiftyPlannedDate[], fromDate: string, toDate: string): readonly ValidatedNiftyPlannedDate[] {
+    return validatedDates.filter((planned) => planned.tradingDate >= fromDate && planned.tradingDate <= toDate);
+  }
+
+  private async findAlreadyCompleteDatesInRange(
+    fromDate: string,
+    toDate: string,
+    validatedByDate: ReadonlyMap<string, ValidatedNiftyPlannedDate>
+  ): Promise<Set<string>> {
     const { from, to } = this.istRangeBounds(fromDate, toDate);
     const existing = await this.repository.findRange(NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME, from, to);
     const byDate = this.groupByTradingDate(existing);
     const complete = new Set<string>();
     for (const [date, rows] of byDate) {
-      if (isCompleteHistoricalSession(rows)) complete.add(date);
+      const planned = validatedByDate.get(date);
+      if (!planned || !FETCH_ELIGIBLE_DISPOSITIONS.has(planned.disposition)) continue;
+      if (this.isSessionComplete(rows, date, planned)) complete.add(date);
     }
     return complete;
   }
