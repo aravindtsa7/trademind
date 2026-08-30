@@ -1,0 +1,58 @@
+{
+  "manifestSchemaVersion": 1,
+  "pilotId": "B-F7A-SOURCE-EVIDENCE-1-2026-V1-EQUITY",
+  "calendarYear": 2026,
+  "entries": [
+    {
+      "reference": "NSE/CMTR/71775",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR71775.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "172/2025",
+      "publicationDate": "2025-12-12",
+      "subject": "Trading holidays for the calendar year 2026",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "ANNUAL_HOLIDAY_CIRCULAR",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": "Annual circular covers the FULL calendar year 2026 (15 holidays); the B-F7A-FIXTURES-1 V1 fixture only certifies coverage through 2026-08-28, so only the subset of holidays on or before that cutoff is carried into the fixture's explicit days."
+    },
+    {
+      "reference": "NSE/CMTR/72260",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR72260.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "07/2026",
+      "publicationDate": "2026-01-12",
+      "subject": "Trading Holiday on January 15, 2026 on account of Municipal Corporation Election in Maharashtra in Capital Market Segment",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "EXCEPTIONAL_CLOSURE_NOTICE",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": "In partial modification to Exchange circular reference no. NSE/CMTR/71775."
+    },
+    {
+      "reference": "NSE/CMTR/72349",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR72349.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "11/2026",
+      "publicationDate": "2026-01-16",
+      "subject": "Live Trading Session on February 01, 2026 - Presentation of Union Budget",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "SPECIAL_SESSION_NOTICE",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": null
+    }
+  ]
+}

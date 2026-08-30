@@ -1,5 +1,5 @@
 import { isValidRawSourceReference } from './raw-source-archive.types';
-import { RawSourceReceiptIndex, RawSourceRetrievalReceipt } from './raw-source-retrieval-receipt.types';
+import { RawSourceDocumentEvidence, RawSourceReceiptIndex, RawSourceReceiptRepairAudit, RawSourceRetrievalReceipt } from './raw-source-retrieval-receipt.types';
 import { rawSourceBlobRelativePath } from './raw-source-archive-storage';
 
 /**
@@ -32,7 +32,9 @@ export type ReceiptIndexErrorCode =
   | 'INVALID_URL'
   | 'INVALID_HTTP_STATUS'
   | 'INVALID_BYTE_LENGTH'
-  | 'INVALID_RETRIEVED_AT';
+  | 'INVALID_RETRIEVED_AT'
+  | 'INVALID_DOCUMENT_EVIDENCE'
+  | 'INVALID_REPAIR_AUDIT';
 
 export class ReceiptIndexValidationError extends Error {
   constructor(public readonly code: ReceiptIndexErrorCode, message: string) {
@@ -55,6 +57,77 @@ function isWellFormedUrl(value: unknown): value is string {
   } catch {
     return false;
   }
+}
+
+/**
+ * `documentEvidence` is a NEW, backward-compatible field
+ * (B-F7A-SOURCE-EVIDENCE-FIX-1): absent entirely (an old, pre-fix receipt
+ * JSON never had the key) or explicit `null` both mean "no separate
+ * document layer -- the document IS the raw transport bytes" (task section
+ * 5: "Old direct-PDF receipts must remain readable/valid where safe"). Only
+ * a genuinely-present, non-null value is validated as a real
+ * `RawSourceDocumentEvidence` object.
+ */
+function validateDocumentEvidence(key: string, raw: unknown): RawSourceDocumentEvidence | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== 'object') fail('INVALID_DOCUMENT_EVIDENCE', `Receipt for '${key}': documentEvidence must be an object or null.`);
+  const evidence = raw as Record<string, unknown>;
+
+  if (typeof evidence.documentSha256 !== 'string' || !HEX64_PATTERN.test(evidence.documentSha256)) {
+    fail('INVALID_DOCUMENT_EVIDENCE', `Receipt for '${key}': documentEvidence.documentSha256 must be a lowercase 64-character hex digest.`);
+  }
+  if (!Number.isInteger(evidence.documentByteLength) || (evidence.documentByteLength as number) < 0) {
+    fail('INVALID_DOCUMENT_EVIDENCE', `Receipt for '${key}': documentEvidence.documentByteLength must be a non-negative integer.`);
+  }
+  if (typeof evidence.documentMemberName !== 'string' || evidence.documentMemberName.trim().length === 0) {
+    fail('INVALID_DOCUMENT_EVIDENCE', `Receipt for '${key}': documentEvidence.documentMemberName must be a non-empty string.`);
+  }
+  if (typeof evidence.documentMediaType !== 'string' || evidence.documentMediaType.trim().length === 0) {
+    fail('INVALID_DOCUMENT_EVIDENCE', `Receipt for '${key}': documentEvidence.documentMediaType must be a non-empty string.`);
+  }
+  // Document blobs are always PDF-extension by construction (only PDF documents are ever extracted -- raw-source-content-validator.ts never accepts anything else).
+  const expectedLocator = rawSourceBlobRelativePath(evidence.documentSha256 as string, 'pdf');
+  if (evidence.documentArchiveRelativePath !== expectedLocator) {
+    fail(
+      'INVALID_DOCUMENT_EVIDENCE',
+      `Receipt for '${key}': documentEvidence.documentArchiveRelativePath '${String(evidence.documentArchiveRelativePath)}' does not match the locator '${expectedLocator}' derived from its own documentSha256.`
+    );
+  }
+
+  return {
+    documentSha256: evidence.documentSha256 as string,
+    documentByteLength: evidence.documentByteLength as number,
+    documentArchiveRelativePath: evidence.documentArchiveRelativePath as string,
+    documentMemberName: evidence.documentMemberName as string,
+    documentMediaType: evidence.documentMediaType as string,
+  };
+}
+
+/** `repairedFrom` is likewise new/optional -- absent or `null` means "never repaired" (the overwhelming common case). */
+function validateRepairAudit(key: string, raw: unknown): RawSourceReceiptRepairAudit | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== 'object') fail('INVALID_REPAIR_AUDIT', `Receipt for '${key}': repairedFrom must be an object or null.`);
+  const audit = raw as Record<string, unknown>;
+
+  if (typeof audit.repairedFromLegacyRawSha256 !== 'string' || !HEX64_PATTERN.test(audit.repairedFromLegacyRawSha256)) {
+    fail('INVALID_REPAIR_AUDIT', `Receipt for '${key}': repairedFrom.repairedFromLegacyRawSha256 must be a lowercase 64-character hex digest.`);
+  }
+  if (typeof audit.repairedFromArchiveRelativePath !== 'string' || audit.repairedFromArchiveRelativePath.trim().length === 0) {
+    fail('INVALID_REPAIR_AUDIT', `Receipt for '${key}': repairedFrom.repairedFromArchiveRelativePath must be a non-empty string.`);
+  }
+  if (typeof audit.repairedAt !== 'string' || Number.isNaN(Date.parse(audit.repairedAt))) {
+    fail('INVALID_REPAIR_AUDIT', `Receipt for '${key}': repairedFrom.repairedAt must be a parseable ISO timestamp string.`);
+  }
+  if (typeof audit.reason !== 'string' || audit.reason.trim().length === 0) {
+    fail('INVALID_REPAIR_AUDIT', `Receipt for '${key}': repairedFrom.reason must be a non-empty string.`);
+  }
+
+  return {
+    repairedFromLegacyRawSha256: audit.repairedFromLegacyRawSha256 as string,
+    repairedFromArchiveRelativePath: audit.repairedFromArchiveRelativePath as string,
+    repairedAt: audit.repairedAt as string,
+    reason: audit.reason as string,
+  };
 }
 
 function validateReceipt(key: string, raw: unknown): RawSourceRetrievalReceipt {
@@ -85,7 +158,15 @@ function validateReceipt(key: string, raw: unknown): RawSourceRetrievalReceipt {
     fail('INVALID_RETRIEVED_AT', `Receipt for '${key}': retrievedAt must be a parseable ISO timestamp string.`);
   }
 
-  const expectedLocator = rawSourceBlobRelativePath(receipt.rawSha256 as string);
+  const documentEvidence = validateDocumentEvidence(key, receipt.documentEvidence);
+  const repairedFrom = validateRepairAudit(key, receipt.repairedFrom);
+
+  // The RAW/TRANSPORT blob's extension is never guessed from the (attacker/server-controlled) `contentType` header --
+  // it follows deterministically from whether a document layer exists: a document layer exists ONLY when the
+  // transport response was a ZIP envelope that had to be unwrapped, so the raw blob is a `.zip`; otherwise the raw
+  // bytes ARE the document (a `.pdf`).
+  const rawExtension = documentEvidence !== null ? 'zip' : 'pdf';
+  const expectedLocator = rawSourceBlobRelativePath(receipt.rawSha256 as string, rawExtension);
   if (receipt.archiveRelativePath !== expectedLocator) {
     fail('INVALID_BLOB_LOCATOR', `Receipt for '${key}': archiveRelativePath '${String(receipt.archiveRelativePath)}' does not match the locator '${expectedLocator}' derived from its own rawSha256.`);
   }
@@ -98,6 +179,8 @@ function validateReceipt(key: string, raw: unknown): RawSourceRetrievalReceipt {
     contentType: (receipt.contentType as string | null) ?? null,
     etag: (receipt.etag as string | null) ?? null,
     lastModified: (receipt.lastModified as string | null) ?? null,
+    documentEvidence,
+    repairedFrom,
     rawSha256: receipt.rawSha256 as string,
     byteLength: receipt.byteLength as number,
     retrievedAt: receipt.retrievedAt as string,

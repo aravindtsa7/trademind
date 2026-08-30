@@ -1,0 +1,41 @@
+{
+  "manifestSchemaVersion": 1,
+  "pilotId": "B-F7A-SOURCE-EVIDENCE-1-2022-EQUITY",
+  "calendarYear": 2022,
+  "entries": [
+    {
+      "reference": "NSE/CMTR/50560",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR50560.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "117/2021",
+      "publicationDate": "2021-12-10",
+      "subject": "Trading holidays for the calendar year 2022",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "ANNUAL_HOLIDAY_CIRCULAR",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": null
+    },
+    {
+      "reference": "NSE/CMTR/54023",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR54023.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "124/2022",
+      "publicationDate": "2022-10-11",
+      "subject": "Muhurat Trading session on account of Diwali",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "MUHURAT_TRADING_NOTICE",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": "In continuation to circular No. 50560 dated December 10, 2021 (the 2022 annual holiday circular)."
+    }
+  ]
+}

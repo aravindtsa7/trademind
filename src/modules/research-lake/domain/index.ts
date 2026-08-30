@@ -29,3 +29,4 @@ export * from './raw-source-manifest-url-binding';
 export * from './raw-source-executable-pilot-manifest';
 export * from './raw-source-archive-lock';
 export * from './raw-source-receipt-index';
+export * from './raw-source-zip-envelope.util';

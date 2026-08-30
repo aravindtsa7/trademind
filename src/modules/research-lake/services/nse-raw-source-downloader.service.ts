@@ -2,6 +2,7 @@ import axios from 'axios';
 import logger from '../../../core/logger/logger';
 import { assertApprovedRawSourceUrl } from '../domain/raw-source-url-policy';
 import { assertValidRawPdfBytes, MAX_RAW_SOURCE_BYTES } from '../domain/raw-source-content-validator';
+import { deriveExpectedZipMemberBasename, extractZipMember, looksLikeZipEnvelope } from '../domain/raw-source-zip-envelope.util';
 
 /**
  * B-F7A-ARCHIVE-1 official-source downloader (task section 6/11/20). A small
@@ -25,6 +26,19 @@ export interface RawSourceHttpTransport {
   get(url: string, config: RawSourceHttpRequestConfig): Promise<RawSourceHttpResponse>;
 }
 
+/**
+ * B-F7A-SOURCE-EVIDENCE-FIX-1 (Terra Defect A): the reference-bound PDF
+ * unwrapped from a ZIP transport envelope, kept as its OWN distinct object
+ * -- never merged back into a single ambiguous `bytes` field. `mediaType`
+ * is always `'application/pdf'` today (the only thing this extractor ever
+ * produces), carried explicitly rather than assumed at every call site.
+ */
+export interface RawSourceExtractedDocument {
+  readonly bytes: Buffer;
+  readonly memberName: string;
+  readonly mediaType: string;
+}
+
 export interface RawSourceDownloadResult {
   readonly requestedUrl: string;
   readonly resolvedFinalUrl: string;
@@ -32,7 +46,10 @@ export interface RawSourceDownloadResult {
   readonly contentType: string | null;
   readonly etag: string | null;
   readonly lastModified: string | null;
-  readonly bytes: Buffer;
+  /** LAYER A / TRANSPORT: the EXACT terminal HTTP response bytes, always -- never extracted/unwrapped (Terra Defect A). For a ZIP-wrapped source this is the ZIP itself. */
+  readonly rawBytes: Buffer;
+  /** LAYER B / DOCUMENT: non-null ONLY when `rawBytes` was a ZIP envelope that had to be unwrapped. `null` means the document IS `rawBytes` (the common direct-PDF case). */
+  readonly document: RawSourceExtractedDocument | null;
 }
 
 export type RawSourceDownloadErrorCode =
@@ -50,6 +67,28 @@ export class RawSourceDownloadError extends Error {
 
 const DEFAULT_TIMEOUT_MS = 20_000;
 const MAX_REDIRECT_HOPS = 5;
+const EXTRACTED_DOCUMENT_MEDIA_TYPE = 'application/pdf';
+
+/**
+ * B-F7A-SOURCE-EVIDENCE-1: live retrieval against the real
+ * `nsearchives.nseindia.com` host proved that axios's bare default request
+ * (no `User-Agent`/`Accept` headers at all) is rejected by NSE's Akamai edge
+ * with a bare `503` before ever reaching the actual file -- verified
+ * directly with the production transport during this task, not assumed. A
+ * standard browser-shaped request (the same header set a real browser
+ * sends) succeeds. These are STATIC headers only -- no cookies, no
+ * authentication/session state, no credential scraping -- and do not change
+ * WHAT is requested or WHICH host/path policy applies, only whether NSE's
+ * edge accepts the connection at all. Terra explicitly accepted this
+ * correction; kept as a named constant (task section 22) purely for
+ * reviewability, not behavior change.
+ */
+const NSE_BROWSER_SHAPED_REQUEST_HEADERS: Readonly<Record<string, string>> = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  Accept: 'application/pdf,application/zip,application/octet-stream,*/*',
+  'Accept-Language': 'en-US,en;q=0.9',
+  Referer: 'https://www.nseindia.com/',
+};
 
 function isRedirectStatus(status: number): boolean {
   return status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
@@ -73,6 +112,7 @@ class AxiosRawSourceHttpTransport implements RawSourceHttpTransport {
         maxContentLength: config.maxBytes,
         maxBodyLength: config.maxBytes,
         validateStatus: () => true,
+        headers: NSE_BROWSER_SHAPED_REQUEST_HEADERS,
       });
       const headers: Record<string, string | undefined> = {};
       for (const [key, value] of Object.entries(response.headers ?? {})) {
@@ -91,8 +131,15 @@ class AxiosRawSourceHttpTransport implements RawSourceHttpTransport {
  * every URL -- the initial one AND every redirect hop -- is revalidated
  * against `assertApprovedRawSourceUrl` before it is ever requested, so a
  * redirect can never silently escape the approved host/path allowlist.
- * `assertValidRawPdfBytes` runs on the terminal response body before this
- * method returns -- callers never receive unvalidated bytes.
+ *
+ * B-F7A-SOURCE-EVIDENCE-FIX-1 (Terra Defect A): the returned `rawBytes` are
+ * ALWAYS the exact terminal HTTP response body, untouched -- if that body is
+ * itself a ZIP envelope (task section 4/37), the reference-bound PDF member
+ * inside it is unwrapped into a SEPARATE `document` field rather than
+ * silently replacing `rawBytes`. `assertValidRawPdfBytes` always runs on the
+ * DOCUMENT bytes (whichever they are -- `document.bytes` when present,
+ * `rawBytes` otherwise) before this method returns -- callers never receive
+ * an unvalidated document, and never lose the raw transport evidence.
  */
 export default class NseRawSourceHttpDownloaderService {
   constructor(
@@ -124,8 +171,23 @@ export default class NseRawSourceHttpDownloaderService {
         throw new RawSourceDownloadError('HTTP_STATUS_REJECTED', `'${currentUrl}' responded with non-success HTTP status ${response.status}.`);
       }
 
-      const bytes = Buffer.isBuffer(response.data) ? response.data : Buffer.from(response.data);
-      await assertValidRawPdfBytes(bytes);
+      const rawBytes = Buffer.isBuffer(response.data) ? response.data : Buffer.from(response.data);
+
+      // B-F7A-SOURCE-EVIDENCE-FIX-1 (task section 4/37): a small number of
+      // real NSE circulars are published at their approved path as a `.zip`
+      // bundle rather than a bare PDF. Detected by the response body's own
+      // magic bytes (never inferred from the request URL alone), and only
+      // the single member whose name is PROVEN to match this reference's
+      // expected `<DEPT><NUMBER>.pdf` basename is ever extracted -- see
+      // `raw-source-zip-envelope.util.ts`. `rawBytes` itself is NEVER
+      // replaced by the extraction -- it stays the exact transport bytes.
+      let document: RawSourceExtractedDocument | null = null;
+      if (looksLikeZipEnvelope(rawBytes)) {
+        const memberName = deriveExpectedZipMemberBasename(currentUrl);
+        document = { bytes: extractZipMember(rawBytes, memberName), memberName, mediaType: EXTRACTED_DOCUMENT_MEDIA_TYPE };
+      }
+
+      await assertValidRawPdfBytes(document?.bytes ?? rawBytes);
 
       return {
         requestedUrl: url,
@@ -134,7 +196,8 @@ export default class NseRawSourceHttpDownloaderService {
         contentType: response.headers['content-type'] ?? null,
         etag: response.headers['etag'] ?? null,
         lastModified: response.headers['last-modified'] ?? null,
-        bytes,
+        rawBytes,
+        document,
       };
     }
 

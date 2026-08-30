@@ -10,6 +10,7 @@ import {
   RawSourceUrlReviewStatus,
   ReviewedRawSourceManifestEntry,
   assertExact2024PilotReferenceSet,
+  assertExactReferenceSet,
   isValidRawSourceReference,
   validateReviewedRawSourceManifest,
 } from './raw-source-archive.types';
@@ -128,4 +129,16 @@ test('assertExact2024PilotReferenceSet accepts exactly the 16 expected reference
     baseManifest([...EXPECTED_2024_PILOT_REFERENCES.map((reference) => baseEntry({ reference })), baseEntry({ reference: 'NSE/CMTR/99999' })])
   );
   assert.throws(() => assertExact2024PilotReferenceSet(extraOne), RawSourceManifestValidationError);
+});
+
+test('(B-F7A-SOURCE-EVIDENCE-1) assertExactReferenceSet is the generic form -- works against an arbitrary expected set, not just the 2024 pilot list', () => {
+  const expected = ['NSE/CMTR/50560', 'NSE/CMTR/54023'];
+  const exact = validateReviewedRawSourceManifest(baseManifest(expected.map((reference) => baseEntry({ reference }))));
+  assert.doesNotThrow(() => assertExactReferenceSet(exact, expected, '2022 EQUITY manifest'));
+
+  const missingOne = validateReviewedRawSourceManifest(baseManifest([baseEntry({ reference: 'NSE/CMTR/50560' })]));
+  assert.throws(() => assertExactReferenceSet(missingOne, expected, '2022 EQUITY manifest'), RawSourceManifestValidationError);
+
+  const extraOne = validateReviewedRawSourceManifest(baseManifest([...expected.map((reference) => baseEntry({ reference })), baseEntry({ reference: 'NSE/CMTR/99999' })]));
+  assert.throws(() => assertExactReferenceSet(extraOne, expected, '2022 EQUITY manifest'), RawSourceManifestValidationError);
 });

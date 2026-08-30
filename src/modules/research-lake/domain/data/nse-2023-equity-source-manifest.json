@@ -1,0 +1,58 @@
+{
+  "manifestSchemaVersion": 1,
+  "pilotId": "B-F7A-SOURCE-EVIDENCE-1-2023-EQUITY",
+  "calendarYear": 2023,
+  "entries": [
+    {
+      "reference": "NSE/CMTR/54757",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR54757.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "150/2022",
+      "publicationDate": "2022-12-08",
+      "subject": "Trading holidays for the calendar year 2023",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "ANNUAL_HOLIDAY_CIRCULAR",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": null
+    },
+    {
+      "reference": "NSE/CMTR/57285",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR57285.zip",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "76/2023",
+      "publicationDate": "2023-06-27",
+      "subject": "Change in Trading Holiday",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "HOLIDAY_AMENDMENT_NOTICE",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": "In partial modification to Exchange circular NSE/CMTR/54757 dated December 08, 2022: moves the June 2023 trading holiday from June 28 to June 29 (Bakri Id / Id-Ul-Zuha), per Maharashtra general administration department notification dated June 26, 2023. Officially published at its approved circulars path as a .zip bundle (circular PDF + the Maharashtra gazette notification), not a bare PDF -- confirmed via NSE's own official circular-search API and by inspecting the archive contents."
+    },
+    {
+      "reference": "NSE/CMTR/59124",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR59124.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "139/2023",
+      "publicationDate": "2023-10-27",
+      "subject": "Muhurat Trading session on account of Diwali",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "MUHURAT_TRADING_NOTICE",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": "In continuation to circular No. 54757 dated December 08, 2022 (the 2023 annual holiday circular)."
+    }
+  ]
+}

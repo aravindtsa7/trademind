@@ -17,7 +17,7 @@ function validReceipt(overrides: Record<string, unknown> = {}) {
     rawSha256: HASH,
     byteLength: 1234,
     retrievedAt: '2026-01-01T00:00:00.000Z',
-    archiveRelativePath: rawSourceBlobRelativePath(HASH),
+    archiveRelativePath: rawSourceBlobRelativePath(HASH, 'pdf'),
     ...overrides,
   };
 }
@@ -98,12 +98,157 @@ test('an unparseable retrievedAt is rejected', () => {
   expectCode(() => validateReceiptIndexEnvelope(raw), 'INVALID_RETRIEVED_AT');
 });
 
+// ============================================================
+// B-F7A-SOURCE-EVIDENCE-FIX-1 two-layer evidence schema (task section 5/33)
+// ============================================================
+
+const PDF_SHA = 'b'.repeat(64);
+const ZIP_SHA = 'c'.repeat(64);
+
+test('(33) a legacy/direct-PDF receipt with NO documentEvidence key at all (pre-fix on-disk shape) still validates -- backward compatible', () => {
+  const raw = { schemaVersion: 1, receipts: { 'NSE/MSD/60340': validReceipt() } };
+  const result = validateReceiptIndexEnvelope(raw);
+  assert.equal(result.receipts['NSE/MSD/60340'].documentEvidence, null);
+  assert.equal(result.receipts['NSE/MSD/60340'].repairedFrom, null);
+});
+
+test('(33) a receipt with an explicit documentEvidence: null also validates (equivalent to absent)', () => {
+  const raw = { schemaVersion: 1, receipts: { 'NSE/MSD/60340': validReceipt({ documentEvidence: null }) } };
+  assert.doesNotThrow(() => validateReceiptIndexEnvelope(raw));
+});
+
+test('(33) a corrected ZIP two-layer receipt (rawSha256 for the .zip transport blob, documentEvidence for the extracted PDF) validates', () => {
+  const raw = {
+    schemaVersion: 1,
+    receipts: {
+      'NSE/CMTR/60338': validReceipt({
+        reference: 'NSE/CMTR/60338',
+        requestedUrl: 'https://nsearchives.nseindia.com/content/circulars/CMTR60338.zip',
+        resolvedFinalUrl: 'https://nsearchives.nseindia.com/content/circulars/CMTR60338.zip',
+        rawSha256: ZIP_SHA,
+        archiveRelativePath: rawSourceBlobRelativePath(ZIP_SHA, 'zip'),
+        documentEvidence: {
+          documentSha256: PDF_SHA,
+          documentByteLength: 4321,
+          documentArchiveRelativePath: rawSourceBlobRelativePath(PDF_SHA, 'pdf'),
+          documentMemberName: 'CMTR60338.pdf',
+          documentMediaType: 'application/pdf',
+        },
+      }),
+    },
+  };
+  const result = validateReceiptIndexEnvelope(raw);
+  const receipt = result.receipts['NSE/CMTR/60338'];
+  assert.equal(receipt.rawSha256, ZIP_SHA);
+  assert.equal(receipt.documentEvidence!.documentSha256, PDF_SHA);
+  assert.notEqual(receipt.rawSha256, receipt.documentEvidence!.documentSha256, 'transport and document hashes must be genuinely different for a ZIP-wrapped source');
+});
+
+test('(33) a ZIP-shaped receipt (documentEvidence present) whose archiveRelativePath is still .pdf-extension (pretending the raw/transport blob IS the pdf blob) is rejected', () => {
+  const raw = {
+    schemaVersion: 1,
+    receipts: {
+      'NSE/CMTR/60338': validReceipt({
+        reference: 'NSE/CMTR/60338',
+        rawSha256: ZIP_SHA,
+        archiveRelativePath: rawSourceBlobRelativePath(ZIP_SHA, 'pdf'), // wrong extension for a receipt that carries document evidence
+        documentEvidence: {
+          documentSha256: PDF_SHA,
+          documentByteLength: 4321,
+          documentArchiveRelativePath: rawSourceBlobRelativePath(PDF_SHA, 'pdf'),
+          documentMemberName: 'CMTR60338.pdf',
+          documentMediaType: 'application/pdf',
+        },
+      }),
+    },
+  };
+  expectCode(() => validateReceiptIndexEnvelope(raw), 'INVALID_BLOB_LOCATOR');
+});
+
+test('(33) documentEvidence with a malformed documentSha256 is rejected', () => {
+  const raw = {
+    schemaVersion: 1,
+    receipts: {
+      'NSE/CMTR/60338': validReceipt({
+        reference: 'NSE/CMTR/60338',
+        rawSha256: ZIP_SHA,
+        archiveRelativePath: rawSourceBlobRelativePath(ZIP_SHA, 'zip'),
+        documentEvidence: { documentSha256: 'not-a-hash', documentByteLength: 1, documentArchiveRelativePath: 'blobs/x.pdf', documentMemberName: 'x.pdf', documentMediaType: 'application/pdf' },
+      }),
+    },
+  };
+  expectCode(() => validateReceiptIndexEnvelope(raw), 'INVALID_DOCUMENT_EVIDENCE');
+});
+
+test('(33) documentEvidence.documentArchiveRelativePath inconsistent with its own documentSha256 is rejected', () => {
+  const raw = {
+    schemaVersion: 1,
+    receipts: {
+      'NSE/CMTR/60338': validReceipt({
+        reference: 'NSE/CMTR/60338',
+        rawSha256: ZIP_SHA,
+        archiveRelativePath: rawSourceBlobRelativePath(ZIP_SHA, 'zip'),
+        documentEvidence: { documentSha256: PDF_SHA, documentByteLength: 1, documentArchiveRelativePath: `blobs/${'f'.repeat(64)}.pdf`, documentMemberName: 'x.pdf', documentMediaType: 'application/pdf' },
+      }),
+    },
+  };
+  expectCode(() => validateReceiptIndexEnvelope(raw), 'INVALID_DOCUMENT_EVIDENCE');
+});
+
+test('(33) an empty documentMemberName is rejected', () => {
+  const raw = {
+    schemaVersion: 1,
+    receipts: {
+      'NSE/CMTR/60338': validReceipt({
+        reference: 'NSE/CMTR/60338',
+        rawSha256: ZIP_SHA,
+        archiveRelativePath: rawSourceBlobRelativePath(ZIP_SHA, 'zip'),
+        documentEvidence: { documentSha256: PDF_SHA, documentByteLength: 1, documentArchiveRelativePath: rawSourceBlobRelativePath(PDF_SHA, 'pdf'), documentMemberName: '', documentMediaType: 'application/pdf' },
+      }),
+    },
+  };
+  expectCode(() => validateReceiptIndexEnvelope(raw), 'INVALID_DOCUMENT_EVIDENCE');
+});
+
+test('(33) a well-formed repairedFrom audit record validates and round-trips', () => {
+  const raw = {
+    schemaVersion: 1,
+    receipts: {
+      'NSE/CMTR/60338': validReceipt({
+        reference: 'NSE/CMTR/60338',
+        rawSha256: ZIP_SHA,
+        archiveRelativePath: rawSourceBlobRelativePath(ZIP_SHA, 'zip'),
+        documentEvidence: { documentSha256: PDF_SHA, documentByteLength: 1, documentArchiveRelativePath: rawSourceBlobRelativePath(PDF_SHA, 'pdf'), documentMemberName: 'CMTR60338.pdf', documentMediaType: 'application/pdf' },
+        repairedFrom: { repairedFromLegacyRawSha256: PDF_SHA, repairedFromArchiveRelativePath: rawSourceBlobRelativePath(PDF_SHA, 'pdf'), repairedAt: '2026-01-01T00:00:00.000Z', reason: 'legacy repair test' },
+      }),
+    },
+  };
+  const result = validateReceiptIndexEnvelope(raw);
+  assert.equal(result.receipts['NSE/CMTR/60338'].repairedFrom!.reason, 'legacy repair test');
+});
+
+test('(33) a repairedFrom audit record with a malformed timestamp is rejected', () => {
+  const raw = {
+    schemaVersion: 1,
+    receipts: {
+      'NSE/CMTR/60338': validReceipt({
+        reference: 'NSE/CMTR/60338',
+        rawSha256: ZIP_SHA,
+        archiveRelativePath: rawSourceBlobRelativePath(ZIP_SHA, 'zip'),
+        documentEvidence: { documentSha256: PDF_SHA, documentByteLength: 1, documentArchiveRelativePath: rawSourceBlobRelativePath(PDF_SHA, 'pdf'), documentMemberName: 'CMTR60338.pdf', documentMediaType: 'application/pdf' },
+        repairedFrom: { repairedFromLegacyRawSha256: PDF_SHA, repairedFromArchiveRelativePath: 'blobs/x.pdf', repairedAt: 'not-a-date', reason: 'x' },
+      }),
+    },
+  };
+  expectCode(() => validateReceiptIndexEnvelope(raw), 'INVALID_REPAIR_AUDIT');
+});
+
 test('one malformed receipt fails the WHOLE index closed -- valid sibling entries are never partially accepted', () => {
   const raw = {
     schemaVersion: 1,
     receipts: {
       'NSE/MSD/60340': validReceipt(),
-      'NSE/CMTR/59722': validReceipt({ reference: 'NSE/CMTR/59722', rawSha256: 'bad-hash', archiveRelativePath: rawSourceBlobRelativePath(HASH) }),
+      'NSE/CMTR/59722': validReceipt({ reference: 'NSE/CMTR/59722', rawSha256: 'bad-hash', archiveRelativePath: rawSourceBlobRelativePath(HASH, 'pdf') }),
     },
   };
   assert.throws(() => validateReceiptIndexEnvelope(raw), ReceiptIndexValidationError);

@@ -34,3 +34,4 @@ export * from './nse-raw-source-downloader.service';
 export { default as RawSourceArchiverService } from './nse-raw-source-archiver.service';
 export * from './nse-raw-source-archiver.service';
 export * from './nse-2024-pilot-archive-runner';
+export * from './reviewed-raw-source-archive-runner';

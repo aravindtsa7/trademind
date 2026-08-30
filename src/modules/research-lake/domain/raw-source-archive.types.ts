@@ -35,6 +35,17 @@ export enum RawSourceRole {
   SPECIAL_SESSION_UPDATE = 'SPECIAL_SESSION_UPDATE',
   EXCEPTIONAL_CLOSURE_NOTICE = 'EXCEPTIONAL_CLOSURE_NOTICE',
   MUHURAT_TRADING_NOTICE = 'MUHURAT_TRADING_NOTICE',
+  /**
+   * B-F7A-SOURCE-EVIDENCE-1: a document that CHANGES an already-published
+   * annual holiday's date (e.g. `NSE/CMTR/57285`: "in partial modification
+   * to Exchange circular... NSE/CMTR/54757... Current Trading Holiday June
+   * 28, 2023 / Revised Trading Holiday June 29, 2023"), as distinct from
+   * `EXCEPTIONAL_CLOSURE_NOTICE` (which ADDS a new one-off closure day, never
+   * moves an existing one). No existing role fit this without
+   * mischaracterizing the document -- mirrors `SourceDocumentType.AMENDMENT`
+   * already present at the fixture layer for exactly this document kind.
+   */
+  HOLIDAY_AMENDMENT_NOTICE = 'HOLIDAY_AMENDMENT_NOTICE',
 }
 
 export enum RawSourceApplicabilityDomain {
@@ -324,6 +335,30 @@ export function validateReviewedRawSourceManifest(raw: unknown): ReviewedRawSour
 }
 
 /**
+ * B-F7A-SOURCE-EVIDENCE-1 (task section 11): the GENERIC form of "this
+ * manifest contains exactly this expected reference set, no more, no
+ * fewer" -- extracted so a future reviewed manifest/pilot year can prove
+ * its own exact expected reference set without inheriting (or duplicating)
+ * the 2024-specific list. `assertExact2024PilotReferenceSet` below is now a
+ * thin wrapper over this for the original 2024 pilot; its behavior/error
+ * code are unchanged.
+ */
+export function assertExactReferenceSet(manifest: ReviewedRawSourceManifest, expectedReferences: readonly string[], label: string): void {
+  const actual = new Set(manifest.entries.map((entry) => entry.reference));
+  const expected = new Set(expectedReferences);
+
+  const missing = [...expected].filter((reference) => !actual.has(reference));
+  const unexpected = [...actual].filter((reference) => !expected.has(reference));
+
+  if (missing.length > 0 || unexpected.length > 0) {
+    fail('INVALID_MANIFEST_SHAPE', `${label} reference set mismatch. Missing: [${missing.join(', ')}]. Unexpected: [${unexpected.join(', ')}].`);
+  }
+  if (manifest.entries.length !== expectedReferences.length) {
+    fail('INVALID_MANIFEST_SHAPE', `${label}: expected exactly ${expectedReferences.length} entries, got ${manifest.entries.length}.`);
+  }
+}
+
+/**
  * Fails closed unless `manifest.entries` contains exactly
  * `EXPECTED_2024_PILOT_REFERENCES` -- no more, no fewer (task section 4/17
  * tests 2-4: "exactly 16 source entries exist" / "all expected source refs
@@ -332,19 +367,5 @@ export function validateReviewedRawSourceManifest(raw: unknown): ReviewedRawSour
  * without inheriting the 2024-specific reference list.
  */
 export function assertExact2024PilotReferenceSet(manifest: ReviewedRawSourceManifest): void {
-  const actual = new Set(manifest.entries.map((entry) => entry.reference));
-  const expected = new Set(EXPECTED_2024_PILOT_REFERENCES);
-
-  const missing = [...expected].filter((reference) => !actual.has(reference));
-  const unexpected = [...actual].filter((reference) => !expected.has(reference));
-
-  if (missing.length > 0 || unexpected.length > 0) {
-    fail(
-      'INVALID_MANIFEST_SHAPE',
-      `2024 pilot manifest reference set mismatch. Missing: [${missing.join(', ')}]. Unexpected: [${unexpected.join(', ')}].`
-    );
-  }
-  if (manifest.entries.length !== EXPECTED_2024_PILOT_REFERENCES.length) {
-    fail('INVALID_MANIFEST_SHAPE', `Expected exactly ${EXPECTED_2024_PILOT_REFERENCES.length} entries, got ${manifest.entries.length}.`);
-  }
+  assertExactReferenceSet(manifest, EXPECTED_2024_PILOT_REFERENCES, '2024 pilot manifest');
 }

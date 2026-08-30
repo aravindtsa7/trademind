@@ -1,0 +1,58 @@
+{
+  "manifestSchemaVersion": 1,
+  "pilotId": "B-F7A-SOURCE-EVIDENCE-1-2025-EQUITY",
+  "calendarYear": 2025,
+  "entries": [
+    {
+      "reference": "NSE/CMTR/65587",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR65587.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "170/2024",
+      "publicationDate": "2024-12-13",
+      "subject": "Trading holidays for the calendar year 2025",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "ANNUAL_HOLIDAY_CIRCULAR",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": null
+    },
+    {
+      "reference": "NSE/CMTR/65729",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR65729.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "172/2024",
+      "publicationDate": "2024-12-23",
+      "subject": "Live Trading Session on February 01, 2025 - Presentation of Union Budget",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "SPECIAL_SESSION_NOTICE",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": null
+    },
+    {
+      "reference": "NSE/CMTR/70319",
+      "urlReviewStatus": "REVIEWED",
+      "sourceUrl": "https://nsearchives.nseindia.com/content/circulars/CMTR70319.pdf",
+      "primaryDepartment": "Capital Market",
+      "circularReference": "124/2025",
+      "publicationDate": "2025-09-22",
+      "subject": "Muhurat Trading session on account of Diwali",
+      "applicableSegments": [{ "domain": "EQUITY", "basis": "DIRECT" }],
+      "sourceRole": "MUHURAT_TRADING_NOTICE",
+      "lifecycleStatus": "FINAL",
+      "withdraws": [],
+      "withdrawnBy": null,
+      "supersedes": [],
+      "supersededBy": null,
+      "notes": "In continuation to circular No. NSE/CMTR/65587 dated December 13, 2024 (the 2025 annual holiday circular)."
+    }
+  ]
+}

@@ -52,7 +52,7 @@ class FakeDownloader implements RawSourceDownloader {
     const bytes = this.bytesPerCall[this.callCount];
     this.callCount += 1;
     if (bytes === undefined) throw new Error('FakeDownloader: no more configured responses.');
-    return { requestedUrl: url, resolvedFinalUrl: url, httpStatus: 200, contentType: 'application/pdf', etag: null, lastModified: null, bytes };
+    return { requestedUrl: url, resolvedFinalUrl: url, httpStatus: 200, contentType: 'application/pdf', etag: null, lastModified: null, rawBytes: bytes, document: null };
   }
 }
 
@@ -86,7 +86,7 @@ test('(Defect E defense-in-depth) a REVIEWED entry whose URL does not bind to it
     const mismatched = reviewedEntry({ sourceUrl: 'https://nsearchives.nseindia.com/content/circulars/MSD60318.pdf' });
     const result = await archiver.archiveEntry(mismatched, {});
     assert.equal(result.status, 'FAILED_ERROR');
-    assert.match(result.detail ?? '', /URL_REFERENCE_MISMATCH|does not match|basename/i);
+    assert.match(result.detail ?? '', /URL_REFERENCE_MISMATCH|expects URL path/i);
     assert.equal(downloader.callCount, 0);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -198,7 +198,7 @@ test('(15/22) crash recovery Case 1: an orphan blob (blob exists, receipt absent
   try {
     // Simulate a crash between blob-publish and receipt-publish: write the blob directly, but no receipt index exists yet.
     const hash = sha256HexOfBuffer(PDF_A);
-    const stored = storeRawSourceBlob(root, PDF_A, hash);
+    const stored = storeRawSourceBlob(root, PDF_A, hash, 'pdf');
     assert.equal(stored.wasNewlyWritten, true);
 
     const manifest = { manifestSchemaVersion: 1, pilotId: 'TEST', calendarYear: 2024, entries: [reviewedEntry()] };
@@ -206,7 +206,7 @@ test('(15/22) crash recovery Case 1: an orphan blob (blob exists, receipt absent
     const run = await new RawSourceArchiverService(new FakeDownloader([PDF_A]), root).archiveManifest(manifest);
     assert.equal(run.entries[0].status, 'ARCHIVED_NEW');
     assert.equal(run.entries[0].receipt!.rawSha256, hash);
-    assert.equal(run.entries[0].receipt!.archiveRelativePath, rawSourceBlobRelativePath(hash));
+    assert.equal(run.entries[0].receipt!.archiveRelativePath, rawSourceBlobRelativePath(hash, 'pdf'));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

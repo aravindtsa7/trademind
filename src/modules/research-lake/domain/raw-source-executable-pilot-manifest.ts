@@ -1,4 +1,4 @@
-import { ReviewedRawSourceManifest, RawSourceUrlReviewStatus, assertExact2024PilotReferenceSet } from './raw-source-archive.types';
+import { ReviewedRawSourceManifest, RawSourceUrlReviewStatus, EXPECTED_2024_PILOT_REFERENCES, assertExactReferenceSet } from './raw-source-archive.types';
 import { validateRawSourceLifecycleGraph } from './raw-source-lifecycle-graph';
 import { assertUrlBindsToReference, RawSourceUrlBindingError } from './raw-source-manifest-url-binding';
 
@@ -23,24 +23,27 @@ export class ExecutablePilotManifestValidationError extends Error {
 }
 
 /**
- * Fails closed unless `manifest` is a complete, executable 2024 pilot
- * manifest: exactly the 16 accepted references (task section 3/7), every
- * entry `REVIEWED` with a non-null `sourceUrl` that is provably bound to its
- * own `reference` (task section 20), every entry carrying a non-null
- * `primaryDepartment`, and a lifecycle graph that validates. Callers
- * (the archive CLI) MUST call this before attempting to archive anything --
- * `validateReviewedRawSourceManifest`'s generic schema pass alone is not
- * sufficient authorization to run a live archive (task section 7).
+ * B-F7A-SOURCE-EVIDENCE-1 (task section 11): the GENERIC form of "this is a
+ * complete, executable reviewed manifest" -- every entry `REVIEWED` with a
+ * non-null `sourceUrl` provably bound to its own `reference` (task section
+ * 20), every entry carrying a non-null `primaryDepartment`, a lifecycle
+ * graph that validates, AND `manifest.entries` containing EXACTLY
+ * `expectedReferences` (via `assertExactReferenceSet`). Extracted so a
+ * future reviewed manifest/pilot year can reuse this same executable gate
+ * without inheriting the 2024-specific reference list.
+ * `assertExecutable2024PilotManifestComplete` below is now a thin wrapper
+ * over this for the original 2024 pilot; its behavior/error codes are
+ * unchanged.
  */
-export function assertExecutable2024PilotManifestComplete(manifest: ReviewedRawSourceManifest): void {
-  assertExact2024PilotReferenceSet(manifest);
+export function assertExecutableManifestComplete(manifest: ReviewedRawSourceManifest, expectedReferences: readonly string[], label: string): void {
+  assertExactReferenceSet(manifest, expectedReferences, label);
   validateRawSourceLifecycleGraph(manifest.entries);
 
   for (const entry of manifest.entries) {
     if (entry.urlReviewStatus !== RawSourceUrlReviewStatus.REVIEWED || entry.sourceUrl === null) {
       throw new ExecutablePilotManifestValidationError(
         'ENTRY_NOT_REVIEWED',
-        `Entry '${entry.reference}' has urlReviewStatus '${entry.urlReviewStatus}' -- the executable 2024 pilot manifest requires every entry to be REVIEWED with a non-null sourceUrl.`
+        `Entry '${entry.reference}' has urlReviewStatus '${entry.urlReviewStatus}' -- the executable manifest requires every entry to be REVIEWED with a non-null sourceUrl.`
       );
     }
     try {
@@ -52,7 +55,21 @@ export function assertExecutable2024PilotManifestComplete(manifest: ReviewedRawS
       throw error;
     }
     if (entry.primaryDepartment === null || entry.primaryDepartment.trim().length === 0) {
-      throw new ExecutablePilotManifestValidationError('MISSING_PRIMARY_DEPARTMENT', `Entry '${entry.reference}' has no primaryDepartment -- the executable 2024 pilot manifest requires one for every entry.`);
+      throw new ExecutablePilotManifestValidationError('MISSING_PRIMARY_DEPARTMENT', `Entry '${entry.reference}' has no primaryDepartment -- the executable manifest requires one for every entry.`);
     }
   }
+}
+
+/**
+ * Fails closed unless `manifest` is a complete, executable 2024 pilot
+ * manifest: exactly the 16 accepted references (task section 3/7), every
+ * entry `REVIEWED` with a non-null `sourceUrl` that is provably bound to its
+ * own `reference` (task section 20), every entry carrying a non-null
+ * `primaryDepartment`, and a lifecycle graph that validates. Callers
+ * (the archive CLI) MUST call this before attempting to archive anything --
+ * `validateReviewedRawSourceManifest`'s generic schema pass alone is not
+ * sufficient authorization to run a live archive (task section 7).
+ */
+export function assertExecutable2024PilotManifestComplete(manifest: ReviewedRawSourceManifest): void {
+  assertExecutableManifestComplete(manifest, EXPECTED_2024_PILOT_REFERENCES, '2024 pilot manifest');
 }
