@@ -1,13 +1,22 @@
 import dotenv from 'dotenv';
 import { mkdir, writeFile } from 'node:fs/promises';
 import logger from '../core/logger/logger';
+import { determineNiftyIngestionPlanCliExitCode } from '../modules/research-lake/services/nifty-ingestion-plan-cli-exit-policy.util';
 import NiftyUnderlyingAcquisitionService from '../modules/research-lake/services/nifty-underlying-acquisition.service';
+import NiftyUnderlyingIngestionPlannerService, { NiftyPlannedDateDisposition } from '../modules/research-lake/services/nifty-underlying-ingestion-planner.service';
 
 dotenv.config();
 logger.silent = true;
 
 const ARTIFACT_DIR = 'artifacts/research-lake';
 const ARTIFACT_PATH = `${ARTIFACT_DIR}/nifty-underlying-acquisition-result.json`;
+/**
+ * B-F2-CAL-1 plan-only output. Deliberately named/located as disposable
+ * planning evidence, distinct from `ARTIFACT_PATH` above and from canonical
+ * validated research-lake datasets -- never write it under
+ * `artifacts/research-lake/parquet` or otherwise imply it is validated data.
+ */
+const PLAN_ARTIFACT_PATH = `${ARTIFACT_DIR}/nifty-underlying-ingestion-plan.json`;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
@@ -26,11 +35,20 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  *
  * Optional: RESEARCH_DRY_RUN=true fetches from the real provider but never
  * writes to the database (see NiftyUnderlyingAcquisitionRequest.dryRun).
+ *
+ * Optional: RESEARCH_PLAN_ONLY=true (B-F2-CAL-1) runs a calendar-aware,
+ * NETWORK-FREE plan instead: it calls
+ * `NiftyUnderlyingIngestionPlannerService.buildPlan(...)` and returns before
+ * `NiftyUnderlyingAcquisitionService` is ever constructed -- no Upstox
+ * request, no database write. Unlike the acquisition path,
+ * `RESEARCH_START_DATE` is REQUIRED in this mode (the planner has no default
+ * start date). `RESEARCH_DRY_RUN` is ignored when `RESEARCH_PLAN_ONLY=true`.
  */
 async function run(): Promise<void> {
   const startDate = process.env.RESEARCH_START_DATE?.trim();
   const endDate = process.env.RESEARCH_END_DATE?.trim();
   const dryRun = process.env.RESEARCH_DRY_RUN?.trim().toLowerCase() === 'true';
+  const planOnly = process.env.RESEARCH_PLAN_ONLY?.trim().toLowerCase() === 'true';
 
   if (!endDate) {
     throw new Error(
@@ -42,6 +60,56 @@ async function run(): Promise<void> {
   }
   if (startDate && !DATE_PATTERN.test(startDate)) {
     throw new Error(`RESEARCH_START_DATE must be YYYY-MM-DD; received '${startDate}'.`);
+  }
+
+  if (planOnly) {
+    if (!startDate) {
+      throw new Error(
+        'RESEARCH_START_DATE is required (YYYY-MM-DD) when RESEARCH_PLAN_ONLY=true: the planner never defaults a start date ' +
+          '(task B-F2-CAL-1 section 11 -- no implicit today/current year/five-year range).'
+      );
+    }
+
+    console.log(JSON.stringify({ event: 'research:nifty-history plan-only starting', requestedStartDate: startDate, requestedEndDate: endDate }));
+
+    const planner = new NiftyUnderlyingIngestionPlannerService();
+    const plan = await planner.buildPlan({ fromDate: startDate, toDate: endDate });
+
+    await mkdir(ARTIFACT_DIR, { recursive: true });
+    await writeFile(PLAN_ARTIFACT_PATH, `${JSON.stringify(plan, null, 2)}\n`);
+
+    console.log(
+      JSON.stringify(
+        {
+          instrumentKey: plan.instrumentKey,
+          exchange: plan.exchange,
+          calendarSegment: plan.calendarSegment,
+          requestedFromDate: plan.requestedFromDate,
+          requestedToDate: plan.requestedToDate,
+          totalCalendarDateCount: plan.totalCalendarDateCount,
+          totalExpectedCandles: plan.totalExpectedCandles,
+          regularTradingDateCount: plan.regularTradingDateCount,
+          specialSessionDateCount: plan.specialSessionDateCount,
+          closedDateCount: plan.closedDateCount,
+          blockedDateCount: plan.blockedDateCount,
+          hasBlockedDates: plan.hasBlockedDates,
+          blockedDates: plan.dates.filter((date) => date.disposition === NiftyPlannedDateDisposition.BLOCKED_UNCERTIFIED).map((date) => date.tradingDate),
+          providerRequestChunkCount: plan.providerRequestChunks.length,
+          artifact: PLAN_ARTIFACT_PATH,
+        },
+        null,
+        2
+      )
+    );
+
+    process.exitCode = determineNiftyIngestionPlanCliExitCode(plan);
+    if (plan.hasBlockedDates) {
+      console.error(
+        `B-F2-CAL-1 plan is NOT execution-ready: ${plan.blockedDateCount} date(s) are BLOCKED_UNCERTIFIED ` +
+          '(authoritative calendar truth unavailable -- this is never equivalent to a known market holiday).'
+      );
+    }
+    return;
   }
 
   console.log(
