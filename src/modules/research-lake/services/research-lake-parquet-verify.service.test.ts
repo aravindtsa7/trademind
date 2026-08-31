@@ -12,6 +12,10 @@ import { ParquetDatasetStorageDescriptor } from '../domain/parquet-storage.types
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import HistoricalCandleRepository from '../../historical-candles/repositories/historical-candle.repository';
 import HistoricalOptionCandleLakeRepository from '../repositories/historical-option-candle-lake.repository';
+import HistoricalDataRetrievalEvidenceService from './historical-data-retrieval-evidence.service';
+
+/** B-F2C: see the identical constant's doc in research-lake-parquet-export.service.test.ts -- this suite tests Parquet verify/storage-descriptor behavior, not B-F2C evidence, so every manifest here truthfully has none. */
+const NO_RETRIEVAL_EVIDENCE = { findLatestAvailableSessionEvidence: async () => null } as unknown as HistoricalDataRetrievalEvidenceService;
 
 const INSTRUMENT_KEY = 'NSE_INDEX|Nifty 50';
 
@@ -55,6 +59,7 @@ async function buildAndExport(tradingDates: string[]): Promise<{ manifest: Await
       }
     })() as unknown as HistoricalOptionCandleLakeRepository,
     sessionBuilder: new DatasetSessionManifestBuilderService(),
+    retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE,
   });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates });
 
@@ -107,6 +112,7 @@ test('(verify/P) valid Parquet bytes with a semantic mutation (physical checksum
     const mutatedManifestService = new DatasetManifestService({
       historicalCandleRepository: mutatedCandleRepo as unknown as HistoricalCandleRepository,
       sessionBuilder: new DatasetSessionManifestBuilderService(),
+      retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE,
     });
     const mutatedManifest = await mutatedManifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
     const mutatedExportService = new ResearchLakeParquetExportService({ historicalCandleRepository: mutatedCandleRepo as unknown as HistoricalCandleRepository });

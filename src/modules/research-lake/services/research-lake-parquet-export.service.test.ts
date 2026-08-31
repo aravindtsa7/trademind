@@ -15,6 +15,18 @@ import { HistoricalProviderId } from '../interfaces/historical-provider-capabili
 import { HistoricalOptionType } from '../domain/historical-asset.types';
 import HistoricalCandleRepository from '../../historical-candles/repositories/historical-candle.repository';
 import HistoricalOptionCandleLakeRepository from '../repositories/historical-option-candle-lake.repository';
+import HistoricalDataRetrievalEvidenceService from './historical-data-retrieval-evidence.service';
+
+/**
+ * B-F2C: `DatasetManifestService` now looks up durable retrieval evidence
+ * via `HistoricalDataRetrievalEvidenceService`, which defaults to a real,
+ * Prisma-backed instance. Every `DatasetManifestService` constructed in
+ * this file is a manifest-generation detail unrelated to what this suite
+ * actually tests (Parquet export/publish-order/checksum behavior) -- none
+ * of it has genuine B-F2C evidence, so this fake truthfully reports `null`
+ * for every lookup without ever touching a database.
+ */
+const NO_RETRIEVAL_EVIDENCE = { findLatestAvailableSessionEvidence: async () => null } as unknown as HistoricalDataRetrievalEvidenceService;
 
 /** No stray `.tmp` file (from `writeBufferToTempFile`) survives in `directory`, whether or not it exists at all. */
 function assertNoStaleTempFiles(directory: string): void {
@@ -128,6 +140,7 @@ function newHarness(): {
     historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository,
     historicalOptionCandleLakeRepository: optionRepo as unknown as HistoricalOptionCandleLakeRepository,
     sessionBuilder,
+    retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE,
   });
   const exportService = new ResearchLakeParquetExportService({
     historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository,
@@ -344,7 +357,7 @@ test('(export/AH) a manifest with zero sessions produces zero requested/written 
 test('(publish-order/A,G) a new session is verified at a TEMP path while finalPath does not yet exist; finalPath appears only after verification succeeds, and its bytes/checksum are exactly the verified temp bytes', async () => {
   const candleRepo = new FakeHistoricalCandleRepository();
   candleRepo.rows = normalSessionRows('2022-01-03');
-  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService() });
+  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService(), retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
 
   const outputRoot = tempDir();
@@ -379,7 +392,7 @@ test('(publish-order/A,G) a new session is verified at a TEMP path while finalPa
 test('(publish-order/B) a forced logical-checksum verification failure on the temp file leaves finalPath absent and cleans up the temp file', async () => {
   const candleRepo = new FakeHistoricalCandleRepository();
   candleRepo.rows = normalSessionRows('2022-01-03');
-  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService() });
+  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService(), retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
 
   const outputRoot = tempDir();
@@ -400,7 +413,7 @@ test('(publish-order/B) a forced logical-checksum verification failure on the te
 test('(publish-order/C) a Parquet parse/schema verification failure on the temp file leaves finalPath absent and cleans up the temp file', async () => {
   const candleRepo = new FakeHistoricalCandleRepository();
   candleRepo.rows = normalSessionRows('2022-01-03');
-  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService() });
+  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService(), retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
 
   const outputRoot = tempDir();
@@ -425,7 +438,7 @@ test('(publish-order/C) a Parquet parse/schema verification failure on the temp 
 test('(publish-order/D) an unexpected exception during verification (e.g. a simulated I/O error) leaves finalPath absent and cleans up the temp file', async () => {
   const candleRepo = new FakeHistoricalCandleRepository();
   candleRepo.rows = normalSessionRows('2022-01-03');
-  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService() });
+  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService(), retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
 
   const outputRoot = tempDir();
@@ -450,7 +463,7 @@ test('(publish-order/D) an unexpected exception during verification (e.g. a simu
 test('(publish-order/E) an existing corrupt final file remains byte-for-byte untouched (FAILED_EXISTING_FILE_UNTRUSTED), with no stray temp file left behind', async () => {
   const candleRepo = new FakeHistoricalCandleRepository();
   candleRepo.rows = normalSessionRows('2022-01-03');
-  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService() });
+  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService(), retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
   const exportService = new ResearchLakeParquetExportService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository });
 
@@ -474,7 +487,7 @@ test('(publish-order/E) an existing corrupt final file remains byte-for-byte unt
 test('(publish-order/F) an existing, valid, verified final file is skipped (SKIPPED_VERIFIED) and never rewritten, with no stray temp file left behind', async () => {
   const candleRepo = new FakeHistoricalCandleRepository();
   candleRepo.rows = normalSessionRows('2022-01-03');
-  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService() });
+  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService(), retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
   const exportService = new ResearchLakeParquetExportService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository });
 
@@ -497,7 +510,7 @@ test('(publish-order/F) an existing, valid, verified final file is skipped (SKIP
 test('(publish-order/H) an interrupted/failed temporary write (mkdir blocked by a file where a directory is expected) leaves no trusted final file', async () => {
   const candleRepo = new FakeHistoricalCandleRepository();
   candleRepo.rows = normalSessionRows('2022-01-03');
-  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService() });
+  const manifestService = new DatasetManifestService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository, sessionBuilder: new DatasetSessionManifestBuilderService(), retrievalEvidenceService: NO_RETRIEVAL_EVIDENCE });
   const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
   const exportService = new ResearchLakeParquetExportService({ historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository });
 

@@ -1,19 +1,20 @@
-import HistoricalCandleRepository, {
-  HistoricalCandleUpsertInput,
-} from '../../historical-candles/repositories/historical-candle.repository';
+import HistoricalCandleRepository from '../../historical-candles/repositories/historical-candle.repository';
 import {
   HISTORICAL_SESSION_ROW_COUNT,
   isCompleteHistoricalSession,
 } from '../../historical-candles/utils/historical-session-completeness.util';
 import {
-  CanonicalHistoricalCandle,
   CanonicalSessionDeclaration,
   CanonicalSessionExclusion,
+  computeSourceRowsSemanticChecksum,
   DatasetHealthIssue,
   DatasetHealthReport,
   DatasetHealthStatus,
   expectedMinutesForWindows,
   HistoricalAssetType,
+  HistoricalCandleSessionPersistenceOutcome,
+  HistoricalDataRetrievalErrorCategory,
+  HistoricalDataRetrievalStatus,
   HistoricalSourceCandleRow,
   isCompleteCalendarSession,
   istCalendarDate,
@@ -24,6 +25,10 @@ import { CalendarDateRange, splitIntoCalendarMonthChunks } from '../domain/calen
 import { HistoricalDataProvider } from '../interfaces/historical-data-provider.interface';
 import CanonicalSessionProjectorService from './canonical-session-projector.service';
 import DatasetHealthValidatorService from './dataset-health-validator.service';
+import HistoricalDataRetrievalEvidenceService from './historical-data-retrieval-evidence.service';
+import HistoricalCandleResearchPersistenceService, {
+  ResearchSessionPersistenceResult,
+} from './historical-candle-research-persistence.service';
 import HistoricalProviderRateLimiterService from './historical-provider-rate-limiter.service';
 import {
   HistoricalProviderPermanentError,
@@ -193,7 +198,20 @@ export type NiftySessionAcquisitionBucket =
    * `UNRESOLVED_NO_DATA` (which means a real provider request ran and
    * returned nothing for this date).
    */
-  | 'DRY_RUN_ACQUISITION_PLANNED';
+  | 'DRY_RUN_ACQUISITION_PLANNED'
+  /**
+   * B-F2C invariant 7: the incoming, canonicalization-accepted candle set
+   * for this date disagreed (any OHLC/volume/openInterest difference, for
+   * at least one minute) with already-persisted `HistoricalCandle` content
+   * at the same logical key. `HistoricalCandle` is left completely
+   * unchanged for this date -- zero mutation, not even for the other,
+   * non-conflicting minutes in the same session (session atomicity) --
+   * and durable conflict evidence is written. Never reused as
+   * `INCOMPLETE`/`INVALID`/`UNRESOLVED_NO_DATA`: a content conflict is a
+   * materially different, more serious condition than a merely-missing or
+   * structurally-invalid session.
+   */
+  | 'SOURCE_CONFLICT';
 
 /**
  * Typed reason for an orchestrator-level (not B-F1 validator-level) failure
@@ -204,6 +222,8 @@ export type NiftySessionAcquisitionBucket =
  */
 export enum NiftyAcquisitionIssueReason {
   POST_PERSIST_RECONCILIATION_FAILED = 'POST_PERSIST_RECONCILIATION_FAILED',
+  /** B-F2C: see `NiftySessionAcquisitionBucket.SOURCE_CONFLICT` doc -- kept deliberately distinct, never folded into a generic incomplete/invalid reason. */
+  SOURCE_CONTENT_CONFLICT = 'SOURCE_CONTENT_CONFLICT',
 }
 
 export interface NiftyAcquisitionIssue {
@@ -233,6 +253,17 @@ export interface NiftySessionAcquisitionDetail {
    * stay `0` for this bucket).
    */
   readonly plannedExpectedMinuteCount?: number;
+  /**
+   * B-F2C: the durable `HistoricalDataRetrieval.id` this date's provider
+   * data (if any was actually fetched) belongs to -- lets a caller/year
+   * runner trace a result back to its durable evidence. `undefined` for
+   * every date this run never called the provider for (`ALREADY_COMPLETE`,
+   * `CLOSED_NO_DATA_EXPECTED`, `DRY_RUN_ACQUISITION_PLANNED`) -- invariant
+   * 12: never a fabricated retrieval reference.
+   */
+  readonly retrievalId?: string;
+  /** B-F2C: populated only for bucket `SOURCE_CONFLICT` -- the number of conflicting minutes found; see `HistoricalCandleConflict` evidence for full detail. */
+  readonly conflictCount?: number;
 }
 
 export interface NiftyUnderlyingAcquisitionResult {
@@ -277,6 +308,13 @@ export interface NiftyUnderlyingAcquisitionResult {
      * or the chunk fetch itself fails into `failedChunks`.
      */
     readonly dryRunAcquisitionPlanned: readonly string[];
+    /**
+     * B-F2C: dates whose incoming provider content conflicted with
+     * already-persisted `HistoricalCandle` content at the same logical key.
+     * Never treated as healthy/completed by this result or by the year
+     * runner -- `HistoricalCandle` is left unchanged for every date here.
+     */
+    readonly sourceConflict: readonly string[];
   };
   /** Full typed detail for every date this run touched -- not just the problematic ones -- so nothing is free-form-only. */
   readonly sessionDetails: readonly NiftySessionAcquisitionDetail[];
@@ -305,6 +343,20 @@ export interface NiftyUnderlyingAcquisitionServiceDependencies {
    * fake/duck-typed planner so no unit test touches a live database.
    */
   readonly plannerService?: NiftyUnderlyingIngestionPlannerService;
+  /**
+   * B-F2C: durable, crash-truthful retrieval-lifecycle evidence writer/reader
+   * (invariants 1/2/14). Defaults to a real, Prisma-backed instance. Tests
+   * inject a fake/duck-typed service so no unit test touches a live database.
+   */
+  readonly retrievalEvidenceService?: HistoricalDataRetrievalEvidenceService;
+  /**
+   * B-F2C: the ONLY write path this service uses for accepted candle
+   * content -- conflict-safe, session-atomic, never a blind overwrite (see
+   * `HistoricalCandleResearchPersistenceService`). Defaults to a real
+   * instance. Deliberately NOT `HistoricalCandleRepository.bulkUpsert`
+   * (still used, unchanged, by every other existing caller).
+   */
+  readonly researchPersistenceService?: HistoricalCandleResearchPersistenceService;
 }
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -319,6 +371,7 @@ const BUCKET_TO_SESSIONS_KEY: Record<NiftySessionAcquisitionBucket, keyof NiftyU
   UNRESOLVED_NO_DATA: 'unresolvedNoData',
   CLOSED_NO_DATA_EXPECTED: 'closedNoDataExpected',
   DRY_RUN_ACQUISITION_PLANNED: 'dryRunAcquisitionPlanned',
+  SOURCE_CONFLICT: 'sourceConflict',
 };
 
 /**
@@ -345,6 +398,8 @@ export default class NiftyUnderlyingAcquisitionService {
   private readonly rateLimiter: HistoricalProviderRateLimiterService;
   private readonly retryOptions: HistoricalProviderRetryOptions;
   private readonly plannerService: NiftyUnderlyingIngestionPlannerService;
+  private readonly retrievalEvidenceService: HistoricalDataRetrievalEvidenceService;
+  private readonly researchPersistenceService: HistoricalCandleResearchPersistenceService;
 
   constructor(dependencies: NiftyUnderlyingAcquisitionServiceDependencies = {}) {
     this.provider = dependencies.provider ?? new UpstoxHistoricalDataProviderService();
@@ -354,6 +409,8 @@ export default class NiftyUnderlyingAcquisitionService {
     this.rateLimiter = dependencies.rateLimiter ?? new HistoricalProviderRateLimiterService(UPSTOX_HISTORICAL_MIN_REQUEST_INTERVAL_MS);
     this.retryOptions = dependencies.retryOptions ?? {};
     this.plannerService = dependencies.plannerService ?? new NiftyUnderlyingIngestionPlannerService();
+    this.retrievalEvidenceService = dependencies.retrievalEvidenceService ?? new HistoricalDataRetrievalEvidenceService();
+    this.researchPersistenceService = dependencies.researchPersistenceService ?? new HistoricalCandleResearchPersistenceService();
   }
 
   async acquire(request: NiftyUnderlyingAcquisitionRequest): Promise<NiftyUnderlyingAcquisitionResult> {
@@ -410,6 +467,7 @@ export default class NiftyUnderlyingAcquisitionService {
       unresolvedNoData: [] as string[],
       closedNoDataExpected: [] as string[],
       dryRunAcquisitionPlanned: [] as string[],
+      sourceConflict: [] as string[],
     };
     const pushBucket = (bucket: NiftySessionAcquisitionBucket, date: string): void => {
       sessions[BUCKET_TO_SESSIONS_KEY[bucket]].push(date);
@@ -458,35 +516,94 @@ export default class NiftyUnderlyingAcquisitionService {
         continue;
       }
 
+      // B-F2C invariants 1/2: durable STARTED retrieval-attempt evidence is
+      // created BEFORE the provider is ever called for this chunk -- a
+      // crash between here and the provider responding leaves a truthful
+      // STARTED row, never a fabricated ACCEPTED claim. Never reached for
+      // dryRun (the branch above already returned) or for a chunk with no
+      // fetch-eligible work (the branch above already returned) -- so no
+      // evidence is ever created for a date this run never genuinely
+      // attempts against a provider (invariant 12).
+      const retrievalId = await this.retrievalEvidenceService.startRetrieval({
+        providerId: this.provider.providerId,
+        assetType: HistoricalAssetType.NIFTY_INDEX,
+        instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
+        timeframe: NIFTY_UNDERLYING_TIMEFRAME,
+        requestedFromDate: chunk.fromDate,
+        requestedToDate: chunk.toDate,
+      });
+      const retryCountBeforeChunk = stats.retryCount;
+
       let rawRows: readonly HistoricalSourceCandleRow[];
       try {
         rawRows = await this.fetchChunk(chunk, stats);
       } catch (error) {
         monthlyChunksFailed += 1;
         failedChunks.push({ fromDate: chunk.fromDate, toDate: chunk.toDate, error: this.describeError(error) });
+        // B-F2C invariant 14: the provider call itself failed -- evidence
+        // must never claim ACCEPTED. No per-date session evidence is
+        // written for a failed chunk: there is nothing per-date to report,
+        // since rows were never partitioned by date.
+        await this.retrievalEvidenceService.recordFailed(retrievalId, {
+          errorCategory: this.classifyErrorCategory(error),
+          errorMessage: this.describeError(error),
+          providerCallAttempts: 1 + (stats.retryCount - retryCountBeforeChunk),
+        });
         continue; // one bad chunk must not abort other, healthy chunks
       }
       monthlyChunksSucceeded += 1;
       providerRowsReceived += rawRows.length;
 
+      const sourceRowsSemanticChecksum = computeSourceRowsSemanticChecksum(rawRows);
+      await this.retrievalEvidenceService.recordFetched(retrievalId, {
+        sourceRowCount: rawRows.length,
+        sourceRowsSemanticChecksum,
+        providerCallAttempts: 1 + (stats.retryCount - retryCountBeforeChunk),
+      });
+
       const byDate = this.groupRowsByTradingDate(rawRows);
+      let anyIssueThisRetrieval = false;
 
       for (const planned of pendingFetchEligible) {
         const date = planned.tradingDate;
         if (!byDate.has(date)) continue; // handled by the UNRESOLVED_NO_DATA pass below
         // eslint-disable-next-line no-await-in-loop -- persistence must stay ordered per date, one date's write must complete/reconcile before the next begins
-        const detail = await this.processCandidateDate(planned, byDate.get(date) ?? [], dryRun);
+        const detail = await this.processCandidateDate(planned, byDate.get(date) ?? [], dryRun, retrievalId);
         sessionDetails.push(detail);
         pushBucket(detail.bucket, date);
         canonicalRowsAccepted += detail.canonicalRowCount;
         excludedRowsTotal += detail.excludedRowCount;
+        if (detail.bucket === 'INCOMPLETE' || detail.bucket === 'INVALID' || detail.bucket === 'SOURCE_CONFLICT') anyIssueThisRetrieval = true;
       }
 
       for (const planned of pendingFetchEligible) {
         if (byDate.has(planned.tradingDate)) continue;
-        sessionDetails.push(this.unresolvedDetail(planned.tradingDate));
+        sessionDetails.push(this.unresolvedDetail(planned.tradingDate, retrievalId));
         pushBucket('UNRESOLVED_NO_DATA', planned.tradingDate);
+        anyIssueThisRetrieval = true;
+        // eslint-disable-next-line no-await-in-loop -- matches the ordered-per-date convention already used above
+        await this.retrievalEvidenceService.recordNonPersistableSession({
+          retrievalId,
+          providerId: this.provider.providerId,
+          instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
+          timeframe: NIFTY_UNDERLYING_TIMEFRAME,
+          tradingDate: planned.tradingDate,
+          calendarDisposition: planned.disposition,
+          expectedMinuteCount: planned.expectedMinuteCount,
+          providerRowCountForDate: 0,
+          acceptedRowCount: 0,
+          excludedRowCount: 0,
+          sourceOrderAnomalyCount: 0,
+          healthStatus: DatasetHealthStatus.PROVIDER_UNAVAILABLE,
+          persistenceOutcome: HistoricalCandleSessionPersistenceOutcome.NO_PROVIDER_DATA_FOR_DATE,
+          sourceRowsSemanticChecksum,
+        });
       }
+
+      await this.retrievalEvidenceService.finalizeRetrieval(
+        retrievalId,
+        anyIssueThisRetrieval ? HistoricalDataRetrievalStatus.COMPLETED_WITH_ISSUES : HistoricalDataRetrievalStatus.PROCESSED
+      );
     }
 
     return {
@@ -546,7 +663,8 @@ export default class NiftyUnderlyingAcquisitionService {
   private async processCandidateDate(
     planned: ValidatedNiftyPlannedDate,
     rows: readonly HistoricalSourceCandleRow[],
-    dryRun: boolean
+    dryRun: boolean,
+    retrievalId: string
   ): Promise<NiftySessionAcquisitionDetail> {
     const date = planned.tradingDate;
     const projection = this.projector.project({
@@ -559,20 +677,79 @@ export default class NiftyUnderlyingAcquisitionService {
     });
     const report = this.validator.validate(projection, planned.expectedMinutesIst);
     const isPersistable = report.status === DatasetHealthStatus.HEALTHY || report.status === DatasetHealthStatus.NORMALIZED_WITH_EXCLUSIONS;
+    const sourceRowsSemanticChecksum = computeSourceRowsSemanticChecksum(rows);
 
-    if (!isPersistable || dryRun) {
-      return this.buildDetail(date, report, false, []);
+    if (!isPersistable) {
+      // B-F2C invariant 10: a non-persistable date (INCOMPLETE/INVALID/...)
+      // never touches HistoricalCandle, but its exclusion/anomaly/health
+      // evidence must not disappear -- it is durably recorded here.
+      await this.retrievalEvidenceService.recordNonPersistableSession({
+        retrievalId,
+        providerId: this.provider.providerId,
+        instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
+        timeframe: NIFTY_UNDERLYING_TIMEFRAME,
+        tradingDate: date,
+        calendarDisposition: planned.disposition,
+        expectedMinuteCount: planned.expectedMinuteCount,
+        providerRowCountForDate: rows.length,
+        acceptedRowCount: report.canonicalRowCount,
+        excludedRowCount: report.excludedRowCount,
+        sourceOrderAnomalyCount: projection.sourceOrderAnomalies.length,
+        healthStatus: report.status,
+        persistenceOutcome:
+          report.status === DatasetHealthStatus.INVALID
+            ? HistoricalCandleSessionPersistenceOutcome.INVALID
+            : HistoricalCandleSessionPersistenceOutcome.INCOMPLETE,
+        sourceRowsSemanticChecksum,
+      });
+      return this.buildDetail(date, report, false, [], undefined, retrievalId);
     }
 
-    // Never persist excluded rows: `projection.acceptedRows` is, by
-    // construction, exactly the canonical accepted set -- excluded rows
-    // never entered it (see CanonicalSessionProjectorService).
-    const upserts = projection.acceptedRows.map((candle) => this.toUpsertInput(candle));
-    if (upserts.length > 0) {
-      await this.repository.bulkUpsert(upserts);
+    if (dryRun) {
+      // Structurally unreachable post-CAL-3: the chunk loop's dryRun branch
+      // already returns before `fetchChunk`/this method is ever called.
+      // Kept as defense-in-depth exactly like the pre-B-F2C code did.
+      return this.buildDetail(date, report, false, [], undefined, retrievalId);
     }
 
+    // B-F2C invariants 5-9: NEVER `HistoricalCandleRepository.bulkUpsert`
+    // for this path -- `projection.acceptedRows` (by construction, exactly
+    // the canonical accepted set; excluded rows never entered it) is
+    // compared against already-persisted content inside one conflict-safe,
+    // session-atomic transaction. See `HistoricalCandleResearchPersistenceService`.
     const { from, to } = this.istRangeBounds(date, date);
+    const persistenceResult: ResearchSessionPersistenceResult = await this.researchPersistenceService.persistSession(
+      {
+        retrievalId,
+        providerId: this.provider.providerId,
+        instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
+        timeframe: NIFTY_UNDERLYING_TIMEFRAME,
+        tradingDate: date,
+        calendarDisposition: planned.disposition,
+        expectedMinuteCount: planned.expectedMinuteCount,
+        providerRowCountForDate: rows.length,
+        healthStatus: report.status,
+        excludedRowCount: report.excludedRowCount,
+        sourceOrderAnomalyCount: projection.sourceOrderAnomalies.length,
+        sourceRowsSemanticChecksum,
+        from,
+        to,
+      },
+      projection.acceptedRows
+    );
+
+    if (persistenceResult.outcome === 'CONFLICT') {
+      const acquisitionIssue: NiftyAcquisitionIssue = {
+        reason: NiftyAcquisitionIssueReason.SOURCE_CONTENT_CONFLICT,
+        detail: `Source-content conflict for ${date}: ${persistenceResult.conflicts.length} candle(s) differ from already-persisted content; existing HistoricalCandle rows are unchanged and nothing was persisted for this session.`,
+      };
+      return this.buildDetail(date, report, false, [acquisitionIssue], 'SOURCE_CONFLICT', retrievalId, persistenceResult.conflicts.length);
+    }
+
+    // ACCEPTED_NEW or ACCEPTED_IDEMPOTENT: `persisted` reflects whether THIS
+    // run actually wrote a new row (invariant 6: an idempotent equivalent
+    // re-download inserts nothing and must not report `persisted: true`).
+    const persisted = persistenceResult.insertedCount > 0;
     const reread = await this.repository.findRange(NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME, from, to);
 
     if (!this.isSessionComplete(reread, date, planned)) {
@@ -580,10 +757,10 @@ export default class NiftyUnderlyingAcquisitionService {
         reason: NiftyAcquisitionIssueReason.POST_PERSIST_RECONCILIATION_FAILED,
         detail: `Post-persist reconciliation read for ${date} found ${reread.length} row(s), not a complete ${planned.expectedMinuteCount}-row session; not marked complete.`,
       };
-      return this.buildDetail(date, report, true, [acquisitionIssue], 'INCOMPLETE');
+      return this.buildDetail(date, report, persisted, [acquisitionIssue], 'INCOMPLETE', retrievalId);
     }
 
-    return this.buildDetail(date, report, true, []);
+    return this.buildDetail(date, report, persisted, [], undefined, retrievalId);
   }
 
   /**
@@ -607,7 +784,9 @@ export default class NiftyUnderlyingAcquisitionService {
     report: DatasetHealthReport,
     persisted: boolean,
     acquisitionIssues: readonly NiftyAcquisitionIssue[],
-    bucketOverride?: NiftySessionAcquisitionBucket
+    bucketOverride?: NiftySessionAcquisitionBucket,
+    retrievalId?: string,
+    conflictCount?: number
   ): NiftySessionAcquisitionDetail {
     return {
       tradingDate: date,
@@ -620,6 +799,8 @@ export default class NiftyUnderlyingAcquisitionService {
       excludedRowCount: report.excludedRowCount,
       exclusions: report.exclusions,
       persisted,
+      retrievalId,
+      conflictCount,
     };
   }
 
@@ -665,7 +846,7 @@ export default class NiftyUnderlyingAcquisitionService {
     };
   }
 
-  private unresolvedDetail(date: string): NiftySessionAcquisitionDetail {
+  private unresolvedDetail(date: string, retrievalId: string): NiftySessionAcquisitionDetail {
     return {
       tradingDate: date,
       bucket: 'UNRESOLVED_NO_DATA',
@@ -677,6 +858,7 @@ export default class NiftyUnderlyingAcquisitionService {
       excludedRowCount: 0,
       exclusions: [],
       persisted: false,
+      retrievalId,
     };
   }
 
@@ -866,22 +1048,6 @@ export default class NiftyUnderlyingAcquisitionService {
     return byDate;
   }
 
-  private toUpsertInput(candle: CanonicalHistoricalCandle): HistoricalCandleUpsertInput {
-    const data = {
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-      volume: candle.volume,
-      openInterest: candle.openInterest,
-      source: 'REST',
-    };
-    return {
-      create: { instrumentKey: candle.instrumentKey, timeframe: NIFTY_UNDERLYING_TIMEFRAME, candleTime: candle.candleTime, ...data },
-      update: data,
-    };
-  }
-
   private istRangeBounds(fromDate: string, toDate: string): { from: Date; to: Date } {
     return { from: new Date(`${fromDate}T00:00:00+05:30`), to: new Date(`${toDate}T23:59:59.999+05:30`) };
   }
@@ -898,5 +1064,12 @@ export default class NiftyUnderlyingAcquisitionService {
       return error.message;
     }
     return error instanceof Error ? error.message : String(error);
+  }
+
+  /** B-F2C invariant 14: safe failure classification for durable evidence -- reads only the existing typed retry-error classes, never anything from the underlying axios error beyond what `describeError` already exposes. */
+  private classifyErrorCategory(error: unknown): HistoricalDataRetrievalErrorCategory {
+    if (error instanceof HistoricalProviderPermanentError) return HistoricalDataRetrievalErrorCategory.PERMANENT;
+    if (error instanceof HistoricalProviderRetryExhaustedError) return HistoricalDataRetrievalErrorCategory.RETRY_EXHAUSTED;
+    return HistoricalDataRetrievalErrorCategory.UNKNOWN;
   }
 }

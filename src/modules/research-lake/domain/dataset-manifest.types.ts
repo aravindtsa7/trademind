@@ -21,8 +21,16 @@ export enum ManifestDatasetKind {
  * describes how the manifest is written, not what the underlying data means.
  * Bump only when `DatasetManifest`/`SessionManifest`'s own field shape
  * changes in a way a consumer must know about.
+ *
+ * Bumped 1 -> 2 for B-F2C: `SourceAcquisitionEvidence` gained `provider`
+ * and `evidenceSemanticChecksum` fields (both observability material,
+ * never part of `contentChecksum`/`datasetChecksum` -- see that interface's
+ * doc). Existing schema-version-1 manifest artifacts remain fully readable;
+ * this bump exists so a consumer inspecting `manifestSchemaVersion` can
+ * tell whether `sourceAcquisitionEvidence.provider`/`.evidenceSemanticChecksum`
+ * are even expected to be present.
  */
-export const MANIFEST_SCHEMA_VERSION = 1;
+export const MANIFEST_SCHEMA_VERSION = 2;
 
 /**
  * Semantic version of `CanonicalSessionProjectorService`'s session-boundary/
@@ -157,15 +165,24 @@ export function deriveDatasetId(datasetKind: ManifestDatasetKind, datasetChecksu
  * purely from the persisted store therefore can NEVER prove what the
  * original raw provider delivery looked like (whether it had pre/post-market
  * rows, duplicates, or out-of-order timestamps that were already excluded
- * before persistence). `UNAVAILABLE_FROM_PERSISTED_STORE` is the only value
- * B-F5 ever produces today -- there is deliberately no path that fabricates
- * a `HEALTHY`/zero-exclusion source acquisition record. A future milestone
- * that reads an acquisition run's OWN result artifact (not implemented here)
- * could introduce an `AVAILABLE_FROM_ACQUISITION_ARTIFACT` value; B-F5 does
- * not add it speculatively.
+ * before persistence). `UNAVAILABLE_FROM_PERSISTED_STORE` was, until B-F2C,
+ * the only value B-F5 ever produced -- there was deliberately no path that
+ * fabricated a `HEALTHY`/zero-exclusion source acquisition record.
+ *
+ * B-F2C introduces `AVAILABLE_FROM_DURABLE_RETRIEVAL_EVIDENCE`: exactly the
+ * `AVAILABLE_FROM_ACQUISITION_ARTIFACT`-shaped value this file's original
+ * comment anticipated, now that `NiftyUnderlyingAcquisitionService` writes a
+ * durable `HistoricalDataRetrievalSession` evidence row (B-F2C) BEFORE
+ * persistence for every session it genuinely retrieves from a provider.
+ * `DatasetManifestService` looks this evidence up (never fabricates it) and
+ * falls back to `UNAVAILABLE_FROM_PERSISTED_STORE` whenever no such
+ * evidence exists -- a legacy, pre-B-F2C session (or a resumed session
+ * B-F2C's acquisition path skipped without calling a provider, per
+ * invariant 12) never becomes `AVAILABLE_FROM_DURABLE_RETRIEVAL_EVIDENCE`.
  */
 export enum SourceAcquisitionEvidenceAvailability {
   UNAVAILABLE_FROM_PERSISTED_STORE = 'UNAVAILABLE_FROM_PERSISTED_STORE',
+  AVAILABLE_FROM_DURABLE_RETRIEVAL_EVIDENCE = 'AVAILABLE_FROM_DURABLE_RETRIEVAL_EVIDENCE',
 }
 
 /**
@@ -187,15 +204,31 @@ export interface SourceAcquisitionEvidence {
   readonly sourceOrderAnomalyCount: number | null;
   /** The `DatasetHealthStatus` DatasetHealthValidatorService computed at ORIGINAL acquisition time (over the true raw projection, including any exclusions). `null` means unknown -- NEVER fabricated as `HEALTHY`/`NORMALIZED_WITH_EXCLUSIONS` merely because the persisted canonical content happens to look healthy. */
   readonly sourceHealthStatus: DatasetHealthStatus | null;
+  /** B-F2C: the true historical-data-provider identity from durable retrieval evidence (see invariant 4 -- never `HistoricalCandle.source`, which is not authoritative provenance). `null` when `availability` is `UNAVAILABLE_FROM_PERSISTED_STORE`. */
+  readonly provider: HistoricalProviderId | null;
+  /**
+   * B-F2C: the stable, deterministic `HistoricalDataRetrievalSession.
+   * evidenceSemanticChecksum` this evidence was read from. VERY IMPORTANT
+   * (invariant 13): this is a SEMANTIC content checksum, never a random
+   * retrieval-attempt UUID or a wall-clock `retrievedAt` -- two identical
+   * retrievals of the same provider content produce the identical value
+   * here. `null` when `availability` is `UNAVAILABLE_FROM_PERSISTED_STORE`.
+   * This field itself is observability material (like the rest of
+   * `SourceAcquisitionEvidence`) and is never part of `contentChecksum`/
+   * `datasetChecksum`.
+   */
+  readonly evidenceSemanticChecksum: string | null;
 }
 
-/** The only `SourceAcquisitionEvidence` value B-F5 ever produces (persisted-store reconstruction has no path to original acquisition evidence). Exported as a single frozen constant so every caller shares the identical "unknown" representation rather than each re-deriving its own all-null object. */
+/** The `SourceAcquisitionEvidence` value used whenever no durable B-F2C retrieval evidence exists for a session (every value B-F5 produced before B-F2C, and every legacy/resumed session after it). Exported as a single frozen constant so every caller shares the identical "unknown" representation rather than each re-deriving its own all-null object. */
 export const UNAVAILABLE_SOURCE_ACQUISITION_EVIDENCE: SourceAcquisitionEvidence = Object.freeze({
   availability: SourceAcquisitionEvidenceAvailability.UNAVAILABLE_FROM_PERSISTED_STORE,
   providerRowCount: null,
   excludedRowCount: null,
   sourceOrderAnomalyCount: null,
   sourceHealthStatus: null,
+  provider: null,
+  evidenceSemanticChecksum: null,
 });
 
 /**

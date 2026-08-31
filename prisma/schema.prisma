@@ -71,6 +71,111 @@ model HistoricalCandle {
   @@index([instrumentKey, timeframe, candleTime])
 }
 
+// B-F2C: durable, non-secret evidence that a research-lake historical
+// provider retrieval was attempted, created BEFORE the provider is ever
+// called (see NiftyUnderlyingAcquisitionService) so a crash mid-retrieval
+// leaves a truthful STARTED/FETCHED row rather than silently claiming
+// accepted data that was never durably persisted. One row per LOGICAL
+// provider request (a monthly chunk), never one row per internal HTTP
+// retry -- `providerCallAttempts` records the truthful total attempt count
+// for that one logical retrieval. Never stores an access token, API
+// secret, Authorization header, or Axios config.
+model HistoricalDataRetrieval {
+  id                         String    @id @default(uuid())
+  providerId                 String
+  assetType                  String
+  instrumentKey              String
+  timeframe                  String
+  requestedFromDate          String
+  requestedToDate            String
+  status                     String
+  startedAt                  DateTime
+  completedAt                DateTime?
+  providerCallAttempts       Int       @default(0)
+  sourceRowCount             Int?
+  sourceRowsSemanticChecksum String?
+  errorCategory              String?
+  errorCode                  String?
+  errorMessage               String?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+  sessions                   HistoricalDataRetrievalSession[]
+
+  @@index([instrumentKey, timeframe])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// One trading-session's durable acceptance/conflict/exclusion evidence
+// within a parent `HistoricalDataRetrieval` (one provider request commonly
+// spans many trading dates -- acceptance is always decided per session).
+// `evidenceSemanticChecksum` deliberately excludes `id`/`retrievalId`/
+// `createdAt`/`updatedAt` so two semantically-identical retrievals (e.g. a
+// re-run against unchanged provider content) produce the IDENTICAL
+// checksum despite different wall-clock timestamps/random IDs -- this is
+// the value a dataset manifest can safely reference without perturbing its
+// own deterministic content identity.
+model HistoricalDataRetrievalSession {
+  id                         String   @id @default(uuid())
+  retrievalId                String
+  instrumentKey              String
+  timeframe                  String
+  tradingDate                String
+  calendarDisposition        String
+  expectedMinuteCount        Int
+  providerRowCountForDate    Int
+  acceptedRowCount           Int
+  excludedRowCount           Int
+  sourceOrderAnomalyCount    Int
+  healthStatus               String
+  persistenceOutcome         String
+  sourceRowsSemanticChecksum String?
+  canonicalContentChecksum   String?
+  evidenceSemanticChecksum   String
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+  retrieval                  HistoricalDataRetrieval @relation(fields: [retrievalId], references: [id], onDelete: Cascade)
+  conflicts                  HistoricalCandleConflict[]
+
+  @@unique([retrievalId, tradingDate])
+  @@index([instrumentKey, timeframe, tradingDate])
+  @@index([persistenceOutcome])
+}
+
+// One conflicting logical candle: the already-persisted `HistoricalCandle`
+// content disagreed with a new provider retrieval's content for the exact
+// same (instrumentKey, timeframe, candleTime) identity. Durable, queryable
+// evidence that the research persistence path fails closed on -- it NEVER
+// overwrites `HistoricalCandle` when this row is written (see
+// HistoricalCandleResearchPersistenceService). No secrets are ever stored
+// here (candle OHLCVOI values only).
+model HistoricalCandleConflict {
+  id                      String   @id @default(uuid())
+  retrievalSessionId      String
+  instrumentKey           String
+  timeframe               String
+  candleTime              DateTime
+  existingOpen            Decimal
+  existingHigh            Decimal
+  existingLow             Decimal
+  existingClose           Decimal
+  existingVolume          BigInt
+  existingOpenInterest    BigInt?
+  incomingOpen            Decimal
+  incomingHigh            Decimal
+  incomingLow             Decimal
+  incomingClose           Decimal
+  incomingVolume          BigInt
+  incomingOpenInterest    BigInt?
+  existingContentChecksum String
+  incomingContentChecksum String
+  detectedAt              DateTime @default(now())
+  retrievalSession        HistoricalDataRetrievalSession @relation(fields: [retrievalSessionId], references: [id], onDelete: Cascade)
+
+  @@index([instrumentKey, timeframe, candleTime])
+  @@index([retrievalSessionId])
+}
+
 model HistoricalCandleSyncLog {
   id            String    @id @default(uuid())
   instrumentKey String

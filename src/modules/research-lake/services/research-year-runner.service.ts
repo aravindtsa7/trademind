@@ -253,13 +253,21 @@ export default class ResearchYearRunnerService {
     // `unresolvedNoData` is NEVER treated as a safe exclusion (task correction section 3/3C): B-F2 has no authoritative
     // NSE-holiday/non-trading-day classification, so a candidate weekday with no provider data and no existing DB
     // coverage stays genuinely unresolved -- it must keep this stage (and therefore the overall run) out of COMPLETE.
+    // B-F2C: `sourceConflict` dates are NEVER folded into `healthyTradingDates` above (they are a distinct
+    // bucket, never NEWLY_COMPLETED/ALREADY_COMPLETE/NORMALIZED_WITH_EXCLUSIONS) and are treated exactly like
+    // any other recoverable failure here -- a conflict date must never let this stage (or the overall run)
+    // report COMPLETE while `HistoricalCandle` and the incoming provider content still disagree.
     const hasRecoverableFailures =
-      result.sessions.incomplete.length > 0 || result.sessions.invalid.length > 0 || result.sessions.unresolvedNoData.length > 0 || result.failedChunks.length > 0;
+      result.sessions.incomplete.length > 0 ||
+      result.sessions.invalid.length > 0 ||
+      result.sessions.unresolvedNoData.length > 0 ||
+      result.sessions.sourceConflict.length > 0 ||
+      result.failedChunks.length > 0;
     return {
       stageKind: ResearchYearRunStageKind.UNDERLYING_ACQUISITION,
       status: hasRecoverableFailures ? ResearchYearRunStageStatus.INCOMPLETE : ResearchYearRunStageStatus.COMPLETED,
       detail: hasRecoverableFailures
-        ? `incomplete=${result.sessions.incomplete.length} invalid=${result.sessions.invalid.length} unresolvedNoData=${result.sessions.unresolvedNoData.length} failedChunks=${result.failedChunks.length} -- unresolvedNoData is neither a certified holiday nor a certified session; it is retried on the next run, never silently dropped.`
+        ? `incomplete=${result.sessions.incomplete.length} invalid=${result.sessions.invalid.length} unresolvedNoData=${result.sessions.unresolvedNoData.length} sourceConflict=${result.sessions.sourceConflict.length} failedChunks=${result.failedChunks.length} -- unresolvedNoData is neither a certified holiday nor a certified session, and sourceConflict means already-persisted content disagreed with the provider and was left unchanged; both are retried on the next run, never silently dropped or treated as healthy.`
         : null,
       acquisitionSummary: {
         healthyTradingDates,
@@ -270,6 +278,7 @@ export default class ResearchYearRunnerService {
         incomplete: result.sessions.incomplete.length,
         invalid: result.sessions.invalid.length,
         unresolvedNoData: result.sessions.unresolvedNoData.length,
+        sourceConflict: result.sessions.sourceConflict.length,
         failedChunks: result.failedChunks.length,
         retryCount: result.retryCount,
       },
@@ -309,7 +318,11 @@ export default class ResearchYearRunnerService {
 
     const summary = previousAcquisition.acquisitionSummary;
     const concealedUnresolvedCount =
-      Number(summary.unresolvedNoData ?? 0) + Number(summary.incomplete ?? 0) + Number(summary.invalid ?? 0) + Number(summary.failedChunks ?? 0);
+      Number(summary.unresolvedNoData ?? 0) +
+      Number(summary.incomplete ?? 0) +
+      Number(summary.invalid ?? 0) +
+      Number(summary.sourceConflict ?? 0) +
+      Number(summary.failedChunks ?? 0);
     if (concealedUnresolvedCount > 0) return null;
 
     const healthyTradingDates = (summary.healthyTradingDates as string[] | undefined) ?? [];

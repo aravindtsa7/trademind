@@ -21,6 +21,7 @@ import { HistoricalProviderId } from '../interfaces/historical-provider-capabili
 import HistoricalCandleRepository from '../../historical-candles/repositories/historical-candle.repository';
 import HistoricalOptionCandleLakeRepository from '../repositories/historical-option-candle-lake.repository';
 import DatasetSessionManifestBuilderService from './dataset-session-manifest-builder.service';
+import HistoricalDataRetrievalEvidenceService from './historical-data-retrieval-evidence.service';
 
 export interface GenerateUnderlyingDatasetManifestRequest {
   readonly provider: HistoricalProviderId;
@@ -46,6 +47,15 @@ export interface DatasetManifestServiceDependencies {
   readonly historicalCandleRepository?: HistoricalCandleRepository;
   readonly historicalOptionCandleLakeRepository?: HistoricalOptionCandleLakeRepository;
   readonly sessionBuilder?: DatasetSessionManifestBuilderService;
+  /**
+   * B-F2C invariant 13: looked up per underlying session to expose genuine
+   * durable retrieval evidence (never fabricated) instead of the
+   * unconditional `UNAVAILABLE_FROM_PERSISTED_STORE` every pre-B-F2C
+   * manifest reported. Defaults to a real, Prisma-backed
+   * `HistoricalDataRetrievalEvidenceService`. Option manifests are
+   * unaffected (out of scope for B-F2C -- see `generateOptionManifest`).
+   */
+  readonly retrievalEvidenceService?: HistoricalDataRetrievalEvidenceService;
 }
 
 /**
@@ -60,11 +70,13 @@ export default class DatasetManifestService {
   private readonly historicalCandleRepository: HistoricalCandleRepository;
   private readonly historicalOptionCandleLakeRepository: HistoricalOptionCandleLakeRepository;
   private readonly sessionBuilder: DatasetSessionManifestBuilderService;
+  private readonly retrievalEvidenceService: HistoricalDataRetrievalEvidenceService;
 
   constructor(dependencies: DatasetManifestServiceDependencies = {}) {
     this.historicalCandleRepository = dependencies.historicalCandleRepository ?? new HistoricalCandleRepository();
     this.historicalOptionCandleLakeRepository = dependencies.historicalOptionCandleLakeRepository ?? new HistoricalOptionCandleLakeRepository();
     this.sessionBuilder = dependencies.sessionBuilder ?? new DatasetSessionManifestBuilderService();
+    this.retrievalEvidenceService = dependencies.retrievalEvidenceService ?? new HistoricalDataRetrievalEvidenceService();
   }
 
   async generateUnderlyingManifest(request: GenerateUnderlyingDatasetManifestRequest): Promise<DatasetManifest> {
@@ -75,6 +87,11 @@ export default class DatasetManifestService {
       const { start, end } = istTradingDayUtcBounds(tradingDate);
       // eslint-disable-next-line no-await-in-loop -- deterministic per-date ordering matters for reproducible logging/failure attribution
       const rows = await this.historicalCandleRepository.findRange(request.instrumentKey, request.timeframe, start, end);
+      // B-F2C invariant 13: looked up per date, never fabricated -- a legacy or
+      // provider-skipped session genuinely has none, and the builder falls back
+      // to UNAVAILABLE_FROM_PERSISTED_STORE when this resolves to `null`.
+      // eslint-disable-next-line no-await-in-loop -- see above
+      const sourceAcquisitionEvidence = await this.retrievalEvidenceService.findLatestAvailableSessionEvidence(request.instrumentKey, request.timeframe, tradingDate);
       sessions.push(
         this.sessionBuilder.buildUnderlyingSession({
           provider: request.provider,
@@ -82,6 +99,7 @@ export default class DatasetManifestService {
           timeframe: request.timeframe,
           tradingDate,
           rows,
+          sourceAcquisitionEvidence: sourceAcquisitionEvidence ?? undefined,
         })
       );
     }

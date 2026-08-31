@@ -32,13 +32,42 @@ import NiftyUnderlyingIngestionPlannerService, {
   NiftyPlannedDate,
   NiftyPlannedDateDisposition,
 } from './nifty-underlying-ingestion-planner.service';
+import { CanonicalHistoricalCandle } from '../domain/canonical-historical-candle';
+import {
+  HistoricalDataRetrievalErrorCategory,
+  HistoricalDataRetrievalStatus,
+} from '../domain/historical-data-retrieval.types';
+import HistoricalDataRetrievalEvidenceService, {
+  NonPersistableSessionInput,
+  RecordFailedInput,
+  RecordFetchedInput,
+  StartRetrievalInput,
+} from './historical-data-retrieval-evidence.service';
+import HistoricalCandleResearchPersistenceService, {
+  ResearchCandleSessionMetadata,
+  ResearchSessionPersistenceResult,
+  planSessionPersistence,
+} from './historical-candle-research-persistence.service';
 
 const SECRET_TOKEN = 'super-secret-upstox-bearer-token-value';
 
 // ---- Fakes ---------------------------------------------------------------
 
+/**
+ * B-F2C: carries full OHLCVOI content (not just `candleTime`) so the new
+ * content-aware conflict-detection path (`planSessionPersistence`) can be
+ * exercised faithfully against this fake -- the pre-B-F2C fake only ever
+ * needed to prove PRESENCE/count, never CONTENT, since `bulkUpsert` used
+ * to overwrite unconditionally.
+ */
 interface StoredRow {
   candleTime: Date;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: bigint;
+  openInterest: bigint | null;
 }
 
 class FakeHistoricalCandleRepository {
@@ -64,18 +93,35 @@ class FakeHistoricalCandleRepository {
       const date = istDateKey(input.create.candleTime as Date);
       const map = this.rowsByDate.get(date) ?? new Map<number, StoredRow>();
       this.rowsByDate.set(date, map);
-      const row: StoredRow = { candleTime: input.create.candleTime as Date };
+      const row: StoredRow = {
+        candleTime: input.create.candleTime as Date,
+        open: Number(input.create.open),
+        high: Number(input.create.high),
+        low: Number(input.create.low),
+        close: Number(input.create.close),
+        volume: BigInt(input.create.volume as number | bigint),
+        openInterest: input.create.openInterest === undefined || input.create.openInterest === null ? null : BigInt(input.create.openInterest),
+      };
       map.set(row.candleTime.getTime(), row);
       results.push(row);
     }
     return results;
   }
 
-  /** Test seam: preload a fully complete 375-row canonical session, simulating "already validated in a prior run". */
-  seedCompleteSession(date: string): void {
+  /** Test seam: preload a fully complete 375-row canonical session, simulating "already validated in a prior run". `rowOverrides` lets a test seed DIFFERENT content than a later fetch will return, to deterministically force a B-F2C content conflict. */
+  seedCompleteSession(date: string, rowOverrides: (sourceIndex: number) => Partial<Pick<StoredRow, 'open' | 'high' | 'low' | 'close' | 'volume' | 'openInterest'>> = () => ({})): void {
     const map = new Map<number, StoredRow>();
-    for (const row of normalSessionRows(date)) {
-      map.set(row.candleTime.getTime(), { candleTime: row.candleTime });
+    for (const sourceRow of normalSessionRows(date)) {
+      const overrides = rowOverrides(sourceRow.sourceIndex);
+      map.set(sourceRow.candleTime.getTime(), {
+        candleTime: sourceRow.candleTime,
+        open: overrides.open ?? sourceRow.open,
+        high: overrides.high ?? sourceRow.high,
+        low: overrides.low ?? sourceRow.low,
+        close: overrides.close ?? sourceRow.close,
+        volume: overrides.volume ?? sourceRow.volume,
+        openInterest: overrides.openInterest !== undefined ? overrides.openInterest : sourceRow.openInterest,
+      });
     }
     this.rowsByDate.set(date, map);
   }
@@ -313,25 +359,127 @@ function rowsForMinutes(tradingDate: string, minutes: readonly number[], sourceI
   return minutes.map((minute, index) => row(sourceIndexOffset + index, dateForMinuteOfDay(tradingDate, minute).toISOString()));
 }
 
+// ---- B-F2C retrieval-evidence / research-persistence fakes ----------------
+
+/**
+ * Records every lifecycle call with zero I/O. Used as the DEFAULT evidence
+ * service for every test in this file (via `buildService`) so no test --
+ * including every pre-existing CAL-1/CAL-2/CAL-3 test -- ever touches a
+ * real Prisma client/database.
+ */
+class FakeHistoricalDataRetrievalEvidenceService {
+  startCalls: StartRetrievalInput[] = [];
+  fetchedCalls: { retrievalId: string; input: RecordFetchedInput }[] = [];
+  failedCalls: { retrievalId: string; input: RecordFailedInput }[] = [];
+  nonPersistableCalls: NonPersistableSessionInput[] = [];
+  finalizeCalls: { retrievalId: string; status: HistoricalDataRetrievalStatus.PROCESSED | HistoricalDataRetrievalStatus.COMPLETED_WITH_ISSUES }[] = [];
+  private counter = 0;
+
+  async startRetrieval(input: StartRetrievalInput): Promise<string> {
+    this.startCalls.push(input);
+    this.counter += 1;
+    return `fake-retrieval-${this.counter}`;
+  }
+
+  async recordFetched(retrievalId: string, input: RecordFetchedInput): Promise<void> {
+    this.fetchedCalls.push({ retrievalId, input });
+  }
+
+  async recordFailed(retrievalId: string, input: RecordFailedInput): Promise<void> {
+    this.failedCalls.push({ retrievalId, input });
+  }
+
+  async recordNonPersistableSession(input: NonPersistableSessionInput): Promise<string> {
+    this.nonPersistableCalls.push(input);
+    this.counter += 1;
+    return `fake-session-evidence-${this.counter}`;
+  }
+
+  async finalizeRetrieval(
+    retrievalId: string,
+    status: HistoricalDataRetrievalStatus.PROCESSED | HistoricalDataRetrievalStatus.COMPLETED_WITH_ISSUES
+  ): Promise<void> {
+    this.finalizeCalls.push({ retrievalId, status });
+  }
+}
+
+/**
+ * Delegates the ENTIRE insert/no-op/conflict decision to the REAL, exported
+ * `planSessionPersistence` pure function (the same one production code
+ * uses), reading "existing" rows from -- and, for a non-conflicting
+ * outcome, writing accepted rows back into -- the SAME
+ * `FakeHistoricalCandleRepository` instance the test already asserts
+ * against via `repository.bulkUpsertCallCount`/`findRange`. This is what
+ * makes every pre-existing CAL-1/CAL-2/CAL-3 test's `bulkUpsertCallCount`/
+ * `findRange` assertions continue to hold unchanged: for the ordinary
+ * "insert missing, nothing pre-existing" case this fake behaves exactly
+ * like the pre-B-F2C direct `bulkUpsert` call did. Content conflicts are
+ * therefore genuinely detected (never simulated) whenever a test seeds
+ * `FakeHistoricalCandleRepository` with content that differs from what the
+ * fake provider later returns for the same logical key.
+ */
+class FakeHistoricalCandleResearchPersistenceService {
+  sessionMetadataCalls: ResearchCandleSessionMetadata[] = [];
+  private counter = 0;
+
+  constructor(private readonly repository: FakeHistoricalCandleRepository) {}
+
+  async persistSession(metadata: ResearchCandleSessionMetadata, candidateCandles: readonly CanonicalHistoricalCandle[]): Promise<ResearchSessionPersistenceResult> {
+    this.sessionMetadataCalls.push(metadata);
+    this.counter += 1;
+    const existingRows = await this.repository.findRange(metadata.instrumentKey, metadata.timeframe, metadata.from, metadata.to);
+    const plan = planSessionPersistence(metadata.instrumentKey, metadata.timeframe, existingRows, candidateCandles);
+
+    if (plan.conflicts.length > 0) {
+      return { outcome: 'CONFLICT', insertedCount: 0, idempotentCount: 0, conflicts: plan.conflicts, sessionEvidenceId: `fake-session-evidence-${this.counter}` };
+    }
+
+    if (plan.toInsert.length > 0) {
+      const upserts: HistoricalCandleUpsertInput[] = plan.toInsert.map((candle) => {
+        const data = { open: candle.open, high: candle.high, low: candle.low, close: candle.close, volume: candle.volume, openInterest: candle.openInterest, source: 'REST' };
+        return { create: { instrumentKey: candle.instrumentKey, timeframe: metadata.timeframe, candleTime: candle.candleTime, ...data }, update: data };
+      });
+      await this.repository.bulkUpsert(upserts);
+    }
+
+    return {
+      outcome: plan.toInsert.length > 0 ? 'ACCEPTED_NEW' : 'ACCEPTED_IDEMPOTENT',
+      insertedCount: plan.toInsert.length,
+      idempotentCount: plan.idempotentCount,
+      conflicts: [],
+      sessionEvidenceId: `fake-session-evidence-${this.counter}`,
+    };
+  }
+}
+
 function buildService(
   respond: (request: HistoricalUnderlyingCandleRangeRequest) => FakeResponse,
   repository: FakeHistoricalCandleRepository = new FakeHistoricalCandleRepository(),
-  plannerService: { buildPlan: NiftyUnderlyingIngestionPlannerService['buildPlan'] } = new FakeAllRegularPlanner()
+  plannerService: { buildPlan: NiftyUnderlyingIngestionPlannerService['buildPlan'] } = new FakeAllRegularPlanner(),
+  options: {
+    retrievalEvidenceService?: FakeHistoricalDataRetrievalEvidenceService;
+    researchPersistenceService?: FakeHistoricalCandleResearchPersistenceService | { persistSession: HistoricalCandleResearchPersistenceService['persistSession'] };
+  } = {}
 ): {
   service: NiftyUnderlyingAcquisitionService;
   provider: FakeHistoricalDataProvider;
   repository: FakeHistoricalCandleRepository;
   planner: { buildPlan: NiftyUnderlyingIngestionPlannerService['buildPlan'] };
+  retrievalEvidenceService: FakeHistoricalDataRetrievalEvidenceService;
 } {
   const provider = new FakeHistoricalDataProvider(respond);
+  const retrievalEvidenceService = options.retrievalEvidenceService ?? new FakeHistoricalDataRetrievalEvidenceService();
+  const researchPersistenceService = options.researchPersistenceService ?? new FakeHistoricalCandleResearchPersistenceService(repository);
   const service = new NiftyUnderlyingAcquisitionService({
     provider,
     repository: repository as unknown as HistoricalCandleRepository,
     rateLimiter: new HistoricalProviderRateLimiterService(0),
     retryOptions: { sleep: async () => {}, maxAttempts: 3, baseDelayMs: 1, maxDelayMs: 1 },
     plannerService: plannerService as unknown as NiftyUnderlyingIngestionPlannerService,
+    retrievalEvidenceService: retrievalEvidenceService as unknown as HistoricalDataRetrievalEvidenceService,
+    researchPersistenceService: researchPersistenceService as unknown as HistoricalCandleResearchPersistenceService,
   });
-  return { service, provider, repository, planner: plannerService };
+  return { service, provider, repository, planner: plannerService, retrievalEvidenceService };
 }
 
 // ---- E: 378-row 2022 regression ------------------------------------------
@@ -848,6 +996,8 @@ test('CAL-2 REAL CHAIN: certified regular + holiday + special dates flow through
     rateLimiter: new HistoricalProviderRateLimiterService(0),
     retryOptions: { sleep: async () => {}, maxAttempts: 3, baseDelayMs: 1, maxDelayMs: 1 },
     plannerService: realPlanner,
+    retrievalEvidenceService: new FakeHistoricalDataRetrievalEvidenceService() as unknown as HistoricalDataRetrievalEvidenceService,
+    researchPersistenceService: new FakeHistoricalCandleResearchPersistenceService(repository) as unknown as HistoricalCandleResearchPersistenceService,
   });
 
   const result = await service.acquire({ fromDate: regular, toDate: special });
@@ -1253,4 +1403,166 @@ test('CAL-3 I: NETWORK-BOUNDARY REGRESSION -- a provider that throws immediately
   assert.equal(repository.bulkUpsertCallCount, 0);
   assert.deepEqual([...result.sessions.dryRunAcquisitionPlanned].sort(), [regular, special].sort());
   assert.deepEqual([...result.sessions.closedNoDataExpected].sort(), [weekend, exceptional].sort());
+});
+
+// ============================================================================
+// B-F2C: durable provider retrieval evidence + historical source-conflict safety
+// ============================================================================
+
+// ---- N: DRY RUN -- zero retrieval evidence writes (invariant 11) ----------
+
+test('B-F2C N: DRY RUN -- zero retrieval evidence writes (STARTED/FETCHED/FAILED/session/finalize), in addition to the already-proven zero provider calls and zero candle writes', async () => {
+  const date = '2022-02-05';
+  const { service, repository, retrievalEvidenceService } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  });
+
+  const result = await service.acquire({ fromDate: date, toDate: date, dryRun: true });
+
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, [date]);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  // Invariant 11: dryRun=true must remain network-free AND mutation-free -- B-F2C evidence writes are a
+  // NEW form of mutation this milestone introduces, and they must be held to the exact same standard.
+  assert.equal(retrievalEvidenceService.startCalls.length, 0);
+  assert.equal(retrievalEvidenceService.fetchedCalls.length, 0);
+  assert.equal(retrievalEvidenceService.failedCalls.length, 0);
+  assert.equal(retrievalEvidenceService.nonPersistableCalls.length, 0);
+  assert.equal(retrievalEvidenceService.finalizeCalls.length, 0);
+});
+
+// ---- A: NEW SESSION -- durable retrieval-lifecycle evidence -----------------
+
+test('B-F2C A: NEW SESSION -- retrieval evidence is STARTED before the provider call, FETCHED with a truthful checksum after, session evidence is recorded, and the retrieval is finalized PROCESSED', async () => {
+  const date = '2022-02-01';
+  const { service, repository, retrievalEvidenceService } = buildService(() => normalSessionRows(date));
+  const result = await service.acquire({ fromDate: date, toDate: date });
+
+  assert.deepEqual(result.sessions.newlyCompleted, [date]);
+  assert.equal(repository.bulkUpsertCallCount, 1);
+
+  // Invariant 1: exactly one durable retrieval identity for this one logical chunk request, containing only
+  // non-secret metadata, and truthfully identifying the real provider (UPSTOX).
+  assert.equal(retrievalEvidenceService.startCalls.length, 1);
+  assert.equal(retrievalEvidenceService.startCalls[0].providerId, HistoricalProviderId.UPSTOX);
+  assert.equal(retrievalEvidenceService.startCalls[0].instrumentKey, NIFTY_INDEX_INSTRUMENT_KEY);
+  assert.equal(retrievalEvidenceService.startCalls[0].timeframe, NIFTY_UNDERLYING_TIMEFRAME);
+
+  // Invariant 2/14: FETCHED evidence exists (the provider call succeeded) with a real row count/checksum.
+  assert.equal(retrievalEvidenceService.fetchedCalls.length, 1);
+  assert.equal(retrievalEvidenceService.fetchedCalls[0].input.sourceRowCount, 375);
+  assert.equal(typeof retrievalEvidenceService.fetchedCalls[0].input.sourceRowsSemanticChecksum, 'string');
+  assert.ok(retrievalEvidenceService.fetchedCalls[0].input.sourceRowsSemanticChecksum.length > 0);
+  assert.equal(retrievalEvidenceService.failedCalls.length, 0);
+
+  // The retrieval finalizes PROCESSED (no conflict/invalid/incomplete date in this chunk).
+  assert.equal(retrievalEvidenceService.finalizeCalls.length, 1);
+  assert.equal(retrievalEvidenceService.finalizeCalls[0].status, HistoricalDataRetrievalStatus.PROCESSED);
+
+  // The result detail traces back to a real, non-empty durable retrieval id.
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.ok(typeof detail.retrievalId === 'string' && detail.retrievalId.length > 0);
+});
+
+// ---- O: PROVIDER FAILURE -- evidence must never falsely show ACCEPTED ------
+
+test('B-F2C O: PROVIDER FAILURE -- retrieval STARTED evidence exists before the provider call, a provider failure is recorded FAILED (never ACCEPTED), the retrieval is never finalized, and zero candles are persisted', async () => {
+  const date = '2022-02-02';
+  const { service, repository, retrievalEvidenceService } = buildService(() => ({ permanent: true }));
+
+  const result = await service.acquire({ fromDate: date, toDate: date });
+
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.equal(result.monthlyChunksFailed, 1);
+  assert.equal(retrievalEvidenceService.startCalls.length, 1, 'durable STARTED evidence must exist even though the provider call ultimately failed');
+  assert.equal(retrievalEvidenceService.fetchedCalls.length, 0);
+  assert.equal(retrievalEvidenceService.failedCalls.length, 1);
+  assert.equal(retrievalEvidenceService.failedCalls[0].input.errorCategory, HistoricalDataRetrievalErrorCategory.PERMANENT);
+  assert.ok(!retrievalEvidenceService.failedCalls[0].input.errorMessage.includes(SECRET_TOKEN), 'no bearer token in the persisted failure evidence');
+  // Never falsely finalized as PROCESSED/COMPLETED_WITH_ISSUES -- a failed provider call leaves the
+  // retrieval "conservatively unfinished" (STARTED/FAILED only), which is truthful and auditable.
+  assert.equal(retrievalEvidenceService.finalizeCalls.length, 0);
+});
+
+test('B-F2C O: PROVIDER FAILURE (retry exhaustion) -- classified RETRY_EXHAUSTED, never ACCEPTED', async () => {
+  const date = '2022-02-03';
+  const { retrievalEvidenceService, service } = buildService(() => ({ transient: true }));
+  await service.acquire({ fromDate: date, toDate: date });
+  assert.equal(retrievalEvidenceService.failedCalls.length, 1);
+  assert.equal(retrievalEvidenceService.failedCalls[0].input.errorCategory, HistoricalDataRetrievalErrorCategory.RETRY_EXHAUSTED);
+});
+
+// ---- P: PERSISTENCE FAILURE -- evidence must not falsely become ACCEPTED --
+
+test('B-F2C P: PERSISTENCE FAILURE -- a DB/repository failure after provider data was received never falsely finalizes the retrieval, and the failure propagates rather than being silently swallowed', async () => {
+  const date = '2022-02-04';
+  const throwingPersistenceService = {
+    persistSession: async (): Promise<ResearchSessionPersistenceResult> => {
+      throw new Error('SIMULATED_PERSISTENCE_FAILURE');
+    },
+  };
+  const { service, retrievalEvidenceService } = buildService(() => normalSessionRows(date), undefined, undefined, {
+    researchPersistenceService: throwingPersistenceService,
+  });
+
+  await assert.rejects(service.acquire({ fromDate: date, toDate: date }), /SIMULATED_PERSISTENCE_FAILURE/);
+
+  // The provider call DID succeed (FETCHED evidence exists), but the retrieval must never be falsely
+  // finalized PROCESSED/COMPLETED_WITH_ISSUES when persistence itself blew up mid-session.
+  assert.equal(retrievalEvidenceService.fetchedCalls.length, 1);
+  assert.equal(retrievalEvidenceService.finalizeCalls.length, 0);
+});
+
+// ---- Q: SESSION CONFLICT + OTHER SESSION SAME CHUNK ------------------------
+
+test('B-F2C Q: a source-content conflict on one date does not corrupt an independent, healthy date fetched in the SAME chunk -- the conflict date fails closed/unchanged, the healthy date completes normally', async () => {
+  const conflictDate = '2024-01-19';
+  const healthyDate = '2024-01-22'; // same calendar month -> same provider chunk as conflictDate
+  const planner = new FakeExplicitPlanner([regularPlannedDate(conflictDate), regularPlannedDate(healthyDate)]);
+  const repository = new FakeHistoricalCandleRepository();
+  // Seed a SINGLE existing row (a realistic "prior partial run" shape, deliberately NOT a full complete
+  // session -- a complete session would be caught by the pre-fetch resumability check instead) at
+  // `conflictDate`'s first minute, with DIFFERENT content than what the fake provider will return for that
+  // exact minute below -- a genuine conflict.
+  const conflictMinute = new Date(`${conflictDate}T09:15:00+05:30`);
+  await repository.bulkUpsert([
+    {
+      create: { instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY, timeframe: NIFTY_UNDERLYING_TIMEFRAME, candleTime: conflictMinute, open: 100, high: 101, low: 99, close: 4242, volume: 1_000n, openInterest: null, source: 'REST' },
+      update: { open: 100, high: 101, low: 99, close: 4242, volume: 1_000n, openInterest: null, source: 'REST' },
+    },
+  ]);
+  const seedBulkUpsertCallCount = repository.bulkUpsertCallCount;
+
+  const { service, provider, retrievalEvidenceService } = buildService(
+    () => [...normalSessionRows(conflictDate), ...normalSessionRows(healthyDate)],
+    repository,
+    planner
+  );
+  const result = await service.acquire({ fromDate: conflictDate, toDate: healthyDate });
+
+  assert.equal(provider.calls.length, 1, 'one whole-chunk request covers both dates');
+  assert.deepEqual(result.sessions.sourceConflict, [conflictDate]);
+  assert.deepEqual(result.sessions.newlyCompleted, [healthyDate]);
+  assert.deepEqual(result.sessions.incomplete, []);
+  assert.deepEqual(result.sessions.invalid, []);
+
+  const conflictDetail = result.sessionDetails.find((d) => d.tradingDate === conflictDate)!;
+  assert.equal(conflictDetail.bucket, 'SOURCE_CONFLICT');
+  assert.equal(conflictDetail.persisted, false);
+  assert.ok((conflictDetail.conflictCount ?? 0) > 0);
+
+  const healthyDetail = result.sessionDetails.find((d) => d.tradingDate === healthyDate)!;
+  assert.equal(healthyDetail.bucket, 'NEWLY_COMPLETED');
+  assert.equal(healthyDetail.persisted, true);
+
+  // Only the healthy date's session actually wrote anything -- the conflict date caused zero additional writes.
+  assert.equal(repository.bulkUpsertCallCount, seedBulkUpsertCallCount + 1);
+
+  // The seeded conflicting row is left byte-for-byte unchanged -- no cross-date corruption, no partial mutation.
+  const conflictMinuteRows = await repository.findRange(NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME, conflictMinute, conflictMinute);
+  assert.equal(conflictMinuteRows.length, 1);
+  assert.equal(conflictMinuteRows[0].close, 4242);
+
+  // The retrieval finalizes COMPLETED_WITH_ISSUES (the conflict date), never PROCESSED.
+  assert.equal(retrievalEvidenceService.finalizeCalls.length, 1);
+  assert.equal(retrievalEvidenceService.finalizeCalls[0].status, HistoricalDataRetrievalStatus.COMPLETED_WITH_ISSUES);
 });

@@ -10,6 +10,7 @@ import {
   OptionSessionIdentity,
   SessionContentIdentity,
   SessionManifest,
+  SourceAcquisitionEvidence,
   UNAVAILABLE_SOURCE_ACQUISITION_EVIDENCE,
   UnderlyingSessionIdentity,
   computeSessionContentChecksum,
@@ -35,6 +36,16 @@ export interface BuildUnderlyingSessionRequest {
   readonly timeframe: string;
   readonly tradingDate: string;
   readonly rows: readonly PersistedManifestCandleRow[];
+  /**
+   * B-F2C: genuine durable retrieval evidence for this exact session, when
+   * `DatasetManifestService` found one (see
+   * `HistoricalDataRetrievalEvidenceService.findLatestAvailableSessionEvidence`).
+   * Omitted (the default, preserving every pre-B-F2C caller's behavior
+   * exactly) -- falls back to `UNAVAILABLE_SOURCE_ACQUISITION_EVIDENCE`.
+   * This builder never fabricates evidence itself; it only ever uses
+   * exactly what the caller looked up.
+   */
+  readonly sourceAcquisitionEvidence?: SourceAcquisitionEvidence;
 }
 
 export interface BuildOptionSessionRequest {
@@ -87,7 +98,7 @@ export default class DatasetSessionManifestBuilderService {
       timeframe: request.timeframe,
       tradingDate: request.tradingDate,
     };
-    return this.build(identity, HistoricalAssetType.NIFTY_INDEX, request.instrumentKey, request.tradingDate, request.rows, null);
+    return this.build(identity, HistoricalAssetType.NIFTY_INDEX, request.instrumentKey, request.tradingDate, request.rows, null, request.sourceAcquisitionEvidence);
   }
 
   buildOptionSession(request: BuildOptionSessionRequest): SessionManifest {
@@ -110,7 +121,8 @@ export default class DatasetSessionManifestBuilderService {
     instrumentKey: string,
     tradingDate: string,
     rows: readonly PersistedManifestCandleRow[],
-    oi: { rowsWithOi: number; rowsWithNullOi: number } | null
+    oi: { rowsWithOi: number; rowsWithNullOi: number } | null,
+    sourceAcquisitionEvidence?: SourceAcquisitionEvidence
   ): SessionManifest {
     const sortedRows = [...rows].sort((left, right) => left.candleTime.getTime() - right.candleTime.getTime());
 
@@ -166,7 +178,7 @@ export default class DatasetSessionManifestBuilderService {
       issues: report.issues,
       rowsWithOi: oi?.rowsWithOi ?? null,
       rowsWithNullOi: oi?.rowsWithNullOi ?? null,
-      sourceAcquisitionEvidence: UNAVAILABLE_SOURCE_ACQUISITION_EVIDENCE,
+      sourceAcquisitionEvidence: sourceAcquisitionEvidence ?? UNAVAILABLE_SOURCE_ACQUISITION_EVIDENCE,
     };
   }
 
