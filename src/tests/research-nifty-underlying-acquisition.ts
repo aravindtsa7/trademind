@@ -33,8 +33,11 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  *   $env:RESEARCH_END_DATE = '2022-01-31'
  *   npm run research:nifty-history
  *
- * Optional: RESEARCH_DRY_RUN=true fetches from the real provider but never
- * writes to the database (see NiftyUnderlyingAcquisitionRequest.dryRun).
+ * Optional: RESEARCH_DRY_RUN=true (B-F2-CAL-3) is a NETWORK-FREE,
+ * MUTATION-FREE acquisition-level dry run: the calendar plan is still
+ * resolved/validated and local completeness is still checked, but any date
+ * that would require provider retrieval makes zero Upstox requests and zero
+ * database writes (see NiftyUnderlyingAcquisitionRequest.dryRun).
  *
  * Optional: RESEARCH_PLAN_ONLY=true (B-F2-CAL-1) runs a calendar-aware,
  * NETWORK-FREE plan instead: it calls
@@ -151,7 +154,9 @@ async function run(): Promise<void> {
           specialSessionExcluded: result.sessions.specialSessionExcluded.length,
           unresolvedNoData: result.sessions.unresolvedNoData.length,
           closedNoDataExpected: result.sessions.closedNoDataExpected.length,
+          dryRunAcquisitionPlanned: result.sessions.dryRunAcquisitionPlanned.length,
         },
+        dryRun: result.dryRun,
         retryCount: result.retryCount,
         rateLimitBackoffCount: result.rateLimitBackoffCount,
         failedChunkCount: result.failedChunks.length,

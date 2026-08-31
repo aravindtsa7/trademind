@@ -78,11 +78,13 @@ function underlyingResult(overrides: {
       specialSessionExcluded: [],
       unresolvedNoData: overrides.unresolvedNoData ?? [],
       closedNoDataExpected: [],
+      dryRunAcquisitionPlanned: [],
     },
     sessionDetails: [],
     retryCount: 0,
     rateLimitBackoffCount: 0,
     failedChunks: overrides.failedChunks ?? [],
+    dryRun: false,
   };
 }
 

@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
 import { execSync } from 'node:child_process';
 import logger from '../core/logger/logger';
-import ResearchYearRunnerService from '../modules/research-lake/services/research-year-runner.service';
 import GrowwOptionCandleAcquisitionService from '../modules/research-lake/services/groww-option-candle-acquisition.service';
 import GrowwHistoricalClient from '../modules/research-lake/providers/groww/groww-historical-client';
 import GrowwOptionHistoricalDataProviderService from '../modules/research-lake/providers/groww/groww-option-historical-data-provider.service';
 import GrowwAccessTokenProviderService from '../modules/research-lake/providers/groww/groww-access-token-provider.service';
 import { ResearchYearRunScope } from '../modules/research-lake/domain/research-year-run.types';
 import { determineResearchYearRunCliExitCode } from '../modules/research-lake/services/research-year-run-cli-exit-policy.util';
+import { runResearchYearCli } from '../modules/research-lake/services/research-year-cli-runner';
 
 dotenv.config();
 logger.silent = true;
@@ -65,13 +65,18 @@ async function run(): Promise<void> {
     throw new Error(`RESEARCH_YEAR_TO_DATE must be YYYY-MM-DD; received '${toDate}'.`);
   }
 
-  const optionCandleAcquisitionService = await tryBuildOptionCandleAcquisitionService(scope);
-
-  const runner = new ResearchYearRunnerService({ optionCandleAcquisitionService, gitRevision: resolveGitRevisionBestEffort() });
-
   console.log(JSON.stringify({ event: 'research:year starting', year, scope, fromDate: fromDate ?? '(default)', toDate: toDate ?? '(default)', dryRun }));
 
-  const record = await runner.run({ year, fromDate, toDate, scope, dryRun });
+  // B-F2-CAL-3-FIX-1: `runResearchYearCli` resolves `dryRun` BEFORE
+  // constructing any optional, network-capable dependency -- a dry run
+  // never calls `tryBuildOptionCandleAcquisitionService` (and therefore
+  // never resolves/generates a Groww access token), for any scope. See
+  // `research-year-cli-runner.ts` for the full rationale and its focused
+  // unit tests for the exact Terra-reported regression this closes.
+  const { record, checkpointPath } = await runResearchYearCli(
+    { year, scope, fromDate, toDate, dryRun },
+    { buildOptionCandleAcquisitionService: tryBuildOptionCandleAcquisitionService, resolveGitRevision: resolveGitRevisionBestEffort }
+  );
 
   console.log(
     JSON.stringify(
@@ -95,7 +100,7 @@ async function run(): Promise<void> {
             sessions: instrument.sessions.length,
           })),
         })),
-        checkpointPath: runner.checkpointPath(record.plan),
+        checkpointPath,
         startedAt: record.startedAt,
         completedAt: record.completedAt,
       },

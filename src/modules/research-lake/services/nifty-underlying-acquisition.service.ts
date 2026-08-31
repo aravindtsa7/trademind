@@ -157,11 +157,21 @@ export interface NiftyUnderlyingAcquisitionRequest {
   /** Optional; defaults to the provider's documented `earliestDocumentedUnderlyingHistory` capability. */
   readonly fromDate?: string;
   /**
-   * When true: fetches from the provider exactly as normal, but never
-   * writes to the database (no `bulkUpsert`, no post-write reconciliation
-   * read). `NiftySessionAcquisitionDetail.persisted` reports `false` for
-   * every date in a dry run, so the result is never ambiguous about what
-   * actually reached the database.
+   * B-F2-CAL-3: when true, this is a NETWORK-FREE, MUTATION-FREE
+   * acquisition-level dry run. The calendar plan is still resolved and
+   * whole-plan CAL-2-validated (UNCERTIFIED still fails closed, an
+   * internally-inconsistent plan entry still throws
+   * `NiftyAcquisitionCalendarPlanInvariantError`), and already-complete
+   * local sessions are still detected via a read-only repository lookup --
+   * but for any date that WOULD require provider retrieval, this run makes
+   * ZERO calls to `HistoricalDataProvider` (no `fetchCompletedUnderlyingRange`)
+   * and performs ZERO persistence (no `bulkUpsert`). Such dates are reported
+   * under `sessions.dryRunAcquisitionPlanned` /
+   * `NiftySessionAcquisitionDetail.bucket === 'DRY_RUN_ACQUISITION_PLANNED'`,
+   * never fabricated into a fetched/validated/persisted bucket.
+   * `NiftySessionAcquisitionDetail.persisted` reports `false` for every date
+   * in a dry run, so the result is never ambiguous about what actually
+   * reached the database.
    */
   readonly dryRun?: boolean;
 }
@@ -174,7 +184,16 @@ export type NiftySessionAcquisitionBucket =
   | 'INVALID'
   | 'SPECIAL_SESSION_EXCLUDED'
   | 'UNRESOLVED_NO_DATA'
-  | 'CLOSED_NO_DATA_EXPECTED';
+  | 'CLOSED_NO_DATA_EXPECTED'
+  /**
+   * B-F2-CAL-3: this date is fetch-eligible and NOT already locally
+   * complete, so a real (`dryRun: false`) run WOULD have called the
+   * provider for it -- but this run is `dryRun: true`, so zero provider
+   * calls and zero persistence occurred for it. Never conflated with
+   * `UNRESOLVED_NO_DATA` (which means a real provider request ran and
+   * returned nothing for this date).
+   */
+  | 'DRY_RUN_ACQUISITION_PLANNED';
 
 /**
  * Typed reason for an orchestrator-level (not B-F1 validator-level) failure
@@ -205,6 +224,15 @@ export interface NiftySessionAcquisitionDetail {
   readonly exclusions: readonly CanonicalSessionExclusion[];
   /** Whether THIS run actually wrote rows for this date (always `false` for `ALREADY_COMPLETE`, `UNRESOLVED_NO_DATA`, a non-persistable health status, or `dryRun`). */
   readonly persisted: boolean;
+  /**
+   * B-F2-CAL-3: populated ONLY for bucket `DRY_RUN_ACQUISITION_PLANNED` --
+   * the CAL-2-canonical, already-invariant-validated expected minute count
+   * for this date, taken directly from the calendar plan. Informational
+   * only: it is a planning fact, never a claim that any row was actually
+   * fetched, validated, or persisted (`sourceRowCount`/`canonicalRowCount`
+   * stay `0` for this bucket).
+   */
+  readonly plannedExpectedMinuteCount?: number;
 }
 
 export interface NiftyUnderlyingAcquisitionResult {
@@ -241,6 +269,14 @@ export interface NiftyUnderlyingAcquisitionResult {
      * data and none arrived).
      */
     readonly closedNoDataExpected: readonly string[];
+    /**
+     * B-F2-CAL-3: dates that ARE fetch-eligible and NOT already locally
+     * complete, but for which this `dryRun: true` run performed ZERO
+     * provider retrieval and ZERO persistence. Always empty when `dryRun`
+     * is `false` -- a real run either fetches and buckets these elsewhere,
+     * or the chunk fetch itself fails into `failedChunks`.
+     */
+    readonly dryRunAcquisitionPlanned: readonly string[];
   };
   /** Full typed detail for every date this run touched -- not just the problematic ones -- so nothing is free-form-only. */
   readonly sessionDetails: readonly NiftySessionAcquisitionDetail[];
@@ -248,6 +284,8 @@ export interface NiftyUnderlyingAcquisitionResult {
   readonly rateLimitBackoffCount: number;
   /** Message text only -- see `describeError`; never includes request headers/tokens. */
   readonly failedChunks: readonly { fromDate: string; toDate: string; error: string }[];
+  /** B-F2-CAL-3: echoes the request's `dryRun` flag so a caller/report can distinguish a genuinely executed run from a network-free planning-only run without re-threading the original request. */
+  readonly dryRun: boolean;
 }
 
 export interface NiftyUnderlyingAcquisitionServiceDependencies {
@@ -280,6 +318,7 @@ const BUCKET_TO_SESSIONS_KEY: Record<NiftySessionAcquisitionBucket, keyof NiftyU
   SPECIAL_SESSION_EXCLUDED: 'specialSessionExcluded',
   UNRESOLVED_NO_DATA: 'unresolvedNoData',
   CLOSED_NO_DATA_EXPECTED: 'closedNoDataExpected',
+  DRY_RUN_ACQUISITION_PLANNED: 'dryRunAcquisitionPlanned',
 };
 
 /**
@@ -370,6 +409,7 @@ export default class NiftyUnderlyingAcquisitionService {
       specialSessionExcluded: [] as string[],
       unresolvedNoData: [] as string[],
       closedNoDataExpected: [] as string[],
+      dryRunAcquisitionPlanned: [] as string[],
     };
     const pushBucket = (bucket: NiftySessionAcquisitionBucket, date: string): void => {
       sessions[BUCKET_TO_SESSIONS_KEY[bucket]].push(date);
@@ -399,6 +439,21 @@ export default class NiftyUnderlyingAcquisitionService {
       if (pendingFetchEligible.length === 0) {
         // Every date in this chunk is either already complete or certified
         // closed -- no provider request is needed at all (task section 15).
+        monthlyChunksSucceeded += 1;
+        continue;
+      }
+
+      if (dryRun) {
+        // B-F2-CAL-3 core fix: a true acquire-level dry-run must never
+        // reach `HistoricalDataProvider` -- report what WOULD require
+        // provider retrieval using only the calendar plan + the read-only
+        // local-completeness check already performed above, and stop
+        // BEFORE `fetchChunk` (and therefore before any network call,
+        // any `bulkUpsert`, and any post-persist reconciliation read).
+        for (const planned of pendingFetchEligible) {
+          sessionDetails.push(this.dryRunPlannedDetail(planned));
+          pushBucket('DRY_RUN_ACQUISITION_PLANNED', planned.tradingDate);
+        }
         monthlyChunksSucceeded += 1;
         continue;
       }
@@ -450,6 +505,7 @@ export default class NiftyUnderlyingAcquisitionService {
       retryCount: stats.retryCount,
       rateLimitBackoffCount: stats.rateLimitBackoffCount,
       failedChunks,
+      dryRun,
     };
   }
 
@@ -621,6 +677,30 @@ export default class NiftyUnderlyingAcquisitionService {
       excludedRowCount: 0,
       exclusions: [],
       persisted: false,
+    };
+  }
+
+  /**
+   * B-F2-CAL-3: truthful placeholder detail for a fetch-eligible,
+   * not-already-complete date this `dryRun: true` run deliberately did NOT
+   * retrieve from the provider. `sourceRowCount`/`canonicalRowCount` stay
+   * `0` (nothing was fetched or accepted this run) and `persisted` stays
+   * `false`; only `plannedExpectedMinuteCount` carries a non-zero, already
+   * CAL-2-invariant-validated fact from the calendar plan itself.
+   */
+  private dryRunPlannedDetail(planned: ValidatedNiftyPlannedDate): NiftySessionAcquisitionDetail {
+    return {
+      tradingDate: planned.tradingDate,
+      bucket: 'DRY_RUN_ACQUISITION_PLANNED',
+      healthStatus: null,
+      issues: [],
+      acquisitionIssues: [],
+      sourceRowCount: 0,
+      canonicalRowCount: 0,
+      excludedRowCount: 0,
+      exclusions: [],
+      persisted: false,
+      plannedExpectedMinuteCount: planned.expectedMinuteCount,
     };
   }
 

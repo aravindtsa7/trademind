@@ -498,17 +498,24 @@ test('M: SECURITY -- no bearer token ever appears in failedChunks error text or 
   assert.ok(!serialized.includes(SECRET_TOKEN));
 });
 
-// ---- dry run --------------------------------------------------------------
+// ---- dry run (B-F2-CAL-3: network-free, mutation-free) ---------------------
 
-test('dryRun fetches from the provider as normal but never writes to the database', async () => {
+test('dryRun performs ZERO provider calls and ZERO writes -- reports a truthful DRY_RUN_ACQUISITION_PLANNED bucket, never a fabricated NEWLY_COMPLETED', async () => {
   const date = '2022-01-12';
-  const { service, repository } = buildService(() => normalSessionRows(date));
+  const { service, repository, provider } = buildService(() => normalSessionRows(date));
   const result = await service.acquire({ fromDate: date, toDate: date, dryRun: true });
 
-  assert.deepEqual(result.sessions.newlyCompleted, [date]);
-  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
-  assert.equal(detail.persisted, false);
+  assert.equal(provider.calls.length, 0);
   assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.equal(result.dryRun, true);
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, [date]);
+  assert.deepEqual(result.sessions.newlyCompleted, []);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.bucket, 'DRY_RUN_ACQUISITION_PLANNED');
+  assert.equal(detail.persisted, false);
+  assert.equal(detail.sourceRowCount, 0);
+  assert.equal(detail.canonicalRowCount, 0);
+  assert.equal(detail.plannedExpectedMinuteCount, 375);
 });
 
 // ---- validation -------------------------------------------------------------
@@ -1050,4 +1057,200 @@ test('CAL-2-FIX-1 MIXED CHUNK CLOSED-ROW INJECTION: provider rows for certified-
   assert.ok(!result.sessionDetails.some((detail) => detail.tradingDate === exceptional && detail.bucket !== 'CLOSED_NO_DATA_EXPECTED'));
   assert.equal(repository.bulkUpsertCallCount, 2); // only regular + special persisted
   assert.equal(result.canonicalRowsAccepted, 750); // 375 + 375 -- the closed dates' rows are never counted
+});
+
+// ============================================================================
+// B-F2-CAL-3: TRUE ACQUIRE-LEVEL NETWORK-FREE DRY-RUN
+// ============================================================================
+//
+// CAL-2 (above) already proved the calendar plan itself is correct and that
+// `dryRun` gates persistence. CAL-3 closes the remaining gap: before this
+// milestone, `acquire({ dryRun: true })` still called `fetchChunk` (and
+// therefore `HistoricalDataProvider.fetchCompletedUnderlyingRange`) for any
+// chunk containing a fetch-eligible, not-already-complete date -- dryRun only
+// ever skipped the LATER `bulkUpsert`. Every test below asserts
+// `provider.calls.length === 0` for a `dryRun: true` request whenever the
+// requested range contains at least one date that would otherwise require
+// provider retrieval.
+
+test('CAL-3 A: REGULAR SESSION / MISSING LOCAL DATA / DRY RUN -- zero provider calls, zero writes, truthful DRY_RUN_ACQUISITION_PLANNED, correct calendar minute semantics', async () => {
+  const date = '2024-02-05';
+  const planner = new FakeExplicitPlanner([regularPlannedDate(date)]);
+  const { service, provider, repository } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, undefined, planner);
+
+  const result = await service.acquire({ fromDate: date, toDate: date, dryRun: true });
+
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.equal(result.dryRun, true);
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, [date]);
+  assert.deepEqual(result.sessions.newlyCompleted, []);
+  assert.deepEqual(result.sessions.alreadyComplete, []);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.bucket, 'DRY_RUN_ACQUISITION_PLANNED');
+  assert.equal(detail.persisted, false);
+  assert.equal(detail.sourceRowCount, 0);
+  assert.equal(detail.canonicalRowCount, 0);
+  assert.equal(detail.plannedExpectedMinuteCount, 375); // regular session: full [555,930) calendar minute semantics preserved
+});
+
+test('CAL-3 B: REGULAR SESSION / ALREADY COMPLETE / DRY RUN -- zero provider calls, zero writes, correct local-completeness skip', async () => {
+  const date = '2024-02-06';
+  const repository = new FakeHistoricalCandleRepository();
+  repository.seedCompleteSession(date);
+  const planner = new FakeExplicitPlanner([regularPlannedDate(date)]);
+  const { service, provider } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, repository, planner);
+
+  const result = await service.acquire({ fromDate: date, toDate: date, dryRun: true });
+
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.deepEqual(result.sessions.alreadyComplete, [date]);
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, []);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.bucket, 'ALREADY_COMPLETE');
+  assert.equal(detail.persisted, false);
+});
+
+test('CAL-3 C: SPECIAL SESSION / DRY RUN -- zero provider calls, zero writes, exact single-window expected-minute semantics survive dry-run', async () => {
+  const date = '2024-11-01';
+  const window: SessionWindow = { windowIndex: 0, openMinuteIst: 1080, closeMinuteIst: 1140 };
+  const planner = new FakeExplicitPlanner([specialPlannedDate(date, [window])]);
+  const { service, provider, repository } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, undefined, planner);
+
+  const result = await service.acquire({ fromDate: date, toDate: date, dryRun: true });
+
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, [date]);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.bucket, 'DRY_RUN_ACQUISITION_PLANNED');
+  assert.equal(detail.plannedExpectedMinuteCount, 60); // [1080,1140) = 60 minutes, exact
+  assert.equal(detail.persisted, false);
+});
+
+test('CAL-3 D: MULTI-WINDOW SPECIAL SESSION / DRY RUN -- [555,600)+[690,750)=105 minutes, the [600,690) gap is never bridged, zero provider calls, zero writes', async () => {
+  const date = '2024-03-02';
+  const windows: SessionWindow[] = [
+    { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+    { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+  ];
+  const expectedMinutes = expectedMinutesForWindows(windows);
+  assert.equal(expectedMinutes.length, 105); // 45 + 60, NOT 375 and NOT 195 (555..749 continuous)
+
+  const planner = new FakeExplicitPlanner([specialPlannedDate(date, windows)]);
+  const { service, provider, repository } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, undefined, planner);
+
+  const result = await service.acquire({ fromDate: date, toDate: date, dryRun: true });
+
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, [date]);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.bucket, 'DRY_RUN_ACQUISITION_PLANNED');
+  assert.equal(detail.plannedExpectedMinuteCount, 105); // exact multi-window count; the gap is never bridged into 195
+  assert.equal(detail.persisted, false);
+});
+
+test('CAL-3 E: CLOSED DAY / DRY RUN -- no provider requirement, zero provider calls, zero writes', async () => {
+  const date = '2023-06-29';
+  const planner = new FakeExplicitPlanner([closedPlannedDate(date, NiftyPlannedDateDisposition.CLOSED_HOLIDAY)]);
+  const { service, provider, repository } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, undefined, planner);
+
+  const result = await service.acquire({ fromDate: date, toDate: date, dryRun: true });
+
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.deepEqual(result.sessions.closedNoDataExpected, [date]);
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, []);
+  assert.deepEqual(result.sessions.unresolvedNoData, []);
+});
+
+test('CAL-3 F: UNCERTIFIED RANGE / DRY RUN -- fails closed BEFORE any provider call, zero provider calls, zero writes', async () => {
+  const date = '2026-08-29';
+  const planner = new FakeExplicitPlanner([blockedPlannedDate(date)]);
+  const { service, provider, repository } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, undefined, planner);
+
+  await assert.rejects(service.acquire({ fromDate: date, toDate: date, dryRun: true }), (error: unknown) => {
+    assert.ok(error instanceof NiftyAcquisitionCalendarBlockedError);
+    assert.deepEqual(error.blockedDates, [date]);
+    return true;
+  });
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+});
+
+test('CAL-3 G: CAL-2 PLAN INVARIANT CORRUPTION + DRY RUN -- typed NiftyAcquisitionCalendarPlanInvariantError, zero provider calls, zero writes', async () => {
+  const date = '2024-11-05';
+  const window: SessionWindow = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 };
+  const broken = inconsistentPlannedDate(specialPlannedDate(date, [window]), {
+    expectedMinuteCount: 44,
+    expectedMinutesIst: Array.from({ length: 44 }, (_, i) => 555 + i), // 555..598 -- self-consistent with the wrong count, but not with the window
+  });
+  const planner = new FakeExplicitPlanner([broken]);
+  const { service, provider, repository } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, undefined, planner);
+
+  await rejectsWithPlanInvariant(
+    service.acquire({ fromDate: date, toDate: date, dryRun: true }),
+    NiftyAcquisitionCalendarPlanInvariantReason.EXPECTED_MINUTE_COUNT_MISMATCH,
+    date
+  );
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+});
+
+test('CAL-3 H: NORMAL ACQUIRE (dryRun=false) REGRESSION -- provider is still called and persistence/projection behavior remains unchanged when acquisition is required', async () => {
+  const date = '2024-02-07';
+  const planner = new FakeExplicitPlanner([regularPlannedDate(date)]);
+  const { service, provider, repository } = buildService(() => normalSessionRows(date), undefined, planner);
+
+  const result = await service.acquire({ fromDate: date, toDate: date, dryRun: false });
+
+  assert.equal(provider.calls.length, 1);
+  assert.equal(repository.bulkUpsertCallCount, 1);
+  assert.equal(result.dryRun, false);
+  assert.deepEqual(result.sessions.newlyCompleted, [date]);
+  assert.deepEqual(result.sessions.dryRunAcquisitionPlanned, []);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.bucket, 'NEWLY_COMPLETED');
+  assert.equal(detail.persisted, true);
+  assert.equal(detail.canonicalRowCount, 375);
+});
+
+test('CAL-3 I: NETWORK-BOUNDARY REGRESSION -- a provider that throws immediately if invoked never fires during a valid multi-date dry run mixing regular/special/closed dispositions', async () => {
+  const regular = '2024-01-19';
+  const special = '2024-01-20';
+  const weekend = '2024-01-21';
+  const exceptional = '2024-01-22';
+  const specialWindow = regularSessionWindow();
+  const planner = new FakeExplicitPlanner([
+    regularPlannedDate(regular),
+    specialPlannedDate(special, [specialWindow]),
+    closedPlannedDate(weekend, NiftyPlannedDateDisposition.CLOSED_WEEKEND),
+    closedPlannedDate(exceptional, NiftyPlannedDateDisposition.CLOSED_EXCEPTIONAL),
+  ]);
+  const { service, provider, repository } = buildService(() => {
+    throw new Error('NETWORK_CALLED_DURING_DRY_RUN');
+  }, undefined, planner);
+
+  const result = await service.acquire({ fromDate: regular, toDate: exceptional, dryRun: true });
+
+  assert.equal(provider.calls.length, 0);
+  assert.equal(repository.bulkUpsertCallCount, 0);
+  assert.deepEqual([...result.sessions.dryRunAcquisitionPlanned].sort(), [regular, special].sort());
+  assert.deepEqual([...result.sessions.closedNoDataExpected].sort(), [weekend, exceptional].sort());
 });
