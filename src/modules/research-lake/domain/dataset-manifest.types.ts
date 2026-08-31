@@ -3,6 +3,7 @@ import { DatasetHealthIssue, DatasetHealthStatus } from './dataset-health.types'
 import { OptionCandleObservationState } from './historical-option-candle-observation.types';
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import { canonicalManifestJson, sha256Hex } from './dataset-manifest-canonical-json';
+import { CalendarSessionWindowsByDate, SessionWindow } from './exchange-calendar.types';
 
 /**
  * The two Historical Research Lake dataset kinds B-F5 covers (task section
@@ -29,8 +30,16 @@ export enum ManifestDatasetKind {
  * this bump exists so a consumer inspecting `manifestSchemaVersion` can
  * tell whether `sourceAcquisitionEvidence.provider`/`.evidenceSemanticChecksum`
  * are even expected to be present.
+ *
+ * Bumped 2 -> 3 for B-F5 CALENDAR FIX: `SessionManifest` gained
+ * `calendarSessionWindows` (also observability material, never part of
+ * `contentChecksum`/`datasetChecksum`) -- the exact calendar-declared
+ * session windows a session's health was computed against, so
+ * `DatasetManifestService.verifyManifest` can recompute the identical
+ * health determination later without a live calendar lookup. `[]` for any
+ * session whose health used the legacy fixed 375-row default.
  */
-export const MANIFEST_SCHEMA_VERSION = 2;
+export const MANIFEST_SCHEMA_VERSION = 3;
 
 /**
  * Semantic version of `CanonicalSessionProjectorService`'s session-boundary/
@@ -86,6 +95,30 @@ export interface OptionSessionIdentity {
 }
 
 export type SessionContentIdentity = UnderlyingSessionIdentity | OptionSessionIdentity;
+
+/**
+ * B-F5 CALENDAR FIX (task invariant A/C): explicit, calendar-authoritative
+ * session windows for requested manifest sessions, keyed by `tradingDate`.
+ * Supplied by a calendar-aware caller (see
+ * `ManifestCalendarSessionResolverService` / `research-dataset-manifest-generate.ts`)
+ * so a certified SPECIAL_SESSION date's health is scored against its REAL
+ * session windows -- never Monday-Friday arithmetic, never the fixed
+ * 09:15-15:29 375-row regular-session default. A date with no entry here
+ * falls back to that fixed default, which is provably identical to the
+ * certified calendar's own REGULAR_SESSION window (see
+ * `regularSessionWindow()`) -- so an ordinary weekday request behaves
+ * identically whether or not its entry is present, and no pre-existing
+ * caller/test that only ever requests ordinary weekday sessions needs to
+ * change.
+ *
+ * Type alias only (kept so existing manifest-domain call sites/tests keep
+ * this name) -- the canonical, domain-neutral definition is
+ * `CalendarSessionWindowsByDate` in `exchange-calendar.types.ts`, since this
+ * same shape is now also consumed by `GrowwOptionCandleAcquisitionService`
+ * (option acquisition) and `ResearchYearRunnerService` (year-runner manifest
+ * generation), not just manifest generation.
+ */
+export type ManifestCalendarSessionWindowsByDate = CalendarSessionWindowsByDate;
 
 /** Exactly the content that determines a session's `contentChecksum` -- IDENTITY MATERIAL only (task section 4). Never persisted verbatim in a `SessionManifest` artifact (task section 12: "no huge raw candle payload duplication"); used transiently to compute the checksum. */
 export interface SessionContentPayload {
@@ -289,6 +322,21 @@ export interface SessionManifest {
   readonly rowsWithNullOi: number | null;
   /** Original-provider-acquisition evidence, kept structurally separate from `persistedCanonicalHealthStatus` -- see `SourceAcquisitionEvidence` doc. Always `UNAVAILABLE_FROM_PERSISTED_STORE` in every manifest B-F5 can currently produce. */
   readonly sourceAcquisitionEvidence: SourceAcquisitionEvidence;
+  /**
+   * B-F5 CALENDAR FIX: the exact calendar-declared session windows this
+   * session's `persistedCanonicalHealthStatus`/`issues`/`optionObservationState`
+   * were computed against, when a calendar-aware caller supplied them at
+   * generation time (`calendarSessionWindows` on the generate request). `[]`
+   * when no calendar declaration was supplied for this date -- the legacy
+   * fixed 09:15-15:29 375-row regular-session default was used instead (see
+   * `DatasetSessionManifestBuilderService`). Recorded (not re-derived) so
+   * `DatasetManifestService.verifyManifest` reproduces the IDENTICAL health
+   * determination later without a live calendar lookup -- B-F5 never calls a
+   * provider or a calendar service during verify (task section 9/15). Never
+   * hashed into `contentChecksum`/`datasetChecksum`, exactly like
+   * `persistedCanonicalHealthStatus` itself.
+   */
+  readonly calendarSessionWindows: readonly SessionWindow[];
 }
 
 export interface DatasetProvenance {

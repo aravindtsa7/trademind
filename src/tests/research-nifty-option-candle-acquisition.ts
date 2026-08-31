@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { mkdir, writeFile } from 'node:fs/promises';
 import logger from '../core/logger/logger';
 import GrowwOptionCandleAcquisitionService from '../modules/research-lake/services/groww-option-candle-acquisition.service';
+import ManifestCalendarSessionResolverService from '../modules/research-lake/services/manifest-calendar-session-resolver.service';
 import GrowwHistoricalClient from '../modules/research-lake/providers/groww/groww-historical-client';
 import GrowwOptionHistoricalDataProviderService from '../modules/research-lake/providers/groww/groww-option-historical-data-provider.service';
 import GrowwAccessTokenProviderService from '../modules/research-lake/providers/groww/groww-access-token-provider.service';
@@ -51,13 +52,23 @@ async function run(): Promise<void> {
     throw new Error(`RESEARCH_OPTION_START_DATE (${startDate}) must not be after RESEARCH_OPTION_END_DATE (${endDate}).`);
   }
 
-  const tradingDates = calendarWeekdays(startDate, endDate);
   const spanDays = Math.round((new Date(`${endDate}T00:00:00Z`).getTime() - new Date(`${startDate}T00:00:00Z`).getTime()) / 86_400_000) + 1;
   if (spanDays > MAX_DATE_SPAN_DAYS && process.env.RESEARCH_OPTION_ALLOW_LARGE_RANGE?.trim().toLowerCase() !== 'true') {
     throw new Error(
       `Requested range ${startDate}..${endDate} spans ${spanDays} day(s), exceeding this CLI's ${MAX_DATE_SPAN_DAYS}-day safety cap. B-F4 is scoped to strategy-required contracts/sessions, never an implicit full-history backfill (task section 5). Set RESEARCH_OPTION_ALLOW_LARGE_RANGE=true only for a deliberate, explicitly-authorized larger run.`
     );
   }
+
+  // B-F5 CALENDAR FIX (task invariant B/D/G): requested sessions come from the
+  // certified NSE/EQUITY exchange calendar via `ManifestCalendarSessionResolverService`
+  // -- never Monday-Friday arithmetic. A certified holiday/exceptional
+  // closure/ordinary weekend is simply excluded; a certified weekend
+  // SPECIAL_SESSION is included with its real windows; any calendar-UNCERTIFIED
+  // date in the range fails this run closed BEFORE any token/provider work
+  // below -- the provider is never called merely to discover that a
+  // certified date was closed.
+  const calendarResolver = new ManifestCalendarSessionResolverService();
+  const { tradingDates, calendarSessionWindows } = await calendarResolver.resolveRequestedSessions({ fromDate: startDate, toDate: endDate });
 
   const accessToken = await resolveAccessToken();
   const client = new GrowwHistoricalClient(accessToken);
@@ -66,7 +77,7 @@ async function run(): Promise<void> {
 
   console.log(JSON.stringify({ event: 'research:nifty-option-candles starting', growwSymbol, startDate, endDate, requestedSessionCount: tradingDates.length, dryRun }));
 
-  const result = await service.acquire({ providerContractId: growwSymbol, tradingDates, dryRun });
+  const result = await service.acquire({ providerContractId: growwSymbol, tradingDates, calendarSessionWindows, dryRun });
 
   await mkdir(ARTIFACT_DIR, { recursive: true });
   await writeFile(ARTIFACT_PATH, `${JSON.stringify(result, bigintReplacer, 2)}\n`);
@@ -102,15 +113,6 @@ async function resolveAccessToken(): Promise<string> {
   if (direct) return direct;
   const tokenProvider = new GrowwAccessTokenProviderService();
   return tokenProvider.getAccessToken();
-}
-
-/** Independently implemented (never imported from `banknifty-data-audit.ts`, matching the same "additive-only" boundary `nifty-underlying-acquisition.service.ts` already documents for reusing that helper via import rather than duplicating it -- here it is duplicated deliberately to keep this standalone research CLI free of a cross-module import into `research` for a two-line date helper). */
-function calendarWeekdays(startDate: string, endDate: string): string[] {
-  const dates: string[] = [];
-  for (let cursor = new Date(`${startDate}T00:00:00Z`); cursor <= new Date(`${endDate}T00:00:00Z`); cursor.setUTCDate(cursor.getUTCDate() + 1)) {
-    if (![0, 6].includes(cursor.getUTCDay())) dates.push(cursor.toISOString().slice(0, 10));
-  }
-  return dates;
 }
 
 function bigintReplacer(_key: string, value: unknown): unknown {

@@ -13,7 +13,9 @@ import {
   computeSessionContentChecksum,
 } from '../domain/dataset-manifest.types';
 import { toManifestCandleContent } from '../domain/canonical-candle-parquet-codec';
-import { ResampleSessionStatus, ResampleTargetTimeframe } from '../domain/resampled-candle.types';
+import { RESAMPLING_SEMANTICS_VERSION, ResampleSessionStatus, ResampleTargetTimeframe } from '../domain/resampled-candle.types';
+import { SessionWindow } from '../domain/exchange-calendar.types';
+import { regularSessionWindow } from '../domain/session-window-expected-minutes.util';
 import HistoricalCandleResamplerService, { ResampleSessionRequest } from './historical-candle-resampler.service';
 import { PersistedManifestCandleRow } from './dataset-session-manifest-builder.service';
 
@@ -103,7 +105,7 @@ test('(A) 375 clean 1m rows -> exactly 75 complete 5m candles', () => {
   assert.equal(descriptor.completeBucketCount, 75);
   assert.equal(descriptor.partialBucketCount, 0);
   assert.equal(descriptor.excludedTrailingRowCount, 0);
-  assert.equal(descriptor.status, ResampleSessionStatus.COMPLETE_REGULAR_SESSION);
+  assert.equal(descriptor.status, ResampleSessionStatus.COMPLETE_SESSION);
 });
 
 test('(B) 375 clean 1m rows -> exactly 125 complete 3m candles', () => {
@@ -433,4 +435,202 @@ test('(AZ) host timezone does not alter bucket boundaries or the derived checksu
     if (original === undefined) delete process.env.TZ;
     else process.env.TZ = original;
   }
+});
+
+// ============================================================================
+// B-F7 CALENDAR FIX: calendar-authoritative session-window awareness
+// (task invariants A/B/C/D/E/F/I). `HistoricalCandleResamplerService` no
+// longer hard-codes a single fixed 09:15-15:29 IST regular-session anchor --
+// `ResampleSessionRequest.sessionWindows` (defaulting to
+// `[regularSessionWindow()]`) now governs bucket anchoring, partial-bucket
+// policy, and completeness for REGULAR and SPECIAL sessions alike.
+// ============================================================================
+
+/** 60-minute Muhurat-style special session, entirely outside the fixed 09:15-15:29 regular window (16:45-17:45 IST). */
+const MUHURAT_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 };
+/** A certified multi-window special session: 45 minutes (09:15-10:00) + a closed gap + 60 minutes (11:30-12:30). */
+const MULTI_WINDOWS: readonly SessionWindow[] = [
+  { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+  { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+];
+/** A single 7-minute window -- deliberately not evenly divisible by 2m/3m/5m, isolating the partial-final-bucket policy from any gap/multi-window concern. */
+const SEVEN_MINUTE_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 600, closeMinuteIst: 607 };
+
+function calendarDayStartMs(): number {
+  return new Date(`${TRADING_DATE}T00:00:00+05:30`).getTime();
+}
+
+/** Builds one canonical row at an explicit IST minute-of-day, independent of the 09:15 regular-session anchor `row()`/`fullSession()` assume. */
+function rowAtMinute(minuteOfDay: number, overrides: Partial<PersistedManifestCandleRow> = {}): PersistedManifestCandleRow {
+  const price = 100 + minuteOfDay;
+  return {
+    candleTime: new Date(calendarDayStartMs() + minuteOfDay * 60_000),
+    open: new Prisma.Decimal(price),
+    high: new Prisma.Decimal(price + 2),
+    low: new Prisma.Decimal(price - 1),
+    close: new Prisma.Decimal(price + 1),
+    volume: BigInt(1000 + minuteOfDay),
+    openInterest: null,
+    ...overrides,
+  };
+}
+
+/** Full canonical rows for every minute in every declared window -- the calendar-declared analogue of `fullSession()`. */
+function rowsForWindows(windows: readonly SessionWindow[]): PersistedManifestCandleRow[] {
+  const rows: PersistedManifestCandleRow[] = [];
+  for (const window of windows) {
+    for (let minute = window.openMinuteIst; minute < window.closeMinuteIst; minute += 1) rows.push(rowAtMinute(minute));
+  }
+  return rows;
+}
+
+function calendarRequest(
+  targetTimeframe: ResampleTargetTimeframe,
+  sourceRows: readonly PersistedManifestCandleRow[],
+  sessionWindows: readonly SessionWindow[],
+  overrides: Partial<ResampleSessionRequest> = {}
+): ResampleSessionRequest {
+  return baseRequest(targetTimeframe, sourceRows, { sessionWindows, ...overrides });
+}
+
+// Task coverage item 3: special session outside normal market hours accepted, not rejected as pre/post-market.
+test('(CAL-1) a Muhurat-style special session (16:45-17:45 IST) is accepted and fully resampled -- never rejected as a pre-market/post-market row', () => {
+  const rows = rowsForWindows([MUHURAT_WINDOW]);
+  const { candles, descriptor } = resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, [MUHURAT_WINDOW]));
+  assert.equal(descriptor.sourceRowCount, 60);
+  assert.equal(candles.length, 12);
+  assert.equal(descriptor.completeBucketCount, 12);
+  assert.equal(descriptor.partialBucketCount, 0);
+  assert.equal(descriptor.excludedTrailingRowCount, 0);
+  assert.equal(descriptor.missingSourceMinuteCount, 0);
+  assert.equal(descriptor.status, ResampleSessionStatus.COMPLETE_SESSION);
+  assert.deepEqual(descriptor.sessionWindows, [MUHURAT_WINDOW]);
+  assert.equal(candles[0].bucketStart.getTime(), calendarDayStartMs() + MUHURAT_WINDOW.openMinuteIst * 60_000);
+});
+
+// Task coverage items 7/8/9: 2m/3m/5m target timeframe over a special session.
+test('(CAL-2) 2m/3m/5m target timeframes all resample a 60-minute special session identically to how they resample a 60-minute regular-session slice', () => {
+  for (const [timeframe, expectedBuckets] of [
+    [ResampleTargetTimeframe.TWO_MINUTE, 30],
+    [ResampleTargetTimeframe.THREE_MINUTE, 20],
+    [ResampleTargetTimeframe.FIVE_MINUTE, 12],
+  ] as const) {
+    const rows = rowsForWindows([MUHURAT_WINDOW]);
+    const { candles, descriptor } = resampler.resampleSession(calendarRequest(timeframe, rows, [MUHURAT_WINDOW]));
+    assert.equal(candles.length, expectedBuckets);
+    assert.equal(descriptor.completeBucketCount, expectedBuckets);
+    assert.equal(descriptor.partialBucketCount, 0);
+    assert.equal(descriptor.excludedTrailingRowCount, 0);
+    assert.equal(descriptor.status, ResampleSessionStatus.COMPLETE_SESSION);
+  }
+});
+
+// Task coverage item 4: multi-window special session, expected source minutes = 105.
+test('(CAL-3) a multi-window special session (45 + 60 = 105 minutes) accepts all declared windows and reports zero missing minutes when fully present', () => {
+  const rows = rowsForWindows(MULTI_WINDOWS);
+  const { descriptor } = resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, MULTI_WINDOWS));
+  assert.equal(descriptor.sourceRowCount, 105);
+  assert.equal(descriptor.missingSourceMinuteCount, 0);
+  assert.equal(descriptor.status, ResampleSessionStatus.COMPLETE_SESSION);
+});
+
+// Task coverage item 5: multi-window resampling does NOT bridge the closed gap.
+test('(CAL-4) multi-window 5m resampling never bridges the closed [600,690) gap: exactly 9 + 12 = 21 buckets, none straddling the gap', () => {
+  const rows = rowsForWindows(MULTI_WINDOWS);
+  const { candles } = resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, MULTI_WINDOWS));
+  assert.equal(candles.length, 21);
+  // Every bucket falls entirely inside window 0 [555,600) or window 1 [690,750) -- never spanning the gap.
+  for (const candle of candles) {
+    const startMinute = (candle.bucketStart.getTime() - calendarDayStartMs()) / 60_000;
+    const endMinute = (candle.bucketEnd.getTime() - calendarDayStartMs()) / 60_000;
+    const insideWindow0 = startMinute >= 555 && endMinute < 600;
+    const insideWindow1 = startMinute >= 690 && endMinute < 750;
+    assert.ok(insideWindow0 || insideWindow1, `bucket [${startMinute},${endMinute}] must fall entirely inside one declared window`);
+  }
+});
+
+// Task coverage item 6: buckets anchor independently at each window's own open minute.
+test('(CAL-5) each window is its own independent bucket anchor: window 1\'s first bucket starts exactly at its own openMinuteIst (690), never continuing a running offset from window 0', () => {
+  const rows = rowsForWindows(MULTI_WINDOWS);
+  const { candles } = resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, MULTI_WINDOWS));
+  assert.equal(candles[0].bucketStart.getTime(), calendarDayStartMs() + 555 * 60_000);
+  // Window 0 (45 min / 5m) contributes exactly 9 complete buckets before window 1 begins.
+  const firstWindow1Bucket = candles[9];
+  assert.equal(firstWindow1Bucket.bucketStart.getTime(), calendarDayStartMs() + 690 * 60_000);
+});
+
+// Task coverage item 10: explicit behavior for a window whose length is not divisible by the target timeframe.
+test('(CAL-6) a 7-minute window is not evenly divisible by 3m: 2 complete buckets, the trailing 1-minute remainder is excluded, never fabricated/bridged/borrowed', () => {
+  const rows = rowsForWindows([SEVEN_MINUTE_WINDOW]);
+  const { candles, descriptor } = resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.THREE_MINUTE, rows, [SEVEN_MINUTE_WINDOW]));
+  assert.equal(candles.length, 2);
+  assert.equal(descriptor.completeBucketCount, 2);
+  assert.equal(descriptor.partialBucketCount, 0);
+  assert.equal(descriptor.excludedTrailingRowCount, 1);
+  // The trailing remainder is certified complete (all 7 declared minutes present) -- excludedTrailingRowCount is
+  // session-arithmetic, not incompleteness (task invariant C vs D).
+  assert.equal(descriptor.missingSourceMinuteCount, 0);
+  assert.equal(descriptor.status, ResampleSessionStatus.COMPLETE_SESSION);
+  const last = candles[candles.length - 1];
+  assert.equal(last.bucketStart.getTime(), calendarDayStartMs() + 603 * 60_000);
+  assert.equal(last.bucketEnd.getTime(), calendarDayStartMs() + 605 * 60_000);
+});
+
+// Task coverage item 11: missing canonical minute inside a special session fails completeness.
+test('(CAL-7) a missing canonical minute inside a special session fails completeness (INCOMPLETE_SOURCE_SESSION), exactly as for a regular session', () => {
+  const rows = rowsForWindows([MUHURAT_WINDOW]).filter((row) => row.candleTime.getTime() !== calendarDayStartMs() + 1030 * 60_000);
+  const { descriptor } = resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, [MUHURAT_WINDOW]));
+  assert.equal(descriptor.status, ResampleSessionStatus.INCOMPLETE_SOURCE_SESSION);
+  assert.equal(descriptor.missingSourceMinuteCount, 1);
+});
+
+// Task coverage item 12: extra/off-window canonical minute is not silently accepted.
+test('(CAL-8) a canonical minute falling in the closed gap between two declared windows is rejected, not silently bridged into a bucket', () => {
+  const rows = [...rowsForWindows(MULTI_WINDOWS), rowAtMinute(650)]; // 650 falls in the undeclared [600,690) gap
+  assert.throws(
+    () => resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, MULTI_WINDOWS)),
+    /outside every declared calendar session window/i
+  );
+});
+
+// Task coverage item 13: duplicate canonical minute inside a special session remains fail-closed.
+test('(CAL-9) a duplicate canonical minute inside a special session is rejected, exactly as for a regular session', () => {
+  const rows = [...rowsForWindows([MUHURAT_WINDOW]), rowAtMinute(MUHURAT_WINDOW.openMinuteIst, { open: new Prisma.Decimal(999) })];
+  assert.throws(() => resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, [MUHURAT_WINDOW])), /duplicate source minute/i);
+});
+
+// Task invariant A/I: a malformed (overlapping) sessionWindows declaration fails closed before any row is inspected.
+test('(CAL-10) an overlapping/malformed sessionWindows declaration fails closed rather than resampling against a corrupted calendar declaration', () => {
+  const overlapping: readonly SessionWindow[] = [
+    { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+    { windowIndex: 1, openMinuteIst: 590, closeMinuteIst: 650 },
+  ];
+  const rows = rowsForWindows([{ windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 650 }]);
+  assert.throws(() => resampler.resampleSession(calendarRequest(ResampleTargetTimeframe.FIVE_MINUTE, rows, overlapping)), /overlap/i);
+});
+
+// Task invariant E: regular-session parity -- an explicit [regularSessionWindow()] declaration must be bit-for-bit
+// identical to the pre-existing default (omitted sessionWindows) for every target timeframe.
+test('(CAL-11) explicitly passing [regularSessionWindow()] produces a bit-for-bit identical result to omitting sessionWindows entirely', () => {
+  for (const timeframe of [ResampleTargetTimeframe.TWO_MINUTE, ResampleTargetTimeframe.THREE_MINUTE, ResampleTargetTimeframe.FIVE_MINUTE]) {
+    const rows = fullSession();
+    const implicit = resampler.resampleSession(baseRequest(timeframe, rows));
+    const explicit = resampler.resampleSession(calendarRequest(timeframe, rows, [regularSessionWindow()]));
+    assert.deepEqual(implicit.descriptor, explicit.descriptor);
+    assert.deepEqual(
+      implicit.candles.map((c) => c.bucketStart.toISOString()),
+      explicit.candles.map((c) => c.bucketStart.toISOString())
+    );
+  }
+});
+
+// Observability: the descriptor always records which windows governed the result, even when defaulted.
+test('(CAL-12) descriptor.sessionWindows defaults to [regularSessionWindow()] when the request omits sessionWindows', () => {
+  const { descriptor } = resampler.resampleSession(baseRequest(ResampleTargetTimeframe.FIVE_MINUTE, fullSession()));
+  assert.deepEqual(descriptor.sessionWindows, [regularSessionWindow()]);
+});
+
+// Task invariant F: RESAMPLING_SEMANTICS_VERSION was bumped for this genuine semantics change.
+test('(CAL-13) RESAMPLING_SEMANTICS_VERSION was bumped to 2 for the calendar-authoritative bucket-anchor/completeness semantics change', () => {
+  assert.equal(RESAMPLING_SEMANTICS_VERSION, 2);
 });

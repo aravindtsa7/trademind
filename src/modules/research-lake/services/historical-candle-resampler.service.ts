@@ -1,5 +1,7 @@
-import { istCalendarDate, istMinuteOfDay, NORMAL_SESSION_START_MINUTE } from '../domain/ist-session-clock';
-import { NIFTY_1M_SOURCE_HORIZON_END_MINUTE, isCompleteHistoricalSession } from '../../historical-candles/utils/historical-session-completeness.util';
+import { istCalendarDate, istMinuteOfDay } from '../domain/ist-session-clock';
+import { formatMinuteOfDayIst, SessionWindow, validateSessionWindows } from '../domain/exchange-calendar.types';
+import { expectedMinutesForWindows, regularSessionWindow } from '../domain/session-window-expected-minutes.util';
+import { isCompleteCalendarSession } from '../domain/calendar-session-completeness.util';
 import {
   CANONICALIZATION_SEMANTICS_VERSION,
   HEALTH_SEMANTICS_VERSION,
@@ -32,7 +34,22 @@ export interface ResampleSessionRequest {
   readonly sourceSessionIdentity: SessionContentIdentity;
   /** The source B-F5 `SessionManifest.contentChecksum` this request's `sourceRows` are claimed to represent -- verified against the supplied `sourceRows` via `computeSessionContentChecksum` before derivation (fails closed on mismatch). */
   readonly sourceSessionContentChecksum: string;
-  /** Canonical 1m rows for exactly one trading session, in any order (task section 19: order-independent). Every row must already be canonical -- same trading date, 09:15-15:29 IST window, minute-aligned, no duplicate minute -- or `resampleSession` fails closed. */
+  /**
+   * B-F7 CALENDAR FIX (task invariant A): the exact, calendar-authoritative
+   * session windows `sourceRows` belong to -- the SAME `SessionManifest.
+   * calendarSessionWindows` a calendar-aware caller (B-F5's
+   * `ManifestCalendarSessionResolverService`) already resolved and recorded
+   * for this session, never re-derived or re-looked-up here (B-F7 makes no
+   * calendar/provider/DB call of its own). Omitted or `[]` (preserving every
+   * pre-existing caller's behavior exactly): defaults to
+   * `[regularSessionWindow()]` -- the fixed 09:15-15:29 IST, 375-minute
+   * regular-session contract, provably identical to the certified calendar's
+   * own REGULAR_SESSION window. REQUIRED for a genuine SPECIAL_SESSION date
+   * so its real window(s) -- never the fixed regular contract -- govern
+   * bucket anchoring, partial-bucket policy, and completeness below.
+   */
+  readonly sessionWindows?: readonly SessionWindow[];
+  /** Canonical 1m rows for exactly one trading session, in any order (task section 19: order-independent). Every row must already be canonical -- same trading date, inside a declared `sessionWindows` window, minute-aligned, no duplicate minute -- or `resampleSession` fails closed. */
   readonly sourceRows: readonly PersistedManifestCandleRow[];
 }
 
@@ -44,9 +61,9 @@ export interface ResampleSessionResult {
 
 interface CandidateBucket {
   readonly startMinute: number;
-  /** Expected constituent minute-of-day values, clamped to the 09:15-15:29 regular session end. */
+  /** Expected constituent minute-of-day values, clamped to this bucket's OWN declared session window's close -- never extends into a different window or a closed gap. */
   readonly expectedConstituentMinutes: readonly number[];
-  /** True when this bucket falls entirely within the regular session (a full bucket is structurally possible here). False only for the legitimate trailing remainder (e.g. the lone 15:29 minute for 2m). */
+  /** True when this bucket falls entirely within its declared session window (a full bucket is structurally possible here). False only for the legitimate trailing remainder of that window (e.g. the lone final minute when a window's length does not evenly divide the target bucket size) -- never for a bucket that would bridge into a different window or a closed gap (`buildCandidateBuckets` never generates such a bucket). */
   readonly isFullSessionEligible: boolean;
 }
 
@@ -62,13 +79,37 @@ interface CandidateBucket {
  * no Prisma client, no hyparquet, no provider API awareness anywhere in
  * this class.
  *
- * Session anchor is always 09:15:00 IST (task section 1); bucket boundaries
- * are derived purely from `istMinuteOfDay`/`istCalendarDate`
- * (`ist-session-clock.ts`), never from host timezone or Unix-epoch modulo.
- * Never fabricates a missing minute, never forward-fills open interest,
- * never fabricates the legitimate 2m trailing 15:29 remainder into a
- * partial candle, and never certifies an incomplete source session as
- * complete (task sections 2/5/6/7/17/18).
+ * CALENDAR-AUTHORITATIVE SESSION WINDOWS (B-F7 CALENDAR FIX, task invariant
+ * A/B/C): bucket boundaries are derived purely from `istMinuteOfDay`/
+ * `istCalendarDate` (`ist-session-clock.ts`), never from host timezone or
+ * Unix-epoch modulo -- but WHICH minutes are even eligible now comes from
+ * `request.sessionWindows` (defaulting to the fixed 09:15-15:29 IST regular
+ * window when omitted), not a single hard-coded 09:15-15:29 constant.
+ *
+ * BUCKET ANCHOR POLICY (task invariant B): each declared session window is
+ * an INDEPENDENT bucket anchor -- the first bucket of every window starts
+ * exactly at that window's own `openMinuteIst`, never continuing a running
+ * offset from a previous window. A bucket's constituent minutes are always
+ * drawn from exactly one window; a bucket can never cross from one window
+ * into another, and can never bridge a closed gap between two disjoint
+ * windows (`buildCandidateBuckets` walks each window's own
+ * `[openMinuteIst, closeMinuteIst)` range independently).
+ *
+ * PARTIAL-FINAL-BUCKET POLICY (task invariant C): when a window's length is
+ * not evenly divisible by the target bucket size, the legitimate trailing
+ * remainder within THAT window (e.g. the lone 15:29 minute for a 375-minute
+ * regular session at 2m) is never fabricated into a partial candle, never
+ * bridged into the next window, and never borrows a minute from outside the
+ * window -- it is excluded and counted in `excludedTrailingRowCount`,
+ * exactly mirroring the pre-existing regular-session policy, now applied
+ * per-window.
+ *
+ * Never fabricates a missing minute, never forward-fills open interest, and
+ * never certifies an incomplete source session as complete (task sections
+ * 2/5/6/7/17/18) -- completeness (task invariant D) is judged against the
+ * EXACT expected-minute set for the declared windows
+ * (`expectedMinutesForWindows`/`isCompleteCalendarSession`), never a fixed
+ * 375-row assumption.
  */
 export default class HistoricalCandleResamplerService {
   resampleSession(request: ResampleSessionRequest): ResampleSessionResult {
@@ -85,7 +126,8 @@ export default class HistoricalCandleResamplerService {
       );
     }
 
-    const sourceRows = this.validateAndSort(request.sourceRows, request.tradingDate);
+    const sessionWindows = this.resolveSessionWindows(request.sessionWindows);
+    const sourceRows = this.validateAndSort(request.sourceRows, request.tradingDate, sessionWindows);
 
     const manifestCandles: ManifestCandleContent[] = sourceRows.map((row) => toManifestCandleContent(row));
     const computedSourceChecksum = computeSessionContentChecksum({
@@ -103,7 +145,7 @@ export default class HistoricalCandleResamplerService {
     const rowsByMinute = new Map<number, PersistedManifestCandleRow>();
     for (const row of sourceRows) rowsByMinute.set(istMinuteOfDay(row.candleTime), row);
 
-    const candidateBuckets = this.buildCandidateBuckets(bucketSize);
+    const candidateBuckets = this.buildCandidateBuckets(bucketSize, sessionWindows);
 
     const candles: ResampledCandle[] = [];
     let completeBucketCount = 0;
@@ -116,9 +158,10 @@ export default class HistoricalCandleResamplerService {
         .filter((row): row is PersistedManifestCandleRow => row !== undefined);
 
       if (!bucket.isFullSessionEligible) {
-        // Legitimate regular-session arithmetic remainder (task section 2/7A)
-        // -- never a candidate for a fabricated candle, regardless of
-        // whether its lone constituent minute happens to be present.
+        // Legitimate per-window session arithmetic remainder (task invariant
+        // C / section 2/7A) -- never a candidate for a fabricated candle,
+        // regardless of whether its lone constituent minute happens to be
+        // present, and never bridged into the next window.
         excludedTrailingRowCount += constituents.length;
         continue;
       }
@@ -134,8 +177,9 @@ export default class HistoricalCandleResamplerService {
       }
     }
 
-    const missingSourceMinuteCount = this.countMissingCanonicalMinutes(rowsByMinute);
-    const sourceComplete = isCompleteHistoricalSession(sourceRows);
+    const expectedMinutesIst = expectedMinutesForWindows(sessionWindows);
+    const missingSourceMinuteCount = this.countMissingCanonicalMinutes(rowsByMinute, expectedMinutesIst);
+    const sourceComplete = isCompleteCalendarSession(sourceRows, request.tradingDate, expectedMinutesIst);
 
     const derivedContentChecksum = computeDerivedContentChecksum({
       identity: {
@@ -155,6 +199,7 @@ export default class HistoricalCandleResamplerService {
       sourceSessionContentChecksum: request.sourceSessionContentChecksum,
       targetTimeframeMinutes: bucketSize,
       tradingDate: request.tradingDate,
+      sessionWindows,
       sourceRowCount: sourceRows.length,
       expectedConstituentRowsPerBucket: bucketSize,
       completeBucketCount,
@@ -162,25 +207,51 @@ export default class HistoricalCandleResamplerService {
       excludedTrailingRowCount,
       missingSourceMinuteCount,
       derivedContentChecksum,
-      status: sourceComplete ? ResampleSessionStatus.COMPLETE_REGULAR_SESSION : ResampleSessionStatus.INCOMPLETE_SOURCE_SESSION,
+      status: sourceComplete ? ResampleSessionStatus.COMPLETE_SESSION : ResampleSessionStatus.INCOMPLETE_SOURCE_SESSION,
     };
 
     return { candles, descriptor };
   }
 
   /**
-   * Fails closed on any structurally non-canonical input row: cross-date,
-   * pre-market, post-market/post-source, non-minute-aligned, or a duplicate
-   * minute (task section 6/17/18/W/X/Y/U). B-F7 consumes already-canonical
-   * research data -- it never repairs or silently excludes a malformed
-   * input row the way `CanonicalSessionProjectorService` does for raw
-   * provider data. Returns a fresh array sorted ascending by `candleTime`
-   * so the result is independent of input order (task section 19).
+   * B-F7 CALENDAR FIX (task invariant A): resolves the effective, validated
+   * session windows for this request -- `request.sessionWindows` when
+   * supplied and non-empty (a calendar-aware caller's REAL declaration),
+   * else `[regularSessionWindow()]` (the fixed 09:15-15:29 IST default,
+   * preserving every pre-existing caller's exact behavior). Delegates
+   * overlap/order/shape validation to `validateSessionWindows` -- an
+   * explicitly-supplied malformed window set fails closed here, before any
+   * row is even inspected (never silently repaired or ignored).
    */
-  private validateAndSort(rows: readonly PersistedManifestCandleRow[], tradingDate: string): PersistedManifestCandleRow[] {
+  private resolveSessionWindows(sessionWindows: readonly SessionWindow[] | undefined): readonly SessionWindow[] {
+    const windows = sessionWindows && sessionWindows.length > 0 ? sessionWindows : [regularSessionWindow()];
+    return validateSessionWindows(windows);
+  }
+
+  /**
+   * Fails closed on any structurally non-canonical input row: cross-date,
+   * before the earliest declared window, at/after the latest declared
+   * window's close, inside a closed gap between two disjoint windows,
+   * non-minute-aligned, or a duplicate minute (task section 6/17/18/W/X/Y/U,
+   * task invariant A/I). B-F7 consumes already-canonical research data -- it
+   * never repairs or silently excludes a malformed input row the way
+   * `CanonicalSessionProjectorService` does for raw provider data. Returns a
+   * fresh array sorted ascending by `candleTime` so the result is
+   * independent of input order (task section 19).
+   *
+   * `windows` is always non-empty and pre-validated (`resolveSessionWindows`)
+   * -- sorted ascending, non-overlapping. For the default regular window this
+   * reproduces the exact prior "pre-market row"/"post-market row" wording
+   * (before 09:15 IST / at-or-after 15:30 IST) so every pre-existing caller's
+   * error-message contract is unchanged.
+   */
+  private validateAndSort(rows: readonly PersistedManifestCandleRow[], tradingDate: string, windows: readonly SessionWindow[]): PersistedManifestCandleRow[] {
     if (!TRADING_DATE_PATTERN.test(tradingDate)) {
       throw new Error(`HistoricalCandleResamplerService requires tradingDate as 'YYYY-MM-DD'; received '${tradingDate}'.`);
     }
+
+    const earliestOpenMinute = windows[0].openMinuteIst;
+    const latestCloseMinute = windows[windows.length - 1].closeMinuteIst;
 
     const seenMinutes = new Set<number>();
     for (const row of rows) {
@@ -192,11 +263,16 @@ export default class HistoricalCandleResamplerService {
         throw new Error(`HistoricalCandleResamplerService received a cross-date row ${row.candleTime.toISOString()}: expected trading date ${tradingDate}.`);
       }
       const minuteOfDay = istMinuteOfDay(row.candleTime);
-      if (minuteOfDay < NORMAL_SESSION_START_MINUTE) {
-        throw new Error(`HistoricalCandleResamplerService received a pre-market row ${row.candleTime.toISOString()}: before 09:15 IST.`);
+      if (minuteOfDay < earliestOpenMinute) {
+        throw new Error(`HistoricalCandleResamplerService received a pre-market row ${row.candleTime.toISOString()}: before ${formatMinuteOfDayIst(earliestOpenMinute)} IST.`);
       }
-      if (minuteOfDay > NIFTY_1M_SOURCE_HORIZON_END_MINUTE) {
-        throw new Error(`HistoricalCandleResamplerService received a post-market row ${row.candleTime.toISOString()}: after 15:29 IST.`);
+      if (minuteOfDay >= latestCloseMinute) {
+        throw new Error(`HistoricalCandleResamplerService received a post-market row ${row.candleTime.toISOString()}: at or after ${formatMinuteOfDayIst(latestCloseMinute)} IST.`);
+      }
+      if (!windows.some((window) => minuteOfDay >= window.openMinuteIst && minuteOfDay < window.closeMinuteIst)) {
+        throw new Error(
+          `HistoricalCandleResamplerService received a row ${row.candleTime.toISOString()} outside every declared calendar session window: it falls in a closed gap between two disjoint windows and is never bridged.`
+        );
       }
       if (seenMinutes.has(minuteOfDay)) {
         throw new Error(`HistoricalCandleResamplerService received a duplicate source minute at ${row.candleTime.toISOString()}.`);
@@ -208,25 +284,33 @@ export default class HistoricalCandleResamplerService {
   }
 
   /**
-   * Every structurally-possible bucket start-minute across the full regular
-   * 09:15-15:29 session, anchored at 09:15 IST (task section 1), regardless
-   * of which minutes the caller's `sourceRows` actually cover -- so
-   * `completeBucketCount`/`partialBucketCount`/`excludedTrailingRowCount`
-   * are always computed against the fixed canonical session shape, never
-   * against however much of it the caller happened to supply.
+   * Every structurally-possible bucket start-minute across ALL declared
+   * session windows (task invariant B), regardless of which minutes the
+   * caller's `sourceRows` actually cover -- so `completeBucketCount`/
+   * `partialBucketCount`/`excludedTrailingRowCount` are always computed
+   * against the fixed canonical session shape, never against however much of
+   * it the caller happened to supply.
+   *
+   * Each window is walked independently, anchored at its OWN `openMinuteIst`
+   * -- a bucket's constituent minutes never extend past that window's own
+   * `closeMinuteIst`, so a bucket can never cross into a different window or
+   * bridge a closed gap between two disjoint windows. `windows` is expected
+   * pre-validated (non-overlapping, ascending) by `resolveSessionWindows`.
    */
-  private buildCandidateBuckets(bucketSize: number): CandidateBucket[] {
+  private buildCandidateBuckets(bucketSize: number, windows: readonly SessionWindow[]): CandidateBucket[] {
     const buckets: CandidateBucket[] = [];
-    for (let startMinute = NORMAL_SESSION_START_MINUTE; startMinute <= NIFTY_1M_SOURCE_HORIZON_END_MINUTE; startMinute += bucketSize) {
-      const constituents: number[] = [];
-      for (let minute = startMinute; minute < startMinute + bucketSize && minute <= NIFTY_1M_SOURCE_HORIZON_END_MINUTE; minute += 1) {
-        constituents.push(minute);
+    for (const window of windows) {
+      for (let startMinute = window.openMinuteIst; startMinute < window.closeMinuteIst; startMinute += bucketSize) {
+        const constituents: number[] = [];
+        for (let minute = startMinute; minute < startMinute + bucketSize && minute < window.closeMinuteIst; minute += 1) {
+          constituents.push(minute);
+        }
+        buckets.push({
+          startMinute,
+          expectedConstituentMinutes: constituents,
+          isFullSessionEligible: constituents.length === bucketSize,
+        });
       }
-      buckets.push({
-        startMinute,
-        expectedConstituentMinutes: constituents,
-        isFullSessionEligible: constituents.length === bucketSize,
-      });
     }
     return buckets;
   }
@@ -267,9 +351,10 @@ export default class HistoricalCandleResamplerService {
     };
   }
 
-  private countMissingCanonicalMinutes(rowsByMinute: ReadonlyMap<number, PersistedManifestCandleRow>): number {
+  /** Counts against the exact `expectedMinutesIst` set for the declared session windows (task invariant D) -- never a fixed 375-minute assumption. */
+  private countMissingCanonicalMinutes(rowsByMinute: ReadonlyMap<number, PersistedManifestCandleRow>, expectedMinutesIst: readonly number[]): number {
     let missing = 0;
-    for (let minute = NORMAL_SESSION_START_MINUTE; minute <= NIFTY_1M_SOURCE_HORIZON_END_MINUTE; minute += 1) {
+    for (const minute of expectedMinutesIst) {
       if (!rowsByMinute.has(minute)) missing += 1;
     }
     return missing;

@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Prisma } from '@prisma/client';
 import DatasetManifestService from './dataset-manifest.service';
-import { ManifestDatasetKind, SourceAcquisitionEvidence, SourceAcquisitionEvidenceAvailability } from '../domain/dataset-manifest.types';
+import { ManifestCalendarSessionWindowsByDate, ManifestDatasetKind, SourceAcquisitionEvidence, SourceAcquisitionEvidenceAvailability } from '../domain/dataset-manifest.types';
 import { DatasetHealthStatus } from '../domain/dataset-health.types';
 import { HistoricalOptionType } from '../domain/historical-asset.types';
+import { SessionWindow } from '../domain/exchange-calendar.types';
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import HistoricalCandleRepository from '../../historical-candles/repositories/historical-candle.repository';
 import HistoricalOptionCandleLakeRepository from '../repositories/historical-option-candle-lake.repository';
@@ -330,4 +331,167 @@ test('(B-F2C S) MANIFEST EVIDENCE STABILITY -- two manifests generated for ident
   assert.equal(first.sessions[0].sourceAcquisitionEvidence.evidenceSemanticChecksum, stableChecksum);
   assert.equal(second.sessions[0].sourceAcquisitionEvidence.evidenceSemanticChecksum, stableChecksum);
   assert.equal(first.datasetChecksum, second.datasetChecksum);
+});
+
+// ============================================================================
+// B-F5 CALENDAR FIX: `calendarSessionWindows` -- SPECIAL_SESSION health must
+// never be scored against the fixed 375-row regular contract.
+// ============================================================================
+
+/** A 60-minute Muhurat-style special session window: 16:45-17:45 IST. */
+const MUHURAT_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 };
+/** A two-window special session: 09:15-10:00 and 11:30-12:30 IST, with an undeclared gap in between that must never be bridged. */
+const MULTI_WINDOWS: readonly SessionWindow[] = [
+  { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+  { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+];
+
+function rowsForWindows(tradingDate: string, windows: readonly SessionWindow[]): FakeRow[] {
+  const dayStartMs = new Date(`${tradingDate}T00:00:00+05:30`).getTime();
+  const rows: FakeRow[] = [];
+  for (const window of windows) {
+    for (let minute = window.openMinuteIst; minute < window.closeMinuteIst; minute += 1) {
+      rows.push(makeRow(new Date(dayStartMs + minute * 60_000)));
+    }
+  }
+  return rows;
+}
+
+test('(4) a SPECIAL_SESSION date with its real (reduced) minute count is HEALTHY, never scored against the fixed 375-row default', async () => {
+  const date = '2022-11-04'; // Muhurat-style trading date
+  const { service, candleRepo } = newService();
+  candleRepo.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+  const calendarSessionWindows: ManifestCalendarSessionWindowsByDate = { [date]: [MUHURAT_WINDOW] };
+
+  const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date], calendarSessionWindows });
+
+  assert.equal(manifest.sessions[0].canonicalRowCount, 60);
+  assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+  assert.deepEqual(manifest.sessions[0].calendarSessionWindows, [MUHURAT_WINDOW]);
+});
+
+test('the SAME persisted 60-row special session is INCOMPLETE when no calendarSessionWindows is supplied -- proving the fixed-375 default is the actual pre-fix defect, not a strawman', async () => {
+  const date = '2022-11-04';
+  const { service, candleRepo } = newService();
+  candleRepo.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+
+  const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date] });
+
+  assert.equal(manifest.sessions[0].canonicalRowCount, 60);
+  assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.INCOMPLETE);
+  assert.deepEqual(manifest.sessions[0].calendarSessionWindows, []);
+});
+
+test('(5) a multi-window special session uses the exact disjoint windows -- the undeclared gap between them is never bridged into a false-missing-minute claim', async () => {
+  const date = '2022-06-01';
+  const { service, candleRepo } = newService();
+  candleRepo.rows = rowsForWindows(date, MULTI_WINDOWS);
+  const calendarSessionWindows: ManifestCalendarSessionWindowsByDate = { [date]: MULTI_WINDOWS };
+
+  const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date], calendarSessionWindows });
+
+  assert.equal(manifest.sessions[0].canonicalRowCount, 45 + 60);
+  assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+});
+
+test('(10) UNDERLYING_1M honors calendar-declared session windows end to end', async () => {
+  const date = '2022-11-04';
+  const { service, candleRepo } = newService();
+  candleRepo.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+  const manifest = await service.generateUnderlyingManifest({
+    provider: HistoricalProviderId.UPSTOX,
+    instrumentKey: INSTRUMENT_KEY,
+    timeframe: '1minute',
+    tradingDates: [date],
+    calendarSessionWindows: { [date]: [MUHURAT_WINDOW] },
+  });
+  assert.equal(manifest.datasetKind, ManifestDatasetKind.UNDERLYING_1M);
+  assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+});
+
+test('(11) EXPIRED_OPTION_1M honors the SAME calendar-declared session windows end to end', async () => {
+  const date = '2022-11-04';
+  const { service, optionRepo } = newService();
+  optionRepo.rows = rowsForWindows(date, [MUHURAT_WINDOW]).map((row) => ({ ...row, openInterest: 500n }));
+  const manifest = await service.generateOptionManifest({
+    provider: HistoricalProviderId.GROWW,
+    providerContractId: OPTION_CONTRACT_ID,
+    optionType: HistoricalOptionType.PE,
+    strikePrice: 17200,
+    expiry: new Date('2022-11-10T00:00:00+05:30'),
+    timeframe: '1minute',
+    tradingDates: [date],
+    calendarSessionWindows: { [date]: [MUHURAT_WINDOW] },
+  });
+  assert.equal(manifest.datasetKind, ManifestDatasetKind.EXPIRED_OPTION_1M);
+  assert.equal(manifest.sessions[0].canonicalRowCount, 60);
+  assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+});
+
+test('(12) durable retrieval evidence selection (B-F2C FIX-1) is unaffected by calendarSessionWindows', async () => {
+  const date = '2022-11-04';
+  const genuineEvidence: SourceAcquisitionEvidence = {
+    availability: SourceAcquisitionEvidenceAvailability.AVAILABLE_FROM_DURABLE_RETRIEVAL_EVIDENCE,
+    providerRowCount: 60,
+    excludedRowCount: 0,
+    sourceOrderAnomalyCount: 0,
+    sourceHealthStatus: DatasetHealthStatus.HEALTHY,
+    provider: HistoricalProviderId.UPSTOX,
+    evidenceSemanticChecksum: 'special-session-evidence-checksum',
+  };
+  const evidenceService = new FakeRetrievalEvidenceService(new Map([[`${INSTRUMENT_KEY}|1minute|${date}`, genuineEvidence]]));
+  const { service, candleRepo } = newService(evidenceService);
+  candleRepo.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+
+  const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date], calendarSessionWindows: { [date]: [MUHURAT_WINDOW] } });
+
+  assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+  assert.equal(manifest.sessions[0].sourceAcquisitionEvidence.availability, SourceAcquisitionEvidenceAvailability.AVAILABLE_FROM_DURABLE_RETRIEVAL_EVIDENCE);
+  assert.equal(manifest.sessions[0].sourceAcquisitionEvidence.evidenceSemanticChecksum, 'special-session-evidence-checksum');
+});
+
+test('(13) determinism: calendarSessionWindows never perturbs datasetChecksum/datasetId -- it changes health, never content identity', async () => {
+  const date = '2022-11-04';
+  const { service: withoutWindows, candleRepo: repoA } = newService();
+  repoA.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+  const baseline = await withoutWindows.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date] });
+
+  const { service: withWindows, candleRepo: repoB } = newService();
+  repoB.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+  const withCalendarTruth = await withWindows.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date], calendarSessionWindows: { [date]: [MUHURAT_WINDOW] } });
+
+  // Health differs (this is the whole point of the fix)...
+  assert.equal(baseline.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.INCOMPLETE);
+  assert.equal(withCalendarTruth.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+  // ...but content identity (checksum/id) is completely unaffected -- same persisted candles, same identity, same canonicalization/health-semantics version.
+  assert.equal(baseline.sessions[0].contentChecksum, withCalendarTruth.sessions[0].contentChecksum);
+  assert.equal(baseline.datasetChecksum, withCalendarTruth.datasetChecksum);
+  assert.equal(baseline.datasetId, withCalendarTruth.datasetId);
+});
+
+test('generation is deterministic across repeated calls with the identical calendarSessionWindows input', async () => {
+  const date = '2022-11-04';
+  const { service, candleRepo } = newService();
+  candleRepo.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+  const calendarSessionWindows: ManifestCalendarSessionWindowsByDate = { [date]: [MUHURAT_WINDOW] };
+
+  const first = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date], calendarSessionWindows });
+  const second = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date], calendarSessionWindows });
+
+  assert.equal(first.datasetChecksum, second.datasetChecksum);
+  assert.equal(first.sessions[0].persistedCanonicalHealthStatus, second.sessions[0].persistedCanonicalHealthStatus);
+});
+
+test('verifyManifest recomputes the SAME special-session health from the manifest\'s own recorded calendarSessionWindows -- never a live calendar lookup', async () => {
+  const date = '2022-11-04';
+  const { service, candleRepo } = newService();
+  candleRepo.rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+  const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: [date], calendarSessionWindows: { [date]: [MUHURAT_WINDOW] } });
+  assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+
+  const result = await service.verifyManifest(manifest);
+
+  assert.equal(result.verified, true);
+  assert.equal(result.sessionResults[0].originalPersistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+  assert.equal(result.sessionResults[0].recomputedPersistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
 });

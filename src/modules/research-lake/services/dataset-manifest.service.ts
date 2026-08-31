@@ -6,6 +6,7 @@ import {
   DatasetManifestSessionCounts,
   DatasetManifestVerificationResult,
   HEALTH_SEMANTICS_VERSION,
+  ManifestCalendarSessionWindowsByDate,
   ManifestDatasetKind,
   MANIFEST_SCHEMA_VERSION,
   OptionSessionIdentity,
@@ -30,6 +31,17 @@ export interface GenerateUnderlyingDatasetManifestRequest {
   /** Explicit, non-empty, deduplicated list of IST trading dates (`YYYY-MM-DD`). Never defaulted/inferred (task section 13/18: "no default all years"). */
   readonly tradingDates: readonly string[];
   readonly gitRevision?: string | null;
+  /**
+   * B-F5 CALENDAR FIX (task invariant A/C): explicit, calendar-authoritative
+   * session windows, keyed by tradingDate, that a calendar-aware caller (see
+   * `ManifestCalendarSessionResolverService`) resolved for this request --
+   * REQUIRED for a SPECIAL_SESSION date so it is never scored against the
+   * fixed 375-row regular contract. A date absent from this map falls back
+   * to that fixed default, which is provably correct for an ordinary
+   * REGULAR_SESSION date (see `regularSessionWindow()`); omitting the whole
+   * map preserves every pre-existing caller's behavior exactly.
+   */
+  readonly calendarSessionWindows?: ManifestCalendarSessionWindowsByDate;
 }
 
 export interface GenerateOptionDatasetManifestRequest {
@@ -41,6 +53,8 @@ export interface GenerateOptionDatasetManifestRequest {
   readonly timeframe: string;
   readonly tradingDates: readonly string[];
   readonly gitRevision?: string | null;
+  /** See `GenerateUnderlyingDatasetManifestRequest.calendarSessionWindows` doc -- identical contract for EXPIRED_OPTION_1M (task invariant B). */
+  readonly calendarSessionWindows?: ManifestCalendarSessionWindowsByDate;
 }
 
 export interface DatasetManifestServiceDependencies {
@@ -100,6 +114,7 @@ export default class DatasetManifestService {
           tradingDate,
           rows,
           sourceAcquisitionEvidence: sourceAcquisitionEvidence ?? undefined,
+          sessionWindows: request.calendarSessionWindows?.[tradingDate],
         })
       );
     }
@@ -135,6 +150,7 @@ export default class DatasetManifestService {
           timeframe: request.timeframe,
           tradingDate,
           rows,
+          sessionWindows: request.calendarSessionWindows?.[tradingDate],
         })
       );
     }
@@ -169,7 +185,19 @@ export default class DatasetManifestService {
         const identity = original.identity as UnderlyingSessionIdentity;
         // eslint-disable-next-line no-await-in-loop -- verification must attribute failures to a specific trading date, one date at a time
         const rows = await this.historicalCandleRepository.findRange(identity.instrumentKey, identity.timeframe, start, end);
-        recomputed = this.sessionBuilder.buildUnderlyingSession({ provider: identity.provider, instrumentKey: identity.instrumentKey, timeframe: identity.timeframe, tradingDate: identity.tradingDate, rows });
+        // B-F5 CALENDAR FIX: reuses the ORIGINAL manifest's own recorded
+        // `calendarSessionWindows` (never a fresh live calendar lookup --
+        // verify stays entirely persisted-store/manifest-artifact driven,
+        // task section 9/15) so a SPECIAL_SESSION date's health is
+        // recomputed against the SAME windows generation used.
+        recomputed = this.sessionBuilder.buildUnderlyingSession({
+          provider: identity.provider,
+          instrumentKey: identity.instrumentKey,
+          timeframe: identity.timeframe,
+          tradingDate: identity.tradingDate,
+          rows,
+          sessionWindows: original.calendarSessionWindows,
+        });
       } else {
         const identity = original.identity as OptionSessionIdentity;
         // eslint-disable-next-line no-await-in-loop -- see above
@@ -183,6 +211,7 @@ export default class DatasetManifestService {
           timeframe: identity.timeframe,
           tradingDate: identity.tradingDate,
           rows,
+          sessionWindows: original.calendarSessionWindows,
         });
       }
 

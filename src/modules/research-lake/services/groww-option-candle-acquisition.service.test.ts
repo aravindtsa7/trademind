@@ -6,6 +6,7 @@ import { HistoricalDataProvider, HistoricalOptionCandleRangeRequest } from '../i
 import { HistoricalProviderCapability, HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import { CanonicalHistoricalCandle, HistoricalSourceCandleRow } from '../domain/canonical-historical-candle';
 import { OptionCandleObservationState } from '../domain/historical-option-candle-observation.types';
+import { CalendarSessionWindowsByDate, SessionWindow } from '../domain/exchange-calendar.types';
 import HistoricalOptionCandleLakeRepository, { HistoricalOptionCandleLakeIdentity } from '../repositories/historical-option-candle-lake.repository';
 import { GrowwAuthenticationError } from '../providers/groww/groww-historical-client';
 
@@ -347,4 +348,104 @@ test('a permanent (non-auth) provider error is classified FETCH_PERMANENT and bu
   assert.deepEqual(result.sessions.providerUnavailable, ['2022-01-03']);
   assert.equal(result.failedSessions[0].reason, GrowwOptionAcquisitionFailureReason.FETCH_PERMANENT);
   assert.equal(repository.upsertCallCount, 0);
+});
+
+// ============================================================================
+// B-F5 CALENDAR FIX (task invariant C): calendarSessionWindows -- SPECIAL_SESSION
+// completeness/health must never be scored against the fixed 375-row default.
+// ============================================================================
+
+/** A 60-minute Muhurat-style special session window: 16:45-17:45 IST. */
+const MUHURAT_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 };
+/** Two windows -- 09:15-10:00 and 11:30-12:30 IST -- with an undeclared gap in between that must never be bridged. */
+const MULTI_WINDOWS: readonly SessionWindow[] = [
+  { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+  { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+];
+
+function rowsForWindows(date: string, windows: readonly SessionWindow[]): HistoricalSourceCandleRow[] {
+  const dayStartMs = new Date(`${date}T00:00:00+05:30`).getTime();
+  const rows: HistoricalSourceCandleRow[] = [];
+  let sourceIndex = 0;
+  for (const window of windows) {
+    for (let minute = window.openMinuteIst; minute < window.closeMinuteIst; minute += 1) {
+      rows.push(row(sourceIndex, new Date(dayStartMs + minute * 60_000).toISOString()));
+      sourceIndex += 1;
+    }
+  }
+  return rows;
+}
+
+test('(C-1) a 60-row SPECIAL_SESSION with calendarSessionWindows is COMPLETE_SESSION at exactly 60 rows -- never scored against the fixed 375-row default', async () => {
+  const date = '2022-11-04';
+  const calendarSessionWindows: CalendarSessionWindowsByDate = { [date]: [MUHURAT_WINDOW] };
+  const { service, repository } = buildService(() => rowsForWindows(date, [MUHURAT_WINDOW]));
+  const result = await service.acquire({ providerContractId: SYMBOL, tradingDates: [date], calendarSessionWindows });
+
+  assert.deepEqual(result.sessions.newlyComplete, [date]);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.observationState, OptionCandleObservationState.COMPLETE_SESSION);
+  assert.equal(detail.canonicalRowCount, 60);
+  assert.equal(detail.persisted, true);
+  assert.equal(repository.upsertCallCount, 1);
+});
+
+test('the SAME 60-row special session is misclassified as PARTIAL/zero-canonical-rows when no calendarSessionWindows is supplied -- proving the fixed-375-window default is the real pre-fix defect, not a strawman', async () => {
+  const date = '2022-11-04'; // Muhurat window [1005,1065) IST falls entirely outside the fixed [555,930) regular-session envelope
+  const { service } = buildService(() => rowsForWindows(date, [MUHURAT_WINDOW]));
+  const result = await service.acquire({ providerContractId: SYMBOL, tradingDates: [date] });
+
+  assert.deepEqual(result.sessions.observedPartial, [date]);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.observationState, OptionCandleObservationState.PARTIAL_OBSERVED_SESSION);
+  // Without calendar truth, every genuine special-session row is excluded as
+  // POST_MARKET_ROW (outside the fixed regular window) -- canonicalRowCount
+  // is 0, not 60, an even more dramatic illustration of the defect than a
+  // mere completeness miscount.
+  assert.equal(detail.canonicalRowCount, 0);
+  assert.equal(detail.excludedRowCount, 60);
+});
+
+test('(C-2) a multi-window special session (105 = 45+60 minutes) is COMPLETE_SESSION at exactly 105 rows -- the undeclared gap is never bridged into a false shortfall', async () => {
+  const date = '2022-06-01';
+  const calendarSessionWindows: CalendarSessionWindowsByDate = { [date]: MULTI_WINDOWS };
+  const { service, repository } = buildService(() => rowsForWindows(date, MULTI_WINDOWS));
+  const result = await service.acquire({ providerContractId: SYMBOL, tradingDates: [date], calendarSessionWindows });
+
+  assert.deepEqual(result.sessions.newlyComplete, [date]);
+  const detail = result.sessionDetails.find((d) => d.tradingDate === date)!;
+  assert.equal(detail.observationState, OptionCandleObservationState.COMPLETE_SESSION);
+  assert.equal(detail.canonicalRowCount, 45 + 60);
+  assert.equal(repository.upsertCallCount, 1);
+});
+
+test('(C-3) an already-complete special session in the store is detected via calendar-aware completeness and skipped -- no re-fetch', async () => {
+  const date = '2022-11-04';
+  const calendarSessionWindows: CalendarSessionWindowsByDate = { [date]: [MUHURAT_WINDOW] };
+  const repository = new FakeLakeRepository();
+  const rows = rowsForWindows(date, [MUHURAT_WINDOW]);
+  const { service: firstRun, provider: firstProvider } = buildService(() => rows, repository);
+  await firstRun.acquire({ providerContractId: SYMBOL, tradingDates: [date], calendarSessionWindows });
+  assert.equal(firstProvider.calls.length, 1);
+
+  const { service: secondRun, provider: secondProvider } = buildService(() => rows, repository);
+  const result = await secondRun.acquire({ providerContractId: SYMBOL, tradingDates: [date], calendarSessionWindows });
+  assert.deepEqual(result.sessions.alreadyComplete, [date]);
+  assert.equal(secondProvider.calls.length, 0); // never re-fetched -- resume honored the 60-minute calendar contract, not the fixed 375
+});
+
+test('a REGULAR_SESSION date behaves identically whether the calendar-derived regular window is explicitly supplied or omitted', async () => {
+  const date = '2022-01-03';
+  const REGULAR_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 930 };
+  const rows = normalSessionRows(date);
+
+  const { service: withoutWindows } = buildService(() => rows);
+  const withoutResult = await withoutWindows.acquire({ providerContractId: SYMBOL, tradingDates: [date] });
+
+  const { service: withWindows } = buildService(() => rows);
+  const withResult = await withWindows.acquire({ providerContractId: SYMBOL, tradingDates: [date], calendarSessionWindows: { [date]: [REGULAR_WINDOW] } });
+
+  assert.equal(withoutResult.sessionDetails[0].observationState, OptionCandleObservationState.COMPLETE_SESSION);
+  assert.equal(withResult.sessionDetails[0].observationState, OptionCandleObservationState.COMPLETE_SESSION);
+  assert.equal(withoutResult.sessionDetails[0].canonicalRowCount, withResult.sessionDetails[0].canonicalRowCount);
 });

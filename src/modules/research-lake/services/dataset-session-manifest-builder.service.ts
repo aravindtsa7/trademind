@@ -17,6 +17,8 @@ import {
 } from '../domain/dataset-manifest.types';
 import { resolveOptionCandleObservationState } from '../domain/historical-option-candle-observation.types';
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
+import { SessionWindow } from '../domain/exchange-calendar.types';
+import { expectedMinutesForWindows } from '../domain/session-window-expected-minutes.util';
 import DatasetHealthValidatorService from './dataset-health-validator.service';
 
 /** Structural shape this builder needs from a persisted `HistoricalCandle`/`HistoricalOptionCandle` row -- deliberately a `Pick`, not the full Prisma model, so this service never depends on fields it does not use (id/createdAt/updatedAt/source/tradingSymbol etc. are irrelevant to manifest content). */
@@ -46,6 +48,17 @@ export interface BuildUnderlyingSessionRequest {
    * exactly what the caller looked up.
    */
   readonly sourceAcquisitionEvidence?: SourceAcquisitionEvidence;
+  /**
+   * B-F5 CALENDAR FIX (task invariant A/C): explicit, calendar-authoritative
+   * session windows this session's health must be scored against -- REQUIRED
+   * by a calendar-aware caller for a SPECIAL_SESSION date (see
+   * `ManifestCalendarSessionResolverService`). Omitted (the default,
+   * preserving every pre-existing caller's behavior exactly): falls back to
+   * the legacy fixed 09:15-15:29 375-row regular-session contract, which is
+   * provably identical to the calendar's own REGULAR_SESSION window (see
+   * `regularSessionWindow()`).
+   */
+  readonly sessionWindows?: readonly SessionWindow[];
 }
 
 export interface BuildOptionSessionRequest {
@@ -57,6 +70,8 @@ export interface BuildOptionSessionRequest {
   readonly timeframe: string;
   readonly tradingDate: string;
   readonly rows: readonly PersistedManifestCandleRow[];
+  /** See `BuildUnderlyingSessionRequest.sessionWindows` doc -- identical contract for EXPIRED_OPTION_1M (task invariant B). */
+  readonly sessionWindows?: readonly SessionWindow[];
 }
 
 /**
@@ -98,7 +113,7 @@ export default class DatasetSessionManifestBuilderService {
       timeframe: request.timeframe,
       tradingDate: request.tradingDate,
     };
-    return this.build(identity, HistoricalAssetType.NIFTY_INDEX, request.instrumentKey, request.tradingDate, request.rows, null, request.sourceAcquisitionEvidence);
+    return this.build(identity, HistoricalAssetType.NIFTY_INDEX, request.instrumentKey, request.tradingDate, request.rows, null, request.sourceAcquisitionEvidence, request.sessionWindows);
   }
 
   buildOptionSession(request: BuildOptionSessionRequest): SessionManifest {
@@ -112,7 +127,7 @@ export default class DatasetSessionManifestBuilderService {
       timeframe: request.timeframe,
       tradingDate: request.tradingDate,
     };
-    return this.build(identity, HistoricalAssetType.NIFTY_OPTION, request.providerContractId, request.tradingDate, request.rows, this.countOi(request.rows));
+    return this.build(identity, HistoricalAssetType.NIFTY_OPTION, request.providerContractId, request.tradingDate, request.rows, this.countOi(request.rows), undefined, request.sessionWindows);
   }
 
   private build(
@@ -122,7 +137,8 @@ export default class DatasetSessionManifestBuilderService {
     tradingDate: string,
     rows: readonly PersistedManifestCandleRow[],
     oi: { rowsWithOi: number; rowsWithNullOi: number } | null,
-    sourceAcquisitionEvidence?: SourceAcquisitionEvidence
+    sourceAcquisitionEvidence?: SourceAcquisitionEvidence,
+    sessionWindows?: readonly SessionWindow[]
   ): SessionManifest {
     const sortedRows = [...rows].sort((left, right) => left.candleTime.getTime() - right.candleTime.getTime());
 
@@ -157,7 +173,16 @@ export default class DatasetSessionManifestBuilderService {
       sourceOrderAnomalies: [],
     };
 
-    const report = this.validator.validate(projection);
+    // B-F5 CALENDAR FIX (task invariant A/C): a non-empty `sessionWindows`
+    // means a calendar-aware caller declared this session's REAL windows --
+    // score health against exactly those expected minutes (a SPECIAL_SESSION
+    // day's real 60-minute window, a multi-window session's disjoint union,
+    // ...), never the fixed 375-row default. `undefined`/`[]` preserves the
+    // pre-existing default exactly (`DatasetHealthValidatorService.validate`
+    // already falls back to the fixed 09:15-15:29 375-row contract when
+    // `expectedMinutesIst` is omitted).
+    const expectedMinutesIst = sessionWindows && sessionWindows.length > 0 ? expectedMinutesForWindows(sessionWindows) : undefined;
+    const report = this.validator.validate(projection, expectedMinutesIst);
     const optionObservationState = identity.datasetKind === ManifestDatasetKind.EXPIRED_OPTION_1M ? resolveOptionCandleObservationState(report) : null;
 
     const contentChecksum = computeSessionContentChecksum({
@@ -179,6 +204,7 @@ export default class DatasetSessionManifestBuilderService {
       rowsWithOi: oi?.rowsWithOi ?? null,
       rowsWithNullOi: oi?.rowsWithNullOi ?? null,
       sourceAcquisitionEvidence: sourceAcquisitionEvidence ?? UNAVAILABLE_SOURCE_ACQUISITION_EVIDENCE,
+      calendarSessionWindows: sessionWindows ?? [],
     };
   }
 

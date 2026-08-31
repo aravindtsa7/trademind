@@ -95,6 +95,19 @@ export interface SessionWindow {
   readonly closeMinuteIst: number;
 }
 
+/**
+ * Explicit, calendar-authoritative session windows for a set of trading
+ * dates, keyed by `YYYY-MM-DD`. Domain-neutral (not manifest-specific,
+ * not acquisition-specific): the single shared shape every calendar-aware
+ * consumer of `SessionWindow` data uses -- `DatasetManifestService`/
+ * `DatasetSessionManifestBuilderService` (manifest health scoring),
+ * `GrowwOptionCandleAcquisitionService` (option session projection/health),
+ * and `ResearchYearRunnerService` (manifest generation from acquisition
+ * output) -- so there is exactly one "session windows by date" contract
+ * rather than each consumer inventing its own.
+ */
+export type CalendarSessionWindowsByDate = Readonly<Record<string, readonly SessionWindow[]>>;
+
 export interface SourceDocumentIdentity {
   readonly documentReference: string;
   readonly documentType: SourceDocumentType;

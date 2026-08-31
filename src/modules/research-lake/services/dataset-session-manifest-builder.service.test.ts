@@ -15,6 +15,7 @@ import {
   UnderlyingSessionIdentity,
   computeSessionContentChecksum,
 } from '../domain/dataset-manifest.types';
+import { SessionWindow } from '../domain/exchange-calendar.types';
 
 const TRADING_DATE = '2026-08-17';
 const INSTRUMENT_KEY = 'NSE_INDEX|Nifty 50';
@@ -212,4 +213,52 @@ test('optionObservationState is null for UNDERLYING_1M sessions', () => {
   assert.equal(manifest.optionObservationState, null);
   assert.equal(manifest.rowsWithOi, null);
   assert.equal(manifest.rowsWithNullOi, null);
+});
+
+// ---- B-F5 CALENDAR FIX: calendar-declared sessionWindows -------------------
+
+const REDUCED_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 }; // 60-minute special session
+
+function rowsForWindow(window: SessionWindow): PersistedManifestCandleRow[] {
+  const start = new Date(`${TRADING_DATE}T00:00:00+05:30`).getTime();
+  const rows: PersistedManifestCandleRow[] = [];
+  for (let minute = window.openMinuteIst; minute < window.closeMinuteIst; minute += 1) rows.push(row(new Date(start + minute * 60_000)));
+  return rows;
+}
+
+test('with no sessionWindows supplied, a 60-row special session is scored against the legacy fixed 375-row default and reported INCOMPLETE', () => {
+  const manifest = builder.buildUnderlyingSession({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDate: TRADING_DATE, rows: rowsForWindow(REDUCED_WINDOW) });
+  assert.equal(manifest.persistedCanonicalHealthStatus, DatasetHealthStatus.INCOMPLETE);
+  assert.deepEqual(manifest.calendarSessionWindows, []);
+});
+
+test('with calendar-declared sessionWindows supplied, the SAME 60 rows are HEALTHY -- scored against the real window, not the fixed default', () => {
+  const manifest = builder.buildUnderlyingSession({
+    provider: HistoricalProviderId.UPSTOX,
+    instrumentKey: INSTRUMENT_KEY,
+    timeframe: '1minute',
+    tradingDate: TRADING_DATE,
+    rows: rowsForWindow(REDUCED_WINDOW),
+    sessionWindows: [REDUCED_WINDOW],
+  });
+  assert.equal(manifest.persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+  assert.equal(manifest.canonicalRowCount, 60);
+  assert.deepEqual(manifest.calendarSessionWindows, [REDUCED_WINDOW]);
+});
+
+test('sessionWindows never perturbs contentChecksum -- it is observability material (health), never identity material', () => {
+  const rows = rowsForWindow(REDUCED_WINDOW);
+  const withoutWindows = builder.buildUnderlyingSession({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDate: TRADING_DATE, rows });
+  const withWindows = builder.buildUnderlyingSession({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDate: TRADING_DATE, rows, sessionWindows: [REDUCED_WINDOW] });
+  assert.equal(withoutWindows.contentChecksum, withWindows.contentChecksum);
+  assert.notEqual(withoutWindows.persistedCanonicalHealthStatus, withWindows.persistedCanonicalHealthStatus);
+});
+
+test('an ordinary REGULAR_SESSION 375-row session is HEALTHY whether or not the calendar-derived regular window is explicitly supplied', () => {
+  const REGULAR_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 930 };
+  const withoutWindows = builder.buildUnderlyingSession({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDate: TRADING_DATE, rows: normalSessionRows() });
+  const withWindows = builder.buildUnderlyingSession({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDate: TRADING_DATE, rows: normalSessionRows(), sessionWindows: [REGULAR_WINDOW] });
+  assert.equal(withoutWindows.persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+  assert.equal(withWindows.persistedCanonicalHealthStatus, DatasetHealthStatus.HEALTHY);
+  assert.equal(withoutWindows.contentChecksum, withWindows.contentChecksum);
 });

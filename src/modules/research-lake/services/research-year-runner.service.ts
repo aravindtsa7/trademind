@@ -27,6 +27,7 @@ import HistoricalCandleRepository from '../../historical-candles/repositories/hi
 import HistoricalOptionCandleLakeRepository from '../repositories/historical-option-candle-lake.repository';
 import DatasetManifestService from './dataset-manifest.service';
 import GrowwOptionCandleAcquisitionService from './groww-option-candle-acquisition.service';
+import ManifestCalendarSessionResolverService from './manifest-calendar-session-resolver.service';
 import HistoricalCandleResamplerService from './historical-candle-resampler.service';
 import NiftyHistoricalContractCatalogAcquisitionService from './nifty-historical-contract-catalog.service';
 import NiftyUnderlyingAcquisitionService, { NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME } from './nifty-underlying-acquisition.service';
@@ -60,6 +61,18 @@ export interface ResearchYearRunnerServiceDependencies {
    */
   readonly optionCandleAcquisitionService?: GrowwOptionCandleAcquisitionService | null;
   readonly manifestService?: DatasetManifestService;
+  /**
+   * B-F5 CALENDAR FIX (task invariant A -- GAP 1): the single authoritative
+   * source consulted to recover calendar session windows for this run's
+   * already-determined `healthyTradingDates`/option `tradingDates` before
+   * manifest generation, since neither `NiftyUnderlyingAcquisitionResult`
+   * nor `GrowwOptionCandleAcquisitionResult` carries `SessionWindow`
+   * information forward past acquisition. Defaults to a real instance
+   * (itself defaulting to a real, Prisma-backed calendar resolver). Tests
+   * inject a fake/duck-typed resolver so no unit test touches a live
+   * database (same pattern as every other dependency here).
+   */
+  readonly calendarSessionResolverService?: ManifestCalendarSessionResolverService;
   readonly parquetExportService?: ResearchLakeParquetExportService;
   readonly parquetVerifyService?: ResearchLakeParquetVerifyService;
   readonly resamplerService?: HistoricalCandleResamplerService;
@@ -84,6 +97,7 @@ export default class ResearchYearRunnerService {
   private catalogAcquisitionService: NiftyHistoricalContractCatalogAcquisitionService | undefined;
   private readonly optionCandleAcquisitionService: GrowwOptionCandleAcquisitionService | null;
   private readonly manifestService: DatasetManifestService;
+  private readonly calendarSessionResolverService: ManifestCalendarSessionResolverService;
   private readonly parquetExportService: ResearchLakeParquetExportService;
   private readonly parquetVerifyService: ResearchLakeParquetVerifyService;
   private readonly resamplerService: HistoricalCandleResamplerService;
@@ -103,6 +117,7 @@ export default class ResearchYearRunnerService {
     this.historicalCandleRepository = dependencies.historicalCandleRepository ?? new HistoricalCandleRepository();
     this.historicalOptionCandleLakeRepository = dependencies.historicalOptionCandleLakeRepository ?? new HistoricalOptionCandleLakeRepository();
     this.manifestService = dependencies.manifestService ?? new DatasetManifestService({ historicalCandleRepository: this.historicalCandleRepository, historicalOptionCandleLakeRepository: this.historicalOptionCandleLakeRepository });
+    this.calendarSessionResolverService = dependencies.calendarSessionResolverService ?? new ManifestCalendarSessionResolverService();
     this.parquetExportService = dependencies.parquetExportService ?? new ResearchLakeParquetExportService({ historicalCandleRepository: this.historicalCandleRepository, historicalOptionCandleLakeRepository: this.historicalOptionCandleLakeRepository });
     this.parquetVerifyService = dependencies.parquetVerifyService ?? new ResearchLakeParquetVerifyService();
     this.resamplerService = dependencies.resamplerService ?? new HistoricalCandleResamplerService();
@@ -304,7 +319,7 @@ export default class ResearchYearRunnerService {
    *   3. the previous UNDERLYING_MATERIALIZATION stage COMPLETED and its
    *      recorded sessions cover every one of those certified healthy dates
    *      with a WRITTEN/SKIPPED_VERIFIED Parquet session and a
-   *      COMPLETE_REGULAR_SESSION resample for every target timeframe
+   *      COMPLETE_SESSION resample for every target timeframe
    *   4. that durable output re-verifies fresh against the CURRENT
    *      persisted store and Parquet storage (B-F5/B-F6 VERIFY, task
    *      section 13)
@@ -342,14 +357,23 @@ export default class ResearchYearRunnerService {
         datasetKind: ManifestDatasetKind.UNDERLYING_1M,
         instrumentDescriptor: NIFTY_INDEX_INSTRUMENT_KEY,
         healthyTradingDates,
-        generateManifest: () =>
-          this.manifestService.generateUnderlyingManifest({
+        generateManifest: async () => {
+          // B-F5 CALENDAR FIX (task invariant A -- GAP 1): recovers the
+          // authoritative calendar session windows for these already-determined
+          // healthy trading dates so a SPECIAL_SESSION date's manifest health is
+          // never scored against the fixed 375-row regular contract. Fails
+          // closed (never produces a manifest) if calendar truth for any of
+          // these dates is no longer a certified trading session.
+          const calendarSessionWindows = await this.calendarSessionResolverService.resolveSessionWindowsForDates(healthyTradingDates);
+          return this.manifestService.generateUnderlyingManifest({
             provider: HistoricalProviderId.UPSTOX,
             instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
             timeframe: NIFTY_UNDERLYING_TIMEFRAME,
             tradingDates: healthyTradingDates,
+            calendarSessionWindows,
             gitRevision: this.gitRevision,
-          }),
+          });
+        },
       });
       const failed = this.hasMaterializationFailures(outcome);
       return {
@@ -421,8 +445,22 @@ export default class ResearchYearRunnerService {
         }
       }
 
+      // B-F5 CALENDAR FIX (Terra HIGH defect correction): the SAME
+      // authoritative calendar session windows already resolved for option
+      // MANIFEST generation below (`materializeOptionContract`) must also
+      // reach OPTION CANDLE ACQUISITION -- `GrowwOptionCandleAcquisitionService.acquire`
+      // intentionally falls back to the fixed 375-row regular contract when
+      // `calendarSessionWindows` is omitted, so a certified SPECIAL_SESSION
+      // date requested here would otherwise be evaluated against the wrong
+      // contract and never truthfully progress. Resolved for exactly
+      // `session.tradingDates` (the requested set for this contract), fails
+      // this stage closed (via the thrown error propagating out of this
+      // method to `run()`'s stage try/catch) if any requested date is no
+      // longer a certified trading session.
       // eslint-disable-next-line no-await-in-loop
-      const result = await this.optionCandleAcquisitionService.acquire({ providerContractId: session.providerContractId, tradingDates: [...session.tradingDates], dryRun: false });
+      const calendarSessionWindows = await this.calendarSessionResolverService.resolveSessionWindowsForDates(session.tradingDates);
+      // eslint-disable-next-line no-await-in-loop
+      const result = await this.optionCandleAcquisitionService.acquire({ providerContractId: session.providerContractId, tradingDates: [...session.tradingDates], calendarSessionWindows, dryRun: false });
       const healthyTradingDates = [...result.sessions.alreadyComplete, ...result.sessions.newlyComplete].sort();
       if (result.sessions.invalid.length > 0 || result.sessions.providerUnavailable.length > 0 || result.authenticationFailed) anyFailure = true;
       if (result.authenticationFailed) authenticationStopped = true;
@@ -476,8 +514,13 @@ export default class ResearchYearRunnerService {
       datasetKind: ManifestDatasetKind.EXPIRED_OPTION_1M,
       instrumentDescriptor: providerContractId,
       healthyTradingDates: dates,
-      generateManifest: () =>
-        this.manifestService.generateOptionManifest({
+      generateManifest: async () => {
+        // B-F5 CALENDAR FIX (task invariant A/B -- GAP 1): same authoritative
+        // calendar session windows lookup as the underlying path above --
+        // EXPIRED_OPTION_1M manifests use the SAME certified calendar truth
+        // (task invariant B), never a provider-specific shortcut.
+        const calendarSessionWindows = await this.calendarSessionResolverService.resolveSessionWindowsForDates(dates);
+        return this.manifestService.generateOptionManifest({
           provider: HistoricalProviderId.GROWW,
           providerContractId,
           optionType: optionIdentity.optionType,
@@ -485,8 +528,10 @@ export default class ResearchYearRunnerService {
           expiry: optionIdentity.expiry,
           timeframe: '1minute',
           tradingDates: dates,
+          calendarSessionWindows,
           gitRevision: this.gitRevision,
-        }),
+        });
+      },
     });
   }
 
@@ -524,12 +569,19 @@ export default class ResearchYearRunnerService {
             ? await this.historicalCandleRepository.findRange(instrumentKey, timeframe, start, end)
             : await this.historicalOptionCandleLakeRepository.findRange(instrumentKey, timeframe, start, end);
         for (const targetTimeframe of RESAMPLE_TIMEFRAMES) {
+          // B-F7 CALENDAR FIX (task invariant G): the SAME authoritative
+          // calendar session windows the B-F5 manifest recorded for this
+          // session (`session.calendarSessionWindows`) govern B-F7 bucket
+          // anchoring/completeness here too -- a SPECIAL_SESSION date the
+          // manifest already certified HEALTHY must never be re-evaluated by
+          // the resampler against the fixed regular-session contract.
           const { candles, descriptor } = this.resamplerService.resampleSession({
             targetTimeframe,
             tradingDate: session.identity.tradingDate,
             sourceDatasetKind: manifest.datasetKind,
             sourceSessionIdentity: session.identity,
             sourceSessionContentChecksum: session.contentChecksum,
+            sessionWindows: session.calendarSessionWindows,
             sourceRows: rows,
           });
           resamples.push({ targetTimeframe, status: descriptor.status, derivedBucketCount: candles.length, derivedContentChecksum: descriptor.derivedContentChecksum });
@@ -549,7 +601,7 @@ export default class ResearchYearRunnerService {
   }
 
   private hasMaterializationFailures(outcome: ResearchYearRunMaterializationInstrumentOutcome): boolean {
-    return outcome.sessions.some((session) => !WRITTEN_STATUSES.has(session.parquetStatus) || session.resamples.some((resample) => resample.status !== ResampleSessionStatus.COMPLETE_REGULAR_SESSION));
+    return outcome.sessions.some((session) => !WRITTEN_STATUSES.has(session.parquetStatus) || session.resamples.some((resample) => resample.status !== ResampleSessionStatus.COMPLETE_SESSION));
   }
 
   private previousInstrumentMaterialization(
@@ -567,7 +619,7 @@ export default class ResearchYearRunnerService {
     const byDate = new Map(outcome.sessions.map((session) => [session.tradingDate, session]));
     return requiredDates.every((date) => {
       const session = byDate.get(date);
-      return session !== undefined && WRITTEN_STATUSES.has(session.parquetStatus) && session.resamples.every((resample) => resample.status === ResampleSessionStatus.COMPLETE_REGULAR_SESSION);
+      return session !== undefined && WRITTEN_STATUSES.has(session.parquetStatus) && session.resamples.every((resample) => resample.status === ResampleSessionStatus.COMPLETE_SESSION);
     });
   }
 

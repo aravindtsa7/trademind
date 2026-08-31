@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Prisma } from '@prisma/client';
@@ -14,11 +14,13 @@ import GrowwOptionCandleAcquisitionService, { GrowwOptionCandleAcquisitionReques
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import { ResampleSessionStatus } from '../domain/resampled-candle.types';
 import { DatasetManifest, ManifestDatasetKind } from '../domain/dataset-manifest.types';
+import { CalendarSessionWindowsByDate, SessionWindow } from '../domain/exchange-calendar.types';
 import { RequiredOptionSession, RequiredOptionSessionSource, ResearchYearRunOutcome, ResearchYearRunScope, ResearchYearRunStageKind, ResearchYearRunStageStatus, ResolvedResearchYearRunRange } from '../domain/research-year-run.types';
 import HistoricalCandleRepository from '../../historical-candles/repositories/historical-candle.repository';
 import HistoricalOptionCandleLakeRepository from '../repositories/historical-option-candle-lake.repository';
 import DatasetManifestService from './dataset-manifest.service';
 import HistoricalDataRetrievalEvidenceService from './historical-data-retrieval-evidence.service';
+import ManifestCalendarSessionResolverService, { ManifestCalendarSessionWindowLookupError } from './manifest-calendar-session-resolver.service';
 
 const CLOCK = () => new Date('2026-08-28T10:00:00+05:30');
 
@@ -31,6 +33,16 @@ function makeRow(candleTime: Date, overrides: Partial<PersistedManifestCandleRow
 function normalSessionRows(tradingDate: string, rowOverrides: (index: number) => Partial<PersistedManifestCandleRow> = () => ({})): PersistedManifestCandleRow[] {
   const start = new Date(`${tradingDate}T09:15:00+05:30`).getTime();
   return Array.from({ length: 375 }, (_, index) => makeRow(new Date(start + index * 60_000), rowOverrides(index)));
+}
+
+/** Rows for an arbitrary set of calendar-declared session windows (GAP 1 special-session tests) -- reuses `makeRow`, never the fixed 09:15-15:29 375-row shape. */
+function sessionRowsForWindows(tradingDate: string, windows: readonly SessionWindow[]): PersistedManifestCandleRow[] {
+  const dayStartMs = new Date(`${tradingDate}T00:00:00+05:30`).getTime();
+  const rows: PersistedManifestCandleRow[] = [];
+  for (const window of windows) {
+    for (let minute = window.openMinuteIst; minute < window.closeMinuteIst; minute += 1) rows.push(makeRow(new Date(dayStartMs + minute * 60_000)));
+  }
+  return rows;
 }
 
 class FakeHistoricalCandleRepository {
@@ -181,6 +193,30 @@ class FakeOptionCandleAcquisitionService {
   }
 }
 
+/** The calendar-derived regular session window (09:15-15:29 IST, 375 minutes) -- matches `regularSessionWindow()`. */
+const REGULAR_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 930 };
+
+/**
+ * B-F5 CALENDAR FIX (GAP 1): duck-typed fake for `ManifestCalendarSessionResolverService`
+ * -- MUST be injected into every harness so `ResearchYearRunnerService`
+ * never falls back to its real, Prisma-backed default (which would touch
+ * the live shared database during a unit test). Defaults every requested
+ * date to the ordinary REGULAR_WINDOW, matching this test file's existing
+ * `normalSessionRows` (375-row) fixture convention exactly, so injecting
+ * this fake changes no pre-existing test's observable behavior.
+ */
+class FakeCalendarSessionResolver {
+  calls: string[][] = [];
+  constructor(private readonly windowsFor: (date: string) => readonly SessionWindow[] = () => [REGULAR_WINDOW]) {}
+  async resolveSessionWindowsForDates(dates: readonly string[]): Promise<CalendarSessionWindowsByDate> {
+    this.calls.push([...dates]);
+    if (dates.length === 0) return {};
+    const result: Record<string, readonly SessionWindow[]> = {};
+    for (const date of dates) result[date] = this.windowsFor(date);
+    return result;
+  }
+}
+
 class FakeRequiredOptionSessionSource implements RequiredOptionSessionSource {
   calls: ResolvedResearchYearRunRange[] = [];
   constructor(private sessions: readonly RequiredOptionSession[]) {}
@@ -202,6 +238,7 @@ interface Harness {
   fakeUnderlying: FakeUnderlyingAcquisitionService;
   fakeCatalog: FakeCatalogAcquisitionService;
   fakeOptionCandle: FakeOptionCandleAcquisitionService | null;
+  fakeCalendarSessionResolver: FakeCalendarSessionResolver;
   requiredOptionSessionSource?: FakeRequiredOptionSessionSource;
   outputRoot: string;
   manifestArtifactRoot: string;
@@ -218,6 +255,7 @@ function newHarness(options: {
   onUnderlyingCall?: () => void;
   onCatalogCall?: () => void;
   onOptionCandleCall?: (providerContractId: string) => void;
+  calendarWindowsFor?: (date: string) => readonly SessionWindow[];
 } = {}): Harness {
   const candleRepo = new FakeHistoricalCandleRepository();
   const optionRepo = new FakeHistoricalOptionCandleLakeRepository();
@@ -235,6 +273,10 @@ function newHarness(options: {
 
   const fakeCatalog = new FakeCatalogAcquisitionService(options.catalogResult ?? catalogResult(), options.onCatalogCall);
   const fakeOptionCandle = options.includeOptionCandleService === false ? null : new FakeOptionCandleAcquisitionService(options.optionCandleResultFor ?? (() => optionCandleResult()), options.onOptionCandleCall);
+  // B-F5 CALENDAR FIX (GAP 1): MUST be injected -- without it, `ResearchYearRunnerService`
+  // defaults to a real, Prisma-backed `ManifestCalendarSessionResolverService`
+  // that would touch the live shared database during this unit test.
+  const fakeCalendarSessionResolver = new FakeCalendarSessionResolver(options.calendarWindowsFor);
 
   // B-F2C: this harness's `fakeUnderlying` never writes real durable retrieval
   // evidence (it is a duck-typed result stub, not the real acquisition
@@ -257,6 +299,7 @@ function newHarness(options: {
     historicalCandleRepository: candleRepo as unknown as HistoricalCandleRepository,
     historicalOptionCandleLakeRepository: optionRepo as unknown as HistoricalOptionCandleLakeRepository,
     manifestService,
+    calendarSessionResolverService: fakeCalendarSessionResolver as unknown as ManifestCalendarSessionResolverService,
     checkpointService,
     outputRoot,
     manifestArtifactRoot,
@@ -270,6 +313,7 @@ function newHarness(options: {
     fakeUnderlying,
     fakeCatalog,
     fakeOptionCandle,
+    fakeCalendarSessionResolver,
     requiredOptionSessionSource: options.requiredOptionSessionSource,
     outputRoot,
     manifestArtifactRoot,
@@ -388,7 +432,7 @@ test('(AE/AF) a full 375-row underlying source produces 2m=187 (never a fabricat
     assert.equal(byTimeframe['2m']?.derivedBucketCount, 187);
     assert.equal(byTimeframe['3m']?.derivedBucketCount, 125);
     assert.equal(byTimeframe['5m']?.derivedBucketCount, 75);
-    for (const timeframe of ['2m', '3m', '5m']) assert.equal(byTimeframe[timeframe]?.status, ResampleSessionStatus.COMPLETE_REGULAR_SESSION);
+    for (const timeframe of ['2m', '3m', '5m']) assert.equal(byTimeframe[timeframe]?.status, ResampleSessionStatus.COMPLETE_SESSION);
   } finally {
     harness.cleanup();
   }
@@ -721,6 +765,8 @@ test('(AD) an invariant failure (e.g. a resampler checksum violation) fails the 
       historicalOptionCandleLakeRepository: optionRepo as unknown as HistoricalOptionCandleLakeRepository,
       retrievalEvidenceService: { findLatestAvailableSessionEvidence: async () => null } as unknown as HistoricalDataRetrievalEvidenceService,
     }),
+    // B-F5 CALENDAR FIX (GAP 1): MUST be injected -- see `newHarness`'s identical comment.
+    calendarSessionResolverService: new FakeCalendarSessionResolver() as unknown as ManifestCalendarSessionResolverService,
     resamplerService: throwingResampler as unknown as HistoricalCandleResamplerService,
     checkpointService: new ResearchYearRunCheckpointService(checkpointRoot),
     outputRoot,
@@ -770,6 +816,366 @@ test('OPTIONS scope with a resolvable strategy universe but no configured GrowwO
     const candleStage = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.OPTION_CANDLE_ACQUISITION);
     assert.equal(candleStage?.status, ResearchYearRunStageStatus.BLOCKED);
     assert.equal(record.outcome, ResearchYearRunOutcome.INCOMPLETE);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+// ============================================================================
+// B-F5/B-F7 CALENDAR FIX (GAP 1): year-runner manifest generation propagates
+// authoritative calendar session windows for healthyTradingDates, so a
+// SPECIAL_SESSION date's MANIFEST health (persistedCanonicalHealthStatus) is
+// never scored against the fixed 375-row regular contract. These assertions
+// read back the persisted B-F5 manifest artifact -- the exact layer GAP 1
+// describes ("reach manifest health validation without sessionWindows").
+//
+// B-F7 CALENDAR FIX (task invariant G): `HistoricalCandleResamplerService`
+// now also consumes `session.calendarSessionWindows` (wired in
+// `resampleExportedSessions`), so a SPECIAL_SESSION date the manifest
+// certifies HEALTHY is no longer re-evaluated by the resampler against the
+// fixed 09:15-15:29 regular contract. The tests below therefore assert the
+// FULL end-to-end outcome -- manifest health AND overall MATERIALIZATION
+// stage status AND B-F7 resample bucket counts -- for regular, single-window
+// special, multi-window special, and weekend special sessions alike (task
+// coverage items 16/17/18).
+// ============================================================================
+
+const MUHURAT_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 }; // 60-minute Muhurat-style special session
+const MULTI_WINDOWS: readonly SessionWindow[] = [
+  { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 }, // 09:15-10:00
+  { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 }, // 11:30-12:30
+];
+const REGULAR_SESSION_WINDOW: SessionWindow = { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 930 };
+
+function readPersistedUnderlyingManifest(harness: Harness, datasetId: string): DatasetManifest {
+  return JSON.parse(readFileSync(join(harness.manifestArtifactRoot, ManifestDatasetKind.UNDERLYING_1M, `${datasetId}.json`), 'utf8')) as DatasetManifest;
+}
+
+test('(GAP1-1) year runner REGULAR_SESSION manifest generation still validates against exactly the calendar-derived 375-minute regular window', async () => {
+  const date = '2022-01-03';
+  const harness = newHarness({ underlyingResult: underlyingResult({ newlyCompleted: [date] }) });
+  try {
+    harness.candleRepo.rows = normalSessionRows(date);
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, fromDate: date, toDate: date });
+    const materialization = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION);
+    assert.equal(materialization?.status, ResearchYearRunStageStatus.COMPLETED);
+
+    assert.deepEqual(harness.fakeCalendarSessionResolver.calls, [[date]]);
+    const datasetId = materialization!.materialization![0].datasetId!;
+    const manifest = readPersistedUnderlyingManifest(harness, datasetId);
+    assert.equal(manifest.sessions[0].canonicalRowCount, 375);
+    assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, 'HEALTHY');
+    assert.deepEqual(manifest.sessions[0].calendarSessionWindows, [REGULAR_SESSION_WINDOW]);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-2/3/16) a SPECIAL_SESSION date carries its exact 60-minute calendar windows into manifest generation AND B-F7 materialization -- HEALTHY at 60 rows, never scored against the fixed 375-row default, and the resampler never rejects the Muhurat-style window as pre/post-market', async () => {
+  const date = '2022-11-04';
+  const harness = newHarness({
+    underlyingResult: underlyingResult({ newlyCompleted: [date] }),
+    calendarWindowsFor: () => [MUHURAT_WINDOW],
+  });
+  try {
+    harness.candleRepo.rows = sessionRowsForWindows(date, [MUHURAT_WINDOW]);
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, fromDate: date, toDate: date });
+    const materialization = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION);
+
+    // B-F7 CALENDAR FIX (task invariant G, coverage item 16): a certified
+    // Muhurat-style special session (16:45-17:45 IST -- entirely outside the
+    // fixed 09:15-15:29 regular window) now materializes cleanly end-to-end:
+    // `HistoricalCandleResamplerService` consumes the SAME `calendarSessionWindows`
+    // the manifest already certified HEALTHY, so it is never re-rejected as a
+    // "pre-market"/"post-market row" downstream of an otherwise-correct manifest.
+    assert.equal(materialization?.status, ResearchYearRunStageStatus.COMPLETED);
+    const outcome = materialization?.materialization?.[0];
+    const byTimeframe = Object.fromEntries((outcome?.sessions[0]?.resamples ?? []).map((r) => [r.targetTimeframe, r]));
+    // 60 minutes / {2m,3m,5m} divides evenly -- no partial/excluded trailing bucket.
+    assert.equal(byTimeframe['2m']?.derivedBucketCount, 30);
+    assert.equal(byTimeframe['3m']?.derivedBucketCount, 20);
+    assert.equal(byTimeframe['5m']?.derivedBucketCount, 12);
+    for (const timeframe of ['2m', '3m', '5m']) assert.equal(byTimeframe[timeframe]?.status, ResampleSessionStatus.COMPLETE_SESSION);
+
+    const manifestDir = join(harness.manifestArtifactRoot, ManifestDatasetKind.UNDERLYING_1M);
+    const [manifestFile] = readdirSync(manifestDir);
+    const manifest = JSON.parse(readFileSync(join(manifestDir, manifestFile), 'utf8')) as DatasetManifest;
+    assert.equal(manifest.sessions[0].canonicalRowCount, 60);
+    assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, 'HEALTHY');
+    assert.deepEqual(manifest.sessions[0].calendarSessionWindows, [MUHURAT_WINDOW]);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-4/17) a multi-window SPECIAL_SESSION (105 = 45+60 minutes) carries the exact disjoint windows into manifest generation AND materializes through B-F7 without ever bridging the closed [600,690) gap', async () => {
+  const date = '2022-06-01';
+  const harness = newHarness({
+    underlyingResult: underlyingResult({ newlyCompleted: [date] }),
+    calendarWindowsFor: () => MULTI_WINDOWS,
+  });
+  try {
+    harness.candleRepo.rows = sessionRowsForWindows(date, MULTI_WINDOWS);
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, fromDate: date, toDate: date });
+    const materialization = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION);
+    const outcome = materialization?.materialization?.[0];
+    assert.equal(outcome?.sessions[0]?.persistedCanonicalHealthStatus, 'HEALTHY');
+
+    // B-F7 CALENDAR FIX (task invariant B/G, coverage item 17): the resampler
+    // buckets each window independently -- window 0 (45 min, 09:15-10:00)
+    // and window 1 (60 min, 11:30-12:30) never merge into one contiguous
+    // 105-minute run. 5m/3m divide both window lengths evenly (9+12=21,
+    // 15+20=35 buckets, zero excluded); 2m does NOT evenly divide window 0's
+    // 45 minutes, so window 0 alone contributes exactly one excluded
+    // trailing minute (22 complete 2m buckets) while window 1's 60 minutes
+    // remain evenly divisible (30 complete) -- 52 total, never 52.5 rounded
+    // or a single spurious boundary bucket straddling the gap.
+    assert.equal(materialization?.status, ResearchYearRunStageStatus.COMPLETED);
+    const byTimeframe = Object.fromEntries((outcome?.sessions[0]?.resamples ?? []).map((r) => [r.targetTimeframe, r]));
+    assert.equal(byTimeframe['5m']?.derivedBucketCount, 21);
+    assert.equal(byTimeframe['3m']?.derivedBucketCount, 35);
+    assert.equal(byTimeframe['2m']?.derivedBucketCount, 52);
+    for (const timeframe of ['2m', '3m', '5m']) assert.equal(byTimeframe[timeframe]?.status, ResampleSessionStatus.COMPLETE_SESSION);
+
+    const manifest = readPersistedUnderlyingManifest(harness, outcome!.datasetId!);
+    assert.equal(manifest.sessions[0].canonicalRowCount, 45 + 60);
+    assert.deepEqual(manifest.sessions[0].calendarSessionWindows, MULTI_WINDOWS);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-5) a certified weekend SPECIAL_SESSION date is handled identically to any other calendar-declared session -- weekday-ness is irrelevant once the calendar has certified it', async () => {
+  const saturdayDate = '2022-01-08'; // certified Saturday special session
+  const harness = newHarness({
+    underlyingResult: underlyingResult({ newlyCompleted: [saturdayDate] }),
+    calendarWindowsFor: () => [MUHURAT_WINDOW],
+  });
+  try {
+    harness.candleRepo.rows = sessionRowsForWindows(saturdayDate, [MUHURAT_WINDOW]);
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, fromDate: saturdayDate, toDate: saturdayDate });
+
+    // This test proves the calendar-authoritative MANIFEST *and* B-F7
+    // RESAMPLING layers both treat a certified Saturday special session
+    // identically to any other calendar-declared session -- weekday-ness
+    // never matters once certified (task invariant G).
+    const materialization = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION);
+    assert.equal(materialization?.status, ResearchYearRunStageStatus.COMPLETED);
+
+    const manifestDir = join(harness.manifestArtifactRoot, ManifestDatasetKind.UNDERLYING_1M);
+    const [manifestFile] = readdirSync(manifestDir);
+    const manifest = JSON.parse(readFileSync(join(manifestDir, manifestFile), 'utf8')) as DatasetManifest;
+    assert.equal(manifest.sessions[0].identity.tradingDate, saturdayDate);
+    assert.equal(manifest.sessions[0].canonicalRowCount, 60);
+    assert.equal(manifest.sessions[0].persistedCanonicalHealthStatus, 'HEALTHY');
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-6/7) EXCHANGE_HOLIDAY/EXCEPTIONAL_CLOSURE dates are never candidates the year runner materializes -- they are excluded upstream by calendar-aware acquisition, never reaching manifest generation at all', async () => {
+  // GAP 1's own description: "ordinary exchange holidays such as 2022-01-26
+  // are not the same problem [for the year runner]" -- `healthyTradingDates`
+  // comes exclusively from `NiftyUnderlyingAcquisitionService`'s own
+  // calendar-aware planner (untouched by this correction), which only ever
+  // buckets REGULAR_TRADING_DAY/SPECIAL_SESSION_DAY dispositions as
+  // fetch-eligible/healthy -- CLOSED_HOLIDAY/CLOSED_EXCEPTIONAL dates are
+  // bucketed `closedNoDataExpected`, never `newlyCompleted`/`alreadyComplete`/
+  // `normalizedWithExclusions`, so they structurally never reach this
+  // method's `healthyTradingDates` in the first place (see
+  // `executeUnderlyingAcquisition`). This is proven directly by exclusion:
+  // an acquisition result reporting a holiday only in `closedNoDataExpected`
+  // (never in any healthy bucket) produces zero materialized sessions for it.
+  const holidayDate = '2022-01-26';
+  const result = underlyingResult({ newlyCompleted: ['2022-01-25'] });
+  const withClosedDate: NiftyUnderlyingAcquisitionResult = { ...result, sessions: { ...result.sessions, closedNoDataExpected: [holidayDate] } };
+  const harness = newHarness({ underlyingResult: withClosedDate });
+  try {
+    harness.candleRepo.rows = normalSessionRows('2022-01-25');
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, fromDate: '2022-01-24', toDate: '2022-01-26' });
+    const materialization = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION);
+    const outcome = materialization?.materialization?.[0];
+    assert.deepEqual(outcome?.sessions.map((s) => s.tradingDate), ['2022-01-25']);
+    assert.equal(harness.fakeCalendarSessionResolver.calls[0]?.includes(holidayDate), false);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-8) UNCERTIFIED/inconsistent calendar scope at materialization time fails the stage closed -- no manifest artifact is written, no checkpoint certifies a clean run', async () => {
+  const date = '2022-01-03';
+  const harness = newHarness({ underlyingResult: underlyingResult({ newlyCompleted: [date] }) });
+  try {
+    harness.candleRepo.rows = normalSessionRows(date);
+    // Force the calendar lookup itself to fail closed, exactly as
+    // `ManifestCalendarSessionWindowLookupError` would for a date that no
+    // longer certifies as a real trading session between acquisition and
+    // materialization (task invariant A: "do not produce a clean year
+    // checkpoint/manifest from uncertified scope").
+    harness.fakeCalendarSessionResolver.resolveSessionWindowsForDates = async () => {
+      throw new ManifestCalendarSessionWindowLookupError([date], []);
+    };
+
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, fromDate: date, toDate: date });
+    const materialization = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION);
+    assert.equal(materialization?.status, ResearchYearRunStageStatus.FAILED);
+    assert.match(materialization?.detail ?? '', /ManifestCalendarSessionWindowLookupError|UNCERTIFIED/);
+    assert.equal(record.outcome, ResearchYearRunOutcome.FAILED);
+
+    // No manifest artifact was ever written for this run -- generation was
+    // never reached (the calendar lookup happens before `generateManifest`'s
+    // own service call).
+    const manifestDir = join(harness.manifestArtifactRoot, ManifestDatasetKind.UNDERLYING_1M);
+    assert.equal(existsSync(manifestDir), false);
+    // No checkpoint ever certifies this run as cleanly resumable past the failure.
+    assert.equal(harness.checkpointService.load(record.plan)?.outcome, ResearchYearRunOutcome.FAILED);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+// ============================================================================
+// TERRA HIGH DEFECT CORRECTION: `executeOptionCandleAcquisition` previously
+// called `optionCandleAcquisitionService.acquire({ providerContractId,
+// tradingDates, dryRun: false })` WITHOUT `calendarSessionWindows`. Since
+// `GrowwOptionCandleAcquisitionService.acquire` intentionally falls back to
+// the fixed 09:15-15:29/375-row regular contract whenever `calendarSessionWindows`
+// is omitted, a certified SPECIAL_SESSION option date reaching year-runner
+// OPTION_CANDLE_ACQUISITION was silently evaluated against the WRONG
+// contract -- even though the exact same authoritative windows were already
+// being resolved (and correctly propagated) for option MANIFEST generation
+// a few lines later in `materializeOptionContract`. The fix resolves
+// `calendarSessionWindows` via the SAME injected `calendarSessionResolverService`
+// immediately before the `acquire()` call and passes it through unchanged.
+//
+// These tests assert the ACTUAL `GrowwOptionCandleAcquisitionRequest` object
+// `FakeOptionCandleAcquisitionService.calls` captured -- the real object that
+// crosses the year-runner -> Groww acquisition boundary -- never a canned
+// mock answer.
+// ============================================================================
+
+const OPTION_CONTRACT_ID = 'NSE-NIFTY-06Jan22-17200-PE';
+
+test('(GAP1-OPT-1) CRITICAL: a certified 60-minute SPECIAL_SESSION option date propagates its EXACT calendarSessionWindows to GrowwOptionCandleAcquisitionService.acquire -- the precise HIGH defect Terra found', async () => {
+  const specialDate = '2022-11-04';
+  const muhuratWindow: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 };
+  const requiredSource = new FakeRequiredOptionSessionSource([{ providerContractId: OPTION_CONTRACT_ID, tradingDates: [specialDate] }]);
+  const harness = newHarness({
+    requiredOptionSessionSource: requiredSource,
+    calendarWindowsFor: (date) => (date === specialDate ? [muhuratWindow] : [REGULAR_WINDOW]),
+  });
+  try {
+    await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, scope: ResearchYearRunScope.OPTIONS });
+
+    const call = harness.fakeOptionCandle?.calls[0];
+    assert.ok(call, 'GrowwOptionCandleAcquisitionService.acquire must have been called');
+    assert.ok(call!.tradingDates.includes(specialDate));
+    // The exact request object must NOT have calendarSessionWindows undefined -- that is precisely
+    // the defect: an undefined map silently triggers the service's own fixed-375-row fallback.
+    assert.notEqual(call!.calendarSessionWindows, undefined);
+    const windowsForDate = call!.calendarSessionWindows?.[specialDate];
+    assert.ok(windowsForDate, `calendarSessionWindows must contain an entry for ${specialDate}`);
+    assert.equal(windowsForDate!.length, 1);
+    assert.equal(windowsForDate![0].openMinuteIst, 1005);
+    assert.equal(windowsForDate![0].closeMinuteIst, 1065);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-OPT-2) an ordinary REGULAR_SESSION option date propagates exactly [regularSessionWindow()] = {openMinuteIst:555, closeMinuteIst:930}', async () => {
+  const date = '2022-01-03';
+  const requiredSource = new FakeRequiredOptionSessionSource([{ providerContractId: OPTION_CONTRACT_ID, tradingDates: [date] }]);
+  const harness = newHarness({ requiredOptionSessionSource: requiredSource });
+  try {
+    await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, scope: ResearchYearRunScope.OPTIONS });
+    const call = harness.fakeOptionCandle?.calls[0];
+    assert.notEqual(call?.calendarSessionWindows, undefined);
+    assert.deepEqual(call?.calendarSessionWindows?.[date], [REGULAR_WINDOW]);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-OPT-3) a multi-window SPECIAL_SESSION option date propagates BOTH declared windows unchanged: [555,600) + [690,750)', async () => {
+  const date = '2022-06-01';
+  const multiWindows: readonly SessionWindow[] = [
+    { windowIndex: 0, openMinuteIst: 555, closeMinuteIst: 600 },
+    { windowIndex: 1, openMinuteIst: 690, closeMinuteIst: 750 },
+  ];
+  const requiredSource = new FakeRequiredOptionSessionSource([{ providerContractId: OPTION_CONTRACT_ID, tradingDates: [date] }]);
+  const harness = newHarness({
+    requiredOptionSessionSource: requiredSource,
+    calendarWindowsFor: (d) => (d === date ? multiWindows : [REGULAR_WINDOW]),
+  });
+  try {
+    await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, scope: ResearchYearRunScope.OPTIONS });
+    const call = harness.fakeOptionCandle?.calls[0];
+    assert.deepEqual(call?.calendarSessionWindows?.[date], multiWindows);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-OPT-4) a certified Saturday SPECIAL_SESSION option date is included in tradingDates and its windows are propagated -- weekday-ness is irrelevant once certified', async () => {
+  const saturdayDate = '2022-01-08';
+  const muhuratWindow: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 };
+  const requiredSource = new FakeRequiredOptionSessionSource([{ providerContractId: OPTION_CONTRACT_ID, tradingDates: [saturdayDate] }]);
+  const harness = newHarness({
+    requiredOptionSessionSource: requiredSource,
+    calendarWindowsFor: () => [muhuratWindow],
+  });
+  try {
+    await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, scope: ResearchYearRunScope.OPTIONS });
+    const call = harness.fakeOptionCandle?.calls[0];
+    assert.ok(call?.tradingDates.includes(saturdayDate));
+    assert.deepEqual(call?.calendarSessionWindows?.[saturdayDate], [muhuratWindow]);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-OPT-5) an UNCERTIFIED option trading date fails OPTION_CANDLE_ACQUISITION closed BEFORE acquire() is ever called -- no partial/invalid request reaches Groww', async () => {
+  const date = '2022-01-03';
+  const requiredSource = new FakeRequiredOptionSessionSource([{ providerContractId: OPTION_CONTRACT_ID, tradingDates: [date] }]);
+  const harness = newHarness({ requiredOptionSessionSource: requiredSource });
+  try {
+    // Force the calendar lookup itself to fail closed, exactly as
+    // `ManifestCalendarSessionWindowLookupError` would for a date that no
+    // longer certifies as a real trading session (task invariant 9).
+    harness.fakeCalendarSessionResolver.resolveSessionWindowsForDates = async () => {
+      throw new ManifestCalendarSessionWindowLookupError([date], []);
+    };
+
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, scope: ResearchYearRunScope.OPTIONS });
+    const acquisition = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.OPTION_CANDLE_ACQUISITION);
+    assert.equal(acquisition?.status, ResearchYearRunStageStatus.FAILED);
+    assert.match(acquisition?.detail ?? '', /ManifestCalendarSessionWindowLookupError|UNCERTIFIED/);
+    assert.equal(harness.fakeOptionCandle?.calls.length ?? 0, 0);
+    assert.equal(record.outcome, ResearchYearRunOutcome.FAILED);
+  } finally {
+    harness.cleanup();
+  }
+});
+
+test('(GAP1-OPT-6) scope=ALL: OPTION_CANDLE_ACQUISITION still propagates calendarSessionWindows exactly as under scope=OPTIONS', async () => {
+  const specialDate = '2022-11-04';
+  const muhuratWindow: SessionWindow = { windowIndex: 0, openMinuteIst: 1005, closeMinuteIst: 1065 };
+  const requiredSource = new FakeRequiredOptionSessionSource([{ providerContractId: OPTION_CONTRACT_ID, tradingDates: [specialDate] }]);
+  const harness = newHarness({
+    underlyingResult: underlyingResult({ newlyCompleted: ['2022-01-03'] }),
+    requiredOptionSessionSource: requiredSource,
+    calendarWindowsFor: (date) => (date === specialDate ? [muhuratWindow] : [REGULAR_WINDOW]),
+  });
+  try {
+    harness.candleRepo.rows = normalSessionRows('2022-01-03');
+    const record = await harness.runner.run({ ...REQUEST_UNDERLYING_ONLY, scope: ResearchYearRunScope.ALL });
+
+    const acquisition = record.stages.find((s) => s.stageKind === ResearchYearRunStageKind.OPTION_CANDLE_ACQUISITION);
+    assert.equal(acquisition?.status, ResearchYearRunStageStatus.COMPLETED);
+    const call = harness.fakeOptionCandle?.calls[0];
+    assert.notEqual(call?.calendarSessionWindows, undefined);
+    assert.deepEqual(call?.calendarSessionWindows?.[specialDate], [muhuratWindow]);
   } finally {
     harness.cleanup();
   }

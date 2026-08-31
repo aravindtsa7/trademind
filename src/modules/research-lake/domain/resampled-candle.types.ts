@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { ManifestCandleContent, ManifestDatasetKind, SessionContentIdentity, sortManifestCandles } from './dataset-manifest.types';
 import { canonicalManifestJson, sha256Hex } from './dataset-manifest-canonical-json';
+import { SessionWindow } from './exchange-calendar.types';
 import { PersistedManifestCandleRow } from '../services/dataset-session-manifest-builder.service';
 
 /**
@@ -14,8 +15,25 @@ import { PersistedManifestCandleRow } from '../services/dataset-session-manifest
  * timestamp convention, OHLCV formula, OI rule, or partial-bucket policy
  * ever changes, so an old derived checksum never silently compares equal to
  * one produced under new semantics.
+ *
+ * Bumped 1 -> 2 for the B-F7 CALENDAR FIX: `HistoricalCandleResamplerService`
+ * previously hard-coded a single fixed 09:15-15:29 IST regular-session
+ * anchor/bucket-membership/partial-bucket contract (version 1's actual,
+ * documented scope -- "session anchor, bucket boundaries... partial-bucket
+ * policy"). Version 2 generalizes ALL of those to be calendar-session-window
+ * aware (see `ResampleSessionRequest.sessionWindows`): each declared window
+ * is now an independent bucket anchor, a window's own trailing remainder is
+ * its own partial-bucket boundary, and a closed gap between windows is never
+ * bridged. This is a genuine semantics change, not a defect repair of an
+ * already-generic contract -- REGULAR_SESSION output (candle values, bucket
+ * boundaries, counts) is bit-for-bit unchanged (see the resampler's own
+ * regular-session parity tests), but `derivedContentChecksum` intentionally
+ * changes for every session, regular or special, because this version number
+ * is itself hashed into `DerivedSessionIdentity` -- exactly the mechanism
+ * this field exists for (task invariant F/E: "unless resampling identity/
+ * versioning intentionally requires it").
  */
-export const RESAMPLING_SEMANTICS_VERSION = 1;
+export const RESAMPLING_SEMANTICS_VERSION = 2;
 
 /** Envelope/shape version for `HistoricalCandleResamplingDescriptor` itself. Deliberately NOT part of the derived content checksum -- mirrors `MANIFEST_SCHEMA_VERSION`'s role for `SessionManifest`/`DatasetManifest`. */
 export const RESAMPLING_SCHEMA_VERSION = 1;
@@ -69,15 +87,24 @@ export interface ResampledCandle {
 }
 
 /**
- * Whether the SOURCE 1m session this derived result was computed from was a
- * fully complete, canonical 375-row 09:15-15:29 IST session
- * (`isCompleteHistoricalSession`). `INCOMPLETE_SOURCE_SESSION` never means
- * the derived candles that WERE produced are wrong -- only that the overall
- * session cannot be certified complete (task section 6/31.6: "do not
- * certify a complete resampled dataset" from an incomplete source).
+ * Whether the SOURCE 1m session this derived result was computed from was
+ * fully complete against its authoritative expected-minute set -- the fixed
+ * 375-row 09:15-15:29 IST set for a REGULAR_SESSION, or the exact calendar-
+ * declared `expectedMinutesForWindows(sessionWindows)` set for a
+ * SPECIAL_SESSION (`isCompleteCalendarSession`; task invariant D).
+ * `INCOMPLETE_SOURCE_SESSION` never means the derived candles that WERE
+ * produced are wrong -- only that the overall session cannot be certified
+ * complete (task section 6/31.6: "do not certify a complete resampled
+ * dataset" from an incomplete source).
+ *
+ * Renamed from `COMPLETE_REGULAR_SESSION` (B-F7 CALENDAR FIX): the prior name
+ * was accurate when only the fixed regular-session contract existed, but
+ * would now be a misnomer for a fully complete SPECIAL_SESSION result -- this
+ * status genuinely means "complete against whatever session this request
+ * declared", regular or special, never only "regular".
  */
 export enum ResampleSessionStatus {
-  COMPLETE_REGULAR_SESSION = 'COMPLETE_REGULAR_SESSION',
+  COMPLETE_SESSION = 'COMPLETE_SESSION',
   INCOMPLETE_SOURCE_SESSION = 'INCOMPLETE_SOURCE_SESSION',
 }
 
@@ -95,15 +122,26 @@ export interface HistoricalCandleResamplingDescriptor {
   readonly sourceSessionContentChecksum: string;
   readonly targetTimeframeMinutes: number;
   readonly tradingDate: string;
+  /**
+   * The exact, calendar-authoritative session windows this result was
+   * computed against (task invariant A/G) -- always non-empty: defaults to
+   * `[regularSessionWindow()]` (`session-window-expected-minutes.util.ts`)
+   * when the request omits `sessionWindows`, so a REGULAR_SESSION result and
+   * a SPECIAL_SESSION result carry the SAME kind of explicit, auditable
+   * window declaration rather than one being implicit. Recorded here (not
+   * only consumed) so a downstream reader can confirm/reproduce which
+   * windows governed bucket anchoring/completeness without re-deriving them.
+   */
+  readonly sessionWindows: readonly SessionWindow[];
   readonly sourceRowCount: number;
   readonly expectedConstituentRowsPerBucket: number;
   /** Buckets whose every expected constituent minute was present -- these, and only these, produced a `ResampledCandle`. */
   readonly completeBucketCount: number;
-  /** Buckets that fall entirely within the regular 09:15-15:29 session (so a full bucket was structurally possible there) but had at least one missing constituent minute -- distinct from `excludedTrailingRowCount` (task section 7: distinguish source incompleteness from legitimate session-arithmetic remainder). Never fabricated as a candle. */
+  /** Buckets that fall entirely within one of the declared `sessionWindows` (so a full bucket was structurally possible there) but had at least one missing constituent minute -- distinct from `excludedTrailingRowCount` (task section 7: distinguish source incompleteness from legitimate session-arithmetic remainder). Never fabricated as a candle. */
   readonly partialBucketCount: number;
-  /** Source rows that fall in the legitimate regular-session trailing remainder (e.g. the lone 15:29 minute for 2m) -- structurally excluded from any bucket by session arithmetic, never by data incompleteness (task section 2/7). Always 0 for 3m/5m (375 divides evenly). */
+  /** Source rows that fall in a declared window's legitimate trailing remainder (e.g. the lone 15:29 minute for 2m on the regular 375-minute window) -- structurally excluded from any bucket by that window's own session arithmetic, never by data incompleteness, and never bridged into a different window (task invariant B/C, section 2/7). 0 whenever every declared window's length divides evenly by the target bucket size (e.g. always 0 for 3m/5m on the regular 375-minute window). */
   readonly excludedTrailingRowCount: number;
-  /** Count of the 375 canonical 09:15-15:29 minutes not present anywhere in the source rows. */
+  /** Count of the `expectedMinutesForWindows(sessionWindows)` minutes not present anywhere in the source rows (task invariant D) -- 375 canonical 09:15-15:29 minutes for the default regular window, or the exact calendar-declared count for a special session. */
   readonly missingSourceMinuteCount: number;
   readonly derivedContentChecksum: string;
   readonly status: ResampleSessionStatus;

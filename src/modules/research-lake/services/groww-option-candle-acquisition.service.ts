@@ -6,6 +6,9 @@ import {
   HISTORICAL_SESSION_ROW_COUNT,
   isCompleteHistoricalSession,
 } from '../../historical-candles/utils/historical-session-completeness.util';
+import { CalendarSessionCompletenessRow, isCompleteCalendarSession } from '../domain/calendar-session-completeness.util';
+import { CalendarSessionWindowsByDate } from '../domain/exchange-calendar.types';
+import { expectedMinutesForWindows } from '../domain/session-window-expected-minutes.util';
 import { HistoricalDataProvider } from '../interfaces/historical-data-provider.interface';
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import CanonicalSessionProjectorService from './canonical-session-projector.service';
@@ -31,6 +34,18 @@ export interface GrowwOptionCandleAcquisitionRequest {
   readonly providerContractId: string;
   readonly tradingDates: readonly string[];
   readonly dryRun?: boolean;
+  /**
+   * B-F5 CALENDAR FIX (task invariant C): explicit, calendar-authoritative
+   * session windows for requested dates, keyed by tradingDate. REQUIRED by a
+   * calendar-aware caller (see `research-nifty-option-candle-acquisition.ts`)
+   * for a certified SPECIAL_SESSION date, so its session/completeness
+   * evaluation uses the REAL windows -- never the fixed 09:15-15:29 375-row
+   * regular contract. A date absent from this map falls back to that fixed
+   * default (`CanonicalSessionDeclaration.NORMAL_NIFTY_SESSION`), which is
+   * exactly this service's pre-existing behavior -- so omitting the whole
+   * map preserves every pre-existing caller's/test's behavior unchanged.
+   */
+  readonly calendarSessionWindows?: CalendarSessionWindowsByDate;
 }
 
 export enum GrowwOptionAcquisitionFailureReason {
@@ -184,10 +199,18 @@ export default class GrowwOptionCandleAcquisitionService {
     for (const tradingDate of uniqueSortedDates) {
       if (authenticationFailed) break;
 
+      // B-F5 CALENDAR FIX (task invariant C): a non-empty calendar declaration
+      // for this date means REAL certified windows govern completeness/health
+      // for this session -- never the fixed 375-row regular contract. Absent
+      // (the default) preserves this service's exact pre-existing behavior.
+      const sessionWindows = request.calendarSessionWindows?.[tradingDate];
+      const hasCalendarDeclaration = sessionWindows !== undefined && sessionWindows.length > 0;
+      const expectedMinutesIst = hasCalendarDeclaration ? expectedMinutesForWindows(sessionWindows) : undefined;
+
       const { from, to } = this.dayBounds(tradingDate);
       // eslint-disable-next-line no-await-in-loop -- one session's fetch/persist must complete before the next begins, matching NiftyUnderlyingAcquisitionService
       const existing = await this.repository.findRange(request.providerContractId, '1minute', from, to);
-      if (isCompleteHistoricalSession(existing)) {
+      if (this.isSessionComplete(existing, tradingDate, expectedMinutesIst)) {
         pushBucket('ALREADY_COMPLETE', tradingDate);
         sessionDetails.push(this.detail(tradingDate, 'ALREADY_COMPLETE', null, 0, existing.length, 0, 0, 0, false));
         continue;
@@ -230,10 +253,11 @@ export default class GrowwOptionCandleAcquisitionService {
         assetType: HistoricalAssetType.NIFTY_OPTION,
         instrumentKey: request.providerContractId,
         tradingDate,
-        sessionDeclaration: CanonicalSessionDeclaration.NORMAL_NIFTY_SESSION,
+        sessionDeclaration: hasCalendarDeclaration ? CanonicalSessionDeclaration.CALENDAR_DECLARED_SESSION : CanonicalSessionDeclaration.NORMAL_NIFTY_SESSION,
+        sessionWindows: hasCalendarDeclaration ? sessionWindows : undefined,
         sourceRows: rawRows,
       });
-      const report = this.validator.validate(projection);
+      const report = this.validator.validate(projection, expectedMinutesIst);
       const observationState = resolveOptionCandleObservationState(report);
       const sessionOi = this.countOi(projection.acceptedRows);
       rowsWithOi += sessionOi.withOi;
@@ -253,11 +277,11 @@ export default class GrowwOptionCandleAcquisitionService {
         await this.repository.upsertCandles(identity, '1minute', projection.acceptedRows);
         // eslint-disable-next-line no-await-in-loop
         const reread = await this.repository.findRange(request.providerContractId, '1minute', from, to);
-        if (observationState === OptionCandleObservationState.COMPLETE_SESSION && !isCompleteHistoricalSession(reread)) {
+        if (observationState === OptionCandleObservationState.COMPLETE_SESSION && !this.isSessionComplete(reread, tradingDate, expectedMinutesIst)) {
           failedSessions.push({
             tradingDate,
             reason: GrowwOptionAcquisitionFailureReason.POST_PERSIST_RECONCILIATION_FAILED,
-            detail: `Post-persist reconciliation read for ${tradingDate} found ${reread.length} row(s), not the expected ${HISTORICAL_SESSION_ROW_COUNT}-row complete session.`,
+            detail: `Post-persist reconciliation read for ${tradingDate} found ${reread.length} row(s), not the expected ${expectedMinutesIst?.length ?? HISTORICAL_SESSION_ROW_COUNT}-row complete session.`,
           });
           bucket = 'INVALID';
         } else {
@@ -365,6 +389,20 @@ export default class GrowwOptionCandleAcquisitionService {
     persisted: boolean
   ): GrowwOptionSessionAcquisitionDetail {
     return { tradingDate, bucket, observationState, providerRowCount, canonicalRowCount, excludedRowCount, rowsWithOi, rowsWithNullOi, persisted };
+  }
+
+  /**
+   * B-F5 CALENDAR FIX (task invariant C): `expectedMinutesIst` present means a
+   * calendar-aware caller declared this session's REAL windows -- completeness
+   * is judged against exactly that expected-minute set via the same
+   * calendar-parameterized helper `NiftyUnderlyingAcquisitionService` already
+   * uses for a `SPECIAL_SESSION_DAY` (`isCompleteCalendarSession`), never the
+   * fixed 375-row contract. `undefined` (the pre-existing default) preserves
+   * `isCompleteHistoricalSession`'s exact prior behavior unchanged.
+   */
+  private isSessionComplete(rows: readonly CalendarSessionCompletenessRow[], tradingDate: string, expectedMinutesIst: readonly number[] | undefined): boolean {
+    if (expectedMinutesIst === undefined) return isCompleteHistoricalSession(rows);
+    return isCompleteCalendarSession(rows, tradingDate, expectedMinutesIst);
   }
 
   private dayBounds(tradingDate: string): { from: Date; to: Date } {
