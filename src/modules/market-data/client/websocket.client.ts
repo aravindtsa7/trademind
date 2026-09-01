@@ -38,6 +38,22 @@ export default class MarketDataWebSocketClient extends EventEmitter {
   private readonly intentionallyClosingSockets = new WeakSet<WebSocket>();
   private readonly openHandshakeTimeoutMs: number;
   private readonly scheduler: MarketDataWebSocketClientScheduler;
+  /**
+   * Diagnostics-only, monotonically increasing per-socket-instance id (never used for any
+   * lifecycle/ownership decision -- `this.socket !== socket` reference comparisons remain the
+   * sole source of truth for that). Included in every open/error/close/handshake-timeout log line
+   * for a given socket, under the key `wsId`, so a later forward-validation session can correlate
+   * multiple log lines (and rule in/out a stale-vs-current socket, and its readyState at the time)
+   * as belonging to the SAME physical WebSocket instance, without changing any emitted event's
+   * payload shape. Deliberately NOT named socketId/socket*: the production logger's redaction
+   * policy (src/core/logger/logger.ts's unsafeObjectKey pattern) replaces any metadata key
+   * containing "socket" (or request/connection/agent/stream/client) with
+   * '[OMITTED_UNSAFE_OBJECT]' regardless of its value's type, since those keys usually carry
+   * cyclic/unsafe raw objects elsewhere in this codebase -- a scalar diagnostic id needs a key
+   * that does not match that pattern to actually reach the logs. See websocket.client.test.ts's
+   * production-sanitization test for the regression this guards.
+   */
+  private socketSequence = 0;
 
   constructor(private accessToken: string, options: MarketDataWebSocketClientOptions = {}) {
     super();
@@ -81,16 +97,17 @@ export default class MarketDataWebSocketClient extends EventEmitter {
           error ? reject(error) : resolve();
         };
         const socket = new WebSocket(authorizedUrl);
+        const wsId = ++this.socketSequence;
         socket.binaryType = 'arraybuffer';
         this.socket = socket;
 
         socket.addEventListener('open', () => {
           if (this.socket !== socket) {
-            logger.warn('Ignoring stale Upstox market data WebSocket open callback');
+            logger.warn('Ignoring stale Upstox market data WebSocket open callback', { wsId, wsReadyState: socket.readyState });
             socket.close();
             return;
           }
-          logger.info('Connected to Upstox market data WebSocket');
+          logger.info('Connected to Upstox market data WebSocket', { wsId });
           try {
             this.emit('connected');
           } catch (error) {
@@ -114,16 +131,25 @@ export default class MarketDataWebSocketClient extends EventEmitter {
         });
 
         socket.addEventListener('error', () => {
-          if (this.socket !== socket) return;
+          if (this.socket !== socket) {
+            logger.warn('Ignoring stale Upstox market data WebSocket error callback', { wsId, wsReadyState: socket.readyState });
+            return;
+          }
           const error = new Error('Upstox market data WebSocket connection failed.');
           if (this.intentionalDisconnect || this.intentionallyClosingSockets.has(socket)) {
-            logger.debug('Ignoring expected WebSocket error during intentional disconnect');
+            logger.debug('Ignoring expected WebSocket error during intentional disconnect', { wsId, wsReadyState: socket.readyState });
             finish(error);
             return;
           }
-          logger.error('Upstox market data WebSocket error', { error });
+          logger.error('Upstox market data WebSocket error', { error, wsId, wsReadyState: socket.readyState });
           try {
-            this.emit('connectionError', error);
+            // Per the WebSocket contract (the global Node implementation used here included),
+            // readyState has already transitioned to CLOSED by the time an unexpected 'error' for
+            // a genuine transport failure dispatches -- there is no separate close to wait for.
+            // ConnectionManager uses this to anchor physical-outage downtime at the error itself
+            // instead of deferring to the later close event. See ConnectionManager's
+            // reconnectForTransportFailure() for the consuming side.
+            this.emit('connectionError', error, socket.readyState === WebSocket.CLOSED);
           } catch (listenerError) {
             logger.error('Upstox market data connection-error listener failed', { error: listenerError });
           }
@@ -141,6 +167,11 @@ export default class MarketDataWebSocketClient extends EventEmitter {
             code: event.code,
             reason: event.reason,
             wasClean: event.wasClean,
+            wsId,
+            // Logged key is deliberately isCurrentWs, not isCurrentSocket -- see socketSequence's
+            // own doc for why any "*socket*"-matching metadata key is redacted in production.
+            isCurrentWs: isCurrentSocket,
+            wsReadyState: socket.readyState,
           });
           if (!settled) finish(new Error(intentional ? 'Upstox market data WebSocket connection was cancelled before opening.' : `Upstox market data WebSocket closed before opening (code ${event.code}).`));
           this.emit('disconnected', { ...event, intentional }, isCurrentSocket);
@@ -151,6 +182,7 @@ export default class MarketDataWebSocketClient extends EventEmitter {
           const error = new MarketDataWebSocketOpenTimeoutError(this.openHandshakeTimeoutMs);
           logger.error('Upstox market data WebSocket open handshake timed out', {
             openHandshakeTimeoutMs: this.openHandshakeTimeoutMs,
+            wsId,
           });
           this.intentionallyClosingSockets.add(socket);
           this.socket = undefined;

@@ -31,6 +31,24 @@ class FakeClient extends EventEmitter {
   send(): void {}
 }
 
+/**
+ * Models a socket whose disconnectForRecovery() does NOT immediately deliver the actual
+ * close/transport-invalidating event -- the current socket remains (per this model) physically
+ * open for a measurable interval after invalidation is requested, until finishRecoveryClose() is
+ * explicitly invoked. FakeClient's disconnectForRecovery() (above) fires 'disconnected'
+ * synchronously and can never exercise this gap.
+ */
+class DelayedRecoveryClient extends EventEmitter {
+  connects = 0;
+  recoveryDisconnects = 0;
+  private pendingRecoveryClose = false;
+  async connect(): Promise<void> { this.connects+=1;this.emit('connected'); }
+  disconnect(): void { this.emit('disconnected',{code:1000,intentional:true},true); }
+  disconnectForRecovery(): void { this.recoveryDisconnects+=1;this.pendingRecoveryClose=true; }
+  finishRecoveryClose(): void { if(!this.pendingRecoveryClose)return;this.pendingRecoveryClose=false;this.emit('disconnected',{code:1006,reason:'STALL_RECOVERY',wasClean:false,intentional:false},true); }
+  send(): void {}
+}
+
 class CancelableClient extends EventEmitter {
   connects=0;private resolve?:()=>void;private reject?: (error:Error)=>void;
   connect():Promise<void>{this.connects+=1;return new Promise<void>((resolve,reject)=>{this.resolve=resolve;this.reject=reject;});}
@@ -166,6 +184,200 @@ test('the episode deadline opens the breaker while a reconnect promise never set
 test('the episode deadline remains armed after socket open until recovery is confirmed',async()=>{
   const {scheduler,manager}=setup({maximumReconnectAttempts:10,maximumReconnectDurationMs:50});await manager.connect();manager.confirmRecoveryReady(1);manager.reconnectForHealth('STALL',1);scheduler.advanceBy(10);await flush();assert.equal(manager.getState(),ConnectionState.CONNECTED);assert.equal(manager.getGenerationId(),2);
   scheduler.advanceBy(40);assert.equal(manager.getState(),ConnectionState.FAULTED);assert.equal(manager.confirmRecoveryReady(2),false);
+});
+
+// 2026-09-01 V4 live-incident: PHYSICAL vs LOGICAL clock separation. Terra's independent
+// production-safety review rejected an earlier fix (ConnectionManager.confirmSourceDataRecovered())
+// that cleared LOGICAL recovery bookkeeping on REST/backfill success -- that could let a socket
+// which keeps physically reconnecting without ever getting a fresh live tick reset its own
+// fail-closed budget indefinitely. The corrected design instead gives the physical transport
+// outage its own independent anchor (transportOutageStartedAt) used ONLY for MARKET_DATA_RECONNECTED
+// downtimeMs telemetry; the logical anchor (reconnectStartedAt) is untouched by this class and
+// keeps spanning bare reconnects/backfills exactly as before, cleared ONLY by a genuine
+// confirmRecoveryReady()/confirmTransportReady() (or a manual disconnect()).
+
+test('MANDATORY ADVERSARIAL: repeated transport flaps without confirmed recovery cannot reset the logical safety budget indefinitely',async()=>{
+  const {client,scheduler,manager}=setup({maximumReconnectDurationMs:1_000,maximumReconnectAttempts:1_000,maximumReconnectDelayMs:10});
+  const downtimes:number[]=[];manager.on('reconnected',(details:ConnectionEventDetails)=>{downtimes.push(details.downtimeMs!);});
+  await manager.connect();manager.confirmRecoveryReady(1);
+  // Repeated flap cycles: the socket fails, transport reconnects quickly, and (conceptually)
+  // REST/backfill/source recovery succeeds each time -- but NO fresh valid live tick ever arrives
+  // and confirmRecoveryReady() is deliberately never called again. In the corrected design,
+  // REST/backfill success has NO API surface on ConnectionManager at all (that is exactly what
+  // made the rejected patch unsafe), so this loop is simulated purely as repeated physical flaps.
+  for (let i=0;i<5;i+=1) {
+    client.emit('disconnected',{code:1006,reason:'CONNECTION_ERROR'},true);
+    scheduler.advanceBy(10);await flush();
+  }
+  assert.equal(manager.getGenerationId(),6); // 1 baseline connect + 5 flaps
+  assert.equal(manager.getState(),ConnectionState.CONNECTED);
+  // Every physical reconnect's downtime reflects only ITS OWN short outage -- never a growing,
+  // cumulative logical duration.
+  assert.deepEqual(downtimes,[10,10,10,10,10]);
+  // The LOGICAL unresolved-recovery clock has been running, uninterrupted, since the very first
+  // flap; reconnectAttempts (logical) keeps accumulating rather than resetting per flap.
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,5);
+  assert.equal(manager.getReconnectCircuitSnapshot().state,'CLOSED');
+  // Advancing to the ORIGINAL logical deadline (measured from the FIRST flap, not the fifth) must
+  // still fail closed -- no amount of successful, brief, physical reconnects extends it.
+  scheduler.advanceBy(950);
+  assert.equal(manager.getState(),ConnectionState.FAULTED);
+  assert.equal(manager.getReconnectCircuitSnapshot().lastFailureReason,'RECONNECT_DURATION_EXHAUSTED');
+});
+
+test('MANDATORY: after genuine full recovery confirmation, a later independent outage gets a completely fresh physical and logical episode',async()=>{
+  const {client,scheduler,manager}=setup({maximumReconnectDurationMs:1_000});
+  let lastReconnected:ConnectionEventDetails|undefined;manager.on('reconnected',(details:ConnectionEventDetails)=>{lastReconnected=details;});
+  await manager.connect();manager.confirmRecoveryReady(1);
+  // Episode 1: a real disconnect, a fast transport reconnect, then a long CONNECTED-but-unconfirmed
+  // wait -- ended only by the real, unchanged confirmRecoveryReady() path (a genuine current-
+  // generation strategy-safe confirmation, e.g. after backfill AND a fresh live tick).
+  client.emit('disconnected',{code:1006,reason:'CONNECTION_ERROR'},true);scheduler.advanceBy(10);await flush();
+  assert.equal(manager.getGenerationId(),2);assert.equal(lastReconnected?.downtimeMs,10);
+  scheduler.advanceBy(900);
+  assert.equal(manager.confirmRecoveryReady(2),true); // genuine full READY -- clears logical bookkeeping
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,0);
+  // Episode 2: a wholly independent, fast disconnect/reconnect well afterward.
+  client.emit('disconnected',{code:1006,reason:'CONNECTION_ERROR'},true);scheduler.advanceBy(10);await flush();
+  assert.equal(manager.getGenerationId(),3);assert.equal(manager.getState(),ConnectionState.CONNECTED);
+  // Fresh physical transport anchor -- not episode 1's stale ~910ms.
+  assert.equal(lastReconnected?.downtimeMs,10);
+  // No stale deadline from episode 1 (would have fired at t=1000 had confirmRecoveryReady() not
+  // cleared it) can fault episode 2.
+  scheduler.advanceBy(940);
+  assert.equal(manager.getState(),ConnectionState.CONNECTED);assert.equal(manager.getGenerationId(),3);
+  assert.equal(manager.getReconnectCircuitSnapshot().state,'CLOSED');
+});
+
+test('MANDATORY: physical and logical clocks are independent, proven on the exact scaled incident timeline',async()=>{
+  const {client,scheduler,manager}=setup({maximumReconnectDurationMs:1_000,maximumReconnectDelayMs:10});
+  const downtimes:number[]=[];manager.on('reconnected',(details:ConnectionEventDetails)=>{downtimes.push(details.downtimeMs!);});
+  await manager.connect();manager.confirmRecoveryReady(1);
+  // T=0: logical degradation + physical outage both start together.
+  client.emit('disconnected',{code:1006,reason:'CONNECTION_ERROR'},true);
+  // T=10: transport reconnects.
+  scheduler.advanceBy(10);await flush();
+  assert.equal(manager.getGenerationId(),2);assert.equal(downtimes[0],10); // physical downtime = 10
+  // T=910: a long source/backfill wait elapses and "source recovery succeeds" -- by design this has
+  // NO effect on ConnectionManager. Only confirmRecoveryReady()/confirmTransportReady() (a fresh
+  // live tick's full strategy-safe confirmation) may clear logical bookkeeping, and neither is
+  // called here, so the logical episode remains active, unconfirmed, since T=0.
+  scheduler.advanceBy(900);
+  assert.equal(manager.getState(),ConnectionState.CONNECTED);assert.equal(manager.getReconnectCircuitSnapshot().state,'CLOSED');
+  // T=910: a second, independent physical outage begins.
+  client.emit('disconnected',{code:1006,reason:'CONNECTION_ERROR'},true);
+  // T=920: transport reconnects again.
+  scheduler.advanceBy(10);await flush();
+  assert.equal(manager.getGenerationId(),3);assert.equal(downtimes[1],10); // physical downtime = 10 again, not ~910
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,2); // logical attempts still accumulating since T=0
+  assert.equal(manager.getState(),ConnectionState.CONNECTED);
+  // At the logical max deadline (T=1000, measured from T=0), with no full READY confirmation ever
+  // having arrived, the connection must still fail closed.
+  scheduler.advanceBy(80);
+  assert.equal(manager.getState(),ConnectionState.FAULTED);
+  assert.equal(manager.getReconnectCircuitSnapshot().lastFailureReason,'RECONNECT_DURATION_EXHAUSTED');
+});
+
+// Terra MEDIUM finding: for a health-driven recovery, the physical clock previously started the
+// instant beginReconnect() was entered -- before the current socket was actually invalidated/
+// closed -- so physical downtime could include time the socket was still demonstrably open.
+// Exercises the real reconnectForHealth()/disconnectForRecovery()/'disconnected' seam (never
+// private state) with a client that deliberately withholds the close event for a known interval.
+test('MANDATORY: a health-driven recovery anchors physical downtime at actual socket invalidation, not health-stall detection',async()=>{
+  const client=new DelayedRecoveryClient();const scheduler=new FakeScheduler();
+  const manager=new ConnectionManager('token',client as never,{maximumReconnectAttempts:10,maximumReconnectDurationMs:1_000,reconnectJitterMs:0,initialReconnectDelayMs:110,maximumReconnectDelayMs:110,now:()=>scheduler.now,scheduler});
+  let lastReconnected:ConnectionEventDetails|undefined;manager.on('reconnected',(details:ConnectionEventDetails)=>{lastReconnected=details;});
+  await manager.connect();manager.confirmRecoveryReady(1);
+  // T=0: health stall detected -- logical recovery starts immediately.
+  assert.equal(manager.reconnectForHealth('STALL',1),true);
+  assert.equal(client.recoveryDisconnects,1); // invalidation was requested...
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,1);
+  // T=0..100: the current socket has NOT yet actually closed -- it remains physically open for
+  // this modeled interval. Advancing fake time through it must not itself produce a reconnect (the
+  // scheduled retry is 110ms out) or any premature physical-downtime accounting.
+  scheduler.advanceBy(100);
+  assert.equal(manager.getState(),ConnectionState.RECONNECTING);
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,1); // no additional attempt yet
+  // T=100: actual socket invalidation completes -- the first point with real proof of transport
+  // loss. This is where the physical anchor must be set, not T=0.
+  client.finishRecoveryClose();
+  // T=110: the scheduled retry fires and the new transport connects.
+  scheduler.advanceBy(10);await flush();
+  assert.equal(manager.getState(),ConnectionState.CONNECTED);assert.equal(manager.getGenerationId(),2);
+  // Physical downtime = 10 (T=100 to T=110), NOT ~110 (T=0 to T=110): it excludes the pre-close
+  // interval where the socket was still physically open and no strategy-safe recovery was ever
+  // fabricated from that interval.
+  assert.equal(lastReconnected?.downtimeMs,10);
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,1); // reconnectAttempts was not reset
+  // reconnectStartedAt remains anchored to the original T=0 health degradation, and the logical
+  // deadline was never restarted: no confirmRecoveryReady() was ever called, so advancing to the
+  // ORIGINAL T=0-based 1000ms budget (890 more, landing at T=1000, not T=1100) must still fail
+  // closed.
+  scheduler.advanceBy(890);
+  assert.equal(manager.getState(),ConnectionState.FAULTED);
+  assert.equal(manager.getReconnectCircuitSnapshot().lastFailureReason,'RECONNECT_DURATION_EXHAUSTED');
+});
+
+// Terra MEDIUM finding (companion to the health-driven test above): a raw CURRENT connectionError
+// was previously routed through the SAME deferred-physical-outage path as a health stall, even
+// though a genuine current-generation connectionError whose client contract already proves the
+// socket physically CLOSED (transportClosed=true on the 'connectionError' event -- see
+// websocket.client.ts's 'error' listener) has no separate close left to wait for: the transport is
+// already dead at the error itself. Deferring there would UNDERCOUNT downtime by excluding the
+// error-to-close interval even though the socket was unusable throughout it. Exercises the real
+// 'connectionError'/'disconnected' seam (never private state) via ConnectionManager's public event
+// surface, mirroring the health-driven test's shape so the two prove the intentional split:
+//   RAW ERROR (transport already CLOSED): error -> reconnect (physical anchor at the error)
+//   HEALTH STALL:                          actual close -> reconnect (physical anchor at the close)
+test('MANDATORY: a raw current connectionError with a known-closed transport anchors physical downtime at the error itself, not the later close',async()=>{
+  const {client,scheduler,manager}=setup({maximumReconnectAttempts:10,maximumReconnectDurationMs:1_000,reconnectJitterMs:0,initialReconnectDelayMs:110,maximumReconnectDelayMs:110});
+  let lastReconnected:ConnectionEventDetails|undefined;manager.on('reconnected',(details:ConnectionEventDetails)=>{lastReconnected=details;});
+  await manager.connect();manager.confirmRecoveryReady(1);
+  // T=0: a genuine raw connectionError fires on the CURRENT socket. The client asserts (second
+  // argument) that readyState has already transitioned to CLOSED -- the real contract for a
+  // genuine transport failure on the global WebSocket implementation used here. Both logical
+  // recovery AND the physical outage must start immediately, together.
+  client.emit('connectionError',new Error('econnreset'),true);
+  assert.equal(manager.getState(),ConnectionState.RECONNECTING); // logical recovery started at T=0
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,1);
+  assert.equal(client.recoveryDisconnects,0); // nothing left to invalidate -- unlike reconnectForHealth(), no disconnectForRecovery() call
+  // T=0..100: the close/disconnected callback for this same already-dead socket has not arrived
+  // yet. Advancing fake time through it must not itself produce a reconnect (the scheduled retry
+  // is 110ms out).
+  scheduler.advanceBy(100);
+  // T=100: the close/disconnected callback finally arrives for the same outage, followed
+  // immediately by a duplicate close signal for good measure -- neither may restart or duplicate
+  // the physical anchor already set at T=0.
+  client.emit('disconnected',{code:1006,reason:'CONNECTION_ERROR'},true);
+  client.emit('disconnected',{code:1006,reason:'DUPLICATE_CLOSE'},true);
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,1); // episode was not restarted/duplicated
+  // T=110: the scheduled retry fires and the new transport connects.
+  scheduler.advanceBy(10);await flush();
+  assert.equal(manager.getState(),ConnectionState.CONNECTED);assert.equal(manager.getGenerationId(),2);
+  // Physical downtime = 110 (T=0 to T=110) -- the FULL error-to-reconnect interval, NOT 10 (T=100
+  // to T=110): the transport was already dead throughout, so the close at T=100 must not restart
+  // the physical anchor.
+  assert.equal(lastReconnected?.downtimeMs,110);
+  assert.equal(manager.getReconnectCircuitSnapshot().attempts,1); // reconnectAttempts retained normal semantics, not reset
+  // logical reconnectStartedAt remains anchored to the original T=0 error, and the logical deadline
+  // was never restarted: no confirmRecoveryReady() was ever called, so advancing to the ORIGINAL
+  // T=0-based 1000ms budget (890 more, landing at T=1000, not T=1110) must still fail closed.
+  scheduler.advanceBy(890);
+  assert.equal(manager.getState(),ConnectionState.FAULTED);
+  assert.equal(manager.getReconnectCircuitSnapshot().lastFailureReason,'RECONNECT_DURATION_EXHAUSTED');
+});
+
+test('a reconnect attempt failure while already physically down continues from the same physical outage, not a fresh one',async()=>{
+  const {client,scheduler,manager}=setup();let lastReconnected:ConnectionEventDetails|undefined;manager.on('reconnected',(details:ConnectionEventDetails)=>{lastReconnected=details;});
+  await manager.connect();manager.confirmRecoveryReady(1);
+  client.failures=1; // the first scheduled retry attempt fails to even open; the second succeeds
+  client.emit('disconnected',{code:1006},true); // T=0: physical outage begins
+  scheduler.advanceBy(10);await flush(); // T=10: first retry attempt fails and reschedules
+  assert.equal(manager.getGenerationId(),1);assert.equal(manager.getReconnectCircuitSnapshot().attempts,2);
+  scheduler.advanceBy(20);await flush(); // T=30: second retry attempt succeeds
+  assert.equal(manager.getGenerationId(),2);
+  // downtimeMs is measured from the ORIGINAL T=0 outage, not reset by the failed attempt at T=10.
+  assert.equal(lastReconnected?.downtimeMs,30);
 });
 
 test('synchronous reconnect listeners cannot install work after shutdown',async()=>{

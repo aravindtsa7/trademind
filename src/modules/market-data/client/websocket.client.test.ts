@@ -6,6 +6,20 @@ import MarketDataWebSocketClient, {
   MarketDataWebSocketOpenTimeoutError,
 } from './websocket.client';
 import ConnectionManager, { ConnectionState } from '../managers/connection.manager';
+import logger from '../../../core/logger/logger';
+
+/** Captures logger.warn(...) calls for the duration of an async `run`, then restores the original. */
+async function captureWarnLogs(run: () => Promise<void>): Promise<Array<{ message: string; meta: unknown }>> {
+  const calls: Array<{ message: string; meta: unknown }> = [];
+  const original = logger.warn;
+  logger.warn = ((message: string, meta?: unknown) => { calls.push({ message, meta }); return logger; }) as typeof logger.warn;
+  try {
+    await run();
+  } finally {
+    logger.warn = original;
+  }
+  return calls;
+}
 
 type Listener = (event: never) => void;
 
@@ -128,6 +142,25 @@ test('late open, error, and close callbacks from a timed-out socket remain quara
     value.on('connected',()=>{connected+=1;});value.on('connectionError',()=>{errors+=1;});value.on('disconnected',(event)=>disconnects.push(event));
     const pending=value.connect();await flush();const stale=FakeWebSocket.instances[0];scheduler.advanceBy(25);await assert.rejects(pending,/did not open/);
     stale.open();stale.fail();stale.finishClose();assert.equal(connected,0);assert.equal(errors,0);assert.deepEqual(disconnects,[{code:1000,reason:'closed',wasClean:true,intentional:true}]);
+  }finally{globalThis.WebSocket=original;}
+});
+
+// Observability-only: previously a stale socket's 'error' callback (this.socket !== socket) was
+// silently discarded with no log line at all -- indistinguishable, from the logs alone, from the
+// event never having fired. Fixing this incident-observability gap must not change any lifecycle
+// behavior (no spurious 'connectionError', no state mutation) -- only add a diagnosable trail.
+test('a stale-socket error callback is diagnosable instead of silently discarded',async()=>{
+  const original=globalThis.WebSocket;resetWebSockets();FakeWebSocket.deferClose=true;globalThis.WebSocket=FakeWebSocket as unknown as typeof WebSocket;
+  try{
+    const scheduler=new FakeScheduler();const value=client({openHandshakeTimeoutMs:25,scheduler});let errors=0;value.on('connectionError',()=>{errors+=1;});
+    const warnCalls=await captureWarnLogs(async()=>{
+      const pending=value.connect();await flush();const stale=FakeWebSocket.instances[0];scheduler.advanceBy(25);await assert.rejects(pending,/did not open/);
+      stale.fail(); // this.socket was already cleared by the handshake timeout -- this callback is stale
+    });
+    assert.equal(errors,0); // lifecycle/ownership behavior is unchanged: no spurious connectionError
+    const staleWarning=warnCalls.find((call)=>call.message==='Ignoring stale Upstox market data WebSocket error callback');
+    assert.ok(staleWarning,'a stale-socket error callback must now be logged, not silently discarded');
+    assert.deepEqual(staleWarning!.meta,{wsId:1,wsReadyState:3});
   }finally{globalThis.WebSocket=original;}
 });
 
