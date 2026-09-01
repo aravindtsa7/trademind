@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import logger from '../core/logger/logger';
 import DatasetManifestService from '../modules/research-lake/services/dataset-manifest.service';
 import { DatasetManifest } from '../modules/research-lake/domain/dataset-manifest.types';
+import { assertManifestSchemaCompatible } from '../modules/research-lake/domain/manifest-schema-compatibility.util';
 
 dotenv.config();
 logger.silent = true;
@@ -27,6 +28,10 @@ async function run(): Promise<void> {
   }
 
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as DatasetManifest;
+  // B-F2D CORRECTION (manifest wire-contract versioning): reject an
+  // incompatible/malformed manifestSchemaVersion or unknown provenance enum
+  // fail-closed, BEFORE even logging session fields below.
+  assertManifestSchemaCompatible(manifest);
 
   console.log(JSON.stringify({ event: 'research:manifest:verify starting', manifestPath, datasetId: manifest.datasetId, datasetKind: manifest.datasetKind, sessionCount: manifest.sessions.length }));
 

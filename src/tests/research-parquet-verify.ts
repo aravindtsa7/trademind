@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import logger from '../core/logger/logger';
 import ResearchLakeParquetVerifyService, { DEFAULT_PARQUET_OUTPUT_ROOT } from '../modules/research-lake/services/research-lake-parquet-verify.service';
 import { DatasetManifest } from '../modules/research-lake/domain/dataset-manifest.types';
+import { assertManifestSchemaCompatible } from '../modules/research-lake/domain/manifest-schema-compatibility.util';
 import { ParquetDatasetStorageDescriptor } from '../modules/research-lake/domain/parquet-storage.types';
 
 dotenv.config();
@@ -39,6 +40,10 @@ async function run(): Promise<void> {
 
   const descriptor = JSON.parse(await readFile(descriptorPath, 'utf8')) as ParquetDatasetStorageDescriptor;
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as DatasetManifest;
+  // B-F2D CORRECTION (manifest wire-contract versioning): reject an
+  // incompatible/malformed manifestSchemaVersion or unknown provenance enum
+  // fail-closed, before this CLI-supplied manifest is used for anything.
+  assertManifestSchemaCompatible(manifest);
 
   console.log(JSON.stringify({ event: 'research:parquet:verify starting', descriptorPath, manifestPath, datasetId: descriptor.datasetId, datasetKind: descriptor.datasetKind, sessionCount: descriptor.sessions.length, storageRoot }));
 

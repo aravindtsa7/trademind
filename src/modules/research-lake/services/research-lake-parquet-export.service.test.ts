@@ -8,7 +8,7 @@ import DatasetManifestService from './dataset-manifest.service';
 import DatasetSessionManifestBuilderService, { PersistedManifestCandleRow } from './dataset-session-manifest-builder.service';
 import ResearchLakeParquetExportService from './research-lake-parquet-export.service';
 import ResearchLakeParquetReaderService, { VerifySessionAgainstLogicalIdentityRequest, VerifySessionAgainstLogicalIdentityResult } from './research-lake-parquet-reader.service';
-import { DatasetManifest, ManifestDatasetKind } from '../domain/dataset-manifest.types';
+import { DatasetManifest, MANIFEST_SCHEMA_VERSION, ManifestDatasetKind } from '../domain/dataset-manifest.types';
 import { ParquetSessionExportStatus, parquetSessionRelativePath } from '../domain/parquet-storage.types';
 import { sha256HexOfBuffer } from '../domain/file-checksum';
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
@@ -327,10 +327,30 @@ test('(export/AG) export never calls the repositories beyond findRange (no provi
   }
 });
 
-test('(export/AH) a manifest with zero sessions produces zero requested/written and no descriptor', async () => {
-  const { exportService } = newHarness();
+/**
+ * B-F2D CORRECTION (Terra re-review HIGH-1/HIGH-2): this test previously
+ * asserted that `exportDataset` accepted a hand-built manifest with
+ * `manifestSchemaVersion: 1` AND `sessions: []` and silently produced
+ * zero-requested/zero-written output -- i.e. it proved a BYPASS of manifest
+ * validation (there was none at the time), not a genuine product
+ * requirement. Investigation (see `manifest-schema-compatibility.util.ts`'s
+ * own compatibility-matrix doc) confirms `manifestSchemaVersion: 1` on its
+ * own is genuinely valid and still supported; the actual defect this
+ * fixture exercised is the EMPTY `sessions` array, which current
+ * `DatasetManifestService` generation can never legitimately produce
+ * (`assertBoundedSortedDates` rejects an empty `tradingDates` request before
+ * building anything, and `ResearchYearRunnerService` explicitly returns
+ * `datasetId: null` -- never a zero-session manifest -- when there are zero
+ * healthy trading dates). This test now asserts the CORRECT behavior:
+ * `exportDataset` rejects such an artifact fail-closed, before any
+ * repository read or filesystem write, rather than silently processing it
+ * as "an empty dataset". Valid v1-manifest acceptance is separately proven
+ * by "(export/AI) a genuine v1-shaped historical manifest..." below.
+ */
+test('(export/AH) a manifest with an explicitly empty sessions array is rejected fail-closed, before any repository read or filesystem write', async () => {
+  const { exportService, candleRepo } = newHarness();
   const emptyManifest: DatasetManifest = {
-    manifestSchemaVersion: 1,
+    manifestSchemaVersion: MANIFEST_SCHEMA_VERSION,
     datasetKind: ManifestDatasetKind.UNDERLYING_1M,
     canonicalizationVersion: 1,
     healthSemanticsVersion: 1,
@@ -344,9 +364,177 @@ test('(export/AH) a manifest with zero sessions produces zero requested/written 
 
   const outputRoot = tempDir();
   try {
-    const result = await exportService.exportDataset({ manifest: emptyManifest, outputRoot });
-    assert.equal(result.sessionsRequested, 0);
-    assert.equal(result.descriptor, null);
+    await assert.rejects(() => exportService.exportDataset({ manifest: emptyManifest, outputRoot }), /empty sessions array/);
+    assert.equal(candleRepo.findRangeCallCount, 0, 'no repository read may occur before the manifest guard runs');
+    assert.equal(existsSync(outputRoot) && readdirSync(outputRoot).length > 0, false, 'no filesystem write may occur before the manifest guard runs');
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+// ============================================================================
+// B-F2D CORRECTION (Terra re-review HIGH-1): "ResearchLakeParquetExportService
+// .exportDataset() must defend itself as a real trust boundary" -- these
+// tests call `exportDataset` DIRECTLY (never through a CLI or the
+// year-runner) with a manifest that was never validated by any upstream
+// caller, and prove rejection happens BEFORE any candle-repository read,
+// filesystem write, Parquet serialization, or descriptor creation.
+// ============================================================================
+
+/** Strips the v2-v5-only fields off a REAL, freshly-generated (and therefore correctly checksummed) manifest to produce a genuinely v1-shaped artifact -- never a fabricated checksum. Identity/contentChecksum/canonicalRowCount/persistedCanonicalHealthStatus are version-invariant (unchanged since v1; checksum computation never touches the stripped fields -- see `dataset-manifest-canonical-json.ts`), so this is a truthful v1 artifact for the SAME underlying persisted content, not a relabeled v5 one. */
+function downgradeToV1Shape(manifest: DatasetManifest): DatasetManifest {
+  return {
+    ...manifest,
+    manifestSchemaVersion: 1,
+    sessions: manifest.sessions.map((session) => {
+      const { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus } = session.sourceAcquisitionEvidence;
+      const sessionWithoutCalendarWindows = { ...session } as Record<string, unknown>;
+      delete sessionWithoutCalendarWindows.calendarSessionWindows;
+      return { ...sessionWithoutCalendarWindows, sourceAcquisitionEvidence: { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus } };
+    }),
+  } as unknown as DatasetManifest;
+}
+
+test('(export TRUST BOUNDARY 1) a future (v6) manifest is rejected before any repository read or filesystem write', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  candleRepo.findRangeCallCount = 0;
+  const future = { ...manifest, manifestSchemaVersion: manifest.manifestSchemaVersion + 1 };
+
+  const outputRoot = tempDir();
+  try {
+    await assert.rejects(() => exportService.exportDataset({ manifest: future, outputRoot }), /newer than this reader supports/);
+    assert.equal(candleRepo.findRangeCallCount, 0);
+    assert.equal(existsSync(outputRoot) && readdirSync(outputRoot).length > 0, false);
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('(export TRUST BOUNDARY 2) a v4 manifest carrying UNKNOWN_LEGACY_REPAIR_PROVENANCE (a v5-only value) is rejected before any repository read or filesystem write', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  candleRepo.findRangeCallCount = 0;
+  const invalidV4 = {
+    ...manifest,
+    manifestSchemaVersion: 4,
+    sessions: manifest.sessions.map((session) => ({ ...session, sourceAcquisitionEvidence: { ...session.sourceAcquisitionEvidence, provenanceComposition: 'UNKNOWN_LEGACY_REPAIR_PROVENANCE' } })),
+  } as unknown as DatasetManifest;
+
+  const outputRoot = tempDir();
+  try {
+    await assert.rejects(() => exportService.exportDataset({ manifest: invalidV4, outputRoot }), /provenanceComposition/);
+    assert.equal(candleRepo.findRangeCallCount, 0);
+    assert.equal(existsSync(outputRoot) && readdirSync(outputRoot).length > 0, false);
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('(export TRUST BOUNDARY 3) a malformed/non-integer manifestSchemaVersion is rejected before any repository read or filesystem write', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  candleRepo.findRangeCallCount = 0;
+  const malformed = { ...manifest, manifestSchemaVersion: '5' as unknown as number };
+
+  const outputRoot = tempDir();
+  try {
+    await assert.rejects(() => exportService.exportDataset({ manifest: malformed, outputRoot }), /valid integer manifestSchemaVersion/);
+    assert.equal(candleRepo.findRangeCallCount, 0);
+    assert.equal(existsSync(outputRoot) && readdirSync(outputRoot).length > 0, false);
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('(export TRUST BOUNDARY 4) an unknown/future provenanceComposition enum string is rejected before any repository read or filesystem write', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  candleRepo.findRangeCallCount = 0;
+  const unknownEnum = {
+    ...manifest,
+    sessions: manifest.sessions.map((session) => ({ ...session, sourceAcquisitionEvidence: { ...session.sourceAcquisitionEvidence, provenanceComposition: 'NOT_A_REAL_VALUE' } })),
+  } as unknown as DatasetManifest;
+
+  const outputRoot = tempDir();
+  try {
+    await assert.rejects(() => exportService.exportDataset({ manifest: unknownEnum, outputRoot }), /provenanceComposition/);
+    assert.equal(candleRepo.findRangeCallCount, 0);
+    assert.equal(existsSync(outputRoot) && readdirSync(outputRoot).length > 0, false);
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('(export TRUST BOUNDARY 5) missing sessions field is rejected before any repository read or filesystem write', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  candleRepo.findRangeCallCount = 0;
+  const withoutSessions = { ...manifest } as Record<string, unknown>;
+  delete withoutSessions.sessions;
+
+  const outputRoot = tempDir();
+  try {
+    await assert.rejects(() => exportService.exportDataset({ manifest: withoutSessions as unknown as DatasetManifest, outputRoot }), /sessions array/);
+    assert.equal(candleRepo.findRangeCallCount, 0);
+    assert.equal(existsSync(outputRoot) && readdirSync(outputRoot).length > 0, false);
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('(export TRUST BOUNDARY 6) a non-array sessions field is rejected before any repository read or filesystem write', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  candleRepo.findRangeCallCount = 0;
+  const nonArraySessions = { ...manifest, sessions: { not: 'an array' } } as unknown as DatasetManifest;
+
+  const outputRoot = tempDir();
+  try {
+    await assert.rejects(() => exportService.exportDataset({ manifest: nonArraySessions, outputRoot }), /sessions array/);
+    assert.equal(candleRepo.findRangeCallCount, 0);
+    assert.equal(existsSync(outputRoot) && readdirSync(outputRoot).length > 0, false);
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('(export TRUST BOUNDARY 7 / export/AI) a genuine v1-shaped historical manifest (no provider/evidenceSemanticChecksum/provenanceComposition/compositeRepair/calendarSessionWindows) is accepted and exported normally', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const v5Manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  const v1Manifest = downgradeToV1Shape(v5Manifest);
+  assert.equal((v1Manifest.sessions[0] as unknown as Record<string, unknown>).calendarSessionWindows, undefined, 'sanity check: the fixture must genuinely omit calendarSessionWindows to prove v1 compatibility, not just relabel a v5 manifest');
+
+  const outputRoot = tempDir();
+  try {
+    const result = await exportService.exportDataset({ manifest: v1Manifest, outputRoot });
+    assert.equal(result.sessionsRequested, 1);
+    assert.equal(result.sessionsWritten, 1);
+    assert.equal(result.sessions[0].status, ParquetSessionExportStatus.WRITTEN);
+    assert.ok(candleRepo.findRangeCallCount > 0, 'a valid historical manifest must proceed past the guard into real repository reads');
+  } finally {
+    rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test('(export TRUST BOUNDARY 8) a valid current (v5) manifest is accepted and exported normally', async () => {
+  const { manifestService, exportService, candleRepo } = newHarness();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await manifestService.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  assert.equal(manifest.manifestSchemaVersion, MANIFEST_SCHEMA_VERSION);
+
+  const outputRoot = tempDir();
+  try {
+    const result = await exportService.exportDataset({ manifest, outputRoot });
+    assert.equal(result.sessionsWritten, 1);
+    assert.equal(result.sessions[0].status, ParquetSessionExportStatus.WRITTEN);
   } finally {
     rmSync(outputRoot, { recursive: true, force: true });
   }

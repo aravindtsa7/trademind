@@ -424,14 +424,14 @@ class FakeHistoricalCandleResearchPersistenceService {
 
   constructor(private readonly repository: FakeHistoricalCandleRepository) {}
 
-  async persistSession(metadata: ResearchCandleSessionMetadata, candidateCandles: readonly CanonicalHistoricalCandle[]): Promise<ResearchSessionPersistenceResult> {
+  async persistSession<TCompanion = undefined>(metadata: ResearchCandleSessionMetadata, candidateCandles: readonly CanonicalHistoricalCandle[]): Promise<ResearchSessionPersistenceResult<TCompanion>> {
     this.sessionMetadataCalls.push(metadata);
     this.counter += 1;
     const existingRows = await this.repository.findRange(metadata.instrumentKey, metadata.timeframe, metadata.from, metadata.to);
     const plan = planSessionPersistence(metadata.instrumentKey, metadata.timeframe, existingRows, candidateCandles);
 
     if (plan.conflicts.length > 0) {
-      return { outcome: 'CONFLICT', insertedCount: 0, idempotentCount: 0, conflicts: plan.conflicts, sessionEvidenceId: `fake-session-evidence-${this.counter}` };
+      return { outcome: 'CONFLICT', insertedCount: 0, idempotentCount: 0, conflicts: plan.conflicts, sessionEvidenceId: `fake-session-evidence-${this.counter}`, acceptedCompanionResult: null };
     }
 
     if (plan.toInsert.length > 0) {
@@ -448,6 +448,7 @@ class FakeHistoricalCandleResearchPersistenceService {
       idempotentCount: plan.idempotentCount,
       conflicts: [],
       sessionEvidenceId: `fake-session-evidence-${this.counter}`,
+      acceptedCompanionResult: null,
     };
   }
 }
@@ -1496,7 +1497,7 @@ test('B-F2C O: PROVIDER FAILURE (retry exhaustion) -- classified RETRY_EXHAUSTED
 test('B-F2C P: PERSISTENCE FAILURE -- a DB/repository failure after provider data was received never falsely finalizes the retrieval, and the failure propagates rather than being silently swallowed', async () => {
   const date = '2022-02-04';
   const throwingPersistenceService = {
-    persistSession: async (): Promise<ResearchSessionPersistenceResult> => {
+    persistSession: async <TCompanion = undefined>(): Promise<ResearchSessionPersistenceResult<TCompanion>> => {
       throw new Error('SIMULATED_PERSISTENCE_FAILURE');
     },
   };

@@ -17,6 +17,7 @@ import {
   computeDatasetChecksum,
   deriveDatasetId,
 } from '../domain/dataset-manifest.types';
+import { assertManifestSchemaCompatible } from '../domain/manifest-schema-compatibility.util';
 import { DatasetHealthStatus } from '../domain/dataset-health.types';
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import HistoricalCandleRepository from '../../historical-candles/repositories/historical-candle.repository';
@@ -175,6 +176,13 @@ export default class DatasetManifestService {
    * never silently regenerated/overwritten (task section 10/16.R-U).
    */
   async verifyManifest(manifest: DatasetManifest): Promise<DatasetManifestVerificationResult> {
+    // B-F2D CORRECTION (manifest wire-contract versioning): fail closed on an
+    // incompatible/malformed manifestSchemaVersion or an unknown
+    // provenanceComposition value BEFORE any session content is interpreted --
+    // this is the one place every CLI/checkpoint-resume caller ultimately
+    // routes an already-parsed manifest artifact through.
+    assertManifestSchemaCompatible(manifest);
+
     const sessionResults: SessionVerificationResult[] = [];
     const recomputedInputs: { identity: SessionManifest['identity']; canonicalizationVersion: number; healthSemanticsVersion: number; contentChecksum: string }[] = [];
 

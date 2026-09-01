@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { Prisma } from '@prisma/client';
 import DatasetManifestService from './dataset-manifest.service';
-import { ManifestCalendarSessionWindowsByDate, ManifestDatasetKind, SourceAcquisitionEvidence, SourceAcquisitionEvidenceAvailability } from '../domain/dataset-manifest.types';
+import { ManifestCalendarSessionWindowsByDate, ManifestDatasetKind, SourceAcquisitionEvidence, SourceAcquisitionEvidenceAvailability, SourceAcquisitionProvenanceComposition } from '../domain/dataset-manifest.types';
 import { DatasetHealthStatus } from '../domain/dataset-health.types';
 import { HistoricalOptionType } from '../domain/historical-asset.types';
 import { SessionWindow } from '../domain/exchange-calendar.types';
@@ -196,6 +196,84 @@ test('(S) a mutated persisted row causes verification to fail closed, identifyin
   assert.deepEqual(result.mismatchedTradingDates, ['2022-01-03']);
 });
 
+// ============================================================================
+// B-F2D CORRECTION: manifest wire-contract versioning -- verifyManifest()
+// rejects an incompatible/invalid manifestSchemaVersion BEFORE interpreting
+// any session/provenance field (Terra's required test 12).
+// ============================================================================
+
+test('(B-F2D 12) verifyManifest() rejects a future schema version before verification logic interprets session fields -- no repository lookup is even attempted', async () => {
+  const { service, candleRepo } = newService();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+  candleRepo.findRangeCallCount = 0;
+
+  const future = { ...manifest, manifestSchemaVersion: manifest.manifestSchemaVersion + 1 };
+  await assert.rejects(() => service.verifyManifest(future), /manifest schema version/i);
+  assert.equal(candleRepo.findRangeCallCount, 0, 'verifyManifest must reject before ever reading the persisted store for a session');
+});
+
+test('(B-F2D) verifyManifest() rejects an unknown provenanceComposition enum value fail-closed, never silently treating it as PRIMARY_ONLY', async () => {
+  const { service, candleRepo } = newService();
+  candleRepo.rows = normalSessionRows('2022-01-03');
+  const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+
+  const tampered = { ...manifest, sessions: manifest.sessions.map((session) => ({ ...session, sourceAcquisitionEvidence: { ...session.sourceAcquisitionEvidence, provenanceComposition: 'NOT_A_REAL_VALUE' as SourceAcquisitionProvenanceComposition } })) };
+  await assert.rejects(() => service.verifyManifest(tampered), /provenanceComposition/);
+});
+
+// ============================================================================
+// B-F2D CORRECTION (Terra re-review HIGH-2): verifyManifest() must behave
+// according to EACH supported historical version's OWN schema, never the
+// current v5 shape -- see manifest-schema-compatibility.util.ts's own
+// compatibility-matrix doc for the exact v1/v2/v3 field history this strips
+// down to.
+// ============================================================================
+
+function stripManifestToVersion(manifest: Awaited<ReturnType<DatasetManifestService['generateUnderlyingManifest']>>, version: 1 | 2 | 3): Awaited<ReturnType<DatasetManifestService['generateUnderlyingManifest']>> {
+  return {
+    ...manifest,
+    manifestSchemaVersion: version,
+    sessions: manifest.sessions.map((session) => {
+      const { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus, provider, evidenceSemanticChecksum } = session.sourceAcquisitionEvidence;
+      const evidence = version === 1 ? { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus } : { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus, provider, evidenceSemanticChecksum };
+      const withEvidence = { ...session, sourceAcquisitionEvidence: evidence };
+      if (version === 3) return withEvidence;
+      const withoutWindows = { ...withEvidence } as Record<string, unknown>;
+      delete withoutWindows.calendarSessionWindows;
+      return withoutWindows;
+    }),
+  } as unknown as Awaited<ReturnType<DatasetManifestService['generateUnderlyingManifest']>>;
+}
+
+for (const version of [1, 2, 3] as const) {
+  test(`(B-F2D verifyManifest v${version}) a genuine v${version}-shaped manifest verifies successfully against unchanged persisted data, exactly like the current v5 shape`, async () => {
+    const { service, candleRepo } = newService();
+    candleRepo.rows = normalSessionRows('2022-01-03');
+    const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+    const historical = stripManifestToVersion(manifest, version);
+
+    const result = await service.verifyManifest(historical);
+
+    assert.equal(result.verified, true);
+    assert.equal(result.datasetChecksumMatches, true);
+    assert.deepEqual(result.mismatchedTradingDates, []);
+  });
+
+  test(`(B-F2D verifyManifest v${version}) a genuine v${version}-shaped manifest still detects a mutated persisted row, exactly like the current v5 shape`, async () => {
+    const { service, candleRepo } = newService();
+    candleRepo.rows = normalSessionRows('2022-01-03');
+    const manifest = await service.generateUnderlyingManifest({ provider: HistoricalProviderId.UPSTOX, instrumentKey: INSTRUMENT_KEY, timeframe: '1minute', tradingDates: ['2022-01-03'] });
+    const historical = stripManifestToVersion(manifest, version);
+
+    candleRepo.rows[10] = { ...candleRepo.rows[10], close: new Prisma.Decimal(9999) };
+    const result = await service.verifyManifest(historical);
+
+    assert.equal(result.verified, false);
+    assert.deepEqual(result.mismatchedTradingDates, ['2022-01-03']);
+  });
+}
+
 test('(T) a missing persisted row causes verification to fail closed', async () => {
   const { service, candleRepo } = newService();
   candleRepo.rows = normalSessionRows('2022-01-03');
@@ -280,6 +358,8 @@ test('(B-F2C S/13) MANIFEST EVIDENCE AVAILABLE -- genuine durable evidence is ex
     sourceOrderAnomalyCount: 0,
     sourceHealthStatus: DatasetHealthStatus.HEALTHY,
     provider: HistoricalProviderId.UPSTOX,
+    provenanceComposition: SourceAcquisitionProvenanceComposition.PRIMARY_ONLY,
+    compositeRepair: null,
     evidenceSemanticChecksum: 'stable-evidence-checksum-abc123',
   };
   const evidenceService = new FakeRetrievalEvidenceService(new Map([[`${INSTRUMENT_KEY}|1minute|${date}`, genuineEvidence]]));
@@ -317,6 +397,8 @@ test('(B-F2C S) MANIFEST EVIDENCE STABILITY -- two manifests generated for ident
     sourceOrderAnomalyCount: 0,
     sourceHealthStatus: DatasetHealthStatus.HEALTHY,
     provider: HistoricalProviderId.UPSTOX,
+    provenanceComposition: SourceAcquisitionProvenanceComposition.PRIMARY_ONLY,
+    compositeRepair: null,
     evidenceSemanticChecksum: stableChecksum,
   };
   const evidenceService = new FakeRetrievalEvidenceService(new Map([[`${INSTRUMENT_KEY}|1minute|${date}`, evidence]]));
@@ -437,6 +519,8 @@ test('(12) durable retrieval evidence selection (B-F2C FIX-1) is unaffected by c
     sourceOrderAnomalyCount: 0,
     sourceHealthStatus: DatasetHealthStatus.HEALTHY,
     provider: HistoricalProviderId.UPSTOX,
+    provenanceComposition: SourceAcquisitionProvenanceComposition.PRIMARY_ONLY,
+    compositeRepair: null,
     evidenceSemanticChecksum: 'special-session-evidence-checksum',
   };
   const evidenceService = new FakeRetrievalEvidenceService(new Map([[`${INSTRUMENT_KEY}|1minute|${date}`, genuineEvidence]]));

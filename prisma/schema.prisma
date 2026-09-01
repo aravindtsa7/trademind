@@ -136,6 +136,8 @@ model HistoricalDataRetrievalSession {
   updatedAt                  DateTime @updatedAt
   retrieval                  HistoricalDataRetrieval @relation(fields: [retrievalId], references: [id], onDelete: Cascade)
   conflicts                  HistoricalCandleConflict[]
+  repairAttemptsAsPrimary    HistoricalCandleRepairEvidence[] @relation("RepairPrimarySession")
+  repairAttemptsAsResult     HistoricalCandleRepairEvidence[] @relation("RepairResultingSession")
 
   @@unique([retrievalId, tradingDate])
   @@index([instrumentKey, timeframe, tradingDate])
@@ -174,6 +176,130 @@ model HistoricalCandleConflict {
 
   @@index([instrumentKey, timeframe, candleTime])
   @@index([retrievalSessionId])
+}
+
+// B-F8: durable, append-only composite provenance for one canonical-session
+// GAP-REPAIR attempt -- combining a primary retrieval's accepted rows with
+// an explicitly-configured secondary repair provider's rows for exactly the
+// authoritative canonical minutes the primary retrieval left missing (see
+// NiftyUnderlyingGapRepairService). One row per repair ATTEMPT; the SERVICE
+// WRITE PATH (`HistoricalCandleRepairEvidenceService`) is create-only --
+// reruns append a new row rather than revising or deleting an old one,
+// exactly like every other B-F2C evidence table.
+//
+// LOW 5 CORRECTION (post-Terra-review): "append-only" here is a SERVICE
+// CONVENTION, not a database-permanent/cryptographic retention guarantee --
+// `primarySessionId`'s FK is `onDelete: Cascade` (see below), so deleting
+// the parent `HistoricalDataRetrievalSession` DOES cascade-delete this row
+// (and its `HistoricalCandleRepairSessionWindow`/`HistoricalCandleRepairContribution`
+// children in turn). This is the SAME pre-existing convention every other
+// B-F2C evidence table already uses (e.g. `HistoricalCandleConflict`'s
+// `retrievalSessionId` FK is also `onDelete: Cascade`) -- no production code
+// path in this repository ever deletes a `HistoricalDataRetrievalSession`
+// today, but this doc deliberately no longer overclaims an immutability
+// guarantee the schema itself does not enforce. `primarySessionId`
+// always references the (INCOMPLETE, or occasionally INVALID) primary
+// `HistoricalDataRetrievalSession` this attempt targeted; `resultingSessionId`
+// references the NEW composite ACCEPTED session only when `outcome` is
+// REPAIR_ACCEPTED (null for every other outcome -- a failed/declined repair
+// attempt never fabricates a resulting session). `primaryRetrievalId` /
+// `repairRetrievalId` are intentionally plain, non-FK-enforced identifiers
+// (not `@relation`) -- they are denormalized convenience pointers into
+// `HistoricalDataRetrieval`, exactly mirroring how `HistoricalCandleConflict`
+// already denormalizes `instrumentKey`/`timeframe` alongside its own FK;
+// `primarySessionId`/`resultingSessionId` remain the enforced relational
+// links. Never stores an access token, API secret, or raw candle payload.
+model HistoricalCandleRepairEvidence {
+  id                        String                          @id @default(uuid())
+  primaryRetrievalId        String
+  // Nullable at the DB level ONLY because a legacy row written before this column existed cannot
+  // truthfully populate it (see the migration's own doc comment) -- application code
+  // (`HistoricalCandleRepairEvidenceService.recordRepairAttempt`) always supplies a value for every
+  // row it creates; `RecordRepairAttemptInput.primaryProviderId` remains required (non-null) in
+  // TypeScript. `HistoricalDataRetrievalEvidenceService.findLatestAvailableSessionEvidence` requires
+  // this (and `calendarDisposition`/`repairPolicyVersion`) to be non-null before treating a row as
+  // full composite provenance, so a legacy NULL row is fail-closed rather than fabricated.
+  primaryProviderId         String?
+  primarySessionId          String
+  repairProviderId          String
+  repairRetrievalId         String?
+  instrumentKey             String
+  timeframe                 String
+  tradingDate                String
+  // Nullable at the DB level for the same legacy-row reason as `primaryProviderId` above.
+  calendarDisposition       String?
+  // Nullable at the DB level for the same legacy-row reason as `primaryProviderId` above.
+  repairPolicyVersion       Int?
+  expectedMinuteCount       Int
+  primaryAcceptedRowCount   Int
+  missingMinuteCount        Int
+  repairAcceptedMinuteCount Int
+  corroboratedOverlapCount  Int
+  conflictingOverlapCount   Int
+  outcome                   String
+  resultingSessionId        String?
+  missingMinutesChecksum    String
+  repairSemanticChecksum    String
+  createdAt                 DateTime                          @default(now())
+  primarySession            HistoricalDataRetrievalSession    @relation("RepairPrimarySession", fields: [primarySessionId], references: [id], onDelete: Cascade)
+  resultingSession          HistoricalDataRetrievalSession?   @relation("RepairResultingSession", fields: [resultingSessionId], references: [id], onDelete: SetNull)
+  sessionWindows            HistoricalCandleRepairSessionWindow[]
+  contributions             HistoricalCandleRepairContribution[]
+
+  @@index([instrumentKey, timeframe, tradingDate])
+  @@index([primarySessionId])
+  @@index([resultingSessionId])
+  @@index([outcome])
+}
+
+// B-F8 CORRECTION: the exact, authoritative calendar session window(s) that
+// governed ONE repair attempt, stored normalized (mirrors
+// `ExchangeCalendarSessionWindow`'s established shape/spirit, never a JSON
+// blob) so the full expected-canonical-minute vector for that attempt can be
+// deterministically re-derived offline via the existing pure
+// `expectedMinutesForWindows`/`expectedCanonicalTimestamps` utilities --
+// without any future calendar lookup or provider re-fetch. Immutable once
+// written (one repair attempt's windows never change after the fact).
+model HistoricalCandleRepairSessionWindow {
+  id               String                         @id @default(uuid())
+  repairEvidenceId String
+  windowIndex      Int
+  openMinuteIst    Int
+  closeMinuteIst   Int
+  createdAt        DateTime                       @default(now())
+  repairEvidence   HistoricalCandleRepairEvidence @relation(fields: [repairEvidenceId], references: [id], onDelete: Cascade)
+
+  @@unique([repairEvidenceId, windowIndex])
+}
+
+// B-F8 CORRECTION: durable, per-canonical-timestamp contribution provenance
+// for one repair attempt -- answers "which exact canonical timestamps came
+// from the repair provider, which were corroborated overlaps, and which were
+// conflicting overlaps" directly from DB state, without ever requiring a
+// future provider re-fetch (a SHA-256 checksum alone is not invertible).
+// Deliberately does NOT store one row per every primary-retained minute
+// (task correction: "do not blindly store 375 redundant rows") -- a
+// primary-owned timestamp is instead the set difference between the
+// attempt's own `HistoricalCandleRepairSessionWindow`-derived expected
+// minute vector and this table's `REPAIR_FILLED_MISSING` rows for the same
+// `repairEvidenceId`, which is exactly and only valid to reconstruct when
+// the parent's `outcome` is `REPAIR_ACCEPTED` (a full, complete resolution).
+// Append-only; one row per (repairEvidenceId, candleTime, role).
+model HistoricalCandleRepairContribution {
+  id                      String                         @id @default(uuid())
+  repairEvidenceId        String
+  candleTime              DateTime
+  role                    String
+  repairProviderId        String
+  repairRetrievalId       String?
+  repairContentChecksum   String
+  primaryContentChecksum  String?
+  createdAt               DateTime                       @default(now())
+  repairEvidence          HistoricalCandleRepairEvidence @relation(fields: [repairEvidenceId], references: [id], onDelete: Cascade)
+
+  @@unique([repairEvidenceId, candleTime, role])
+  @@index([repairEvidenceId])
+  @@index([candleTime])
 }
 
 model HistoricalCandleSyncLog {

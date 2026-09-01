@@ -38,8 +38,49 @@ export enum ManifestDatasetKind {
  * `DatasetManifestService.verifyManifest` can recompute the identical
  * health determination later without a live calendar lookup. `[]` for any
  * session whose health used the legacy fixed 375-row default.
+ *
+ * Bumped 3 -> 4 for B-F8 CORRECTION (post-Terra-review blocker 2):
+ * `SourceAcquisitionEvidence` gained `provenanceComposition` and
+ * `compositeRepair` (both observability material, never part of
+ * `contentChecksum`/`datasetChecksum` -- identical precedent to the 1 -> 2
+ * bump above). Without this, a manifest reader could not distinguish a
+ * pure-primary-provider session from a composite session assembled from a
+ * primary retrieval plus an explicit gap-repair attempt
+ * (`NiftyUnderlyingGapRepairService`), and `SourceAcquisitionEvidence.provider`
+ * alone would misleadingly read as "this ONE provider supplied every
+ * accepted row" for a session that is actually, say, 372 primary-provider
+ * rows plus 3 repair-provider rows. Existing schema-version-3 manifest
+ * artifacts remain fully readable; this bump exists so a consumer inspecting
+ * `manifestSchemaVersion` can tell whether `sourceAcquisitionEvidence.
+ * provenanceComposition`/`.compositeRepair` are even expected to be present.
  */
-export const MANIFEST_SCHEMA_VERSION = 3;
+// Bumped 4 -> 5 for B-F2D CORRECTION (post-Terra-review, "MANIFEST
+// WIRE-CONTRACT VERSIONING"): the 3 -> 4 bump above already introduced the
+// `provenanceComposition` FIELD; adding `UNKNOWN_LEGACY_REPAIR_PROVENANCE` as
+// a new possible VALUE of that field was, on its own reasoning, initially
+// treated as within the existing v4 contract (see the superseded comment this
+// one replaces, kept in git history). Terra's re-review overturned that:
+// every repository reader that inspects `manifestSchemaVersion` (a real,
+// enumerable set -- see `manifest-schema-compatibility.util.ts`) was compiled
+// against a value set of exactly `{PRIMARY_ONLY, COMPOSITE_REPAIRED}` for
+// schema v4, using `JSON.parse`/type casts with NO runtime enum validation.
+// Emitting a third value into that same declared version is therefore an
+// actual wire-contract break for those readers, not a compatible extension --
+// indistinguishable, without a version bump, from silent data corruption.
+//
+// `UNKNOWN_LEGACY_REPAIR_PROVENANCE` is a v5-only value: current code (see
+// `DatasetManifestService.assembleManifest`) always stamps freshly-generated
+// manifests with the CURRENT `MANIFEST_SCHEMA_VERSION` (5), so this value is
+// never emitted into a v4-labeled artifact by anything in this codebase. A
+// stored v4 artifact remains fully readable under the ORIGINAL v4 contract
+// (`provenanceComposition` restricted to `{PRIMARY_ONLY, COMPOSITE_REPAIRED}`)
+// -- see `manifest-schema-compatibility.util.ts`'s `assertManifestSchemaCompatible`,
+// the ONE centralized guard every manifest-artifact intake boundary now calls
+// before interpreting `sessions`/`sourceAcquisitionEvidence` in any way. A v4
+// artifact that somehow contains `UNKNOWN_LEGACY_REPAIR_PROVENANCE` (it never
+// should, but this must never be assumed) is rejected fail-closed as
+// contract-invalid, never silently upgraded/relabeled.
+export const MANIFEST_SCHEMA_VERSION = 5;
 
 /**
  * Semantic version of `CanonicalSessionProjectorService`'s session-boundary/
@@ -219,6 +260,64 @@ export enum SourceAcquisitionEvidenceAvailability {
 }
 
 /**
+ * B-F8 CORRECTION (post-Terra-review blocker 2): whether the ACCEPTED
+ * session this evidence describes was produced entirely by one primary
+ * retrieval, or is a COMPOSITE session assembled from a primary retrieval
+ * plus an explicit `NiftyUnderlyingGapRepairService` attempt. `PRIMARY_ONLY`
+ * is also the correct value whenever `availability` is
+ * `UNAVAILABLE_FROM_PERSISTED_STORE` (nothing composite can be known either
+ * way) -- it is never read as "proven pure-primary" in that case, only as
+ * "no composite repair evidence is being asserted here".
+ *
+ * HIGH 1 CORRECTION (post-Terra-re-review): `PRIMARY_ONLY` must NEVER be
+ * returned merely because no FULLY-PROVENANCED `HistoricalCandleRepairEvidence`
+ * row was found -- that conflates two different facts. A legacy
+ * `REPAIR_ACCEPTED` row (written before migration
+ * `20260831174417_add_historical_candle_repair_contribution_provenance`
+ * added `calendarDisposition`/`primaryProviderId`/`repairPolicyVersion`,
+ * which remain nullable at the DB level for exactly such rows) still PROVES
+ * the session was assembled from two providers -- it is never truthfully
+ * "primary only". `UNKNOWN_LEGACY_REPAIR_PROVENANCE` is the fail-closed
+ * value for that case: REPAIR_ACCEPTED evidence for this session genuinely
+ * exists, but none of it carries enough durable provenance to safely
+ * populate `CompositeRepairProvenance` (which would otherwise require
+ * fabricating a primary provider/repair-policy version this evidence row
+ * never truthfully recorded). See
+ * `HistoricalDataRetrievalEvidenceService.findLatestAvailableSessionEvidence`
+ * for the exact three-way decision this value participates in.
+ */
+export enum SourceAcquisitionProvenanceComposition {
+  PRIMARY_ONLY = 'PRIMARY_ONLY',
+  COMPOSITE_REPAIRED = 'COMPOSITE_REPAIRED',
+  /** REPAIR_ACCEPTED evidence exists for this session, but none of it is fully provenanced (a legacy row -- see the enum's own doc comment). `compositeRepair` is always `null` here, exactly like `PRIMARY_ONLY` -- but this value must never be confused with a genuinely pure-primary session: it truthfully signals "this session IS known to be a repair composite, but its exact provider/policy attribution cannot be safely reconstructed." */
+  UNKNOWN_LEGACY_REPAIR_PROVENANCE = 'UNKNOWN_LEGACY_REPAIR_PROVENANCE',
+}
+
+/**
+ * B-F8 CORRECTION (post-Terra-review blocker 2): observability-only detail
+ * for a `COMPOSITE_REPAIRED` session -- deliberately does NOT claim the
+ * repair provider supplied every accepted row (see `repairedMinuteCount`,
+ * which is always strictly less than the session's full accepted row
+ * count for any genuine gap-repair case). `HistoricalDataRetrievalSession.
+ * provider`/`SourceAcquisitionEvidence.provider` above still truthfully
+ * describe the RETRIEVAL that produced the accepted evidence row (the
+ * repair retrieval, since that is the one B-F2C `persistSession` call that
+ * actually committed the composite content) -- this structure exists
+ * specifically so a reader is never left with ONLY that single-provider
+ * field to (mis)interpret a composite session by.
+ */
+export interface CompositeRepairProvenance {
+  readonly primaryProvider: HistoricalProviderId;
+  readonly primaryRetrievalId: string;
+  readonly repairProvider: HistoricalProviderId;
+  readonly repairRetrievalId: string | null;
+  readonly repairEvidenceId: string;
+  /** Count of canonical minutes this composite session actually sourced from the repair provider -- NEVER the session's full row count. */
+  readonly repairedMinuteCount: number;
+  readonly repairPolicyVersion: number;
+}
+
+/**
  * Original-provider-acquisition evidence for one session, kept structurally
  * separate from `persistedCanonicalHealthStatus` (task correction: "persisted
  * canonical health != source acquisition health"). Every field here is
@@ -251,6 +350,16 @@ export interface SourceAcquisitionEvidence {
    * `datasetChecksum`.
    */
   readonly evidenceSemanticChecksum: string | null;
+  /**
+   * B-F8 CORRECTION (post-Terra-review blocker 2): `PRIMARY_ONLY` unless a
+   * durable `HistoricalCandleRepairEvidence` row with `outcome ===
+   * REPAIR_ACCEPTED` and `resultingSessionId` equal to THIS session's id was
+   * found (never inferred/guessed) -- see `HistoricalDataRetrievalEvidenceService.
+   * findLatestAvailableSessionEvidence`.
+   */
+  readonly provenanceComposition: SourceAcquisitionProvenanceComposition;
+  /** Non-`null` if and only if `provenanceComposition === COMPOSITE_REPAIRED`. */
+  readonly compositeRepair: CompositeRepairProvenance | null;
 }
 
 /** The `SourceAcquisitionEvidence` value used whenever no durable B-F2C retrieval evidence exists for a session (every value B-F5 produced before B-F2C, and every legacy/resumed session after it). Exported as a single frozen constant so every caller shares the identical "unknown" representation rather than each re-deriving its own all-null object. */
@@ -258,6 +367,8 @@ export const UNAVAILABLE_SOURCE_ACQUISITION_EVIDENCE: SourceAcquisitionEvidence 
   availability: SourceAcquisitionEvidenceAvailability.UNAVAILABLE_FROM_PERSISTED_STORE,
   providerRowCount: null,
   excludedRowCount: null,
+  provenanceComposition: SourceAcquisitionProvenanceComposition.PRIMARY_ONLY,
+  compositeRepair: null,
   sourceOrderAnomalyCount: null,
   sourceHealthStatus: null,
   provider: null,

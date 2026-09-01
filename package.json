@@ -25,6 +25,8 @@
     "replay:session": "tsx src/tests/replay-market-session.ts",
     "replay:verify": "tsx src/tests/replay-market-session.ts --verify",
     "research:nifty-history": "tsx src/tests/research-nifty-underlying-acquisition.ts",
+    "research:nifty-gap-repair": "tsx src/tests/research-nifty-underlying-gap-repair.ts",
+    "research:nifty-gap-repair:fixture-verify": "tsx src/tests/research-nifty-underlying-gap-repair-fixture-verify.ts",
     "research:nifty-contract-catalog": "tsx src/tests/research-nifty-contract-catalog.ts",
     "research:nifty-option-candles": "tsx src/tests/research-nifty-option-candle-acquisition.ts",
     "research:manifest:generate": "tsx src/tests/research-dataset-manifest-generate.ts",

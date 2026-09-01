@@ -68,3 +68,23 @@ export function regularSessionWindow(): SessionWindow {
     closeMinuteIst: NIFTY_1M_SOURCE_HORIZON_END_MINUTE + 1,
   };
 }
+
+const MINUTE_MS = 60_000;
+
+/**
+ * B-F8 (gap repair) consumption helper: converts an ordered set of
+ * minute-of-day (IST) values for one `tradingDate` into the exact ordered
+ * set of canonical UTC candle-start `Date` timestamps those minutes denote.
+ * Deliberately the SAME arithmetic `DatasetHealthValidatorService.
+ * expectedCanonicalMinutes` already uses for its calendar-declared branch
+ * (`dayStart + minuteOfDay * MINUTE_MS`) -- exported here as a standalone,
+ * additive utility (never a modification of that validator's private
+ * method) so `NiftyUnderlyingGapRepairService` can derive the identical
+ * authoritative missing-minute timestamp vector without re-deriving its own
+ * arithmetic or depending on a private implementation detail of a different
+ * service.
+ */
+export function expectedCanonicalTimestamps(tradingDate: string, expectedMinutesIst: readonly number[]): readonly Date[] {
+  const dayStart = new Date(`${tradingDate}T00:00:00+05:30`).getTime();
+  return expectedMinutesIst.map((minuteOfDay) => new Date(dayStart + minuteOfDay * MINUTE_MS));
+}

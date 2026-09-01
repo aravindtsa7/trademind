@@ -3,6 +3,7 @@ import { fileExists, readFileBuffer } from '../domain/atomic-file-writer';
 import { sha256HexOfBuffer } from '../domain/file-checksum';
 import { decodeParquetBufferToManifestCandles } from '../domain/canonical-candle-parquet-codec';
 import { DatasetManifest, computeSessionContentChecksum } from '../domain/dataset-manifest.types';
+import { assertManifestSchemaCompatible } from '../domain/manifest-schema-compatibility.util';
 import { PARQUET_STORAGE_SCHEMA_VERSION, ParquetDatasetStorageDescriptor, ParquetSessionVerificationResult, ParquetVerificationRunResult, assertNoDuplicateStorageSessionEntries } from '../domain/parquet-storage.types';
 
 export interface VerifyStorageDescriptorRequest {
@@ -29,6 +30,12 @@ export const DEFAULT_PARQUET_OUTPUT_ROOT = 'artifacts/research-lake/parquet';
 export default class ResearchLakeParquetVerifyService {
   async verifyStorageDescriptor(request: VerifyStorageDescriptorRequest): Promise<ParquetVerificationRunResult> {
     const { descriptor, manifest } = request;
+    // B-F2D CORRECTION (Terra re-review HIGH-1): this public service is a
+    // real trust boundary -- it must never rely on a caller having already
+    // validated `manifest`. Runs BEFORE the descriptor's own semantic
+    // comparison, any filesystem read, or any checksum/session
+    // interpretation below.
+    assertManifestSchemaCompatible(manifest);
     const storageRoot = request.storageRoot ?? DEFAULT_PARQUET_OUTPUT_ROOT;
 
     if (descriptor.storageSchemaVersion !== PARQUET_STORAGE_SCHEMA_VERSION) {

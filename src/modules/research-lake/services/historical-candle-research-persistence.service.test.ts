@@ -218,6 +218,7 @@ const successfulResultFixture: ResearchSessionPersistenceResult = {
   idempotentCount: 0,
   conflicts: [],
   sessionEvidenceId: 'session-evidence-fixture-id',
+  acceptedCompanionResult: null,
 };
 
 /** Byte-for-byte the shape Terra's reproduced integration failure actually threw (see service file doc). */

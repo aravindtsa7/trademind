@@ -1,16 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 import {
   DatasetHealthStatus,
+  HistoricalCandleRepairOutcome,
   HistoricalCandleSessionPersistenceOutcome,
   HistoricalDataRetrievalErrorCategory,
   HistoricalDataRetrievalStatus,
   computeEvidenceSemanticChecksum,
 } from '../domain';
-import { HistoricalAssetType } from '../domain/historical-asset.types';
 import {
+  CompositeRepairProvenance,
   SourceAcquisitionEvidence,
   SourceAcquisitionEvidenceAvailability,
+  SourceAcquisitionProvenanceComposition,
 } from '../domain/dataset-manifest.types';
+import { HistoricalAssetType } from '../domain/historical-asset.types';
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 
 const defaultPrismaClient = new PrismaClient();
@@ -234,6 +237,90 @@ export default class HistoricalDataRetrievalEvidenceService {
     });
     if (!row) return null;
 
+    // B-F8 CORRECTION (post-Terra-review blocker 2): a session's ACCEPTED
+    // evidence row alone cannot say whether it is a pure-primary session or
+    // a COMPOSITE session assembled by `NiftyUnderlyingGapRepairService` --
+    // that fact lives only in `HistoricalCandleRepairEvidence`. Looked up
+    // here (never inferred/guessed) so the manifest read path can never
+    // silently misattribute a composite session as though ONE provider
+    // supplied every accepted row.
+    //
+    // HIGH 1 CORRECTION (post-Terra-re-review): a session's
+    // `provenanceComposition` is decided by a THREE-WAY, fail-closed
+    // determination, never a simple "found a fully-provenanced row? yes/no"
+    // binary -- doing so previously conflated "genuinely never repaired"
+    // with "repaired, but a legacy row cannot prove exactly how" into the
+    // SAME false `PRIMARY_ONLY` value.
+    //
+    //   (A) No REPAIR_ACCEPTED evidence at all for this resultingSessionId
+    //       -> PRIMARY_ONLY (genuinely, provably pure-primary).
+    //   (B) At least one FULLY-PROVENANCED REPAIR_ACCEPTED row exists
+    //       (`calendarDisposition`/`primaryProviderId`/`repairPolicyVersion`
+    //       all non-NULL -- see BLOCKER 1B / the migration's own doc
+    //       comment for why these are nullable at the DB level at all)
+    //       -> COMPOSITE_REPAIRED, attributed to the latest such row.
+    //   (C) REPAIR_ACCEPTED evidence exists, but NONE of it carries
+    //       sufficient durable provenance (a legacy row predating migration
+    //       20260831174417) -> UNKNOWN_LEGACY_REPAIR_PROVENANCE, NEVER
+    //       PRIMARY_ONLY -- this session IS known to be a repair composite;
+    //       only its exact provider/policy attribution is unrecoverable.
+    //       `compositeRepair` stays `null` here too (never fabricated).
+    //
+    // Two separate queries (never one query silently collapsing (B)/(C)):
+    // the first only asks "does REPAIR_ACCEPTED evidence exist at all"
+    // (case A vs B-or-C); the second (unchanged from the BLOCKER 1B
+    // correction) finds the latest FULLY-PROVENANCED row, if any (B vs C).
+    const anyRepairAcceptedEvidence = await this.prisma.historicalCandleRepairEvidence.findFirst({
+      where: { resultingSessionId: row.id, outcome: HistoricalCandleRepairOutcome.REPAIR_ACCEPTED },
+      select: { id: true },
+    });
+
+    let provenanceComposition = SourceAcquisitionProvenanceComposition.PRIMARY_ONLY;
+    let compositeRepair: CompositeRepairProvenance | null = null;
+
+    if (anyRepairAcceptedEvidence) {
+      // BLOCKER 1B CORRECTION (post-Terra-review, unchanged): `calendarDisposition` /
+      // `primaryProviderId` / `repairPolicyVersion` are nullable at the DB
+      // level (see `prisma/migrations/20260831174417_.../migration.sql`'s doc
+      // comment) because a row written before that migration cannot
+      // truthfully populate them. This query requires all three to be
+      // non-NULL IN THE QUERY ITSELF (never fetched then filtered in JS,
+      // exactly like the FIX-1 terminal-status filter above).
+      const composite = await this.prisma.historicalCandleRepairEvidence.findFirst({
+        where: {
+          resultingSessionId: row.id,
+          outcome: HistoricalCandleRepairOutcome.REPAIR_ACCEPTED,
+          calendarDisposition: { not: null },
+          primaryProviderId: { not: null },
+          repairPolicyVersion: { not: null },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      });
+      // Defensive null-check kept even though the WHERE clause above already
+      // excludes incomplete rows -- this function must NEVER fabricate
+      // `primaryProvider`/`repairPolicyVersion` from a `null`, so if a future
+      // change ever weakens that WHERE clause, this still fails closed
+      // rather than emitting bogus provenance.
+      if (composite && composite.primaryProviderId !== null && composite.repairPolicyVersion !== null) {
+        provenanceComposition = SourceAcquisitionProvenanceComposition.COMPOSITE_REPAIRED;
+        compositeRepair = {
+          primaryProvider: composite.primaryProviderId as HistoricalProviderId,
+          primaryRetrievalId: composite.primaryRetrievalId,
+          repairProvider: composite.repairProviderId as HistoricalProviderId,
+          repairRetrievalId: composite.repairRetrievalId,
+          repairEvidenceId: composite.id,
+          repairedMinuteCount: composite.repairAcceptedMinuteCount,
+          repairPolicyVersion: composite.repairPolicyVersion,
+        };
+      } else {
+        // Case (C): REPAIR_ACCEPTED evidence exists, but none of it is fully
+        // provenanced. Fail closed to UNKNOWN_LEGACY_REPAIR_PROVENANCE --
+        // this must NEVER fall through to PRIMARY_ONLY (HIGH 1).
+        provenanceComposition = SourceAcquisitionProvenanceComposition.UNKNOWN_LEGACY_REPAIR_PROVENANCE;
+        compositeRepair = null;
+      }
+    }
+
     return {
       availability: SourceAcquisitionEvidenceAvailability.AVAILABLE_FROM_DURABLE_RETRIEVAL_EVIDENCE,
       providerRowCount: row.providerRowCountForDate,
@@ -242,6 +329,8 @@ export default class HistoricalDataRetrievalEvidenceService {
       sourceHealthStatus: row.healthStatus as DatasetHealthStatus,
       provider: row.retrieval.providerId as HistoricalProviderId,
       evidenceSemanticChecksum: row.evidenceSemanticChecksum,
+      provenanceComposition,
+      compositeRepair,
     };
   }
 }

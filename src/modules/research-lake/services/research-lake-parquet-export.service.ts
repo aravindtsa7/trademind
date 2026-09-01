@@ -4,6 +4,7 @@ import HistoricalOptionCandleLakeRepository from '../repositories/historical-opt
 import { DatasetHealthStatus } from '../domain/dataset-health.types';
 import { istTradingDayUtcBounds } from '../domain/ist-session-clock';
 import { DatasetManifest, ManifestDatasetKind, OptionSessionIdentity, SessionContentIdentity, SessionManifest, UnderlyingSessionIdentity, computeSessionContentChecksum } from '../domain/dataset-manifest.types';
+import { assertManifestSchemaCompatible } from '../domain/manifest-schema-compatibility.util';
 import { encodeManifestCandlesToParquetBuffer, toManifestCandleContent } from '../domain/canonical-candle-parquet-codec';
 import { cleanupTempFile, fileExists, publishVerifiedTempFile, writeBufferAtomic, writeBufferToTempFile } from '../domain/atomic-file-writer';
 import { sha256HexOfBuffer } from '../domain/file-checksum';
@@ -73,6 +74,12 @@ export default class ResearchLakeParquetExportService {
 
   async exportDataset(request: ExportDatasetRequest): Promise<ParquetExportRunResult> {
     const { manifest } = request;
+    // B-F2D CORRECTION (Terra re-review HIGH-1): this public service is a
+    // real trust boundary -- it must never rely on a caller (CLI, year-runner,
+    // or a future caller) having already validated `manifest`. Runs BEFORE
+    // any repository read, filesystem write, Parquet serialization, or
+    // descriptor creation below.
+    assertManifestSchemaCompatible(manifest);
     const outputRoot = request.outputRoot ?? DEFAULT_PARQUET_OUTPUT_ROOT;
     const allowIncompleteSessions = request.allowIncompleteSessions ?? false;
 

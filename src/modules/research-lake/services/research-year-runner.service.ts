@@ -2,6 +2,7 @@ import { join } from 'path';
 import { fileExists, readFileBuffer, writeBufferAtomic } from '../domain/atomic-file-writer';
 import { istTradingDayUtcBounds } from '../domain/ist-session-clock';
 import { DatasetManifest, ManifestDatasetKind } from '../domain/dataset-manifest.types';
+import { assertManifestSchemaCompatible } from '../domain/manifest-schema-compatibility.util';
 import { ParquetDatasetStorageDescriptor, ParquetExportRunResult, ParquetSessionExportStatus, parquetStorageManifestRelativePath } from '../domain/parquet-storage.types';
 import { ResampleSessionStatus, ResampleTargetTimeframe } from '../domain/resampled-candle.types';
 import {
@@ -631,9 +632,11 @@ export default class ResearchYearRunnerService {
    * (`DatasetManifestService.verifyManifest`), then reloads the STORED B-F6
    * storage descriptor and recomputes physical + logical checksums fresh
    * from the CURRENT Parquet files (`ResearchLakeParquetVerifyService.
-   * verifyStorageDescriptor`). A missing artifact, an unparseable artifact,
-   * or ANY verification mismatch returns `false` -- never a false skip
-   * (task section 13/16.T-X).
+   * verifyStorageDescriptor`). A missing artifact, an unparseable artifact, a
+   * manifest that fails `assertManifestSchemaCompatible` (B-F2D correction:
+   * incompatible/future schema version, or an unknown provenance enum
+   * value), or ANY verification mismatch returns `false` -- never a false
+   * skip (task section 13/16.T-X).
    */
   private async tryRevalidateInstrument(datasetKind: ManifestDatasetKind, datasetId: string): Promise<boolean> {
     const manifestPath = join(this.manifestArtifactRoot, datasetKind, `${datasetId}.json`);
@@ -641,6 +644,12 @@ export default class ResearchYearRunnerService {
     let storedManifest: DatasetManifest;
     try {
       storedManifest = JSON.parse(readFileBuffer(manifestPath).toString('utf8')) as DatasetManifest;
+      // B-F2D CORRECTION (manifest wire-contract versioning): a stored
+      // artifact this reader cannot safely interpret (future schema version,
+      // unsupported ancient version, unknown provenance enum) must never be
+      // trusted enough to skip re-acquisition -- treated identically to an
+      // unparseable artifact (fail closed, force real re-acquisition below).
+      assertManifestSchemaCompatible(storedManifest);
     } catch {
       return false;
     }

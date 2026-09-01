@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import logger from '../core/logger/logger';
 import ResearchLakeParquetExportService, { DEFAULT_PARQUET_OUTPUT_ROOT } from '../modules/research-lake/services/research-lake-parquet-export.service';
 import { DatasetManifest } from '../modules/research-lake/domain/dataset-manifest.types';
+import { assertManifestSchemaCompatible } from '../modules/research-lake/domain/manifest-schema-compatibility.util';
 
 dotenv.config();
 logger.silent = true;
@@ -35,6 +36,10 @@ async function run(): Promise<void> {
   const allowIncompleteSessions = process.env.RESEARCH_PARQUET_ALLOW_INCOMPLETE?.trim().toLowerCase() === 'true';
 
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as DatasetManifest;
+  // B-F2D CORRECTION (manifest wire-contract versioning): reject an
+  // incompatible/malformed manifestSchemaVersion or unknown provenance enum
+  // fail-closed, before this CLI-supplied manifest is exported from.
+  assertManifestSchemaCompatible(manifest);
 
   console.log(JSON.stringify({ event: 'research:parquet:export starting', manifestPath, datasetId: manifest.datasetId, datasetKind: manifest.datasetKind, sessionCount: manifest.sessions.length, outputRoot, allowIncompleteSessions }));
 

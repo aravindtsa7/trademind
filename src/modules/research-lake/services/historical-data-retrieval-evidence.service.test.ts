@@ -142,6 +142,11 @@ class FakePrismaClient {
       return selectFirst(this.rows, args);
     },
   };
+
+  /** B-F8 CORRECTION (blocker 2): `findLatestAvailableSessionEvidence` now also looks up composite repair evidence for the winning session -- every test in this file exercises the ORIGINAL find-latest-session logic, never composite provenance, so this stub always reports "no composite repair evidence exists" (`null`), exactly as a genuinely pure-primary session would. */
+  readonly historicalCandleRepairEvidence = {
+    findFirst: async (): Promise<null> => null,
+  };
 }
 
 function newService(rows: readonly FakeSessionRow[]): { service: HistoricalDataRetrievalEvidenceService; prisma: FakePrismaClient } {

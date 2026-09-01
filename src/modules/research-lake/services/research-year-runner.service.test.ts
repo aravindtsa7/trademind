@@ -532,6 +532,118 @@ test('(T/W) a COMPLETED checkpoint is revalidated before skip -- DB drift after 
   }
 });
 
+// ============================================================================
+// B-F2D CORRECTION: manifest wire-contract versioning -- checkpoint/resume
+// must accept a backward-compatible v4 artifact but never trust a future
+// (unrecognized) schema version enough to skip re-acquisition.
+// ============================================================================
+
+test('(B-F2D 10) year-runner resume with a supported v4 manifest artifact still works -- backward compatibility is real, not just accepted in isolation', async () => {
+  const harness = newHarness({ underlyingResult: underlyingResult({ newlyCompleted: ['2022-01-03'] }) });
+  try {
+    harness.candleRepo.rows = normalSessionRows('2022-01-03');
+    const request = { ...REQUEST_UNDERLYING_ONLY, fromDate: '2022-01-03', toDate: '2022-01-03' };
+
+    const first = await harness.runner.run(request);
+    assert.equal(first.outcome, ResearchYearRunOutcome.COMPLETE);
+    assert.equal(harness.fakeUnderlying.calls.length, 1);
+
+    const datasetId = first.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION)?.materialization?.[0]?.datasetId as string;
+    const manifestPath = join(harness.manifestArtifactRoot, ManifestDatasetKind.UNDERLYING_1M, `${datasetId}.json`);
+    const onDisk = JSON.parse(readFileSync(manifestPath, 'utf8')) as DatasetManifest;
+    assert.equal(onDisk.manifestSchemaVersion, 5, 'sanity check: freshly generated manifests are stamped with the current schema version');
+    // Downgrade the stored artifact's own declared version to the oldest
+    // backward-compatible one (v4) -- every session here already reports
+    // PRIMARY_ONLY (no B-F2C durable evidence in this harness), which is a
+    // v4-legal value, so this is a genuinely valid v4 artifact, not merely a
+    // relabeled v5 one.
+    writeFileSync(manifestPath, `${JSON.stringify({ ...onDisk, manifestSchemaVersion: 4 }, null, 2)}\n`);
+
+    const second = await harness.runner.run(request);
+    assert.equal(second.outcome, ResearchYearRunOutcome.COMPLETE);
+    assert.equal(harness.fakeUnderlying.calls.length, 1, 'a genuinely valid v4 manifest artifact must still be trusted enough to skip re-acquisition -- v4 backward compatibility must be real, not merely accepted by the guard in isolation');
+  } finally {
+    harness.cleanup();
+  }
+});
+
+/**
+ * B-F2D CORRECTION (Terra re-review HIGH-2): strips a real, freshly-generated
+ * (and therefore correctly checksummed) on-disk manifest down to the EXACT
+ * historical shape for `version` -- see `manifest-schema-compatibility.util
+ * .ts`'s own compatibility-matrix doc. Never fabricates a checksum: identity/
+ * contentChecksum/canonicalRowCount/persistedCanonicalHealthStatus are
+ * version-invariant (unchanged since v1), so this is a truthful historical
+ * artifact for the SAME underlying persisted content, not a relabeled v5 one.
+ */
+function stripStoredManifestToVersion(onDisk: DatasetManifest, version: 1 | 2 | 3): DatasetManifest {
+  return {
+    ...onDisk,
+    manifestSchemaVersion: version,
+    sessions: onDisk.sessions.map((session) => {
+      const { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus, provider, evidenceSemanticChecksum } = session.sourceAcquisitionEvidence;
+      const evidence = version === 1 ? { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus } : { availability, providerRowCount, excludedRowCount, sourceOrderAnomalyCount, sourceHealthStatus, provider, evidenceSemanticChecksum };
+      const withEvidence = { ...session, sourceAcquisitionEvidence: evidence };
+      if (version === 3) return withEvidence; // v3 keeps calendarSessionWindows
+      const withoutWindows = { ...withEvidence } as Record<string, unknown>;
+      delete withoutWindows.calendarSessionWindows;
+      return withoutWindows;
+    }),
+  } as unknown as DatasetManifest;
+}
+
+for (const version of [1, 2, 3] as const) {
+  test(`(B-F2D year-runner v${version}) resume with a genuine v${version}-shaped stored manifest artifact still works end to end -- backward compatibility is real, not just accepted by the guard in isolation`, async () => {
+    const harness = newHarness({ underlyingResult: underlyingResult({ newlyCompleted: ['2022-01-03'] }) });
+    try {
+      harness.candleRepo.rows = normalSessionRows('2022-01-03');
+      const request = { ...REQUEST_UNDERLYING_ONLY, fromDate: '2022-01-03', toDate: '2022-01-03' };
+
+      const first = await harness.runner.run(request);
+      assert.equal(first.outcome, ResearchYearRunOutcome.COMPLETE);
+      assert.equal(harness.fakeUnderlying.calls.length, 1);
+
+      const datasetId = first.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION)?.materialization?.[0]?.datasetId as string;
+      const manifestPath = join(harness.manifestArtifactRoot, ManifestDatasetKind.UNDERLYING_1M, `${datasetId}.json`);
+      const onDisk = JSON.parse(readFileSync(manifestPath, 'utf8')) as DatasetManifest;
+      const historical = stripStoredManifestToVersion(onDisk, version);
+      const calendarSessionWindowsPresent = 'calendarSessionWindows' in (historical.sessions[0] as unknown as Record<string, unknown>);
+      assert.equal(calendarSessionWindowsPresent, version === 3, `sanity check: calendarSessionWindows must be present only at v3+ (got present=${calendarSessionWindowsPresent} for v${version})`);
+      writeFileSync(manifestPath, `${JSON.stringify(historical, null, 2)}\n`);
+
+      const second = await harness.runner.run(request);
+      assert.equal(second.outcome, ResearchYearRunOutcome.COMPLETE);
+      assert.equal(harness.fakeUnderlying.calls.length, 1, `a genuine v${version} manifest artifact must still be trusted enough to skip re-acquisition -- documented backward compatibility must be real, not merely accepted by the guard in isolation`);
+    } finally {
+      harness.cleanup();
+    }
+  });
+}
+
+test('(B-F2D 11) year-runner resume with a future (unrecognized) manifest schema version stops before using the artifact -- forces real re-acquisition rather than a false skip', async () => {
+  const harness = newHarness({ underlyingResult: underlyingResult({ newlyCompleted: ['2022-01-03'] }) });
+  try {
+    harness.candleRepo.rows = normalSessionRows('2022-01-03');
+    const request = { ...REQUEST_UNDERLYING_ONLY, fromDate: '2022-01-03', toDate: '2022-01-03' };
+
+    const first = await harness.runner.run(request);
+    assert.equal(harness.fakeUnderlying.calls.length, 1);
+
+    const datasetId = first.stages.find((s) => s.stageKind === ResearchYearRunStageKind.UNDERLYING_MATERIALIZATION)?.materialization?.[0]?.datasetId as string;
+    const manifestPath = join(harness.manifestArtifactRoot, ManifestDatasetKind.UNDERLYING_1M, `${datasetId}.json`);
+    const onDisk = JSON.parse(readFileSync(manifestPath, 'utf8')) as DatasetManifest;
+    // Simulate a manifest written by some future version of this codebase --
+    // a schema version this reader has never heard of.
+    writeFileSync(manifestPath, `${JSON.stringify({ ...onDisk, manifestSchemaVersion: 6 }, null, 2)}\n`);
+
+    const second = await harness.runner.run(request);
+    assert.equal(harness.fakeUnderlying.calls.length, 2, 'an unrecognized future manifest schema version must never be trusted enough to skip re-acquisition -- the stale artifact is never interpreted, real work happens instead');
+    assert.equal(second.outcome, ResearchYearRunOutcome.COMPLETE, 'the run must still safely re-acquire/rematerialize and succeed rather than crashing on the unreadable prior artifact');
+  } finally {
+    harness.cleanup();
+  }
+});
+
 test('(U) a missing Parquet storage descriptor is never false-skipped', async () => {
   const harness = newHarness({ underlyingResult: underlyingResult({ newlyCompleted: ['2022-01-03'] }) });
   try {

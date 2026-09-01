@@ -133,12 +133,70 @@ export function isRetryableResearchPersistenceConcurrencyError(error: unknown): 
   return false;
 }
 
-export interface ResearchSessionPersistenceResult {
+/**
+ * HIGH 2 CORRECTION (post-Terra-re-review): `acceptedCompanionResult` is the
+ * ONLY source of truth for "did the caller's `onAcceptedWithinTransaction`
+ * hook's write genuinely commit as part of THIS result" -- it is populated
+ * exclusively from the value `$transaction()`'s callback RETURNS, which
+ * Prisma's interactive-transaction contract guarantees is only ever
+ * surfaced to the caller after a SUCCESSFUL COMMIT (a callback that throws,
+ * or a transaction whose commit itself fails, never lets its return value
+ * escape -- `$transaction()` rejects instead). Concretely:
+ *   - `null` when no `onAcceptedWithinTransaction` hook was configured;
+ *   - `null` when `outcome === 'CONFLICT'` (the hook is never invoked there);
+ *   - otherwise, exactly the value the hook returned -- and because this
+ *     whole object is only ever produced by the ONE transaction attempt that
+ *     actually committed, a caller reading this field after `persistSession`
+ *     resolves can NEVER observe state from a retried/rolled-back attempt.
+ * This deliberately replaces an earlier design (an outer, hook-mutated
+ * boolean flag in the caller) that could leak a rolled-back attempt's
+ * "the hook ran" fact across a whole-transaction retry -- see
+ * `ResearchPersistenceConcurrencyRetriesExhaustedError`'s retry loop in
+ * `persistSession`, which discards a failed attempt's local state entirely
+ * and starts attempt N+1 from a brand-new transaction callback invocation.
+ */
+export interface ResearchSessionPersistenceResult<TCompanion = undefined> {
   readonly outcome: ResearchSessionPersistenceOutcome;
   readonly insertedCount: number;
   readonly idempotentCount: number;
   readonly conflicts: readonly CandleConflictDetail[];
   readonly sessionEvidenceId: string;
+  readonly acceptedCompanionResult: TCompanion | null;
+}
+
+/** The exact fact `onAcceptedWithinTransaction` (see `PersistSessionOptions`) is handed once a session's fate is decided ACCEPTED -- deliberately never exposed for the CONFLICT branch, since that hook exists to let a caller attach provenance to the session it just created, and no session is created on conflict. */
+export interface AcceptedSessionWithinTransaction {
+  readonly sessionEvidenceId: string;
+  readonly outcome: 'ACCEPTED_NEW' | 'ACCEPTED_IDEMPOTENT';
+}
+
+/**
+ * HIGH 2 CORRECTION (post-Terra-review, re-corrected post-Terra-re-review):
+ * lets a caller (today, only `NiftyUnderlyingGapRepairService`) attach
+ * ADDITIONAL durable evidence to the SAME SERIALIZABLE transaction
+ * `persistSession` already opens, so that evidence and the canonical candle
+ * write commit or roll back together -- never a separate transaction that
+ * can leave the canonical session durable while the caller's own evidence is
+ * lost to a crash. `onAcceptedWithinTransaction` is invoked AFTER the
+ * resulting session identity is known (the `HistoricalDataRetrievalSession`
+ * row has been created inside `tx`) but BEFORE this transaction attempt
+ * commits; if it throws, `tx` throws too, so Prisma rolls back the ENTIRE
+ * attempt -- the candle rows, the session evidence, and whatever partial
+ * writes the hook itself made. Never invoked on the CONFLICT branch (no
+ * accepted session exists to attach anything to). Every existing caller that
+ * omits `options` sees IDENTICAL behavior to before this correction -- this
+ * parameter is purely additive.
+ *
+ * The hook now RETURNS a typed `TCompanion` value (instead of `void`) --
+ * this return value is threaded through `$transaction()`'s own resolved
+ * value into `ResearchSessionPersistenceResult.acceptedCompanionResult` (see
+ * that field's doc). A caller MUST derive "was my companion write durably
+ * committed" from that returned field alone, never from a variable the hook
+ * itself mutates in an outer/enclosing scope -- such a variable would be
+ * indistinguishable from state written by a rolled-back, retried attempt.
+ */
+export interface PersistSessionOptions<TCompanion = undefined> {
+  readonly onAcceptedWithinTransaction?: (tx: Prisma.TransactionClient, accepted: AcceptedSessionWithinTransaction) => Promise<TCompanion>;
 }
 
 /** Structural shape this service needs from an existing persisted row -- deliberately loose on numeric field types (`unknown`) because a raw `FOR UPDATE` query's driver-level type mapping for DECIMAL/BIGINT columns is not asserted here; `canonicalDecimalString`/`normalizeBigInt` below accept and validate whatever shape actually arrives. */
@@ -304,12 +362,16 @@ export default class HistoricalCandleResearchPersistenceService {
    * A non-retryable error (or a class the classifier does not recognize)
    * propagates immediately after exactly one attempt.
    */
-  async persistSession(metadata: ResearchCandleSessionMetadata, candidateCandles: readonly CanonicalHistoricalCandle[]): Promise<ResearchSessionPersistenceResult> {
+  async persistSession<TCompanion = undefined>(
+    metadata: ResearchCandleSessionMetadata,
+    candidateCandles: readonly CanonicalHistoricalCandle[],
+    options?: PersistSessionOptions<TCompanion>
+  ): Promise<ResearchSessionPersistenceResult<TCompanion>> {
     let lastRetryableError: unknown;
     for (let attempt = 1; attempt <= RESEARCH_PERSISTENCE_MAX_ATTEMPTS; attempt += 1) {
       try {
         // eslint-disable-next-line no-await-in-loop -- each whole-transaction attempt must fully commit or roll back before any retry may re-read committed state; attempts are never run concurrently with each other
-        return await this.persistSessionTransactionOnce(metadata, candidateCandles);
+        return await this.persistSessionTransactionOnce(metadata, candidateCandles, options);
       } catch (error) {
         if (!isRetryableResearchPersistenceConcurrencyError(error)) throw error;
         lastRetryableError = error;
@@ -327,8 +389,24 @@ export default class HistoricalCandleResearchPersistenceService {
    * (or a full automatic rollback on any thrown error, per Prisma's
    * interactive-transaction contract). Only `persistSession` above ever
    * calls this, and only it decides whether a failure here is retried.
+   *
+   * HIGH 2 CORRECTION (post-Terra-re-review): every value this method
+   * produces -- INCLUDING `acceptedCompanionResult` -- is constructed
+   * entirely from local variables scoped to THIS SINGLE transaction callback
+   * invocation and returned as one object from `$transaction()`. Nothing is
+   * written to any variable outside this callback's own scope. This is what
+   * makes the result immune to cross-attempt leakage: `$transaction()`
+   * resolves this exact object to the caller if and only if the COMMIT
+   * succeeded for this exact attempt; a rolled-back attempt's local
+   * variables (including whatever the hook returned) simply cease to exist
+   * -- there is no shared mutable cell a later attempt or the caller could
+   * accidentally observe.
    */
-  private async persistSessionTransactionOnce(metadata: ResearchCandleSessionMetadata, candidateCandles: readonly CanonicalHistoricalCandle[]): Promise<ResearchSessionPersistenceResult> {
+  private async persistSessionTransactionOnce<TCompanion = undefined>(
+    metadata: ResearchCandleSessionMetadata,
+    candidateCandles: readonly CanonicalHistoricalCandle[],
+    options?: PersistSessionOptions<TCompanion>
+  ): Promise<ResearchSessionPersistenceResult<TCompanion>> {
     return this.prisma.$transaction(
       async (tx) => {
         const existingRows = await this.lockExistingRange(tx, metadata.instrumentKey, metadata.timeframe, metadata.from, metadata.to);
@@ -337,7 +415,7 @@ export default class HistoricalCandleResearchPersistenceService {
         if (plan.conflicts.length > 0) {
           const sessionEvidenceId = await this.writeSessionEvidence(tx, metadata, HistoricalCandleSessionPersistenceOutcome.CONFLICT, candidateCandles);
           await this.writeConflicts(tx, sessionEvidenceId, metadata, plan.conflicts);
-          return { outcome: 'CONFLICT' as const, insertedCount: 0, idempotentCount: 0, conflicts: plan.conflicts, sessionEvidenceId };
+          return { outcome: 'CONFLICT' as const, insertedCount: 0, idempotentCount: 0, conflicts: plan.conflicts, sessionEvidenceId, acceptedCompanionResult: null };
         }
 
         if (plan.toInsert.length > 0) {
@@ -346,12 +424,26 @@ export default class HistoricalCandleResearchPersistenceService {
 
         const outcome = plan.toInsert.length > 0 ? HistoricalCandleSessionPersistenceOutcome.ACCEPTED_NEW : HistoricalCandleSessionPersistenceOutcome.ACCEPTED_IDEMPOTENT;
         const sessionEvidenceId = await this.writeSessionEvidence(tx, metadata, outcome, candidateCandles);
+        const typedOutcome = outcome === HistoricalCandleSessionPersistenceOutcome.ACCEPTED_NEW ? ('ACCEPTED_NEW' as const) : ('ACCEPTED_IDEMPOTENT' as const);
+
+        // HIGH 2 CORRECTION: runs INSIDE this same transaction, after the
+        // resulting session identity is known but before commit -- see
+        // `PersistSessionOptions.onAcceptedWithinTransaction` doc. A thrown
+        // error here rolls back the candle rows and session evidence too.
+        // Its return value is captured into a LOCAL variable and threaded
+        // into this callback's own return statement below -- never written
+        // to any variable outside this function.
+        const acceptedCompanionResult: TCompanion | null = options?.onAcceptedWithinTransaction
+          ? await options.onAcceptedWithinTransaction(tx, { sessionEvidenceId, outcome: typedOutcome })
+          : null;
+
         return {
-          outcome: outcome === HistoricalCandleSessionPersistenceOutcome.ACCEPTED_NEW ? ('ACCEPTED_NEW' as const) : ('ACCEPTED_IDEMPOTENT' as const),
+          outcome: typedOutcome,
           insertedCount: plan.toInsert.length,
           idempotentCount: plan.idempotentCount,
           conflicts: [],
           sessionEvidenceId,
+          acceptedCompanionResult,
         };
       },
       // SERIALIZABLE is the strongest isolation MySQL/InnoDB offers via Prisma; combined with the
