@@ -1,5 +1,5 @@
-import 'dotenv/config';
-import eventBus from '../core/events';
+﻿import 'dotenv/config';
+import { EventEmitter } from 'events';
 import HistoricalCandleRepository from '../modules/historical-candles/repositories/historical-candle.repository';
 import InstrumentRepository from '../modules/instruments/repositories/instrument.repository';
 import { Candle } from '../modules/indicators/types';
@@ -39,6 +39,8 @@ import PaperPortfolioService, { InMemoryPaperPortfolioRepository } from '../modu
 import PaperFillModelService from '../modules/paper-trading/services/paper-fill-model.service';
 import PrismaExecutionRepository from '../modules/execution/prisma-execution.repository';
 import { PaperOrderStatus } from '../modules/paper-trading/types/paper-trading.types';
+import { MarketDataConnectionPort, MarketDataHealthPort, MarketDataSubscriptionPort, StrategyMarketDataChannel } from '../modules/market-data/gateway/strategy-market-data-channel';
+import ConsumerRecoveryWatchdogService from '../modules/market-data/services/consumer-recovery-watchdog.service';
 
 const niftyInstrumentKey = 'NSE_INDEX|Nifty 50';
 const tickPrintIntervalMs = 30_000;
@@ -139,7 +141,54 @@ function isLikelyMarketSession(timestamp: Date): boolean {
   return isWithinNseSession(timestamp);
 }
 
-async function run(): Promise<void> {
+export interface LiveRuntimeOptions {
+  /** Injected only by the combined shared-market-data-gateway runtime; standalone `npm run paper:v2` omits this and constructs its own dedicated ConnectionManager/SubscriptionManager/MarketDataHealthMonitorService exactly as before. */
+  channel?: StrategyMarketDataChannel;
+  /**
+   * Explicit, per-instance V2 identity override (F-01). When provided, this -- not
+   * process.env.TRADING_STRATEGY_VERSION -- determines whether this run() invocation evaluates
+   * the frozen V2 trend-down decision path. Required by the combined shared-market-data-gateway
+   * runtime (test-live-shared-market-data-gateway.ts), which runs this V2 runner in the SAME
+   * process as V4/V8 and therefore cannot rely on a single process-global env var to distinguish
+   * this instance's identity from a sibling's. Standalone invocations (`npm run paper:v1` /
+   * `npm run paper:v2`) omit this and fall back to process.env.TRADING_STRATEGY_VERSION exactly
+   * as before.
+   */
+  strategyVersion?: 'V1' | 'V2';
+}
+
+export async function run(options: LiveRuntimeOptions = {}): Promise<void> {
+  // F-03 startup ownership guard: every registered shared-gateway consumer must end up either
+  // durably owned by a running strategy lifecycle or released here. Set true only once this
+  // runtime has reached its durable live-ownership point (host reaches RUNNING); every other
+  // path below it -- the outside-session early return, a startup-readiness fault, a
+  // data-freshness block, a thrown config/token error, or any other thrown initialization error
+  // -- falls through to the finally at the end of this function and releases this consumer's
+  // channel. GatewayMarketDataChannel.disconnect() is idempotent, so this is safe even when a
+  // fault-triggered shutdown() already released the channel first. A no-op in standalone mode
+  // (no options.channel). Mirrors the same pattern already accepted for V4/V8.
+  // F-03 startup ownership guard: every registered shared-gateway consumer must end up either
+  // durably owned by a running strategy lifecycle or released here. Set true only once this
+  // runtime has reached its durable live-ownership point (host reaches RUNNING); every other
+  // path below it -- the outside-session early return, a startup-readiness fault, a
+  // data-freshness block, a thrown config/token error, or any other thrown initialization error
+  // -- falls through to the finally at the end of this function and releases this consumer's
+  // channel. GatewayMarketDataChannel.disconnect() is idempotent, so this is safe even when a
+  // fault-triggered shutdown() already released the channel first. A no-op in standalone mode
+  // (no options.channel). Mirrors the same pattern already accepted for V4/V8.
+  let runtimeOwnsChannel = false;
+  try {
+  // Resolved ONCE, here, before any strategy construction -- this local is the sole authority
+  // for V2 identity and its exit policy for the remainder of this run() invocation. A sibling
+  // V4/V8 startup (or anything else) mutating process.env.TRADING_STRATEGY_VERSION afterward can
+  // never change it (see LiveRuntimeOptions.strategyVersion doc above).
+  const isV2 = options.strategyVersion === 'V2' || (options.strategyVersion === undefined && process.env.TRADING_STRATEGY_VERSION === 'V2');
+  const v2ExitPolicyConfig = Object.freeze({
+    targetPercent: Number(process.env.V2_TARGET_PERCENT ?? 5),
+    stopLossPercent: Number(process.env.V2_STOP_PERCENT ?? 5),
+    maximumHoldingMinutes: Number(process.env.V2_MAX_HOLD_MINUTES ?? 15),
+  });
+  const paperTradingOnly = process.env.PAPER_TRADING_ONLY === 'true';
   const accessToken = process.env.UPSTOX_ACCESS_TOKEN;
   if (!accessToken) throw new Error('UPSTOX_ACCESS_TOKEN must be set in .env before running the live paper-trading harness.');
   const forwardFingerprint = strategyFingerprint({ strategyId: 'V2_TREND_DOWN_PE', timeframe: '5m', regime: 'TREND_DOWN', ema: ['EMA15', 'EMA35'], proximityPercent: 0.2, rsi: 'RSI14<35', cooldownMinutes: 10, targetPercent: 5, stopPercent: 5, holdMinutes: 15 });
@@ -157,18 +206,37 @@ async function run(): Promise<void> {
   const healthGraceMs = positiveTimeoutMs('MARKET_DATA_HEALTH_GRACE_MS', process.env.MARKET_DATA_HEALTH_GRACE_MS, 45_000) + alignedHandoffWaitMs;
   const reconnectDurationMs = positiveTimeoutMs('MARKET_DATA_MAX_RECONNECT_DURATION_MS', process.env.MARKET_DATA_MAX_RECONNECT_DURATION_MS, 60_000) + alignedHandoffWaitMs;
 
-  const webSocketClient = new MarketDataWebSocketClient(accessToken);
-  const connectionManager = new ConnectionManager(accessToken, webSocketClient, { maximumReconnectDurationMs:reconnectDurationMs });
-  const subscriptionManager = new SubscriptionManager(accessToken, connectionManager);
-  const protobufDecoder = new ProtobufDecoder();
-  const tickProcessor = new TickProcessor();
+  // Shared-gateway mode (options.channel injected by the combined runtime): connection,
+  // subscription and market-data-bus roles all collapse onto the ONE leased channel -- no
+  // dedicated WebSocket/decoder/TickProcessor is constructed here at all, since the gateway
+  // already decodes every packet exactly once upstream. Standalone mode (npm run paper:v2)
+  // constructs its own dedicated triad exactly as before, using a private bus instead of the
+  // process-global eventBus purely for symmetry with the gateway path -- this process never runs
+  // any other strategy, so there is no cross-talk risk either way.
+  let connectionManager: MarketDataConnectionPort;
+  let subscriptionManager: MarketDataSubscriptionPort;
+  let realConnectionManager: ConnectionManager | undefined;
+  let tickProcessor: TickProcessor | undefined;
+  let protobufDecoder: ProtobufDecoder | undefined;
+  const bus: StrategyMarketDataChannel | EventEmitter = options.channel ?? new EventEmitter();
+  if (options.channel) {
+    connectionManager = options.channel;
+    subscriptionManager = options.channel;
+  } else {
+    const webSocketClient = new MarketDataWebSocketClient(accessToken);
+    realConnectionManager = new ConnectionManager(accessToken, webSocketClient, { maximumReconnectDurationMs:reconnectDurationMs });
+    connectionManager = realConnectionManager;
+    subscriptionManager = new SubscriptionManager(accessToken, realConnectionManager);
+    protobufDecoder = new ProtobufDecoder();
+    tickProcessor = new TickProcessor(bus);
+  }
   const liveCandleBuilder = new LiveCandleBuilderService();
   // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST source
   // horizon -- scoped to this instrument only (never every instrument the shared builder
   // processes, e.g. the option contract subscribed on a signal) via the canonical
   // nifty1mSourceCompletionBoundary utility, computed once for this session's trading day.
   liveCandleBuilder.setSourceCompletionBoundary(niftyInstrumentKey, nifty1mSourceCompletionBoundary(new Date()).getTime());
-  const liveCandleEventAdapter = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connectionManager.getGenerationId());
+  const liveCandleEventAdapter = new LiveCandleEventAdapterService(liveCandleBuilder, bus, () => connectionManager.getGenerationId());
 
   const orderManager = new PaperOrderManagerService();
   // Prisma/MySQL is authoritative. The in-memory portfolio retains existing
@@ -203,7 +271,7 @@ async function run(): Promise<void> {
   });
   paperMarketDataAdapter = new PaperMarketDataAdapterService(
     positionMonitor,
-    eventBus,
+    bus,
     portfolio,
     2_000,
     () => new Date(),
@@ -243,7 +311,7 @@ async function run(): Promise<void> {
     undefined,
     prismaExecution,
   );
-  const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0);
+  const strategyAdapter = new LivePaperStrategyAdapterService(orchestration, undefined, undefined, () => orderManager.getActiveOrders().length > 0, { v2: isV2, paperTradingOnly, v2ExitPolicy: v2ExitPolicyConfig });
   const forwardJournal = new ForwardValidationJournal('V2_TREND_DOWN_PE', forwardFingerprint);
   const performStartupWarmup = async (): Promise<Awaited<ReturnType<LivePaperFreshWarmupService['warmUp']>>> => {
     return new LivePaperFreshWarmupService(
@@ -287,13 +355,13 @@ async function run(): Promise<void> {
       return strategyAdapter.isWarmupReady();
     },
   };
-  const runtime = new PaperTradingRuntimeService(instrumentedStrategyAdapter, paperMarketDataAdapter, orderManager, eventBus);
+  const runtime = new PaperTradingRuntimeService(instrumentedStrategyAdapter, paperMarketDataAdapter, orderManager, bus);
   const contractsProvider = new CurrentNiftyOptionContractsProvider(new InstrumentRepository());
   const hostGatedRuntime = {
     getState: (): PaperTradingRuntimeState => host?.canEvaluate() ? runtime.getState() : PaperTradingRuntimeState.STOPPED,
     processCompletedCandle: (input: LivePaperCompletedCandleInput): Promise<LivePaperStrategyResult> => runtime.processCompletedCandle(input),
   };
-  const paperRuntimeCandleAdapter = new PaperRuntimeCandleAdapterService(hostGatedRuntime, contractsProvider, eventBus);
+  const paperRuntimeCandleAdapter = new PaperRuntimeCandleAdapterService(hostGatedRuntime, contractsProvider, bus);
 
   const createdOrderIds = new Set<string>();
   // Bounds the wait for the first accepted current-generation NIFTY event
@@ -440,7 +508,16 @@ async function run(): Promise<void> {
     onLiveConstructionUnavailable: (sessionClose) => liveCandleBuilder.blockLiveConstructionForSession(niftyInstrumentKey, sessionClose.getTime()),
     onEvent: handleRecoveryEvent,
   });
-  const health = new MarketDataHealthMonitorService(connectionManager, {
+  // Gateway mode: health evidence/confirmation is centralized once in SharedMarketDataGateway's
+  // own single MarketDataHealthMonitorService (see that class's doc) -- `health` here is simply
+  // the same leased channel again, exposing read-only confirm*/no-op note* methods. The onStall
+  // behavior below (stopping candle events, calling recovery.handleUnexpectedDisconnect,
+  // MARKET_DATA_DEGRADED journaling) is NOT lost under gateway mode: it is exactly what the
+  // unchanged `connectionManager.on('unexpectedDisconnect', ...)` listener registered further
+  // below already does, fired once by the gateway's own centralized stall-triggered reconnect --
+  // only the benign SOURCE_STALL (reconnectSolicited=false) observability line is not duplicated
+  // per strategy under gateway mode (logged once, centrally, by the gateway instead).
+  const health: MarketDataHealthPort = options.channel ?? new MarketDataHealthMonitorService(realConnectionManager!, {
     generationGraceMs:healthGraceMs,
     // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST
     // source-completion boundary, well before the wider 09:15-15:40 operational session ends.
@@ -471,6 +548,16 @@ async function run(): Promise<void> {
     },
   });
   recovery.on('stateChanged', handleRecoveryState);
+  // F-02: bounded POST-STARTUP consumer recovery watchdog. Budget mirrors the existing V2
+  // alignment convention (base MARKET_DATA_MAX_RECONNECT_DURATION_MS + 5 minutes) already
+  // computed above as reconnectDurationMs. Only fed states once startupComplete is true (see
+  // the listener below) so it can never compete with waitUntilReady()'s own cold-start bound.
+  // onTimeout calls only recovery.fault() -- never the physical connectionManager -- so a V2-only
+  // timeout can never open the shared gateway breaker or affect V4/V8 siblings (see
+  // handleRecoveryState's own FAULTED branch above, which already routes any fault through the
+  // consumer-scoped connectionManager.failRecovery()/channel.failRecovery() port).
+  const recoveryWatchdog = new ConsumerRecoveryWatchdogService({ budgetMs: reconnectDurationMs, onTimeout: (reason) => recovery!.fault(reason) });
+  recovery.on('stateChanged', (state) => { if (startupComplete) recoveryWatchdog.onStateChanged(state); });
 
   // A7-H6: owned evidence for whether the one required final forward-strategy evaluation at
   // the NIFTY source-completion boundary actually ran (see SourceBoundaryEvaluationCoverageTracker).
@@ -560,7 +647,7 @@ async function run(): Promise<void> {
       // The exact same actionable path an ordinary completed live 5m candle uses: the
       // host-gated runtime object PaperRuntimeCandleAdapterService itself calls.
       const result = await hostGatedRuntime.processCompletedCandle({ candle, completed: true, contracts });
-      eventBus.emit('paper.strategy.evaluated', {
+      bus.emit('paper.strategy.evaluated', {
         candleTimestamp: new Date(result.candleTimestamp.getTime()),
         spotPrice: result.spotPrice,
         rawSignal: result.rawEmaSignal,
@@ -575,19 +662,21 @@ async function run(): Promise<void> {
       forwardJournal.appendEvent(forwardDate, 'V2_SOURCE_BOUNDARY_EVALUATED', ['V2_SOURCE_BOUNDARY_EVALUATED'], { candleTimestamp: candle.timestamp.toISOString() });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Source-boundary strategy evaluation failed.';
-      eventBus.emit('paper.strategy.error', { instrumentKey: niftyInstrumentKey, candleTimestamp: new Date(candle.timestamp.getTime()), message });
+      bus.emit('paper.strategy.error', { instrumentKey: niftyInstrumentKey, candleTimestamp: new Date(candle.timestamp.getTime()), message });
       markSourceBoundaryLost(generationId, message);
     }
   };
 
-  function handleWebSocketMessage(buffer: Buffer, details: { generationId: number }): void {
+  // Only ever registered (below) in standalone mode -- tickProcessor/protobufDecoder are always
+  // defined by the time this can actually run.
+  const handleWebSocketMessage = (buffer: Buffer, details: { generationId: number }): void => {
     try {
-      tickProcessor.process(protobufDecoder.decode(buffer), details.generationId);
+      tickProcessor!.process(protobufDecoder!.decode(buffer), details.generationId);
     } catch (error) {
       console.error('[market-data decode/process error]', safeMessage(error));
     }
-  }
-  function handleMarketTick(event: unknown): void {
+  };
+  const handleMarketTick = (event: unknown): void => {
     const tick = event as Partial<MarketTickEvent>;
     if (!isCurrentLiveGeneration(tick.generationId, connectionManager.getGenerationId())) return;
     if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || !Number.isFinite(tick.ltp) || tick.ltp <= 0 || typeof tick.timestamp !== 'string') return;
@@ -608,14 +697,14 @@ async function run(): Promise<void> {
       lastNiftyTickPrintedAt = Date.now();
       console.log(`[market.tick] NIFTY ${formatIst(timestamp)} | LTP ${tick.ltp.toFixed(2)}`);
     }
-  }
-  function handleCompletedFiveMinuteCandle(event: unknown): void {
+  };
+  const handleCompletedFiveMinuteCandle = (event: unknown): void => {
     const candle = event as { instrumentKey?: string; timeframe?: string; candleTime?: Date; open?: number; high?: number; low?: number; close?: number; completed?: boolean };
     if (eodRequested) return;
     if (candle.instrumentKey !== niftyInstrumentKey || candle.timeframe !== '5m' || candle.completed !== true || !(candle.candleTime instanceof Date)) return;
     console.log(`[market.candle.completed] NIFTY 5m ${formatIst(candle.candleTime)} | O ${candle.open?.toFixed(2)} H ${candle.high?.toFixed(2)} L ${candle.low?.toFixed(2)} C ${candle.close?.toFixed(2)}`);
-  }
-  function handleStrategyEvaluated(event: unknown): void {
+  };
+  const handleStrategyEvaluated = (event: unknown): void => {
     if (eodRequested) return;
     const evaluation = event as StrategyEvaluatedEvent;
     if (!(evaluation.candleTimestamp instanceof Date)) return;
@@ -628,9 +717,9 @@ async function run(): Promise<void> {
     }
     console.log(`[paper.strategy.evaluated] ${formatIst(evaluation.candleTimestamp)} | EMA15 ${formatIndicator(indicatorValues?.ema15)} | EMA35 ${formatIndicator(indicatorValues?.ema35)} | RSI14 ${formatIndicator(indicatorValues?.rsi14)} | raw ${evaluation.rawSignal} | final ${evaluation.finalSignal} | time filter ${evaluation.timeFilterAllowed ? 'ALLOWED' : 'BLOCKED'}${evaluation.paperOrderId ? ` | order ${evaluation.paperOrderId}` : ''}`);
     if (evaluation.reasons.length > 0) console.log(`  reasons: ${evaluation.reasons.join(' | ')}`);
-    if (process.env.TRADING_STRATEGY_VERSION === 'V2') console.log(formatV2TradingLine(evaluation, indicatorValues));
-  }
-  function handlePaperOrderAction(event: unknown): void {
+    if (isV2) console.log(formatV2TradingLine(evaluation, indicatorValues));
+  };
+  const handlePaperOrderAction = (event: unknown): void => {
     const action = event as PaperOrderActionEvent;
     if (typeof action.orderId !== 'string' || !(action.timestamp instanceof Date)) return;
     const settledOrder = orderManager.getById(action.orderId); if (settledOrder?.exit) riskGate.recordClosedOrder(istDate(action.timestamp), action.orderId);
@@ -640,22 +729,24 @@ async function run(): Promise<void> {
     const entryFill = settledOrder?.entry.executionFill; const theoreticalReturn = settledOrder?.exit ? (settledOrder.exit.observedExitPremium - settledOrder.entry.observedEntryPremium) / settledOrder.entry.observedEntryPremium * 100 : null; const executableReturn = settledOrder?.exit && entryFill && fill ? (fill.averageFillPrice - entryFill.averageFillPrice) / entryFill.averageFillPrice * 100 : null;
     forwardJournal.append({ recordType, tradingDate: istDate(action.timestamp), strategyId: 'V2_TREND_DOWN_PE', fingerprint: forwardFingerprint, signalId: action.orderId, signalTimestampIst: formatIst(action.timestamp), selectedOptionInstrument: action.instrumentKey, theoreticalEntryPrice: recordType === 'ENTRY' ? settledOrder?.entry.observedEntryPremium ?? action.observedPremium : undefined, theoreticalExitPrice: recordType === 'EXIT' ? action.observedPremium : undefined, executableEntryPrice: recordType === 'ENTRY' ? (fill?.averageFillPrice ?? null) : undefined, executableExitPrice: recordType === 'EXIT' ? (fill?.averageFillPrice ?? null) : undefined, entryPriceSource: recordType === 'ENTRY' ? (fill ? 'ASK' : 'UNAVAILABLE') : undefined, exitPriceSource: recordType === 'EXIT' ? (fill ? 'BID' : 'UNAVAILABLE') : undefined, theoreticalReturn:recordType === 'EXIT' ? theoreticalReturn : undefined, executableEstimatedReturn:recordType === 'EXIT' ? executableReturn : undefined, totalEstimatedSlippage:recordType === 'EXIT' && entryFill && fill ? (entryFill.totalExecutionSlippage + fill.totalExecutionSlippage) : undefined, totalExecutionFrictionPercent:recordType === 'EXIT' && theoreticalReturn !== null && executableReturn !== null ? theoreticalReturn - executableReturn : undefined, executionQuoteQuality: quote.quality, quote, indicators: { fillStatus: fill?.status ?? 'UNAVAILABLE', fillQuality: fill?.fillQuality ?? 'UNAVAILABLE', requestedQuantity: fill?.requestedQuantity ?? null, filledQuantity: fill?.filledQuantity ?? null, quotedBestPrice: fill?.quotedBestPrice ?? null, totalExecutionSlippage: fill?.totalExecutionSlippage ?? null, slippagePercent: fill?.slippagePercent ?? null }, flags: ['FORWARD_EVALUATION_ONLY', ...(fill ? [] : ['EXECUTION_ESTIMATE_UNAVAILABLE']), ...(quote.quality === 'STALE_QUOTE' ? ['STALE_OPTION_QUOTE'] : [])] });
     console.log(`[paper.order.action] ${action.action} | order ${action.orderId} | ${action.instrumentKey} | premium ${action.observedPremium.toFixed(2)} | ${formatIst(action.timestamp)}`);
-  }
-  function handleMarketDepth(event: unknown): void {
+  };
+  const handleMarketDepth = (event: unknown): void => {
     cacheCurrentLiveDepth(latestDepthByInstrument, event, connectionManager.getGenerationId());
-  }
-  function handleStrategyError(event: unknown): void {
+  };
+  const handleStrategyError = (event: unknown): void => {
     const error = event as { instrumentKey?: string; candleTimestamp?: Date; message?: string };
     console.error(`[paper.strategy.error] ${error.instrumentKey ?? 'unknown'} | ${error.candleTimestamp instanceof Date ? formatIst(error.candleTimestamp) : 'unknown time'} | ${error.message ?? 'Unknown paper-strategy error.'}`);
-  }
+  };
 
-  connectionManager.on('message', handleWebSocketMessage);
-  eventBus.on('market.tick', handleMarketTick);
-  eventBus.on('market.depth', handleMarketDepth);
-  eventBus.on('market.candle.completed', handleCompletedFiveMinuteCandle);
-  eventBus.on('paper.strategy.evaluated', handleStrategyEvaluated);
-  eventBus.on('paper.order.action', handlePaperOrderAction);
-  eventBus.on('paper.strategy.error', handleStrategyError);
+  // Gateway mode decodes every packet exactly once upstream and never re-exposes a raw 'message'
+  // event per consumer -- only standalone mode owns a dedicated decode path.
+  if (!options.channel) connectionManager.on('message', handleWebSocketMessage);
+  bus.on('market.tick', handleMarketTick);
+  bus.on('market.depth', handleMarketDepth);
+  bus.on('market.candle.completed', handleCompletedFiveMinuteCandle);
+  bus.on('paper.strategy.evaluated', handleStrategyEvaluated);
+  bus.on('paper.order.action', handlePaperOrderAction);
+  bus.on('paper.strategy.error', handleStrategyError);
 
   const printStatus = (): void => {
     const status = runtime.getStatus();
@@ -683,12 +774,12 @@ async function run(): Promise<void> {
     }
 
     connectionManager.off('message', handleWebSocketMessage);
-    eventBus.off('market.tick', handleMarketTick);
-    eventBus.off('market.depth', handleMarketDepth);
-    eventBus.off('market.candle.completed', handleCompletedFiveMinuteCandle);
-    eventBus.off('paper.strategy.evaluated', handleStrategyEvaluated);
-    eventBus.off('paper.order.action', handlePaperOrderAction);
-    eventBus.off('paper.strategy.error', handleStrategyError);
+    bus.off('market.tick', handleMarketTick);
+    bus.off('market.depth', handleMarketDepth);
+    bus.off('market.candle.completed', handleCompletedFiveMinuteCandle);
+    bus.off('paper.strategy.evaluated', handleStrategyEvaluated);
+    bus.off('paper.order.action', handlePaperOrderAction);
+    bus.off('paper.strategy.error', handleStrategyError);
   };
 
   const shutdown = async (reason: string, onCloseOutComplete?: () => void, invalidData = false): Promise<void> => {
@@ -702,7 +793,7 @@ async function run(): Promise<void> {
     terminalOutcomeArbiter.propose(reason, resolveSessionOutcome({ reason, invalidData }).status);
     if (shuttingDown) return;
     shuttingDown = true; eodRequestedForRisk = true; riskGate.transition('HALTED');
-    health.stop(); recovery.stop();
+    health.stop(); recovery.stop(); recoveryWatchdog.stop();
     const durableExitDrained = await drainPendingDurableExit();
     let reconciliationRequired = false;
     // sealAfterCloseOut() is the single production seam: it runs this fallible
@@ -839,7 +930,7 @@ async function run(): Promise<void> {
     }
     const actions = await positionMonitor.closeAtSessionEndDurably(eodAt, (instrumentKey, entryPremium) => getCurrentLiveInstrumentValue(latestPremiumByInstrument, instrumentKey, connectionManager.getGenerationId()) ?? entryPremium);
     actions.forEach((action) => {
-      eventBus.emit('paper.order.action', action);
+      bus.emit('paper.order.action', action);
       console.log(`[V2_EOD_EXIT] order=${action.orderId} reason=TIME_EXIT premium=${action.observedPremium.toFixed(2)} timestamp=${formatIst(action.timestamp)}`);
     });
     // The V2_EOD_SUMMARY status/order reads and log are pre-seal, trigger-specific
@@ -947,6 +1038,10 @@ async function run(): Promise<void> {
   // recovery listener may take over ownership of DEGRADED -> RUNNING for any
   // later, genuine reconnect recovery.
   startupComplete = true;
+  // F-03: this runtime has now reached its durable live-ownership point. The finally below must
+  // never release the channel merely because this async function itself finishes below --
+  // listeners/timers registered above keep the strategy alive independently of this call stack.
+  runtimeOwnsChannel = true;
   // A7-H6: armed only once startup has genuinely reached RUNNING. nifty1mSourceCompletionBoundary
   // always resolves to today's trading date -- if it has already passed (only reachable here
   // because a late-enough cold start would already have failed closed above), armAt() fires it
@@ -954,6 +1049,14 @@ async function run(): Promise<void> {
   sourceBoundaryTrigger.armAt(nifty1mSourceCompletionBoundary(new Date()), performSourceBoundaryEvaluation);
   console.log('Live paper-trading harness is RUNNING. It is subscribed to NIFTY only and will subscribe to an option only after an actionable signal. Press Ctrl+C to stop.');
   printStatus();
+  } finally {
+    // F-03: releases this consumer's shared-gateway registration on every path that did not
+    // reach durable RUNNING ownership above -- an early return (outside session, warmup/execution
+    // not ready), a startup-readiness fault (already also released via onFault -> shutdown() ->
+    // connectionManager.disconnect(), but this call is idempotent), or any thrown initialization
+    // error. No-op in standalone mode (no options.channel).
+    if (options.channel && !runtimeOwnsChannel) options.channel.disconnect();
+  }
 }
 
 function formatIndicator(value: number | null | undefined): string {
@@ -978,7 +1081,16 @@ function istDate(timestamp: Date): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-void run().catch((error) => {
-  console.error('Live paper-trading harness failed to start:', safeMessage(error));
-  process.exitCode = 1;
-});
+// Auto-runs ONLY when this file is itself the process entry point (`npm run test:live-paper-trading`
+// / `npm run paper:v1` -- both invoke this file directly). The `paper:v2` wrapper
+// (test-live-paper-trading-v2.ts) dynamically imports this module and calls run() itself after
+// setting its own environment variables first -- require.main there is the wrapper, not this
+// file, so this guard correctly stays silent and does not fire a second, duplicate invocation.
+// The combined shared-gateway runtime imports run() directly the same way, supplying its own
+// leased channel.
+if (require.main === module) {
+  void run().catch((error) => {
+    console.error('Live paper-trading harness failed to start:', safeMessage(error));
+    process.exitCode = 1;
+  });
+}

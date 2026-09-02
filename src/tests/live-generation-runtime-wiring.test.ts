@@ -18,12 +18,17 @@ test('live V2, V4 and V8 candle adapters receive their active WebSocket generati
   const v2 = source('src/tests/test-live-paper-trading.ts');
   const v4 = source('src/tests/test-live-v4-nifty-momentum-shadow.ts');
   const v8 = source('src/tests/test-live-v8-nifty-bullish-reclaim-shadow.ts');
-  assert.ok(v2.includes('LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connectionManager.getGenerationId())'));
+  // Shared Market Data Gateway milestone: each runtime's market-data bus is now `bus` -- either
+  // the injected shared-gateway consumer channel, or (standalone) a private EventEmitter, never
+  // the process-global eventBus singleton (see SharedMarketDataGateway's per-consumer isolation
+  // requirement: three candle adapters on one shared/global bus would double-fire completed
+  // candles across strategies).
+  assert.ok(v2.includes('LiveCandleEventAdapterService(liveCandleBuilder, bus, () => connectionManager.getGenerationId())'));
   // A7-H2: V4 and V8 now hold their LiveCandleBuilderService in its own named variable too
   // (not constructed inline), so the recovery coordinator's onLiveConstructionBoundary
   // callback has something to wire setLiveConstructionBoundary(...) to.
-  assert.ok(v4.includes('LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId())'));
-  assert.ok(v8.includes('LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId())'));
+  assert.ok(v4.includes('LiveCandleEventAdapterService(liveCandleBuilder, bus, () => connection.getGenerationId())'));
+  assert.ok(v8.includes('LiveCandleEventAdapterService(liveCandleBuilder, bus, () => connection.getGenerationId())'));
 });
 
 test('V2 forward-journal depth cache delegates to the strict current-generation cache helper', () => {

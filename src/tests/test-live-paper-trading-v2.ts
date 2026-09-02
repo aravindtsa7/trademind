@@ -7,4 +7,7 @@ process.env.PAPER_STRATEGY_ID = 'V2_TREND_DOWN_PE';
 process.env.PAPER_TRADING_ONLY = 'true';
 if (!process.env.TRADING_LOG_MODE?.trim()) process.env.TRADING_LOG_MODE = 'TRADING';
 console.log('[V2_STARTUP] strategyId=V2_TREND_DOWN_PE paperOnly=true logMode=' + process.env.TRADING_LOG_MODE + ' target=' + (process.env.V2_TARGET_PERCENT ?? '5') + ' stop=' + (process.env.V2_STOP_PERCENT ?? '5') + ' hold=' + (process.env.V2_MAX_HOLD_MINUTES ?? '15'));
-void import('./test-live-paper-trading');
+void import('./test-live-paper-trading').then(({ run }) => run()).catch((error) => {
+  console.error('Live paper-trading harness failed to start:', error instanceof Error ? error.message : 'Unknown error.');
+  process.exitCode = 1;
+});

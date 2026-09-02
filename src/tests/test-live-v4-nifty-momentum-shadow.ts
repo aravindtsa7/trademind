@@ -1,7 +1,7 @@
-import 'dotenv/config';
+﻿import 'dotenv/config';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import eventBus from '../core/events';
+import { EventEmitter } from 'events';
 import HistoricalCandleRepository from '../modules/historical-candles/repositories/historical-candle.repository';
 import InstrumentRepository from '../modules/instruments/repositories/instrument.repository';
 import { Candle } from '../modules/indicators/types';
@@ -28,6 +28,8 @@ import { SourceBoundaryEvaluationCoverageTracker } from '../modules/market-data/
 import { isCurrentLiveGeneration } from '../modules/market-data/utils/live-generation';
 import MarketDataHealthMonitorService from '../modules/market-data/services/market-data-health-monitor.service';
 import { ForwardValidationJournal, resolveSessionOutcome, strategyFingerprint } from '../modules/research-validation';
+import { MarketDataConnectionPort, MarketDataHealthPort, MarketDataSubscriptionPort, StrategyMarketDataChannel } from '../modules/market-data/gateway/strategy-market-data-channel';
+import ConsumerRecoveryWatchdogService from '../modules/market-data/services/consumer-recovery-watchdog.service';
 
 const nifty = 'NSE_INDEX|Nifty 50';
 const journalPath = resolve(process.cwd(), process.env.V4_SHADOW_JOURNAL_PATH ?? 'artifacts/v4-nifty-momentum-shadow.jsonl');
@@ -56,7 +58,22 @@ class CurrentNiftyPeContracts {
   }
 }
 
-async function run(): Promise<void> {
+export interface LiveRuntimeOptions {
+  /** Injected only by the combined shared-market-data-gateway runtime; standalone `npm run shadow:v4:momentum` omits this and constructs its own dedicated ConnectionManager/SubscriptionManager/MarketDataHealthMonitorService exactly as before. */
+  channel?: StrategyMarketDataChannel;
+}
+
+export async function run(options: LiveRuntimeOptions = {}): Promise<void> {
+  // F-03 startup ownership guard: every registered shared-gateway consumer must end up either
+  // durably owned by a running strategy lifecycle or released here. Set true only once this
+  // runtime has reached its durable live-ownership point (host reaches RUNNING); every other
+  // path below -- an early return (outside session, warmup blocked), a startup-readiness fault,
+  // or any thrown initialization error -- falls through to the finally at the end of this
+  // function and releases this consumer's channel. GatewayMarketDataChannel.disconnect() is
+  // idempotent, so this is safe even when a fault-triggered shutdown() already released the
+  // channel first. A no-op in standalone mode (no options.channel).
+  let runtimeOwnsChannel = false;
+  try {
   assertV4ShadowRuntimeGuards();
   const forwardFingerprint = strategyFingerprint({ strategyId: v4MomentumShadowStrategyId, timeframe: '3m', compressionBars: 3, compressionRangeAtr: 2, bodyAtr: 1, breakoutAtr: 0.1, regime: 'TREND_DOWN', cooldownMinutes: 5, targetPercent: 5, stopPercent: 5, holdMinutes: 15, shadowOnly: true });
   console.log(`[V4_FORWARD_FINGERPRINT] strategyId=${v4MomentumShadowStrategyId} fingerprint=${forwardFingerprint}`);
@@ -97,13 +114,36 @@ async function run(): Promise<void> {
   forwardJournal.append({ recordType: 'SESSION', tradingDate: forwardDate, strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, runtimeStartedAt: new Date().toISOString(), warmupReadyAt: new Date().toISOString(), marketDataHealthy: true, sessionCompleted: false, flags: ['FORWARD_EVALUATION_ONLY', 'SHADOW_ONLY'] });
   evaluator.seedHistoricalOneMinute(warmup.seededOneMinuteCandles);
 
-  const websocket = new MarketDataWebSocketClient(token); const connection = new ConnectionManager(token, websocket, { maximumReconnectDurationMs:reconnectDurationMs }); const subscriptions = new SubscriptionManager(token, connection); const decoder = new ProtobufDecoder(); const ticks = new TickProcessor(); const liveCandleBuilder = new LiveCandleBuilderService();
+  // Shared-gateway mode (options.channel injected by the combined runtime): connection,
+  // subscription and market-data-bus roles all collapse onto the ONE leased channel -- no
+  // dedicated WebSocket/decoder/TickProcessor is constructed here, since the gateway already
+  // decodes every packet exactly once upstream. Standalone mode (npm run shadow:v4:momentum)
+  // constructs its own dedicated triad exactly as before, using a private bus instead of the
+  // process-global eventBus purely for symmetry with the gateway path.
+  let connection: MarketDataConnectionPort;
+  let subscriptions: MarketDataSubscriptionPort;
+  let realConnection: ConnectionManager | undefined;
+  let ticks: TickProcessor | undefined;
+  let decoder: ProtobufDecoder | undefined;
+  const bus: StrategyMarketDataChannel | EventEmitter = options.channel ?? new EventEmitter();
+  if (options.channel) {
+    connection = options.channel;
+    subscriptions = options.channel;
+  } else {
+    const websocket = new MarketDataWebSocketClient(token);
+    realConnection = new ConnectionManager(token, websocket, { maximumReconnectDurationMs:reconnectDurationMs });
+    connection = realConnection;
+    subscriptions = new SubscriptionManager(token, realConnection);
+    decoder = new ProtobufDecoder();
+    ticks = new TickProcessor(bus);
+  }
+  const liveCandleBuilder = new LiveCandleBuilderService();
   // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST source
   // horizon -- scoped to this instrument only (never the option contract subscribed on a
   // signal) via the canonical nifty1mSourceCompletionBoundary utility, computed once for this
   // session's trading day.
   liveCandleBuilder.setSourceCompletionBoundary(nifty, nifty1mSourceCompletionBoundary(new Date()).getTime());
-  const candleEvents = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId()); const tracker = new V4MomentumShadowTrackerService(); const contracts = new CurrentNiftyPeContracts();
+  const candleEvents = new LiveCandleEventAdapterService(liveCandleBuilder, bus, () => connection.getGenerationId()); const tracker = new V4MomentumShadowTrackerService(); const contracts = new CurrentNiftyPeContracts();
   let completed3m = 0; let opportunities = 0; let signals = 0; let closing = false; let eodStarted = false; let eodTimer: NodeJS.Timeout | undefined; let eodWatchdog: NodeJS.Timeout | undefined; let host: StrategyHostLifecycle | undefined;
   // Separates each terminal trigger's own close-out work (still gated by the `closing` latch
   // below, run at most once) from the single durable SUMMARY/CLEAN_SHUTDOWN write: a racing
@@ -160,7 +200,12 @@ async function run(): Promise<void> {
     onLiveConstructionUnavailable: (sessionClose) => liveCandleBuilder.blockLiveConstructionForSession(nifty, sessionClose.getTime()),
     onEvent: (eventType, details) => { const unsafe = eventType === 'DATA_GAP_UNRECOVERABLE'; forwardJournal.appendEvent(forwardDate, eventType, [eventType, ...(unsafe ? ['CRITICAL_DATA_QUALITY'] : [])], details); console.log(`[MARKET_DATA_BACKFILL] event=${eventType} state=${recovery.getState()}`); },
   });
-  const health = new MarketDataHealthMonitorService(connection, {
+  // Gateway mode: health evidence/confirmation is centralized once in SharedMarketDataGateway's
+  // own single MarketDataHealthMonitorService -- `health` here is simply the same leased channel
+  // again. The onStall behavior below is not lost under gateway mode: it is exactly what the
+  // unchanged `connection.on('unexpectedDisconnect', ...)` listener further below already does,
+  // fired once by the gateway's own centralized stall-triggered reconnect.
+  const health: MarketDataHealthPort = options.channel ?? new MarketDataHealthMonitorService(realConnection!, {
     generationGraceMs:healthGraceMs,
     // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST
     // source-completion boundary, well before the wider 09:15-15:40 operational session ends.
@@ -190,7 +235,9 @@ async function run(): Promise<void> {
   const eodCoordinator = new NseSessionEodCoordinator();
   const append = (entry: V4ShadowTradeJournalEntry): void => { mkdirSync(dirname(journalPath), { recursive: true }); appendFileSync(journalPath, `${JSON.stringify(entry)}\n`, 'utf8'); forwardJournal.append({ recordType: 'EXIT', tradingDate: entry.tradingDate, strategyId: v4MomentumShadowStrategyId, fingerprint: forwardFingerprint, signalId: `V4-${entry.signalTimestamp.getTime()}`, signalTimestampIst: format(entry.signalTimestamp), selectedOptionInstrument: entry.optionInstrument, theoreticalEntryPrice: entry.referencePremium || null, theoreticalExitPrice: entry.exitPremium, executableEntryPrice: entry.referencePremium || null, executableExitPrice: entry.exitPremium, entryPriceSource: 'ESTIMATED_LTP', exitPriceSource: 'ESTIMATED_LTP', theoreticalReturn: entry.grossReturnPercent, executableEstimatedReturn: entry.grossReturnPercent, totalEstimatedSlippage: 0, totalExecutionFrictionPercent: 0, exitReason: entry.exitReason === 'STOP_LOSS' ? 'STOP' : entry.exitReason === 'TIMEOUT' ? 'TIMEOUT' : entry.exitReason === 'AMBIGUOUS' ? 'AMBIGUOUS' : entry.exitReason === 'UNAVAILABLE' ? 'UNAVAILABLE' : 'TARGET', executionQuoteQuality: 'LTP_ONLY', flags: ['FORWARD_EVALUATION_ONLY', 'LTP_ONLY'] }); console.log(`[V4_PAPER_TRADE_CLOSED] ${entry.exitReason} ${entry.optionInstrument} gross=${entry.grossReturnPercent ?? 'N/A'} net40=${entry.netReturnAt040 ?? 'N/A'}`); };
   const flush = (entries: readonly V4ShadowTradeJournalEntry[]) => entries.forEach(append);
-  const onMessage = (buffer: Buffer, details: { generationId: number }) => { try { ticks.process(decoder.decode(buffer), details.generationId); } catch (error) { console.error('[V4_MARKET_DATA_ERROR]', message(error)); } };
+  // Only ever registered (below) in standalone mode -- ticks/decoder are always defined by the
+  // time this can actually run.
+  const onMessage = (buffer: Buffer, details: { generationId: number }) => { try { ticks!.process(decoder!.decode(buffer), details.generationId); } catch (error) { console.error('[V4_MARKET_DATA_ERROR]', message(error)); } };
   const onTick = (event: unknown) => { const tick = event as Partial<MarketTickEvent>; if (!isCurrentLiveGeneration(tick.generationId, connection.getGenerationId())) return; if (typeof tick.instrumentKey !== 'string' || typeof tick.ltp !== 'number' || typeof tick.timestamp !== 'string') return; const at = new Date(tick.timestamp); if (Number.isNaN(at.getTime())) return; health.noteValidMarketEvent(tick.generationId); if (recovery.getState() === 'SOURCE_COMPLETE_WAITING_FOR_TRANSPORT' && health.confirmPostSourceTransportReady(tick.generationId)) recovery.handleTransportReadySourceRecoveryNotRequired(tick.generationId); if (isAtOrAfterNseSessionClose(at)) { eodStarted = true; void host?.eod('MARKET_EOD'); return; } if (eodStarted) return; if (tick.instrumentKey === nifty) { health.noteNiftyTick(tick.generationId, at); recovery.handleLiveTick({ sourceTimestamp: at, receivedAt: new Date(), generationId: tick.generationId }); if(recovery.isEvaluationReady())health.confirmRecoveryReady(tick.generationId); } if (!recovery.isEvaluationReady()) return; flush(tracker.observePremium(tick.instrumentKey, tick.ltp, at)); };
   const onCandle = (event: unknown) => { void handleCandle(event); };
   /**
@@ -326,6 +373,7 @@ async function run(): Promise<void> {
       () => {
         health.stop();
         recovery.stop();
+        recoveryWatchdog.stop();
         clearInterval(interval);
         clearInterval(status);
         if (eodTimer) clearTimeout(eodTimer);
@@ -333,8 +381,8 @@ async function run(): Promise<void> {
         flush(tracker.advance(new Date()));
         candleEvents.stop();
         connection.off('message', onMessage);
-        eventBus.off('market.tick', onTick);
-        eventBus.off('market.candle.completed', onCandle);
+        bus.off('market.tick', onTick);
+        bus.off('market.candle.completed', onCandle);
         subscriptions.unsubscribeMany(subscriptions.getSubscriptions().map((value) => value.instrumentKey));
         connection.disconnect();
         // Trigger-specific pre-seal observability (e.g. finishEod's own EOD summary log) --
@@ -472,16 +520,43 @@ async function run(): Promise<void> {
   // handleReconnected()/FAULTED at all; see the sourceRecoveryBypassActive-gated onStall/
   // unexpectedDisconnect/reconnected handlers above.
   recovery.on('stateChanged',(state)=>{if(state==='DEGRADED')void host?.degrade('MARKET_DATA_DEGRADED');if((state==='READY'||state==='SOURCE_COMPLETE_READY')&&!eodStarted&&!closing){const healthConfirmed=state==='READY'?health.confirmRecoveryReady(recovery.getGenerationId()):health.confirmPostSourceTransportReady(recovery.getGenerationId());if(!healthConfirmed)connection.failRecovery(recovery.getGenerationId(),'RECOVERY_READY_WITHOUT_HEALTH_EVIDENCE');else if(startupComplete)void host?.recovered('MARKET_DATA_READY');}if(state==='FAULTED')connection.failRecovery(recovery.getGenerationId(),'RECOVERY_COORDINATOR_FAULTED');});
+  // F-02: bounded POST-STARTUP consumer recovery watchdog, budget = base MARKET_DATA_MAX_RECONNECT_DURATION_MS
+  // + V4's 15-minute alignment (already computed above as reconnectDurationMs). Only fed states
+  // once startupComplete is true, so it can never compete with waitUntilReady()'s cold-start
+  // bound. onTimeout only calls recovery.fault() -- never the physical connection -- so a V4-only
+  // timeout can never open the shared gateway breaker or affect V2/V8 siblings (see the FAULTED
+  // branch immediately above, which already routes any fault through the consumer-scoped
+  // connection.failRecovery()/channel.failRecovery() port).
+  const recoveryWatchdog = new ConsumerRecoveryWatchdogService({ budgetMs: reconnectDurationMs, onTimeout: (reason) => recovery.fault(reason) });
+  recovery.on('stateChanged', (state) => { if (startupComplete) recoveryWatchdog.onStateChanged(state); });
   process.once('SIGINT', () => { void host?.shutdown('SIGINT'); }); process.once('SIGTERM', () => { void host?.shutdown('SIGTERM'); });
-  connection.on('message', onMessage); eventBus.on('market.tick', onTick); eventBus.on('market.candle.completed', onCandle); candleEvents.start(); health.start();
+  // Gateway mode decodes every packet exactly once upstream and never re-exposes a raw 'message'
+  // event per consumer -- only standalone mode owns a dedicated decode path.
+  if (!options.channel) connection.on('message', onMessage);
+  bus.on('market.tick', onTick); bus.on('market.candle.completed', onCandle); candleEvents.start(); health.start();
   await host.start();
   if (host.getState() !== 'RUNNING') return;
   startupComplete = true; // the persistent recovery listener may now own DEGRADED -> RUNNING for any later, genuine reconnect recovery
+  // F-03: this runtime has now reached its durable live-ownership point -- the finally below must
+  // not release the channel merely because this async function itself finishes below.
+  runtimeOwnsChannel = true;
   // A7-H6: armed only once startup has genuinely reached RUNNING.
   sourceBoundaryTrigger.armAt(nifty1mSourceCompletionBoundary(new Date()), performSourceBoundaryEvaluation);
   console.log(`[V4_STARTUP] strategyId=${v4MomentumShadowStrategyId} shadowOnly=true paperOrders=false brokerOrders=false journal=${journalPath}`);
+  } finally {
+    if (options.channel && !runtimeOwnsChannel) options.channel.disconnect();
+  }
 }
 function isNifty(value: string): boolean { return value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === 'NIFTY50' || value.trim().toUpperCase() === 'NIFTY'; }
 function format(value: Date): string { return formatter.format(value); } function num(value: number | null): string { return value === null ? 'N/A' : value.toFixed(4); } function message(error: unknown): string { return error instanceof Error ? error.message : 'Unknown error.'; }
 function istDate(value: Date): string { const p=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(value).map(x=>[x.type,x.value])); return `${p.year}-${p.month}-${p.day}`; }
-void run().catch((error) => { console.error('[V4_SHADOW_FATAL]', message(error)); process.exitCode = 1; });
+// Auto-runs ONLY when this file is itself the process entry point (e.g. a manual
+// `tsx src/tests/test-live-v4-nifty-momentum-shadow.ts`). The standard CLI entry point
+// (test-live-v4-nifty-momentum-shadow-entry.ts, run via `npm run shadow:v4:momentum`) dynamically
+// imports this module and calls run() itself after setting its own environment variables first --
+// require.main there is the wrapper, not this file, so this guard correctly stays silent. The
+// combined shared-gateway runtime imports run() directly the same way, supplying its own leased
+// channel.
+if (require.main === module) {
+  void run().catch((error) => { console.error('[V4_SHADOW_FATAL]', message(error)); process.exitCode = 1; });
+}

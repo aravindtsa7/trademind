@@ -19,6 +19,7 @@
     "shadow:v4:momentum": "tsx src/tests/test-live-v4-nifty-momentum-shadow-entry.ts",
     "research:v8:freeze": "set RESEARCH_LOCAL_ONLY=true&& set V8_TRAIN_ONLY_FREEZE=true&& tsx src/tests/test-v8-nifty-bullish-reclaim-outcomes.ts",
     "shadow:v8:reclaim": "tsx src/tests/test-live-v8-nifty-bullish-reclaim-shadow-entry.ts",
+    "live:shared-gateway": "tsx src/tests/test-live-shared-market-data-gateway.ts",
     "report:forward-validation": "tsx src/tests/report-forward-validation.ts",
     "collect:v12:order-flow": "tsx src/tests/collect-v12-nifty-option-order-flow.ts",
     "replay:record": "tsx src/tests/replay-record-help.ts",

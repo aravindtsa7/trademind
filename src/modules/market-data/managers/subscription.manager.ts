@@ -86,6 +86,14 @@ export default class SubscriptionManager {
         logger.warn('Market data subscription is pending reconnect', { instrumentCount: keysToSubscribe.length, mode });
         return;
       }
+      // Terminal (non-reconnect-owned) failure: no reconnect episode will restore this intent
+      // later, so retaining these keys in `subscriptions` would make a later retry for the same
+      // instrumentKey silently no-op via getNewInstrumentKeys() instead of attempting a fresh
+      // physical subscribe. Roll back only the keys this call itself just added (guarded by mode
+      // so an unrelated concurrent grant for the same key is never clobbered).
+      keysToSubscribe.forEach((instrumentKey) => {
+        if (this.subscriptions.get(instrumentKey) === mode) this.subscriptions.delete(instrumentKey);
+      });
       logger.error('Failed to subscribe to market data instruments', {
         instrumentCount: keysToSubscribe.length,
         mode,

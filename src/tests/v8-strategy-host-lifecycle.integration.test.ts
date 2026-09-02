@@ -172,9 +172,12 @@ test('F: the live V8 script wires handleCandle exceptions through a contained as
   assert.ok(handleCandleBlock.includes('describeV8ErrorSafely(error)'), 'journal formatting inside the helper must use the safe, nonthrowing error description');
   assert.ok(source.includes('const onCompletedCandle = (x: unknown): void => {'), 'expected a wrapping listener that cannot leave handleCandle unobserved');
   assert.ok(source.includes('handleCandle(x).catch((error) => v8ObserveTerminalFailure(error, console.error));'), 'the terminal catch must route through the guaranteed-nonthrowing terminal observer, not a raw console.error(String(error))');
-  assert.ok(source.includes("eventBus.on('market.candle.completed', onCompletedCandle)"), 'the event must be registered through the contained wrapper');
-  assert.ok(source.includes("eventBus.off('market.candle.completed', onCompletedCandle)"), 'shutdown must deregister the same contained wrapper');
-  assert.ok(!source.includes("eventBus.on('market.candle.completed', handleCandle)"), 'the raw async handleCandle must never be registered directly as a listener');
+  // Shared Market Data Gateway milestone: V8's market-data bus is now `bus` -- either the
+  // injected shared-gateway consumer channel, or (standalone) a private EventEmitter, never the
+  // process-global eventBus singleton.
+  assert.ok(source.includes("bus.on('market.candle.completed', onCompletedCandle)"), 'the event must be registered through the contained wrapper');
+  assert.ok(source.includes("bus.off('market.candle.completed', onCompletedCandle)"), 'shutdown must deregister the same contained wrapper');
+  assert.ok(!source.includes("bus.on('market.candle.completed', handleCandle)"), 'the raw async handleCandle must never be registered directly as a listener');
 });
 
 test('F2: routeV8CompletedCandleFailure guarantees host.fault() even when the journal write throws synchronously (production ordering)', async () => {

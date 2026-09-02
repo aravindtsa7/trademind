@@ -1,7 +1,7 @@
-import 'dotenv/config';
+﻿import 'dotenv/config';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import eventBus from '../core/events';
+import { EventEmitter } from 'events';
 import HistoricalCandleRepository from '../modules/historical-candles/repositories/historical-candle.repository';
 import InstrumentRepository from '../modules/instruments/repositories/instrument.repository';
 import { Candle } from '../modules/indicators/types';
@@ -53,6 +53,8 @@ import {
   executionComparison,
 } from '../modules/research-validation';
 import { v8FrozenStrategyInputs } from '../modules/research/v8-nifty-bullish-reclaim';
+import { MarketDataConnectionPort, MarketDataHealthPort, MarketDataSubscriptionPort, StrategyMarketDataChannel } from '../modules/market-data/gateway/strategy-market-data-channel';
+import ConsumerRecoveryWatchdogService from '../modules/market-data/services/consumer-recovery-watchdog.service';
 
 const NIFTY = 'NSE_INDEX|Nifty 50';
 const STRATEGY = 'V8_NIFTY_BULLISH_RECLAIM_CE_SHADOW';
@@ -107,7 +109,23 @@ function positiveTimeoutMs(name: string, environmentValue: string | undefined, f
   if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be a positive finite number.`);
   return value;
 }
-async function run(): Promise<void> {
+export interface LiveRuntimeOptions {
+  /** Injected only by the combined shared-market-data-gateway runtime; standalone `npm run shadow:v8:reclaim` omits this and constructs its own dedicated ConnectionManager/SubscriptionManager/MarketDataHealthMonitorService exactly as before. */
+  channel?: StrategyMarketDataChannel;
+}
+
+export async function run(options: LiveRuntimeOptions = {}): Promise<void> {
+  // F-03 startup ownership guard: every registered shared-gateway consumer must end up either
+  // durably owned by a running strategy lifecycle or released here. Set true only once this
+  // runtime has reached its durable live-ownership point (host reaches RUNNING); every other
+  // path below -- an early return (outside session, warmup blocked, evaluator startup-readiness
+  // blocked), a startup-readiness fault, or any thrown initialization error -- falls through to
+  // the finally at the end of this function and releases this consumer's channel.
+  // GatewayMarketDataChannel.disconnect() is idempotent, so this is safe even when a
+  // fault-triggered shutdown() already released the channel first. A no-op in standalone mode
+  // (no options.channel).
+  let runtimeOwnsChannel = false;
+  try {
   if (process.env.SHADOW_ONLY !== 'true' || process.env.PAPER_TRADING_ONLY !== 'true')
     throw Error('V8 shadow requires SHADOW_ONLY=true and PAPER_TRADING_ONLY=true.');
   const frozen = JSON.parse(readFileSync(frozenPath, 'utf8')) as {
@@ -210,18 +228,36 @@ async function run(): Promise<void> {
   const startupReadyTimeoutMs = positiveTimeoutMs('MARKET_DATA_STARTUP_READY_TIMEOUT_MS', process.env.MARKET_DATA_STARTUP_READY_TIMEOUT_MS, 45_000) + alignedHandoffWaitMs;
   const healthGraceMs = positiveTimeoutMs('MARKET_DATA_HEALTH_GRACE_MS', process.env.MARKET_DATA_HEALTH_GRACE_MS, 45_000) + alignedHandoffWaitMs;
   const reconnectDurationMs = positiveTimeoutMs('MARKET_DATA_MAX_RECONNECT_DURATION_MS', process.env.MARKET_DATA_MAX_RECONNECT_DURATION_MS, 60_000) + alignedHandoffWaitMs;
-  const websocket = new MarketDataWebSocketClient(token),
-    connection = new ConnectionManager(token, websocket, { maximumReconnectDurationMs:reconnectDurationMs }),
-    subscriptions = new SubscriptionManager(token, connection),
-    decoder = new ProtobufDecoder(),
-    ticks = new TickProcessor(),
-    liveCandleBuilder = new LiveCandleBuilderService();
+  // Shared-gateway mode (options.channel injected by the combined runtime): connection,
+  // subscription and market-data-bus roles all collapse onto the ONE leased channel -- no
+  // dedicated WebSocket/decoder/TickProcessor is constructed here, since the gateway already
+  // decodes every packet exactly once upstream. Standalone mode (npm run shadow:v8:reclaim)
+  // constructs its own dedicated triad exactly as before, using a private bus instead of the
+  // process-global eventBus purely for symmetry with the gateway path.
+  let connection: MarketDataConnectionPort;
+  let subscriptions: MarketDataSubscriptionPort;
+  let realConnection: ConnectionManager | undefined;
+  let ticks: TickProcessor | undefined;
+  let decoder: ProtobufDecoder | undefined;
+  const bus: StrategyMarketDataChannel | EventEmitter = options.channel ?? new EventEmitter();
+  if (options.channel) {
+    connection = options.channel;
+    subscriptions = options.channel;
+  } else {
+    const websocket = new MarketDataWebSocketClient(token);
+    realConnection = new ConnectionManager(token, websocket, { maximumReconnectDurationMs:reconnectDurationMs });
+    connection = realConnection;
+    subscriptions = new SubscriptionManager(token, realConnection);
+    decoder = new ProtobufDecoder();
+    ticks = new TickProcessor(bus);
+  }
+  const liveCandleBuilder = new LiveCandleBuilderService();
   // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST source
   // horizon -- scoped to this instrument only (never the option contract subscribed on a
   // signal) via the canonical nifty1mSourceCompletionBoundary utility, computed once for this
   // session's trading day.
   liveCandleBuilder.setSourceCompletionBoundary(NIFTY, nifty1mSourceCompletionBoundary(new Date()).getTime());
-  const candles = new LiveCandleEventAdapterService(liveCandleBuilder, eventBus, () => connection.getGenerationId()),
+  const candles = new LiveCandleEventAdapterService(liveCandleBuilder, bus, () => connection.getGenerationId()),
     tracker = new V8ShadowObservationTracker(frozen.candidate.policy),
     contracts = new CurrentNiftyCeContracts(),
     counters = new V8ShadowRuntimeCounters();
@@ -521,7 +557,12 @@ async function run(): Promise<void> {
     onLiveConstructionUnavailable: (sessionClose) => liveCandleBuilder.blockLiveConstructionForSession(NIFTY, sessionClose.getTime()),
     onEvent: (type, details) => { journal.appendEvent(date, type, [type], details); },
   });
-  const health = new MarketDataHealthMonitorService(connection, {
+  // Gateway mode: health evidence/confirmation is centralized once in SharedMarketDataGateway's
+  // own single MarketDataHealthMonitorService -- `health` here is simply the same leased channel
+  // again. The onStall behavior below is not lost under gateway mode: it is exactly what the
+  // unchanged `connection.on('unexpectedDisconnect', ...)` listener further below already does,
+  // fired once by the gateway's own centralized stall-triggered reconnect.
+  const health: MarketDataHealthPort = options.channel ?? new MarketDataHealthMonitorService(realConnection!, {
     generationGraceMs:healthGraceMs,
     // NIFTY_INDEX genuinely stops publishing 1m source candles at the canonical 15:30 IST
     // source-completion boundary, well before the wider 09:15-15:40 operational session ends.
@@ -581,12 +622,13 @@ async function run(): Promise<void> {
         if (statusTimer) clearInterval(statusTimer);
         health.stop();
         recovery.stop();
+        recoveryWatchdog.stop();
         const at = new Date();
         tracker.closeAtEod(at).forEach(writeExit);
         candles.stop();
-        eventBus.off('market.tick', handleTick);
-        eventBus.off('market.depth', handleDepth);
-        eventBus.off('market.candle.completed', onCompletedCandle);
+        bus.off('market.tick', handleTick);
+        bus.off('market.depth', handleDepth);
+        bus.off('market.candle.completed', onCompletedCandle);
         await subscriptions.unsubscribeMany(
           subscriptions.getSubscriptions().map((s) => s.instrumentKey),
         );
@@ -738,20 +780,33 @@ async function run(): Promise<void> {
     // unexpectedDisconnect/reconnected handlers above.
     if (state === 'FAULTED') connection.failRecovery(recovery.getGenerationId(), 'RECOVERY_COORDINATOR_FAULTED');
   });
+  // F-02: bounded POST-STARTUP consumer recovery watchdog, budget = base
+  // MARKET_DATA_MAX_RECONNECT_DURATION_MS + V8's 2-minute alignment (already computed above as
+  // reconnectDurationMs). Only fed states once startupComplete is true, so it can never compete
+  // with waitUntilReady()'s cold-start bound. onTimeout only calls recovery.fault() -- never the
+  // physical connection -- so a V8-only timeout can never open the shared gateway breaker or
+  // affect V2/V4 siblings (see the FAULTED branch immediately above, which already routes any
+  // fault through the consumer-scoped connection.failRecovery()/channel.failRecovery() port).
+  const recoveryWatchdog = new ConsumerRecoveryWatchdogService({ budgetMs: reconnectDurationMs, onTimeout: (reason) => recovery.fault(reason) });
+  recovery.on('stateChanged', (state) => { if (startupComplete) recoveryWatchdog.onStateChanged(state); });
   process.once('SIGINT', () => {
     void host?.shutdown('SIGINT');
   });
   process.once('SIGTERM', () => {
     void host?.shutdown('SIGTERM');
   });
-  connection.on('message', (b: Buffer, d: { generationId: number }) => {
-    try {
-      ticks.process(decoder.decode(b), d.generationId);
-    } catch {}
-  });
-  eventBus.on('market.tick', handleTick);
-  eventBus.on('market.depth', handleDepth);
-  eventBus.on('market.candle.completed', onCompletedCandle);
+  // Gateway mode decodes every packet exactly once upstream and never re-exposes a raw 'message'
+  // event per consumer -- only standalone mode owns a dedicated decode path.
+  if (!options.channel) {
+    connection.on('message', (b: Buffer, d: { generationId: number }) => {
+      try {
+        ticks!.process(decoder!.decode(b), d.generationId);
+      } catch {}
+    });
+  }
+  bus.on('market.tick', handleTick);
+  bus.on('market.depth', handleDepth);
+  bus.on('market.candle.completed', onCompletedCandle);
   candles.start();
   health.start();
   statusTimer = setInterval(emitStatus, 60_000);
@@ -759,9 +814,15 @@ async function run(): Promise<void> {
   await host.start();
   if (host.getState() !== 'RUNNING') return;
   startupComplete = true; // the persistent recovery listener may now own DEGRADED -> RUNNING for any later, genuine reconnect recovery
+  // F-03: this runtime has now reached its durable live-ownership point -- the finally below must
+  // not release the channel merely because this async function itself finishes below.
+  runtimeOwnsChannel = true;
   console.log(
     `[V8_STARTUP] strategyId=${STRATEGY} shadowOnly=true paperOrders=false brokerOrders=false`,
   );
+  } finally {
+    if (options.channel && !runtimeOwnsChannel) options.channel.disconnect();
+  }
 }
 function v8EvaluationLog(
   value: import('../modules/research/v8-nifty-bullish-reclaim').V8BullishReclaimEvaluation,
@@ -800,7 +861,16 @@ function istDate(d: Date) {
   );
   return `${p.year}-${p.month}-${p.day}`;
 }
-void run().catch((e) => {
-  console.error('[V8_SHADOW_FATAL]', e instanceof Error ? e.message : String(e));
-  process.exitCode = 1;
-});
+// Auto-runs ONLY when this file is itself the process entry point (e.g. a manual
+// `tsx src/tests/test-live-v8-nifty-bullish-reclaim-shadow.ts`). The standard CLI entry point
+// (test-live-v8-nifty-bullish-reclaim-shadow-entry.ts, run via `npm run shadow:v8:reclaim`)
+// dynamically imports this module and calls run() itself after setting its own environment
+// variables first -- require.main there is the wrapper, not this file, so this guard correctly
+// stays silent. The combined shared-gateway runtime imports run() directly the same way,
+// supplying its own leased channel.
+if (require.main === module) {
+  void run().catch((e) => {
+    console.error('[V8_SHADOW_FATAL]', e instanceof Error ? e.message : String(e));
+    process.exitCode = 1;
+  });
+}

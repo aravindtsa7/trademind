@@ -23,7 +23,39 @@ const rsiPeriod = 14;
 const minimumHistory = slowPeriod + 1;
 const frozenUnderlying = 'NIFTY 50';
 const frozenExitPolicy = { targetPercent: 30, stopLossPercent: 20, maximumHoldingMinutes: 60 };
-const v2ExitPolicy = { targetPercent: Number(process.env.V2_TARGET_PERCENT ?? 5), stopLossPercent: Number(process.env.V2_STOP_PERCENT ?? 5), maximumHoldingMinutes: Number(process.env.V2_MAX_HOLD_MINUTES ?? 15) };
+
+export interface LivePaperV2ExitPolicy {
+  readonly targetPercent: number;
+  readonly stopLossPercent: number;
+  readonly maximumHoldingMinutes: number;
+}
+
+export interface LivePaperStrategyAdapterConfig {
+  /** Immutable per-instance V2 identity. Never re-derived from process.env after construction. */
+  readonly v2: boolean;
+  readonly paperTradingOnly: boolean;
+  readonly v2ExitPolicy: LivePaperV2ExitPolicy;
+}
+
+/**
+ * Resolves the legacy default configuration from process.env, exactly once, at construction time
+ * of a single instance -- never at module load. Used only when a caller omits the explicit
+ * `config` constructor argument (every legacy/test caller, plus standalone `npm run paper:v1`).
+ * A combined-runtime caller running V2/V4/V8 in the same process MUST pass `config` explicitly
+ * instead of relying on this (see test-live-paper-trading.ts), since process.env.TRADING_STRATEGY_VERSION
+ * is process-global and cannot safely distinguish this instance's identity from a sibling's.
+ */
+function resolveLegacyConfigFromEnvironment(): LivePaperStrategyAdapterConfig {
+  return {
+    v2: process.env.TRADING_STRATEGY_VERSION === 'V2',
+    paperTradingOnly: process.env.PAPER_TRADING_ONLY === 'true',
+    v2ExitPolicy: {
+      targetPercent: Number(process.env.V2_TARGET_PERCENT ?? 5),
+      stopLossPercent: Number(process.env.V2_STOP_PERCENT ?? 5),
+      maximumHoldingMinutes: Number(process.env.V2_MAX_HOLD_MINUTES ?? 15),
+    },
+  };
+}
 
 /**
  * Consumes completed NIFTY five-minute candles for the frozen EMA15/EMA35 +
@@ -33,7 +65,8 @@ export default class LivePaperStrategyAdapterService {
   private readonly history: Candle[] = [];
   private readonly processedTimestamps = new Set<number>();
   private readonly seededHistoricalTimestamps = new Set<number>();
-  private readonly v2 = process.env.TRADING_STRATEGY_VERSION === 'V2';
+  private readonly v2: boolean;
+  private readonly v2ExitPolicy: LivePaperV2ExitPolicy;
   private readonly v2Evaluator = new V2TrendDownEntryEvaluatorService();
   private readonly regimeService = new AdaptiveMarketRegimeService({ trendStrengthThreshold: 20, emaProximityPercent: 0.05, highVolatilityThreshold: 0.10, lowVolatilityThreshold: 0.05 });
 
@@ -42,7 +75,15 @@ export default class LivePaperStrategyAdapterService {
     private readonly indicatorEngine: LivePaperIndicatorEngine = new IndicatorEngineService(),
     private readonly emaCrossStrategy: LivePaperEmaCrossStrategy = new EmaCrossStrategy({ fastPeriod, slowPeriod }),
     private readonly isV2PositionOpen: () => boolean = () => false,
-  ) { if (this.v2 && process.env.PAPER_TRADING_ONLY !== 'true') throw new Error('V2 strategy is paper-only and requires PAPER_TRADING_ONLY=true.'); }
+    config: LivePaperStrategyAdapterConfig = resolveLegacyConfigFromEnvironment(),
+  ) {
+    // Resolved once, here, into readonly instance fields -- this instance's V2 identity and exit
+    // policy can never change after construction, regardless of what process.env holds later or
+    // what a sibling instance constructed in the same process is doing.
+    this.v2 = config.v2;
+    this.v2ExitPolicy = Object.freeze({ ...config.v2ExitPolicy });
+    if (this.v2 && !config.paperTradingOnly) throw new Error('V2 strategy is paper-only and requires PAPER_TRADING_ONLY=true.');
+  }
 
   /**
    * Adds completed historical candles without evaluating signals or invoking
@@ -172,7 +213,7 @@ export default class LivePaperStrategyAdapterService {
     const decision = this.v2Evaluator.evaluate({ completedCandleTimestamp: completedAt, regime, close: candle.close, high: candle.high, ema35, rsi14 }); const reasons = [`V2 ${decision.reason}: completedAt=${completedAt.toISOString()} regime=${regime ?? 'NOT_READY'} close=${candle.close} ema35=${ema35} proximity=${decision.proximityPercent ?? 'N/A'} rsi14=${rsi14} cooldownEligible=${decision.cooldownEligible}.`];
     if (!decision.entry) return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.NO_TRADE, timeFilterAllowed: true, finalSignal: StrategySignal.NO_TRADE, reasons, processed: true };
     if (this.isV2PositionOpen()) { reasons.push('V2_BLOCKED_POSITION_OPEN.'); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.NO_TRADE, timeFilterAllowed: true, finalSignal: StrategySignal.NO_TRADE, reasons, processed: true }; }
-    try { const orchestration = await this.orchestrator.createFromSignal({ signal: { signalTimestamp: completedAt, signalType: StrategySignal.BUY_PE, underlying: frozenUnderlying, spotPrice: candle.close }, contracts: input.contracts, exitPolicy: { ...v2ExitPolicy } }); reasons.push(`Paper order ${orchestration.order.id} opened for V2 BUY_PE.`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, orchestration, reasons, processed: true }; }
+    try { const orchestration = await this.orchestrator.createFromSignal({ signal: { signalTimestamp: completedAt, signalType: StrategySignal.BUY_PE, underlying: frozenUnderlying, spotPrice: candle.close }, contracts: input.contracts, exitPolicy: { ...this.v2ExitPolicy } }); reasons.push(`Paper order ${orchestration.order.id} opened for V2 BUY_PE.`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, orchestration, reasons, processed: true }; }
     catch (error) { if (error instanceof RiskDeniedError) { reasons.push(`V2_RISK_DENIED:${error.decision.denialReasons.join('|')}`); return { candleTimestamp: completedAt, spotPrice: candle.close, ema15, ema35, rsi14, rawEmaSignal: StrategySignal.BUY_PE, timeFilterAllowed: true, finalSignal: StrategySignal.BUY_PE, reasons, processed: true }; } throw error; }
   }
 
