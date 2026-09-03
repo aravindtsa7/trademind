@@ -1,0 +1,5310 @@
+{
+  "schemaVersion": 1,
+  "imputationSemanticsVersion": 1,
+  "identity": {
+    "instrumentKey": "NSE_INDEX|Nifty 50",
+    "timeframe": "1minute",
+    "tradingDate": "2022-03-07"
+  },
+  "authorizationId": "NIFTY_2022_03_07_INDEX_GAP_V1",
+  "sourceSnapshotProviderId": "UPSTOX",
+  "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1",
+  "rows": [
+    {
+      "candleTime": "2022-03-07T03:45:00.000Z",
+      "open": "15867.95",
+      "high": "15903.9",
+      "low": "15863.5",
+      "close": "15891.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:46:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:46:00.000Z",
+      "open": "15888.05",
+      "high": "15888.05",
+      "low": "15860.5",
+      "close": "15863.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:47:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:47:00.000Z",
+      "open": "15863.75",
+      "high": "15864.6",
+      "low": "15842.45",
+      "close": "15855.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:48:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:48:00.000Z",
+      "open": "15855.55",
+      "high": "15864.05",
+      "low": "15850.7",
+      "close": "15855.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:49:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:49:00.000Z",
+      "open": "15854.7",
+      "high": "15862.15",
+      "low": "15854.7",
+      "close": "15857.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:50:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:50:00.000Z",
+      "open": "15853.3",
+      "high": "15871.1",
+      "low": "15853.3",
+      "close": "15865.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:51:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:51:00.000Z",
+      "open": "15865.05",
+      "high": "15874.4",
+      "low": "15860.35",
+      "close": "15866.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:52:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:52:00.000Z",
+      "open": "15867.7",
+      "high": "15869",
+      "low": "15852.9",
+      "close": "15855.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:53:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:53:00.000Z",
+      "open": "15855.8",
+      "high": "15855.8",
+      "low": "15830.15",
+      "close": "15830.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:54:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:54:00.000Z",
+      "open": "15830.1",
+      "high": "15835",
+      "low": "15825.75",
+      "close": "15828.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:55:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:55:00.000Z",
+      "open": "15828.65",
+      "high": "15831.9",
+      "low": "15821.6",
+      "close": "15823.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:56:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:56:00.000Z",
+      "open": "15823.9",
+      "high": "15847.4",
+      "low": "15823.4",
+      "close": "15847.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:57:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:57:00.000Z",
+      "open": "15847",
+      "high": "15848.75",
+      "low": "15829.55",
+      "close": "15829.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:58:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:58:00.000Z",
+      "open": "15830.45",
+      "high": "15830.45",
+      "low": "15814.6",
+      "close": "15817.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T03:59:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T03:59:00.000Z",
+      "open": "15817.6",
+      "high": "15832.5",
+      "low": "15817.6",
+      "close": "15827.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:00:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:00:00.000Z",
+      "open": "15827.15",
+      "high": "15830.15",
+      "low": "15817.2",
+      "close": "15823.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:01:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:01:00.000Z",
+      "open": "15824.15",
+      "high": "15829.8",
+      "low": "15816.45",
+      "close": "15822.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:02:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:02:00.000Z",
+      "open": "15821.85",
+      "high": "15831.45",
+      "low": "15810.75",
+      "close": "15812.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:03:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:03:00.000Z",
+      "open": "15813.1",
+      "high": "15813.1",
+      "low": "15806.1",
+      "close": "15812.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:04:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:04:00.000Z",
+      "open": "15813.85",
+      "high": "15814",
+      "low": "15802.1",
+      "close": "15802.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:05:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:05:00.000Z",
+      "open": "15802.3",
+      "high": "15808.2",
+      "low": "15798.75",
+      "close": "15798.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:06:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:06:00.000Z",
+      "open": "15798.75",
+      "high": "15799.2",
+      "low": "15798.05",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:07:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:07:00.000Z",
+      "open": "15798.3",
+      "high": "15798.3",
+      "low": "15798.3",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:08:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:08:00.000Z",
+      "open": "15798.3",
+      "high": "15798.3",
+      "low": "15798.3",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:09:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:09:00.000Z",
+      "open": "15798.3",
+      "high": "15798.3",
+      "low": "15798.3",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:10:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:10:00.000Z",
+      "open": "15798.3",
+      "high": "15798.3",
+      "low": "15798.3",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:11:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:11:00.000Z",
+      "open": "15798.3",
+      "high": "15798.3",
+      "low": "15798.3",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:12:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:12:00.000Z",
+      "open": "15798.3",
+      "high": "15798.3",
+      "low": "15798.3",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:13:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:13:00.000Z",
+      "open": "15798.3",
+      "high": "15798.3",
+      "low": "15798.3",
+      "close": "15798.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:14:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:14:00.000Z",
+      "open": "15798.3",
+      "high": "15799.4",
+      "low": "15795.8",
+      "close": "15796.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:15:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:15:00.000Z",
+      "open": "15797.55",
+      "high": "15797.55",
+      "low": "15797.55",
+      "close": "15797.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:16:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:16:00.000Z",
+      "open": "15797.55",
+      "high": "15797.55",
+      "low": "15797.55",
+      "close": "15797.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:17:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:17:00.000Z",
+      "open": "15797.55",
+      "high": "15798.2",
+      "low": "15790.35",
+      "close": "15797.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:18:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:18:00.000Z",
+      "open": "15796.75",
+      "high": "15799.35",
+      "low": "15796.75",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:19:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:19:00.000Z",
+      "open": "15797.35",
+      "high": "15797.35",
+      "low": "15797.35",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:20:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:20:00.000Z",
+      "open": "15797.35",
+      "high": "15797.35",
+      "low": "15797.35",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:21:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:21:00.000Z",
+      "open": "15797.35",
+      "high": "15797.35",
+      "low": "15797.35",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:22:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:22:00.000Z",
+      "open": "15797.35",
+      "high": "15797.35",
+      "low": "15797.35",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:23:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:23:00.000Z",
+      "open": "15797.35",
+      "high": "15797.35",
+      "low": "15797.35",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:24:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:24:00.000Z",
+      "open": "15797.35",
+      "high": "15804.4",
+      "low": "15796.5",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:25:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:25:00.000Z",
+      "open": "15797.35",
+      "high": "15810.55",
+      "low": "15775.55",
+      "close": "15797.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:26:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:26:00.000Z",
+      "open": "15797.35",
+      "high": "15797.35",
+      "low": "15775.95",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:27:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:27:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:28:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:28:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:29:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:29:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:30:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:30:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:31:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:31:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:32:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:32:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:33:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:33:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:34:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:34:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:35:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:35:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:36:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:36:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:37:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:37:00.000Z",
+      "open": "15785.4",
+      "high": "16174.45",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:38:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:38:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:39:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:39:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:40:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:40:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:41:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:41:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:42:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:42:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:43:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:43:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:44:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:44:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:45:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:45:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:46:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:46:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:47:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:47:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:48:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:48:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:49:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:49:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:50:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:50:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:51:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:51:00.000Z",
+      "open": "15785.4",
+      "high": "15785.4",
+      "low": "15785.4",
+      "close": "15785.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:52:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:52:00.000Z",
+      "open": "15785.4",
+      "high": "15812.8",
+      "low": "15785.4",
+      "close": "15812.8",
+      "volume": "0",
+      "openInterest": null,
+      "availableAt": "2022-03-07T04:56:00.000Z",
+      "provenance": {
+        "kind": "IMPUTED",
+        "method": "LINEAR_BOUNDARY_INTERPOLATION",
+        "policyVersion": 1,
+        "authorizationId": "NIFTY_2022_03_07_INDEX_GAP_V1",
+        "reason": "INDEX_BROADCAST_DATA_GAP",
+        "leftAnchor": {
+          "candleTime": "2022-03-07T04:51:00.000Z",
+          "field": "CLOSE",
+          "contentChecksum": "1b688dac9d9b249b1ba4fae28a8071cc2163b38a58268f967dad762b524f725e"
+        },
+        "rightAnchor": {
+          "candleTime": "2022-03-07T04:55:00.000Z",
+          "field": "OPEN",
+          "contentChecksum": "2e55eb3eba7f6d03b7082b7d3f03ac3a0e13cc5af8db9fa995ff91c1179edc17"
+        },
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:53:00.000Z",
+      "open": "15812.8",
+      "high": "15840.2",
+      "low": "15812.8",
+      "close": "15840.2",
+      "volume": "0",
+      "openInterest": null,
+      "availableAt": "2022-03-07T04:56:00.000Z",
+      "provenance": {
+        "kind": "IMPUTED",
+        "method": "LINEAR_BOUNDARY_INTERPOLATION",
+        "policyVersion": 1,
+        "authorizationId": "NIFTY_2022_03_07_INDEX_GAP_V1",
+        "reason": "INDEX_BROADCAST_DATA_GAP",
+        "leftAnchor": {
+          "candleTime": "2022-03-07T04:51:00.000Z",
+          "field": "CLOSE",
+          "contentChecksum": "1b688dac9d9b249b1ba4fae28a8071cc2163b38a58268f967dad762b524f725e"
+        },
+        "rightAnchor": {
+          "candleTime": "2022-03-07T04:55:00.000Z",
+          "field": "OPEN",
+          "contentChecksum": "2e55eb3eba7f6d03b7082b7d3f03ac3a0e13cc5af8db9fa995ff91c1179edc17"
+        },
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:54:00.000Z",
+      "open": "15840.2",
+      "high": "15867.6",
+      "low": "15840.2",
+      "close": "15867.6",
+      "volume": "0",
+      "openInterest": null,
+      "availableAt": "2022-03-07T04:56:00.000Z",
+      "provenance": {
+        "kind": "IMPUTED",
+        "method": "LINEAR_BOUNDARY_INTERPOLATION",
+        "policyVersion": 1,
+        "authorizationId": "NIFTY_2022_03_07_INDEX_GAP_V1",
+        "reason": "INDEX_BROADCAST_DATA_GAP",
+        "leftAnchor": {
+          "candleTime": "2022-03-07T04:51:00.000Z",
+          "field": "CLOSE",
+          "contentChecksum": "1b688dac9d9b249b1ba4fae28a8071cc2163b38a58268f967dad762b524f725e"
+        },
+        "rightAnchor": {
+          "candleTime": "2022-03-07T04:55:00.000Z",
+          "field": "OPEN",
+          "contentChecksum": "2e55eb3eba7f6d03b7082b7d3f03ac3a0e13cc5af8db9fa995ff91c1179edc17"
+        },
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:55:00.000Z",
+      "open": "15867.6",
+      "high": "15886.45",
+      "low": "15769.9",
+      "close": "15769.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:56:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:56:00.000Z",
+      "open": "15760.2",
+      "high": "15844.4",
+      "low": "15760.2",
+      "close": "15797.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:57:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:57:00.000Z",
+      "open": "15799.6",
+      "high": "15813.4",
+      "low": "15796.75",
+      "close": "15811",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:58:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:58:00.000Z",
+      "open": "15810.9",
+      "high": "15811.75",
+      "low": "15797.1",
+      "close": "15811.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T04:59:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T04:59:00.000Z",
+      "open": "15810.5",
+      "high": "15810.5",
+      "low": "15795.4",
+      "close": "15795.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:00:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:00:00.000Z",
+      "open": "15793.85",
+      "high": "15793.85",
+      "low": "15767.1",
+      "close": "15768.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:01:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:01:00.000Z",
+      "open": "15768.85",
+      "high": "15769.65",
+      "low": "15762.25",
+      "close": "15763.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:02:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:02:00.000Z",
+      "open": "15762.8",
+      "high": "15762.8",
+      "low": "15756.75",
+      "close": "15756.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:03:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:03:00.000Z",
+      "open": "15758.3",
+      "high": "15759.65",
+      "low": "15753.5",
+      "close": "15759.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:04:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:04:00.000Z",
+      "open": "15757.1",
+      "high": "15759.75",
+      "low": "15752.5",
+      "close": "15752.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:05:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:05:00.000Z",
+      "open": "15752.45",
+      "high": "15752.9",
+      "low": "15742.4",
+      "close": "15748.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:06:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:06:00.000Z",
+      "open": "15747.95",
+      "high": "15759.75",
+      "low": "15743.75",
+      "close": "15757.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:07:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:07:00.000Z",
+      "open": "15758.8",
+      "high": "15766.15",
+      "low": "15757.45",
+      "close": "15759.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:08:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:08:00.000Z",
+      "open": "15759.9",
+      "high": "15759.9",
+      "low": "15747.5",
+      "close": "15750.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:09:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:09:00.000Z",
+      "open": "15751.2",
+      "high": "15761",
+      "low": "15750.2",
+      "close": "15759.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:10:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:10:00.000Z",
+      "open": "15759.65",
+      "high": "15770.65",
+      "low": "15759.65",
+      "close": "15769.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:11:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:11:00.000Z",
+      "open": "15770.1",
+      "high": "15777.2",
+      "low": "15760.85",
+      "close": "15761",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:12:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:12:00.000Z",
+      "open": "15759.9",
+      "high": "15766.8",
+      "low": "15756.05",
+      "close": "15761.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:13:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:13:00.000Z",
+      "open": "15763.05",
+      "high": "15767",
+      "low": "15754.65",
+      "close": "15762.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:14:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:14:00.000Z",
+      "open": "15761.55",
+      "high": "15766.2",
+      "low": "15753.05",
+      "close": "15759.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:15:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:15:00.000Z",
+      "open": "15758.55",
+      "high": "15775.85",
+      "low": "15756.5",
+      "close": "15774.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:16:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:16:00.000Z",
+      "open": "15777.1",
+      "high": "15788.25",
+      "low": "15775.8",
+      "close": "15781.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:17:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:17:00.000Z",
+      "open": "15780.7",
+      "high": "15790.9",
+      "low": "15780.4",
+      "close": "15789.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:18:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:18:00.000Z",
+      "open": "15789.75",
+      "high": "15807.75",
+      "low": "15786.8",
+      "close": "15805.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:19:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:19:00.000Z",
+      "open": "15806.55",
+      "high": "15808.15",
+      "low": "15797.7",
+      "close": "15808.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:20:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:20:00.000Z",
+      "open": "15808.1",
+      "high": "15816.9",
+      "low": "15806.6",
+      "close": "15816.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:21:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:21:00.000Z",
+      "open": "15818.55",
+      "high": "15824.3",
+      "low": "15815.4",
+      "close": "15821.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:22:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:22:00.000Z",
+      "open": "15821",
+      "high": "15829.25",
+      "low": "15820.5",
+      "close": "15822.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:23:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:23:00.000Z",
+      "open": "15822.45",
+      "high": "15831.1",
+      "low": "15816.1",
+      "close": "15831.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:24:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:24:00.000Z",
+      "open": "15830.7",
+      "high": "15843.6",
+      "low": "15830.7",
+      "close": "15842.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:25:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:25:00.000Z",
+      "open": "15842.7",
+      "high": "15850.4",
+      "low": "15836.25",
+      "close": "15836.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:26:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:26:00.000Z",
+      "open": "15835.45",
+      "high": "15849.55",
+      "low": "15834.3",
+      "close": "15849.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:27:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:27:00.000Z",
+      "open": "15849.05",
+      "high": "15859.1",
+      "low": "15848.8",
+      "close": "15853.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:28:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:28:00.000Z",
+      "open": "15853",
+      "high": "15862.4",
+      "low": "15851.9",
+      "close": "15855.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:29:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:29:00.000Z",
+      "open": "15855.65",
+      "high": "15862.4",
+      "low": "15854.05",
+      "close": "15859.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:30:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:30:00.000Z",
+      "open": "15859.4",
+      "high": "15862",
+      "low": "15837.9",
+      "close": "15848.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:31:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:31:00.000Z",
+      "open": "15848.35",
+      "high": "15849.6",
+      "low": "15822.05",
+      "close": "15822.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:32:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:32:00.000Z",
+      "open": "15823",
+      "high": "15840.1",
+      "low": "15822.55",
+      "close": "15839.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:33:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:33:00.000Z",
+      "open": "15840.15",
+      "high": "15847.65",
+      "low": "15837.15",
+      "close": "15838.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:34:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:34:00.000Z",
+      "open": "15838.7",
+      "high": "15847.9",
+      "low": "15831.55",
+      "close": "15846.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:35:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:35:00.000Z",
+      "open": "15847.05",
+      "high": "15847.05",
+      "low": "15824.4",
+      "close": "15838.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:36:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:36:00.000Z",
+      "open": "15837.8",
+      "high": "15846.05",
+      "low": "15837.8",
+      "close": "15839.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:37:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:37:00.000Z",
+      "open": "15838.45",
+      "high": "15841.95",
+      "low": "15834.15",
+      "close": "15841.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:38:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:38:00.000Z",
+      "open": "15841.55",
+      "high": "15844.05",
+      "low": "15831.95",
+      "close": "15841.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:39:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:39:00.000Z",
+      "open": "15842.35",
+      "high": "15847.35",
+      "low": "15836.65",
+      "close": "15838.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:40:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:40:00.000Z",
+      "open": "15838.75",
+      "high": "15846.1",
+      "low": "15838.4",
+      "close": "15845.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:41:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:41:00.000Z",
+      "open": "15845",
+      "high": "15845.5",
+      "low": "15833.8",
+      "close": "15840.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:42:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:42:00.000Z",
+      "open": "15840.6",
+      "high": "15850.9",
+      "low": "15839.4",
+      "close": "15850.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:43:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:43:00.000Z",
+      "open": "15850.9",
+      "high": "15852.4",
+      "low": "15844.2",
+      "close": "15851.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:44:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:44:00.000Z",
+      "open": "15852.25",
+      "high": "15855.8",
+      "low": "15850.6",
+      "close": "15854.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:45:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:45:00.000Z",
+      "open": "15853.7",
+      "high": "15862.45",
+      "low": "15852.8",
+      "close": "15862.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:46:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:46:00.000Z",
+      "open": "15861.8",
+      "high": "15871.6",
+      "low": "15859.15",
+      "close": "15866.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:47:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:47:00.000Z",
+      "open": "15866.8",
+      "high": "15870.45",
+      "low": "15864.9",
+      "close": "15867.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:48:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:48:00.000Z",
+      "open": "15867.65",
+      "high": "15878.3",
+      "low": "15865.5",
+      "close": "15877.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:49:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:49:00.000Z",
+      "open": "15877.8",
+      "high": "15885.55",
+      "low": "15876.6",
+      "close": "15885.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:50:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:50:00.000Z",
+      "open": "15885.5",
+      "high": "15889.15",
+      "low": "15872.3",
+      "close": "15872.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:51:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:51:00.000Z",
+      "open": "15871.95",
+      "high": "15889.15",
+      "low": "15870.25",
+      "close": "15877.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:52:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:52:00.000Z",
+      "open": "15877.65",
+      "high": "15897.65",
+      "low": "15877.65",
+      "close": "15895.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:53:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:53:00.000Z",
+      "open": "15895.1",
+      "high": "15899.05",
+      "low": "15889.2",
+      "close": "15899.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:54:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:54:00.000Z",
+      "open": "15899.2",
+      "high": "15906.95",
+      "low": "15899.2",
+      "close": "15904.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:55:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:55:00.000Z",
+      "open": "15904.35",
+      "high": "15904.35",
+      "low": "15889.3",
+      "close": "15901.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:56:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:56:00.000Z",
+      "open": "15901.4",
+      "high": "15911.6",
+      "low": "15901.25",
+      "close": "15909.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:57:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:57:00.000Z",
+      "open": "15909.65",
+      "high": "15909.65",
+      "low": "15894.15",
+      "close": "15895.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:58:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:58:00.000Z",
+      "open": "15896.4",
+      "high": "15910.2",
+      "low": "15896.4",
+      "close": "15908.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T05:59:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T05:59:00.000Z",
+      "open": "15908.6",
+      "high": "15909.3",
+      "low": "15899.6",
+      "close": "15900.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:00:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:00:00.000Z",
+      "open": "15900.8",
+      "high": "15903.65",
+      "low": "15895",
+      "close": "15895",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:01:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:01:00.000Z",
+      "open": "15896.1",
+      "high": "15900.7",
+      "low": "15891",
+      "close": "15899.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:02:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:02:00.000Z",
+      "open": "15899.5",
+      "high": "15900.35",
+      "low": "15881.8",
+      "close": "15884.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:03:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:03:00.000Z",
+      "open": "15885.5",
+      "high": "15889.65",
+      "low": "15878.7",
+      "close": "15889.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:04:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:04:00.000Z",
+      "open": "15887.3",
+      "high": "15902.2",
+      "low": "15885.1",
+      "close": "15900.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:05:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:05:00.000Z",
+      "open": "15898.7",
+      "high": "15898.7",
+      "low": "15888.85",
+      "close": "15894.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:06:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:06:00.000Z",
+      "open": "15894.55",
+      "high": "15905.4",
+      "low": "15894.2",
+      "close": "15900.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:07:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:07:00.000Z",
+      "open": "15900",
+      "high": "15905.15",
+      "low": "15900",
+      "close": "15901.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:08:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:08:00.000Z",
+      "open": "15901.9",
+      "high": "15905.9",
+      "low": "15892.5",
+      "close": "15905.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:09:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:09:00.000Z",
+      "open": "15907.65",
+      "high": "15913.4",
+      "low": "15905.1",
+      "close": "15913.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:10:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:10:00.000Z",
+      "open": "15913.55",
+      "high": "15913.55",
+      "low": "15906.6",
+      "close": "15912.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:11:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:11:00.000Z",
+      "open": "15911.85",
+      "high": "15921.55",
+      "low": "15904",
+      "close": "15921.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:12:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:12:00.000Z",
+      "open": "15926.2",
+      "high": "15929.45",
+      "low": "15921.9",
+      "close": "15925.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:13:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:13:00.000Z",
+      "open": "15925.2",
+      "high": "15925.95",
+      "low": "15912.1",
+      "close": "15920.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:14:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:14:00.000Z",
+      "open": "15920.15",
+      "high": "15920.15",
+      "low": "15914.45",
+      "close": "15915.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:15:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:15:00.000Z",
+      "open": "15914",
+      "high": "15928.3",
+      "low": "15906.8",
+      "close": "15922.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:16:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:16:00.000Z",
+      "open": "15923.8",
+      "high": "15925.5",
+      "low": "15913.85",
+      "close": "15914.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:17:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:17:00.000Z",
+      "open": "15914.9",
+      "high": "15914.9",
+      "low": "15900.8",
+      "close": "15904.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:18:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:18:00.000Z",
+      "open": "15905",
+      "high": "15908.6",
+      "low": "15900.35",
+      "close": "15900.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:19:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:19:00.000Z",
+      "open": "15896.75",
+      "high": "15898.5",
+      "low": "15890.25",
+      "close": "15892.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:20:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:20:00.000Z",
+      "open": "15892.25",
+      "high": "15900.6",
+      "low": "15882.3",
+      "close": "15889.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:21:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:21:00.000Z",
+      "open": "15889.45",
+      "high": "15895.6",
+      "low": "15888.8",
+      "close": "15894.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:22:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:22:00.000Z",
+      "open": "15895.35",
+      "high": "15896.95",
+      "low": "15887.7",
+      "close": "15887.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:23:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:23:00.000Z",
+      "open": "15888.2",
+      "high": "15895.1",
+      "low": "15884.5",
+      "close": "15895.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:24:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:24:00.000Z",
+      "open": "15896",
+      "high": "15916.5",
+      "low": "15896",
+      "close": "15915.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:25:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:25:00.000Z",
+      "open": "15915.2",
+      "high": "15926.75",
+      "low": "15915.2",
+      "close": "15925.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:26:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:26:00.000Z",
+      "open": "15925.9",
+      "high": "15928.85",
+      "low": "15924.95",
+      "close": "15928.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:27:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:27:00.000Z",
+      "open": "15928.6",
+      "high": "15932.25",
+      "low": "15927.25",
+      "close": "15927.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:28:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:28:00.000Z",
+      "open": "15927.75",
+      "high": "15936.95",
+      "low": "15927.6",
+      "close": "15934.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:29:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:29:00.000Z",
+      "open": "15934.95",
+      "high": "15935.95",
+      "low": "15928.3",
+      "close": "15935.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:30:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:30:00.000Z",
+      "open": "15935.3",
+      "high": "15943.55",
+      "low": "15935.25",
+      "close": "15938.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:31:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:31:00.000Z",
+      "open": "15939.05",
+      "high": "15941.25",
+      "low": "15932.95",
+      "close": "15937.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:32:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:32:00.000Z",
+      "open": "15937.15",
+      "high": "15937.15",
+      "low": "15921.9",
+      "close": "15928.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:33:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:33:00.000Z",
+      "open": "15928.45",
+      "high": "15933.45",
+      "low": "15928.05",
+      "close": "15930.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:34:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:34:00.000Z",
+      "open": "15929.8",
+      "high": "15929.8",
+      "low": "15923.15",
+      "close": "15924.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:35:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:35:00.000Z",
+      "open": "15925.15",
+      "high": "15927.85",
+      "low": "15921",
+      "close": "15921",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:36:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:36:00.000Z",
+      "open": "15921.2",
+      "high": "15921.4",
+      "low": "15912.2",
+      "close": "15913.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:37:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:37:00.000Z",
+      "open": "15914.9",
+      "high": "15925.4",
+      "low": "15913.55",
+      "close": "15925.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:38:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:38:00.000Z",
+      "open": "15923.7",
+      "high": "15924.55",
+      "low": "15919.6",
+      "close": "15919.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:39:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:39:00.000Z",
+      "open": "15920.1",
+      "high": "15921",
+      "low": "15915.3",
+      "close": "15917.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:40:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:40:00.000Z",
+      "open": "15916.4",
+      "high": "15916.4",
+      "low": "15903.65",
+      "close": "15903.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:41:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:41:00.000Z",
+      "open": "15903.9",
+      "high": "15904",
+      "low": "15893.45",
+      "close": "15897.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:42:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:42:00.000Z",
+      "open": "15896.95",
+      "high": "15902.55",
+      "low": "15896.05",
+      "close": "15902.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:43:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:43:00.000Z",
+      "open": "15903.8",
+      "high": "15904.85",
+      "low": "15892.05",
+      "close": "15892.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:44:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:44:00.000Z",
+      "open": "15890.9",
+      "high": "15897.05",
+      "low": "15890.55",
+      "close": "15890.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:45:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:45:00.000Z",
+      "open": "15890.9",
+      "high": "15901.65",
+      "low": "15888.15",
+      "close": "15901.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:46:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:46:00.000Z",
+      "open": "15902.3",
+      "high": "15909",
+      "low": "15897.2",
+      "close": "15907.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:47:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:47:00.000Z",
+      "open": "15908.3",
+      "high": "15917.2",
+      "low": "15905.2",
+      "close": "15914.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:48:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:48:00.000Z",
+      "open": "15914.35",
+      "high": "15914.75",
+      "low": "15907.8",
+      "close": "15907.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:49:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:49:00.000Z",
+      "open": "15909.1",
+      "high": "15909.1",
+      "low": "15904.5",
+      "close": "15905.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:50:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:50:00.000Z",
+      "open": "15905.05",
+      "high": "15915.6",
+      "low": "15904.85",
+      "close": "15904.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:51:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:51:00.000Z",
+      "open": "15906.2",
+      "high": "15914.95",
+      "low": "15905.25",
+      "close": "15911.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:52:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:52:00.000Z",
+      "open": "15912.5",
+      "high": "15913.65",
+      "low": "15900.95",
+      "close": "15904.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:53:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:53:00.000Z",
+      "open": "15903.9",
+      "high": "15908.9",
+      "low": "15900.4",
+      "close": "15904.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:54:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:54:00.000Z",
+      "open": "15905.8",
+      "high": "15909.55",
+      "low": "15902.35",
+      "close": "15907.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:55:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:55:00.000Z",
+      "open": "15908.3",
+      "high": "15924.65",
+      "low": "15907.75",
+      "close": "15924.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:56:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:56:00.000Z",
+      "open": "15924.9",
+      "high": "15924.9",
+      "low": "15915.5",
+      "close": "15916.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:57:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:57:00.000Z",
+      "open": "15916.9",
+      "high": "15916.9",
+      "low": "15909.45",
+      "close": "15909.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:58:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:58:00.000Z",
+      "open": "15909.55",
+      "high": "15914.05",
+      "low": "15908.5",
+      "close": "15913.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T06:59:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T06:59:00.000Z",
+      "open": "15914.8",
+      "high": "15916.55",
+      "low": "15900.6",
+      "close": "15903.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:00:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:00:00.000Z",
+      "open": "15904.1",
+      "high": "15920.4",
+      "low": "15904.1",
+      "close": "15916",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:01:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:01:00.000Z",
+      "open": "15916.85",
+      "high": "15923.2",
+      "low": "15916.25",
+      "close": "15921.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:02:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:02:00.000Z",
+      "open": "15921.2",
+      "high": "15926.35",
+      "low": "15921.1",
+      "close": "15924.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:03:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:03:00.000Z",
+      "open": "15924.4",
+      "high": "15925.65",
+      "low": "15923.05",
+      "close": "15924.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:04:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:04:00.000Z",
+      "open": "15923.7",
+      "high": "15923.7",
+      "low": "15920.5",
+      "close": "15922.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:05:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:05:00.000Z",
+      "open": "15922",
+      "high": "15922.45",
+      "low": "15917.1",
+      "close": "15917.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:06:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:06:00.000Z",
+      "open": "15917.2",
+      "high": "15919.2",
+      "low": "15915.2",
+      "close": "15915.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:07:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:07:00.000Z",
+      "open": "15916.1",
+      "high": "15916.4",
+      "low": "15909.6",
+      "close": "15916.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:08:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:08:00.000Z",
+      "open": "15916",
+      "high": "15916.25",
+      "low": "15913.2",
+      "close": "15914.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:09:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:09:00.000Z",
+      "open": "15914.95",
+      "high": "15918.6",
+      "low": "15914.05",
+      "close": "15917.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:10:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:10:00.000Z",
+      "open": "15917.8",
+      "high": "15918.4",
+      "low": "15914.1",
+      "close": "15917.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:11:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:11:00.000Z",
+      "open": "15917.85",
+      "high": "15919.1",
+      "low": "15913.9",
+      "close": "15914.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:12:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:12:00.000Z",
+      "open": "15914.65",
+      "high": "15915.3",
+      "low": "15911.05",
+      "close": "15911.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:13:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:13:00.000Z",
+      "open": "15911.25",
+      "high": "15916.45",
+      "low": "15909.35",
+      "close": "15916.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:14:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:14:00.000Z",
+      "open": "15916.3",
+      "high": "15916.3",
+      "low": "15910.8",
+      "close": "15912.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:15:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:15:00.000Z",
+      "open": "15912.95",
+      "high": "15928.25",
+      "low": "15912.95",
+      "close": "15927.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:16:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:16:00.000Z",
+      "open": "15928.1",
+      "high": "15929.2",
+      "low": "15923.7",
+      "close": "15927.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:17:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:17:00.000Z",
+      "open": "15927",
+      "high": "15933.95",
+      "low": "15925.75",
+      "close": "15928.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:18:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:18:00.000Z",
+      "open": "15928.15",
+      "high": "15932",
+      "low": "15928.15",
+      "close": "15931.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:19:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:19:00.000Z",
+      "open": "15931.35",
+      "high": "15935.75",
+      "low": "15928.4",
+      "close": "15935.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:20:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:20:00.000Z",
+      "open": "15935.75",
+      "high": "15940",
+      "low": "15935.25",
+      "close": "15935.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:21:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:21:00.000Z",
+      "open": "15936.2",
+      "high": "15937.1",
+      "low": "15935.05",
+      "close": "15936.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:22:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:22:00.000Z",
+      "open": "15936.85",
+      "high": "15936.85",
+      "low": "15927.3",
+      "close": "15933.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:23:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:23:00.000Z",
+      "open": "15933.85",
+      "high": "15934.8",
+      "low": "15932.4",
+      "close": "15933.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:24:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:24:00.000Z",
+      "open": "15933.6",
+      "high": "15934.3",
+      "low": "15929.7",
+      "close": "15932.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:25:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:25:00.000Z",
+      "open": "15932.3",
+      "high": "15934.5",
+      "low": "15929.3",
+      "close": "15933.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:26:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:26:00.000Z",
+      "open": "15933.8",
+      "high": "15937.3",
+      "low": "15932.85",
+      "close": "15933.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:27:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:27:00.000Z",
+      "open": "15934.45",
+      "high": "15934.45",
+      "low": "15932.25",
+      "close": "15932.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:28:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:28:00.000Z",
+      "open": "15932.05",
+      "high": "15932.05",
+      "low": "15925.4",
+      "close": "15929.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:29:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:29:00.000Z",
+      "open": "15928.95",
+      "high": "15928.95",
+      "low": "15915.95",
+      "close": "15916",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:30:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:30:00.000Z",
+      "open": "15915.9",
+      "high": "15915.9",
+      "low": "15899.4",
+      "close": "15900.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:31:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:31:00.000Z",
+      "open": "15901.95",
+      "high": "15913.25",
+      "low": "15901.95",
+      "close": "15909.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:32:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:32:00.000Z",
+      "open": "15909.4",
+      "high": "15914.45",
+      "low": "15908.2",
+      "close": "15912.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:33:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:33:00.000Z",
+      "open": "15913.65",
+      "high": "15929.95",
+      "low": "15912.75",
+      "close": "15928.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:34:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:34:00.000Z",
+      "open": "15928.55",
+      "high": "15930.7",
+      "low": "15923.9",
+      "close": "15925.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:35:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:35:00.000Z",
+      "open": "15925.75",
+      "high": "15925.95",
+      "low": "15913.25",
+      "close": "15913.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:36:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:36:00.000Z",
+      "open": "15912.5",
+      "high": "15912.5",
+      "low": "15899.55",
+      "close": "15899.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:37:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:37:00.000Z",
+      "open": "15899.7",
+      "high": "15900.95",
+      "low": "15884.7",
+      "close": "15885.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:38:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:38:00.000Z",
+      "open": "15887.15",
+      "high": "15889",
+      "low": "15863.5",
+      "close": "15864.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:39:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:39:00.000Z",
+      "open": "15863.7",
+      "high": "15874.15",
+      "low": "15863.7",
+      "close": "15869.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:40:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:40:00.000Z",
+      "open": "15868.5",
+      "high": "15873",
+      "low": "15863.05",
+      "close": "15866.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:41:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:41:00.000Z",
+      "open": "15864.75",
+      "high": "15876.9",
+      "low": "15863.2",
+      "close": "15876.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:42:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:42:00.000Z",
+      "open": "15874.5",
+      "high": "15874.95",
+      "low": "15862.15",
+      "close": "15862.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:43:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:43:00.000Z",
+      "open": "15859.75",
+      "high": "15860.7",
+      "low": "15850.65",
+      "close": "15854",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:44:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:44:00.000Z",
+      "open": "15853.2",
+      "high": "15855",
+      "low": "15850.15",
+      "close": "15851",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:45:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:45:00.000Z",
+      "open": "15851.2",
+      "high": "15855.6",
+      "low": "15849.7",
+      "close": "15853.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:46:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:46:00.000Z",
+      "open": "15853.95",
+      "high": "15859.3",
+      "low": "15851.15",
+      "close": "15858.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:47:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:47:00.000Z",
+      "open": "15859.15",
+      "high": "15861.7",
+      "low": "15856.75",
+      "close": "15856.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:48:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:48:00.000Z",
+      "open": "15856.7",
+      "high": "15857.5",
+      "low": "15852.1",
+      "close": "15853.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:49:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:49:00.000Z",
+      "open": "15852.85",
+      "high": "15859.45",
+      "low": "15851.05",
+      "close": "15859.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:50:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:50:00.000Z",
+      "open": "15858.6",
+      "high": "15879.45",
+      "low": "15858.6",
+      "close": "15874.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:51:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:51:00.000Z",
+      "open": "15874.8",
+      "high": "15874.8",
+      "low": "15866.45",
+      "close": "15871.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:52:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:52:00.000Z",
+      "open": "15871.1",
+      "high": "15871.7",
+      "low": "15864",
+      "close": "15866.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:53:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:53:00.000Z",
+      "open": "15867.1",
+      "high": "15868.45",
+      "low": "15861.85",
+      "close": "15861.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:54:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:54:00.000Z",
+      "open": "15861.15",
+      "high": "15861.85",
+      "low": "15852.65",
+      "close": "15861.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:55:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:55:00.000Z",
+      "open": "15860.15",
+      "high": "15860.4",
+      "low": "15836.15",
+      "close": "15840.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:56:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:56:00.000Z",
+      "open": "15840.95",
+      "high": "15845.5",
+      "low": "15840.4",
+      "close": "15842.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:57:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:57:00.000Z",
+      "open": "15842.1",
+      "high": "15852.5",
+      "low": "15840.9",
+      "close": "15842.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:58:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:58:00.000Z",
+      "open": "15841.85",
+      "high": "15844.45",
+      "low": "15838.7",
+      "close": "15838.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T07:59:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T07:59:00.000Z",
+      "open": "15837.25",
+      "high": "15837.7",
+      "low": "15829.1",
+      "close": "15829.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:00:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:00:00.000Z",
+      "open": "15829.55",
+      "high": "15842.6",
+      "low": "15829.1",
+      "close": "15839.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:01:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:01:00.000Z",
+      "open": "15840.05",
+      "high": "15846.65",
+      "low": "15840.05",
+      "close": "15846.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:02:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:02:00.000Z",
+      "open": "15846.1",
+      "high": "15852",
+      "low": "15846.1",
+      "close": "15849.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:03:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:03:00.000Z",
+      "open": "15849.35",
+      "high": "15858.05",
+      "low": "15849.35",
+      "close": "15854.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:04:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:04:00.000Z",
+      "open": "15853.6",
+      "high": "15861.1",
+      "low": "15836.65",
+      "close": "15839.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:05:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:05:00.000Z",
+      "open": "15838.75",
+      "high": "15850.05",
+      "low": "15834.55",
+      "close": "15848.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:06:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:06:00.000Z",
+      "open": "15847.45",
+      "high": "15855.95",
+      "low": "15847.45",
+      "close": "15848.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:07:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:07:00.000Z",
+      "open": "15848.9",
+      "high": "15852.2",
+      "low": "15845.1",
+      "close": "15851",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:08:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:08:00.000Z",
+      "open": "15850.35",
+      "high": "15857.85",
+      "low": "15848.25",
+      "close": "15849.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:09:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:09:00.000Z",
+      "open": "15848.9",
+      "high": "15856.25",
+      "low": "15847.4",
+      "close": "15855.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:10:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:10:00.000Z",
+      "open": "15856.5",
+      "high": "15859.9",
+      "low": "15849.85",
+      "close": "15858.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:11:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:11:00.000Z",
+      "open": "15859.05",
+      "high": "15859.05",
+      "low": "15849.5",
+      "close": "15850.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:12:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:12:00.000Z",
+      "open": "15849.75",
+      "high": "15854.6",
+      "low": "15846.05",
+      "close": "15853.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:13:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:13:00.000Z",
+      "open": "15853.35",
+      "high": "15854.2",
+      "low": "15847.9",
+      "close": "15847.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:14:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:14:00.000Z",
+      "open": "15847.65",
+      "high": "15854.1",
+      "low": "15847.65",
+      "close": "15852.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:15:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:15:00.000Z",
+      "open": "15852.5",
+      "high": "15864.15",
+      "low": "15851",
+      "close": "15864",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:16:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:16:00.000Z",
+      "open": "15866.6",
+      "high": "15866.6",
+      "low": "15839.25",
+      "close": "15839.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:17:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:17:00.000Z",
+      "open": "15839.05",
+      "high": "15839.9",
+      "low": "15825.35",
+      "close": "15826.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:18:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:18:00.000Z",
+      "open": "15825.55",
+      "high": "15827.25",
+      "low": "15813.8",
+      "close": "15816.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:19:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:19:00.000Z",
+      "open": "15817.5",
+      "high": "15833.3",
+      "low": "15817.5",
+      "close": "15830.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:20:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:20:00.000Z",
+      "open": "15830.35",
+      "high": "15831.6",
+      "low": "15823.75",
+      "close": "15823.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:21:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:21:00.000Z",
+      "open": "15822.15",
+      "high": "15822.2",
+      "low": "15805.65",
+      "close": "15805.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:22:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:22:00.000Z",
+      "open": "15805.45",
+      "high": "15807.8",
+      "low": "15796.7",
+      "close": "15804.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:23:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:23:00.000Z",
+      "open": "15804.1",
+      "high": "15805",
+      "low": "15797.25",
+      "close": "15799.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:24:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:24:00.000Z",
+      "open": "15799.15",
+      "high": "15809.9",
+      "low": "15792.05",
+      "close": "15792.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:25:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:25:00.000Z",
+      "open": "15790.55",
+      "high": "15806.8",
+      "low": "15788.7",
+      "close": "15806.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:26:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:26:00.000Z",
+      "open": "15806.95",
+      "high": "15806.95",
+      "low": "15794.8",
+      "close": "15795",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:27:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:27:00.000Z",
+      "open": "15795",
+      "high": "15800.9",
+      "low": "15794.1",
+      "close": "15799.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:28:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:28:00.000Z",
+      "open": "15799.15",
+      "high": "15808.3",
+      "low": "15796.5",
+      "close": "15808.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:29:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:29:00.000Z",
+      "open": "15808.25",
+      "high": "15819.45",
+      "low": "15804.1",
+      "close": "15817.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:30:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:30:00.000Z",
+      "open": "15816.15",
+      "high": "15830.75",
+      "low": "15813",
+      "close": "15828.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:31:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:31:00.000Z",
+      "open": "15827.2",
+      "high": "15827.2",
+      "low": "15806.45",
+      "close": "15806.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:32:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:32:00.000Z",
+      "open": "15806.55",
+      "high": "15808.1",
+      "low": "15795.8",
+      "close": "15798.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:33:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:33:00.000Z",
+      "open": "15795.65",
+      "high": "15795.8",
+      "low": "15782.45",
+      "close": "15792.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:34:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:34:00.000Z",
+      "open": "15792.05",
+      "high": "15792.05",
+      "low": "15782.05",
+      "close": "15789.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:35:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:35:00.000Z",
+      "open": "15789",
+      "high": "15796.2",
+      "low": "15783.85",
+      "close": "15790.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:36:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:36:00.000Z",
+      "open": "15789.45",
+      "high": "15797.85",
+      "low": "15786.15",
+      "close": "15788.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:37:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:37:00.000Z",
+      "open": "15790.35",
+      "high": "15790.8",
+      "low": "15778.35",
+      "close": "15781.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:38:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:38:00.000Z",
+      "open": "15779.95",
+      "high": "15787.45",
+      "low": "15776.35",
+      "close": "15776.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:39:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:39:00.000Z",
+      "open": "15776.35",
+      "high": "15781",
+      "low": "15772.15",
+      "close": "15773.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:40:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:40:00.000Z",
+      "open": "15772.3",
+      "high": "15774.2",
+      "low": "15760",
+      "close": "15767.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:41:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:41:00.000Z",
+      "open": "15766.25",
+      "high": "15775.6",
+      "low": "15765.65",
+      "close": "15771.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:42:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:42:00.000Z",
+      "open": "15769.6",
+      "high": "15769.6",
+      "low": "15758.5",
+      "close": "15759.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:43:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:43:00.000Z",
+      "open": "15757.7",
+      "high": "15766.6",
+      "low": "15748.85",
+      "close": "15766.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:44:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:44:00.000Z",
+      "open": "15767.15",
+      "high": "15767.3",
+      "low": "15754.8",
+      "close": "15754.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:45:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:45:00.000Z",
+      "open": "15754.7",
+      "high": "15764",
+      "low": "15752.4",
+      "close": "15752.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:46:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:46:00.000Z",
+      "open": "15750",
+      "high": "15750",
+      "low": "15720.05",
+      "close": "15720.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:47:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:47:00.000Z",
+      "open": "15719.2",
+      "high": "15724.2",
+      "low": "15713.7",
+      "close": "15717.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:48:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:48:00.000Z",
+      "open": "15718",
+      "high": "15735.9",
+      "low": "15716.55",
+      "close": "15719.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:49:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:49:00.000Z",
+      "open": "15719.45",
+      "high": "15738.2",
+      "low": "15717.15",
+      "close": "15737.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:50:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:50:00.000Z",
+      "open": "15736.75",
+      "high": "15738.1",
+      "low": "15725.05",
+      "close": "15728.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:51:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:51:00.000Z",
+      "open": "15729.3",
+      "high": "15756.65",
+      "low": "15729.2",
+      "close": "15756.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:52:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:52:00.000Z",
+      "open": "15757",
+      "high": "15779.3",
+      "low": "15756.75",
+      "close": "15774.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:53:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:53:00.000Z",
+      "open": "15773.65",
+      "high": "15777.35",
+      "low": "15760.95",
+      "close": "15765.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:54:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:54:00.000Z",
+      "open": "15766.8",
+      "high": "15767.5",
+      "low": "15752.6",
+      "close": "15761.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:55:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:55:00.000Z",
+      "open": "15761.25",
+      "high": "15771.35",
+      "low": "15756.8",
+      "close": "15764.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:56:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:56:00.000Z",
+      "open": "15762.8",
+      "high": "15767.15",
+      "low": "15758.1",
+      "close": "15767",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:57:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:57:00.000Z",
+      "open": "15765.3",
+      "high": "15782.7",
+      "low": "15760.95",
+      "close": "15782.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:58:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:58:00.000Z",
+      "open": "15781.05",
+      "high": "15785.95",
+      "low": "15773.55",
+      "close": "15785.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T08:59:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T08:59:00.000Z",
+      "open": "15785.95",
+      "high": "15793.5",
+      "low": "15785.95",
+      "close": "15789.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:00:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:00:00.000Z",
+      "open": "15788.85",
+      "high": "15809",
+      "low": "15787.8",
+      "close": "15809",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:01:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:01:00.000Z",
+      "open": "15808.35",
+      "high": "15809.2",
+      "low": "15791.85",
+      "close": "15794.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:02:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:02:00.000Z",
+      "open": "15794.15",
+      "high": "15807.55",
+      "low": "15794.15",
+      "close": "15805.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:03:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:03:00.000Z",
+      "open": "15806",
+      "high": "15809.45",
+      "low": "15793.8",
+      "close": "15794.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:04:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:04:00.000Z",
+      "open": "15792.5",
+      "high": "15806.05",
+      "low": "15791.8",
+      "close": "15793.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:05:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:05:00.000Z",
+      "open": "15793.35",
+      "high": "15817.7",
+      "low": "15792.2",
+      "close": "15813.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:06:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:06:00.000Z",
+      "open": "15814.15",
+      "high": "15826.1",
+      "low": "15814.15",
+      "close": "15820.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:07:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:07:00.000Z",
+      "open": "15820.45",
+      "high": "15822.25",
+      "low": "15811.95",
+      "close": "15812.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:08:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:08:00.000Z",
+      "open": "15811.8",
+      "high": "15812.55",
+      "low": "15805.15",
+      "close": "15805.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:09:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:09:00.000Z",
+      "open": "15804.75",
+      "high": "15812.55",
+      "low": "15803.8",
+      "close": "15811.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:10:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:10:00.000Z",
+      "open": "15812.45",
+      "high": "15812.6",
+      "low": "15803.4",
+      "close": "15810",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:11:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:11:00.000Z",
+      "open": "15809.3",
+      "high": "15820.75",
+      "low": "15809.3",
+      "close": "15814.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:12:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:12:00.000Z",
+      "open": "15815.95",
+      "high": "15819.75",
+      "low": "15810.15",
+      "close": "15814.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:13:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:13:00.000Z",
+      "open": "15815.3",
+      "high": "15825.95",
+      "low": "15812.4",
+      "close": "15812.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:14:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:14:00.000Z",
+      "open": "15813.25",
+      "high": "15833.95",
+      "low": "15812.7",
+      "close": "15833.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:15:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:15:00.000Z",
+      "open": "15833.65",
+      "high": "15840.4",
+      "low": "15827.3",
+      "close": "15832.8",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:16:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:16:00.000Z",
+      "open": "15834.35",
+      "high": "15836.7",
+      "low": "15827.6",
+      "close": "15829.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:17:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:17:00.000Z",
+      "open": "15830.55",
+      "high": "15833.1",
+      "low": "15817.05",
+      "close": "15817.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:18:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:18:00.000Z",
+      "open": "15817.5",
+      "high": "15827.25",
+      "low": "15817",
+      "close": "15817",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:19:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:19:00.000Z",
+      "open": "15816.15",
+      "high": "15824.25",
+      "low": "15814.6",
+      "close": "15821.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:20:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:20:00.000Z",
+      "open": "15821.4",
+      "high": "15831.85",
+      "low": "15821.4",
+      "close": "15831.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:21:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:21:00.000Z",
+      "open": "15833.15",
+      "high": "15854.7",
+      "low": "15833.15",
+      "close": "15853.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:22:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:22:00.000Z",
+      "open": "15853.25",
+      "high": "15866.7",
+      "low": "15853.25",
+      "close": "15866.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:23:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:23:00.000Z",
+      "open": "15866",
+      "high": "15866",
+      "low": "15855.7",
+      "close": "15856.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:24:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:24:00.000Z",
+      "open": "15856.15",
+      "high": "15857.3",
+      "low": "15847.55",
+      "close": "15855.4",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:25:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:25:00.000Z",
+      "open": "15855.25",
+      "high": "15863.55",
+      "low": "15848.45",
+      "close": "15849.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:26:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:26:00.000Z",
+      "open": "15848.1",
+      "high": "15862.55",
+      "low": "15846.3",
+      "close": "15862.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:27:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:27:00.000Z",
+      "open": "15861.35",
+      "high": "15861.75",
+      "low": "15843.2",
+      "close": "15843.25",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:28:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:28:00.000Z",
+      "open": "15842.55",
+      "high": "15853.1",
+      "low": "15839.85",
+      "close": "15845.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:29:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:29:00.000Z",
+      "open": "15845.9",
+      "high": "15846",
+      "low": "15833.5",
+      "close": "15835.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:30:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:30:00.000Z",
+      "open": "15835.35",
+      "high": "15852.2",
+      "low": "15835.35",
+      "close": "15850.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:31:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:31:00.000Z",
+      "open": "15850.35",
+      "high": "15857.2",
+      "low": "15843.2",
+      "close": "15843.2",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:32:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:32:00.000Z",
+      "open": "15843.75",
+      "high": "15843.75",
+      "low": "15826.15",
+      "close": "15826.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:33:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:33:00.000Z",
+      "open": "15828.2",
+      "high": "15828.2",
+      "low": "15809.3",
+      "close": "15809.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:34:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:34:00.000Z",
+      "open": "15808.6",
+      "high": "15825.45",
+      "low": "15801.85",
+      "close": "15825.45",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:35:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:35:00.000Z",
+      "open": "15828.95",
+      "high": "15837.6",
+      "low": "15828.3",
+      "close": "15830.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:36:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:36:00.000Z",
+      "open": "15830.45",
+      "high": "15837.9",
+      "low": "15822.65",
+      "close": "15837.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:37:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:37:00.000Z",
+      "open": "15836.95",
+      "high": "15846.15",
+      "low": "15836.55",
+      "close": "15844.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:38:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:38:00.000Z",
+      "open": "15845.85",
+      "high": "15845.85",
+      "low": "15837.9",
+      "close": "15839.5",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:39:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:39:00.000Z",
+      "open": "15839.55",
+      "high": "15839.75",
+      "low": "15830.45",
+      "close": "15837.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:40:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:40:00.000Z",
+      "open": "15837.6",
+      "high": "15842.4",
+      "low": "15831.3",
+      "close": "15831.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:41:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:41:00.000Z",
+      "open": "15831.1",
+      "high": "15836.75",
+      "low": "15830.75",
+      "close": "15835.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:42:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:42:00.000Z",
+      "open": "15833.9",
+      "high": "15848.95",
+      "low": "15832.4",
+      "close": "15848.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:43:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:43:00.000Z",
+      "open": "15849.55",
+      "high": "15876.45",
+      "low": "15849.5",
+      "close": "15873.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:44:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:44:00.000Z",
+      "open": "15873.6",
+      "high": "15875.7",
+      "low": "15865.95",
+      "close": "15867.35",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:45:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:45:00.000Z",
+      "open": "15868.15",
+      "high": "15880.4",
+      "low": "15867.75",
+      "close": "15879.6",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:46:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:46:00.000Z",
+      "open": "15878.45",
+      "high": "15878.7",
+      "low": "15870.1",
+      "close": "15870.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:47:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:47:00.000Z",
+      "open": "15869.65",
+      "high": "15869.65",
+      "low": "15859.6",
+      "close": "15864.9",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:48:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:48:00.000Z",
+      "open": "15866.1",
+      "high": "15882.75",
+      "low": "15866.1",
+      "close": "15882.65",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:49:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:49:00.000Z",
+      "open": "15882.3",
+      "high": "15897.1",
+      "low": "15882.3",
+      "close": "15896.75",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:50:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:50:00.000Z",
+      "open": "15897.4",
+      "high": "15898.45",
+      "low": "15883.7",
+      "close": "15896.95",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:51:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:51:00.000Z",
+      "open": "15897.35",
+      "high": "15897.35",
+      "low": "15884.7",
+      "close": "15889.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:52:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:52:00.000Z",
+      "open": "15888.65",
+      "high": "15891.75",
+      "low": "15887.35",
+      "close": "15887.7",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:53:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:53:00.000Z",
+      "open": "15887.85",
+      "high": "15893.6",
+      "low": "15883.8",
+      "close": "15893.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:54:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:54:00.000Z",
+      "open": "15893.1",
+      "high": "15894.5",
+      "low": "15889.5",
+      "close": "15889.85",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:55:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:55:00.000Z",
+      "open": "15886.5",
+      "high": "15888.3",
+      "low": "15876.3",
+      "close": "15877.1",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:56:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:56:00.000Z",
+      "open": "15876.5",
+      "high": "15879.8",
+      "low": "15875",
+      "close": "15876.55",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:57:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:57:00.000Z",
+      "open": "15876.25",
+      "high": "15884.1",
+      "low": "15874.35",
+      "close": "15882.3",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:58:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:58:00.000Z",
+      "open": "15884.1",
+      "high": "15885.7",
+      "low": "15877.1",
+      "close": "15881.15",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T09:59:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    },
+    {
+      "candleTime": "2022-03-07T09:59:00.000Z",
+      "open": "15881.55",
+      "high": "15886.05",
+      "low": "15877.4",
+      "close": "15881.05",
+      "volume": "0",
+      "openInterest": "0",
+      "availableAt": "2022-03-07T10:00:00.000Z",
+      "provenance": {
+        "kind": "OBSERVED",
+        "sourceSnapshotChecksum": "ed869ef97d6c34d38249c820e36bb01ba4a5e5a7331262ff7c31c83969dea0c1"
+      }
+    }
+  ],
+  "realRowCount": 372,
+  "imputedRowCount": 3,
+  "precedenceTier": 3,
+  "derivedContentChecksum": "088fead98e57a4337ba3ac73a3dab864b42becee6e66bf076390c33de12bdcaf"
+}

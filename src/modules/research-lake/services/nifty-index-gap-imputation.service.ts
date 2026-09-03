@@ -46,7 +46,11 @@ import { HistoricalDataProvider } from '../interfaces/historical-data-provider.i
 import { HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
 import CanonicalSessionProjectorService from './canonical-session-projector.service';
 import DatasetHealthValidatorService from './dataset-health-validator.service';
-import HistoricalDataRetrievalEvidenceService, { QualifiedIncompleteSessionEvidence } from './historical-data-retrieval-evidence.service';
+import HistoricalDataRetrievalEvidenceService, {
+  QualifiedIncompleteEvidenceAmbiguousError,
+  QualifiedIncompleteEvidenceInvariantError,
+  QualifiedIncompleteSessionEvidence,
+} from './historical-data-retrieval-evidence.service';
 import HistoricalProviderRateLimiterService from './historical-provider-rate-limiter.service';
 import { HistoricalProviderRetryOptions, HistoricalProviderRetryStats, withHistoricalProviderRetry } from './historical-provider-retry.util';
 import UpstoxHistoricalDataProviderService from '../providers/upstox/upstox-historical-data-provider.service';
@@ -128,12 +132,40 @@ export default class NiftyIndexGapImputationService {
     }
 
     // ---- Step 1 (task section 3): read-only qualification against durable historical evidence ----
-    const qualified = await this.retrievalEvidenceService.findTerminalIncompleteSessionEvidence({
-      expectedProviderId: HistoricalProviderId.UPSTOX,
-      instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
-      timeframe: NIFTY_UNDERLYING_TIMEFRAME,
-      tradingDate,
-    });
+    // B-M7.1 CORRECTION (real production reproduction, 2022-03-07): this
+    // re-observation is itself an exact single-date request (`fromTradingDate
+    // === toTradingDate === tradingDate` below), so its checksum comparison
+    // baseline MUST be drawn only from durable evidence produced by an
+    // equally exact-scoped parent retrieval -- `SOURCE_ROWS_CHECKSUM_VERSION=1`
+    // folds each row's request-array-relative `sourceIndex` into the digest,
+    // so a monthly-chunk evidence row for this same trading date is NOT
+    // checksum-comparable to this fresh exact-day fetch even when the
+    // underlying OHLC content never drifted. See `RequiredRetrievalRange`'s
+    // doc in `historical-data-retrieval-evidence.service.ts`.
+    let qualified: QualifiedIncompleteSessionEvidence | null;
+    try {
+      qualified = await this.retrievalEvidenceService.findTerminalIncompleteSessionEvidence({
+        expectedProviderId: HistoricalProviderId.UPSTOX,
+        instrumentKey: NIFTY_INDEX_INSTRUMENT_KEY,
+        timeframe: NIFTY_UNDERLYING_TIMEFRAME,
+        tradingDate,
+        requiredRetrievalRange: { fromDate: tradingDate, toDate: tradingDate },
+      });
+    } catch (error) {
+      // Only the two EXPECTED, typed, fail-closed evidence-qualification
+      // domain errors are converted here -- never a provider/network error
+      // (this call makes no provider call at all), and never any other
+      // unexpected error, which is deliberately re-thrown unconverted so it
+      // still surfaces as the runner's own UNEXPECTED_ERROR path rather than
+      // being misreported as a durable-evidence condition it is not.
+      if (error instanceof QualifiedIncompleteEvidenceAmbiguousError) {
+        throw new NiftyIndexGapImputationError('DURABLE_EVIDENCE_AMBIGUOUS', error.message, error);
+      }
+      if (error instanceof QualifiedIncompleteEvidenceInvariantError) {
+        throw new NiftyIndexGapImputationError('DURABLE_EVIDENCE_INVARIANT_FAILED', error.message, error);
+      }
+      throw error;
+    }
     if (!qualified) {
       throw new NiftyIndexGapImputationError(
         'NO_DURABLE_INCOMPLETE_EVIDENCE',
@@ -420,6 +452,8 @@ export default class NiftyIndexGapImputationService {
 export type NiftyIndexGapImputationErrorCode =
   | 'DATE_NOT_AUTHORIZED'
   | 'NO_DURABLE_INCOMPLETE_EVIDENCE'
+  | 'DURABLE_EVIDENCE_AMBIGUOUS'
+  | 'DURABLE_EVIDENCE_INVARIANT_FAILED'
   | 'DURABLE_EVIDENCE_FACTS_MISMATCH'
   | 'CALENDAR_BLOCKED'
   | 'CALENDAR_NOT_FETCH_ELIGIBLE'

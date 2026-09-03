@@ -59,12 +59,43 @@ export interface NonPersistableSessionInput {
   readonly sourceRowsSemanticChecksum: string | null;
 }
 
+/**
+ * B-M7.1 CORRECTION: an OPTIONAL requirement that the PARENT
+ * `HistoricalDataRetrieval.requestedFromDate`/`requestedToDate` exactly
+ * equal `fromDate`/`toDate` -- see `findTerminalIncompleteSessionEvidence`'s
+ * doc for why parent request SCOPE (not just row content) determines
+ * whether one evidence row's `sourceRowsSemanticChecksum` is even
+ * comparable to a fresh re-observation's checksum
+ * (`SOURCE_ROWS_CHECKSUM_VERSION=1` folds each row's request-array-relative
+ * `sourceIndex` into the digest, so a March-7 row sliced out of a
+ * 2022-03-01..2022-03-31 monthly request and the SAME candle content
+ * fetched via an exact 2022-03-07..2022-03-07 request do NOT produce the
+ * same checksum, even though neither necessarily reflects drifted OHLC
+ * data).
+ */
+export interface RequiredRetrievalRange {
+  readonly fromDate: string;
+  readonly toDate: string;
+}
+
 /** B-M7.1: input for `findTerminalIncompleteSessionEvidence` -- see that method's doc. */
 export interface QualifyTerminalIncompleteEvidenceInput {
   readonly expectedProviderId: HistoricalProviderId;
   readonly instrumentKey: string;
   readonly timeframe: string;
   readonly tradingDate: string;
+  /**
+   * OPTIONAL. When supplied, only terminal INCOMPLETE evidence whose PARENT
+   * retrieval was requested for EXACTLY this `[fromDate, toDate]` range may
+   * qualify -- filtered IN the query itself (never fetched-then-filtered in
+   * JS). Omitted callers keep the ORIGINAL, unscoped "single match or
+   * ambiguous" behavior unchanged. A caller whose own re-observation is
+   * itself an exact single-date request (e.g. B-M7.1) MUST supply
+   * `{ fromDate: tradingDate, toDate: tradingDate }` here so its checksum
+   * comparison baseline is drawn only from request-scope-compatible
+   * evidence -- see the module doc on `RequiredRetrievalRange`.
+   */
+  readonly requiredRetrievalRange?: RequiredRetrievalRange;
 }
 
 /** B-M7.1: the exact durable facts `findTerminalIncompleteSessionEvidence` proves before returning -- a caller qualifies its own date-specific locked facts (e.g. 375/372 for 2022-03-07) on top of this. */
@@ -417,37 +448,87 @@ export default class HistoricalDataRetrievalEvidenceService {
    *  - `sourceRowsSemanticChecksum` is `null` -> `QualifiedIncompleteEvidenceInvariantError`
    *    (a caller can never qualify a controlled re-observation against an
    *    evidence row with no checksum to compare against).
+   *
+   * B-M7.1 CORRECTION (real production reproduction): `input.requiredRetrievalRange`
+   * is an OPTIONAL, additional, IN-QUERY filter on the PARENT retrieval's own
+   * `requestedFromDate`/`requestedToDate`. When OMITTED, every behavior above
+   * is byte-for-byte unchanged (0/1/ambiguous>1, exactly as before) --
+   * existing unscoped callers see no behavior change whatsoever. When
+   * SUPPLIED, this narrows the candidate set to only evidence produced by a
+   * parent retrieval requested for that EXACT range (see `RequiredRetrievalRange`'s
+   * doc for why: `SOURCE_ROWS_CHECKSUM_VERSION=1` folds each row's
+   * request-array-relative `sourceIndex` into the digest, so a monthly-chunk
+   * evidence row and an exact-single-date evidence row for the identical
+   * trading date are NOT directly checksum-comparable, even when the
+   * underlying OHLC content is identical) -- and, if MORE THAN ONE row
+   * still matches after that narrowing, this method no longer immediately
+   * throws ambiguous. Repeated exact-range acquisitions of the SAME date are
+   * legitimate durable history, so each candidate is first proven to
+   * individually satisfy the invariants above, then compared PAIRWISE across
+   * every qualification-relevant durable fact (identity, calendar/count
+   * facts, health, persistence outcome, `sourceRowsSemanticChecksum`,
+   * `evidenceSemanticChecksum`):
+   *  - if every candidate agrees on all of it, they are genuinely
+   *    interchangeable duplicate OBSERVATIONS of the same reality --
+   *    qualification succeeds, selecting ONE persisted representative via a
+   *    deterministic, TOTAL ordering (ascending session `id`). Because every
+   *    candidate already proved equivalent, WHICH one is selected can never
+   *    change the returned checksums/facts -- only its opaque `sessionId`/
+   *    `retrievalId`, which never enter any downstream artifact identity;
+   *  - if ANY candidate disagrees on ANY of it, these are genuinely
+   *    CONFLICTING observations -- `QualifiedIncompleteEvidenceAmbiguousError`
+   *    is thrown, exactly like the unscoped case. This method never selects
+   *    "latest" among conflicting observations.
    */
   async findTerminalIncompleteSessionEvidence(input: QualifyTerminalIncompleteEvidenceInput): Promise<QualifiedIncompleteSessionEvidence | null> {
+    const retrievalWhere: { providerId: HistoricalProviderId; status: { in: string[] }; requestedFromDate?: string; requestedToDate?: string } = {
+      providerId: input.expectedProviderId,
+      status: { in: [...SUCCESSFUL_TERMINAL_RETRIEVAL_STATUSES] },
+    };
+    if (input.requiredRetrievalRange) {
+      retrievalWhere.requestedFromDate = input.requiredRetrievalRange.fromDate;
+      retrievalWhere.requestedToDate = input.requiredRetrievalRange.toDate;
+    }
+
     const rows = await this.prisma.historicalDataRetrievalSession.findMany({
       where: {
         instrumentKey: input.instrumentKey,
         timeframe: input.timeframe,
         tradingDate: input.tradingDate,
         persistenceOutcome: HistoricalCandleSessionPersistenceOutcome.INCOMPLETE,
-        retrieval: { providerId: input.expectedProviderId, status: { in: [...SUCCESSFUL_TERMINAL_RETRIEVAL_STATUSES] } },
+        retrieval: retrievalWhere,
       },
       include: { retrieval: true },
     });
 
     if (rows.length === 0) return null;
-    if (rows.length > 1) {
+
+    // Unscoped callers keep the ORIGINAL behavior verbatim: >1 match is
+    // immediately ambiguous, never reaching the per-row invariant checks
+    // below (matches the pre-correction code path exactly).
+    if (rows.length > 1 && !input.requiredRetrievalRange) {
       throw new QualifiedIncompleteEvidenceAmbiguousError(input.instrumentKey, input.timeframe, input.tradingDate, rows.length);
     }
 
-    const row = rows[0];
-    if (row.healthStatus !== DatasetHealthStatus.INCOMPLETE) {
-      throw new QualifiedIncompleteEvidenceInvariantError(
-        `Terminal INCOMPLETE-persistence evidence for ${input.instrumentKey}/${input.timeframe}/${input.tradingDate} has healthStatus='${row.healthStatus}', not '${DatasetHealthStatus.INCOMPLETE}'.`
-      );
-    }
-    if (!row.sourceRowsSemanticChecksum) {
-      throw new QualifiedIncompleteEvidenceInvariantError(
-        `Terminal INCOMPLETE-persistence evidence for ${input.instrumentKey}/${input.timeframe}/${input.tradingDate} has no sourceRowsSemanticChecksum -- cannot qualify a re-observation against it.`
-      );
-    }
+    const assertRowInvariants = (row: (typeof rows)[number]): void => {
+      if (row.healthStatus !== DatasetHealthStatus.INCOMPLETE) {
+        throw new QualifiedIncompleteEvidenceInvariantError(
+          `Terminal INCOMPLETE-persistence evidence for ${input.instrumentKey}/${input.timeframe}/${input.tradingDate} (session ${row.id}) has healthStatus='${row.healthStatus}', not '${DatasetHealthStatus.INCOMPLETE}'.`
+        );
+      }
+      if (!row.sourceRowsSemanticChecksum) {
+        throw new QualifiedIncompleteEvidenceInvariantError(
+          `Terminal INCOMPLETE-persistence evidence for ${input.instrumentKey}/${input.timeframe}/${input.tradingDate} (session ${row.id}) has no sourceRowsSemanticChecksum -- cannot qualify a re-observation against it.`
+        );
+      }
+    };
+    // Every candidate is validated BEFORE any equivalence/selection decision
+    // is made -- a structurally-invalid candidate must fail closed even when
+    // its siblings all look fine (task: "First validate that each candidate
+    // has the required structural invariants").
+    rows.forEach(assertRowInvariants);
 
-    return {
+    const toQualifiedEvidence = (row: (typeof rows)[number]): QualifiedIncompleteSessionEvidence => ({
       retrievalId: row.retrievalId,
       sessionId: row.id,
       providerId: row.retrieval.providerId as HistoricalProviderId,
@@ -462,8 +543,53 @@ export default class HistoricalDataRetrievalEvidenceService {
       sourceOrderAnomalyCount: row.sourceOrderAnomalyCount,
       healthStatus: row.healthStatus as DatasetHealthStatus,
       persistenceOutcome: row.persistenceOutcome as HistoricalCandleSessionPersistenceOutcome,
-      sourceRowsSemanticChecksum: row.sourceRowsSemanticChecksum,
+      sourceRowsSemanticChecksum: row.sourceRowsSemanticChecksum as string,
       evidenceSemanticChecksum: row.evidenceSemanticChecksum,
-    };
+    });
+
+    if (rows.length === 1) {
+      return toQualifiedEvidence(rows[0]);
+    }
+
+    // rows.length > 1 with input.requiredRetrievalRange set (the only way to
+    // reach here -- the unscoped case already threw above). Every candidate
+    // already individually passed assertRowInvariants; now prove they are
+    // genuinely INTERCHANGEABLE duplicate observations, never merely
+    // "close enough". `evidenceSemanticChecksum` already canonically covers
+    // every field compared here except id/timestamps (it is computed FROM
+    // them, including sourceRowsSemanticChecksum -- see
+    // `computeEvidenceSemanticChecksum`), but `sourceRowsSemanticChecksum` is
+    // still compared explicitly and separately: it is the exact
+    // re-observation comparison anchor B-M7.1 relies on, so this never
+    // leans on "evidenceSemanticChecksum equality implies it" alone.
+    const rowsAreEquivalent = (a: (typeof rows)[number], b: (typeof rows)[number]): boolean =>
+      a.retrieval.providerId === b.retrieval.providerId &&
+      a.instrumentKey === b.instrumentKey &&
+      a.timeframe === b.timeframe &&
+      a.tradingDate === b.tradingDate &&
+      a.calendarDisposition === b.calendarDisposition &&
+      a.expectedMinuteCount === b.expectedMinuteCount &&
+      a.providerRowCountForDate === b.providerRowCountForDate &&
+      a.acceptedRowCount === b.acceptedRowCount &&
+      a.excludedRowCount === b.excludedRowCount &&
+      a.sourceOrderAnomalyCount === b.sourceOrderAnomalyCount &&
+      a.healthStatus === b.healthStatus &&
+      a.persistenceOutcome === b.persistenceOutcome &&
+      a.sourceRowsSemanticChecksum === b.sourceRowsSemanticChecksum &&
+      a.evidenceSemanticChecksum === b.evidenceSemanticChecksum;
+
+    const [first, ...rest] = rows;
+    const allEquivalent = rest.every((row) => rowsAreEquivalent(first, row));
+    if (!allEquivalent) {
+      throw new QualifiedIncompleteEvidenceAmbiguousError(input.instrumentKey, input.timeframe, input.tradingDate, rows.length);
+    }
+
+    // Deterministic, TOTAL, documented ordering (ascending persisted session
+    // `id`) -- selects ONE representative only. Never `createdAt`/wall-clock
+    // ordering (two rows can share an identical DATETIME(3)), and never
+    // "latest": every candidate has already been proven semantically
+    // equivalent above, so this pick cannot change the returned facts.
+    const representative = [...rows].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0];
+    return toQualifiedEvidence(representative);
   }
 }

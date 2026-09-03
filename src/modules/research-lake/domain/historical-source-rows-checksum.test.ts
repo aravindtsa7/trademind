@@ -58,6 +58,31 @@ test('computeSourceRowsSemanticChecksum: an empty row set (zero provider rows) i
   assert.equal(computeSourceRowsSemanticChecksum([]), computeSourceRowsSemanticChecksum([]));
 });
 
+// ============================================================================
+// B-M7.1 CORRECTION regression: WHY request-scope matters. `sourceIndex` is
+// the row's position within the CALLER-SUPPLIED source array for one
+// provider request -- `UpstoxHistoricalDataProviderService` numbers it
+// 0..N-1 across the WHOLE requested range, and `NiftyUnderlyingAcquisitionService`
+// groups the result into per-trading-date sessions WITHOUT renumbering it.
+// So the identical candle content, observed via two DIFFERENTLY-SCOPED
+// requests (e.g. a 2022-03-01..2022-03-31 monthly chunk vs. an exact
+// 2022-03-07..2022-03-07 request), lands at a DIFFERENT sourceIndex in each
+// -- and therefore produces a DIFFERENT checksum, even though neither
+// necessarily reflects drifted OHLC data. This is intentional
+// (SOURCE_ROWS_CHECKSUM_VERSION=1 also detects source-ORDER anomalies), so
+// this test documents/locks the behavior rather than proposing to change it.
+// ============================================================================
+
+test('computeSourceRowsSemanticChecksum: identical candle content at a DIFFERENT sourceIndex (as happens when the same row is embedded at a different position within a differently-scoped parent request) produces a DIFFERENT checksum -- monthly-chunk and exact-day evidence for the same trading date are NOT directly checksum-comparable', () => {
+  // The exact same candle, but observed as the 0th row of an exact single-date
+  // request (sourceIndex=0) vs. e.g. the 6th row of a monthly chunk that also
+  // covered several days before it (sourceIndex=6) -- OHLC/volume/openInterest
+  // and candleTime are byte-for-byte identical in both.
+  const exactDayRequestRow = row(0, '2022-03-07T04:00:00.000Z', { open: 17024.1, high: 17024.6, low: 17023.6, close: 17024.3, volume: 500n });
+  const monthlyChunkRow = row(6, '2022-03-07T04:00:00.000Z', { open: 17024.1, high: 17024.6, low: 17023.6, close: 17024.3, volume: 500n });
+  assert.notEqual(computeSourceRowsSemanticChecksum([exactDayRequestRow]), computeSourceRowsSemanticChecksum([monthlyChunkRow]));
+});
+
 test('computeSourceRowsSemanticChecksum: never includes anything beyond the row fields -- no retrieval ID/timestamp/secret leaks into the digest input by construction (same rows -> same digest across repeated calls at different wall-clock times)', async () => {
   const rows = [row(0, '2024-01-19T03:45:00.000Z')];
   const first = computeSourceRowsSemanticChecksum(rows);

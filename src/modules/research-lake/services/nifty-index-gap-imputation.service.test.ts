@@ -16,7 +16,12 @@ import {
 import { ResearchRowProvenanceKind, ResearchSessionSourcePrecedenceTier } from '../domain/derived-imputed-research-session.types';
 import { HistoricalDataProvider, HistoricalUnderlyingCandleRangeRequest } from '../interfaces/historical-data-provider.interface';
 import { HistoricalProviderCapability, HistoricalProviderId } from '../interfaces/historical-provider-capability.types';
-import HistoricalDataRetrievalEvidenceService, { QualifiedIncompleteSessionEvidence } from './historical-data-retrieval-evidence.service';
+import HistoricalDataRetrievalEvidenceService, {
+  QualifiedIncompleteEvidenceAmbiguousError,
+  QualifiedIncompleteEvidenceInvariantError,
+  QualifiedIncompleteSessionEvidence,
+  QualifyTerminalIncompleteEvidenceInput,
+} from './historical-data-retrieval-evidence.service';
 import HistoricalProviderRateLimiterService from './historical-provider-rate-limiter.service';
 import NiftyUnderlyingIngestionPlannerService, { NiftyIngestionPlan, NiftyPlannedDate, NiftyPlannedDateDisposition } from './nifty-underlying-ingestion-planner.service';
 import { NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME } from './nifty-underlying-identity';
@@ -130,11 +135,14 @@ class FakePlanner {
 
 class FakeRetrievalEvidenceService {
   public callCount = 0;
-  constructor(private readonly evidence: QualifiedIncompleteSessionEvidence | null) {}
+  public readonly calls: QualifyTerminalIncompleteEvidenceInput[] = [];
+  constructor(private readonly evidenceOrError: QualifiedIncompleteSessionEvidence | null | Error) {}
 
-  async findTerminalIncompleteSessionEvidence(): Promise<QualifiedIncompleteSessionEvidence | null> {
+  async findTerminalIncompleteSessionEvidence(input: QualifyTerminalIncompleteEvidenceInput): Promise<QualifiedIncompleteSessionEvidence | null> {
     this.callCount += 1;
-    return this.evidence;
+    this.calls.push(input);
+    if (this.evidenceOrError instanceof Error) throw this.evidenceOrError;
+    return this.evidenceOrError;
   }
 }
 
@@ -172,7 +180,7 @@ function buildService(
     providerRowsOrError?: readonly HistoricalSourceCandleRow[] | Error;
     plannedDates?: readonly NiftyPlannedDate[];
     hasBlockedDates?: boolean;
-    evidence?: QualifiedIncompleteSessionEvidence | null;
+    evidence?: QualifiedIncompleteSessionEvidence | null | Error;
     persistArtifactsToDisk?: boolean;
     archiveRoot?: string;
   } = {}
@@ -240,6 +248,58 @@ test('happy path: exactly zero provider calls before qualification and exactly o
   assert.equal(provider.calls[0].fromTradingDate, TRADING_DATE);
   assert.equal(provider.calls[0].toTradingDate, TRADING_DATE);
   assert.equal(provider.calls[0].instrumentKey, NIFTY_INDEX_INSTRUMENT_KEY);
+});
+
+// ============================================================================
+// B-M7.1 CORRECTION (real production reproduction): exact-range evidence
+// qualification. The orchestrator's re-observation is itself an exact
+// single-date request, so it must require the same exact scope from its
+// evidence-qualification baseline, and must surface the two EXPECTED
+// evidence-qualification domain errors as typed `NiftyIndexGapImputationError`
+// codes rather than letting them escape as unexpected/uncaught errors (the
+// real operator failure this correction fixes).
+// ============================================================================
+
+test('B-M7.1 passes an exact requiredRetrievalRange (fromDate=toDate=tradingDate) to evidence qualification', async () => {
+  const { service, retrievalEvidenceService } = buildService();
+  await service.buildImputedSession({ tradingDate: TRADING_DATE });
+  assert.equal(retrievalEvidenceService.calls.length, 1);
+  assert.deepEqual(retrievalEvidenceService.calls[0].requiredRetrievalRange, { fromDate: TRADING_DATE, toDate: TRADING_DATE });
+  assert.equal(retrievalEvidenceService.calls[0].tradingDate, TRADING_DATE);
+});
+
+test('DURABLE_EVIDENCE_AMBIGUOUS: a QualifiedIncompleteEvidenceAmbiguousError from qualification is surfaced as a typed NiftyIndexGapImputationError, before any provider call', async () => {
+  const original = new QualifiedIncompleteEvidenceAmbiguousError(NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME, TRADING_DATE, 2);
+  const { service, provider } = buildService({ evidence: original });
+  await expectCode(service.buildImputedSession({ tradingDate: TRADING_DATE }), 'DURABLE_EVIDENCE_AMBIGUOUS');
+  assert.equal(provider.calls.length, 0, 'no provider call may happen after an evidence-qualification failure');
+});
+
+test('DURABLE_EVIDENCE_AMBIGUOUS: preserves the original safe message and cause', async () => {
+  const original = new QualifiedIncompleteEvidenceAmbiguousError(NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME, TRADING_DATE, 2);
+  const { service } = buildService({ evidence: original });
+  await assert.rejects(service.buildImputedSession({ tradingDate: TRADING_DATE }), (error: unknown) => {
+    assert.ok(error instanceof NiftyIndexGapImputationError);
+    assert.equal((error as NiftyIndexGapImputationError).code, 'DURABLE_EVIDENCE_AMBIGUOUS');
+    assert.equal((error as NiftyIndexGapImputationError).message, original.message);
+    assert.equal((error as NiftyIndexGapImputationError).cause, original);
+    return true;
+  });
+});
+
+test('DURABLE_EVIDENCE_INVARIANT_FAILED: a QualifiedIncompleteEvidenceInvariantError from qualification is surfaced as a typed NiftyIndexGapImputationError, before any provider call', async () => {
+  const original = new QualifiedIncompleteEvidenceInvariantError('some structural invariant failed');
+  const { service, provider } = buildService({ evidence: original });
+  await expectCode(service.buildImputedSession({ tradingDate: TRADING_DATE }), 'DURABLE_EVIDENCE_INVARIANT_FAILED');
+  assert.equal(provider.calls.length, 0, 'no provider call may happen after an evidence-qualification failure');
+});
+
+test('no fallback / no retry: an evidence-ambiguity failure calls findTerminalIncompleteSessionEvidence exactly once, never a second observation attempt', async () => {
+  const original = new QualifiedIncompleteEvidenceAmbiguousError(NIFTY_INDEX_INSTRUMENT_KEY, NIFTY_UNDERLYING_TIMEFRAME, TRADING_DATE, 2);
+  const { service, retrievalEvidenceService, provider } = buildService({ evidence: original });
+  await expectCode(service.buildImputedSession({ tradingDate: TRADING_DATE }), 'DURABLE_EVIDENCE_AMBIGUOUS');
+  assert.equal(retrievalEvidenceService.callCount, 1);
+  assert.equal(provider.calls.length, 0);
 });
 
 // ---- E: Provenance ------------------------------------------------------
