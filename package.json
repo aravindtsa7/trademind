@@ -38,7 +38,8 @@
     "research:year": "tsx src/tests/research-year-runner.ts",
     "research:archive:2024-pilot": "tsx src/tests/research-nse-2024-raw-source-archive.ts",
     "research:archive:equity-calendar-sources": "tsx src/tests/research-nse-equity-calendar-source-archive.ts",
-    "research:calendar:ops": "tsx src/tests/research-exchange-calendar-ops.ts"
+    "research:calendar:ops": "tsx src/tests/research-exchange-calendar-ops.ts",
+    "research:nifty-2022:assemble": "tsx src/tests/research-nifty-2022-research-assembly.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
