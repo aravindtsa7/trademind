@@ -5,6 +5,7 @@ import SharedMarketDataGateway from './shared-market-data-gateway';
 import { ConnectionState, ReconnectCircuitSnapshot } from '../managers/connection.manager';
 import { MarketDataSubscriptionMode } from '../managers/subscription.manager';
 import ProtobufDecoder, { MarketDataFeedResponseDto } from '../protobuf/protobuf.decoder';
+import MarketDataRecoveryCoordinatorService from '../services/market-data-recovery-coordinator.service';
 
 const NIFTY = 'NSE_INDEX|Nifty 50';
 const OPTION = 'NSE_FO|12345';
@@ -70,6 +71,10 @@ class FakeConnectionManager extends EventEmitter {
   simulateReconnected(): void {
     this.generation += 1;
     this.state = ConnectionState.CONNECTED;
+    // Mirrors the real ConnectionManager's registerClientListeners() 'connected' handler, which
+    // emits 'connected' unconditionally on every physical open (cold start AND reconnect alike)
+    // and then 'reconnected' immediately afterward when wasReconnecting -- see connection.manager.ts.
+    this.emit('connected', { generationId: this.generation });
     this.emit('reconnected', { generationId: this.generation });
   }
   simulateReconnectFailed(details: Record<string, unknown> = {}): void {
@@ -427,4 +432,408 @@ test('F-03: gateway shuts down exactly once after every registered consumer rele
   await simulateRunnerStartup(v4, async () => { /* early return too */ });
   assert.equal(gateway.getState(), 'STOPPED');
   assert.equal(connection.disconnectCalls, 1);
+});
+
+/**
+ * ==========================================================================================
+ * SHARED GATEWAY STARTUP-GENERATION HANDOFF HOTFIX -- regression suite.
+ *
+ * Reproduced defect: SharedMarketDataGateway.registerConsumer() is called BEFORE gateway.start()
+ * in the combined runtime (see test-live-shared-market-data-gateway.ts), and each strategy's
+ * recovery listener (`connection.on('connected', ...)` in test-live-paper-trading.ts /
+ * test-live-v4-nifty-momentum-shadow.ts / test-live-v8-nifty-bullish-reclaim-shadow.ts, where
+ * `connection` is the leased GatewayMarketDataChannel in shared-gateway mode) is only attached
+ * AFTER its own slow startup work (warmup/backfill), which itself only runs AFTER gateway.start()
+ * has already resolved. On a1001e3, GatewayMarketDataChannel is a plain EventEmitter with no
+ * memory of a 'connected' broadcast that already fired before any listener existed -- the event
+ * is lost forever until the next physical reconnect, so MarketDataRecoveryCoordinatorService never
+ * learns the current generation and eventually times out FAULTED despite live ticks flowing (the
+ * proven live V4 945000ms FAULTED transition). See GatewayMarketDataChannel's own class doc for
+ * the fix: a sticky current-generation snapshot, seeded atomically at registerConsumer() time and
+ * kept current independent of listener existence, replayed exactly once (race-safe against a
+ * disconnect/reconnect or disconnect() release) to any 'connected' listener attached late.
+ * ==========================================================================================
+ */
+
+test('CASE A (fails-safe baseline): a listener attached BEFORE the physical connect observes the initial generation exactly once, with no replay involved', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  await gateway.start();
+  // Drain any microtask the handoff mechanism might (wrongly) have scheduled -- there must be
+  // none: currentConnectedGenerationId was still null at listener-attachment time.
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [1], 'a listener attached before connect must receive exactly one live delivery, never a duplicate from the handoff');
+});
+
+test('CASE B (REGRESSION -- fails on a1001e3): a recovery listener attached only AFTER the shared transport is already CONNECTED still observes the current generation, without waiting for the next reconnect', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4'); // registered before start(), exactly like the combined runtime.
+  await gateway.start(); // physical CONNECTED at generation 1 -- broadcasts 'connected' to nobody yet.
+  // Models each strategy runner's own slow startup (historical warmup/backfill/DB reads) that on
+  // a1001e3 runs to completion BEFORE `connection.on('connected', ...)` is ever wired -- see
+  // test-live-v4-nifty-momentum-shadow.ts's warmUp() call preceding its recovery listener wiring.
+  await new Promise((resolve) => setImmediate(resolve));
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve));
+  // On a1001e3 this is [] forever (no further reconnect ever occurs in this test) -- the exact
+  // reproduced defect. After the hotfix it must be [1], delivered without any reconnect.
+  assert.deepEqual(received, [1], 'a late-attached listener must observe the CURRENT physical generation exactly once, and its own generationId must match the real physical generation');
+});
+
+test('three consumers attaching at different times (before connect, immediately after, and after a delay) each independently observe the identical current physical generation exactly once', async () => {
+  const { gateway } = createGateway();
+  const early = gateway.registerConsumer('early');
+  const earlyReceived: number[] = [];
+  early.on('connected', (details: { generationId: number }) => earlyReceived.push(details.generationId));
+
+  await gateway.start(); // generation 1
+
+  const immediate = gateway.registerConsumer('immediate');
+  const immediateReceived: number[] = [];
+  immediate.on('connected', (details: { generationId: number }) => immediateReceived.push(details.generationId));
+
+  const delayed = gateway.registerConsumer('delayed');
+  await new Promise((resolve) => setImmediate(resolve));
+  const delayedReceived: number[] = [];
+  delayed.on('connected', (details: { generationId: number }) => delayedReceived.push(details.generationId));
+
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(earlyReceived, [1]);
+  assert.deepEqual(immediateReceived, [1]);
+  assert.deepEqual(delayedReceived, [1]);
+});
+
+test('CASE C: a disconnect/reconnect racing the late-listener handoff never replays the obsolete generation -- the listener converges on the true current generation only', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any listener exists
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  // Race: before the queued microtask handoff for generation 1 can fire, the physical connection
+  // drops and reconnects to generation 2 -- all synchronously, ahead of the already-scheduled
+  // microtask.
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2 (emits 'connected' then 'reconnected')
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [2], 'the stale generation-1 handoff must never be delivered once generation 2 is authoritative -- only the true current generation may reach the listener');
+});
+
+test('CASE D: after a late-listener handoff delivers the initial generation, a subsequent real reconnect still delivers the next generation normally through the same listener', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve)); // let the generation-1 handoff replay fire
+  assert.deepEqual(received, [1]);
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2
+  assert.deepEqual(received, [1, 2], 'reconnect generation progression must remain intact after a late-listener handoff -- no duplicate/synthetic generation');
+});
+
+test('CASE E: a consumer released before the queued handoff replay fires receives no late notification', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any listener exists
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  channel.disconnect(); // released before the microtask runs
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [], 'a released consumer must never receive a replayed/future connection notification');
+});
+
+test('a listener removed via off() before the queued handoff replay fires is never invoked (EventEmitter cleanup semantics preserved)', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any listener exists
+  let calls = 0;
+  const listener = () => { calls += 1; };
+  channel.on('connected', listener);
+  channel.off('connected', listener);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(calls, 0, 'a listener detached before the handoff replay fires must never be invoked');
+});
+
+test('READINESS SAFETY: the connection-generation handoff alone never grants recovery readiness -- a live current-generation tick is still required (CASE F)', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any recovery listener exists
+  const recovery = new MarketDataRecoveryCoordinatorService({ backfill: async () => ({ ready: true, reason: 'FRESH', missingMinutes: 0, duplicateMinutes: 0 }) });
+  channel.on('connected', (details: { generationId: number }) => recovery.handleInitialConnected({ generationId: details.generationId }));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(recovery.getGenerationId(), 1, 'the coordinator must have learned the current generation via the handoff');
+  assert.equal(recovery.isEvaluationReady(), false, 'connection handoff alone must never grant readiness -- subscription/connection evidence is not market-data readiness evidence');
+});
+
+test('READINESS SAFETY: a stale-generation tick cannot satisfy the recovery gate after a reconnect', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start();
+  const recovery = new MarketDataRecoveryCoordinatorService({ backfill: async () => ({ ready: true, reason: 'FRESH', missingMinutes: 0, duplicateMinutes: 0 }) });
+  channel.on('unexpectedDisconnect', (details: Record<string, unknown>) => recovery.handleUnexpectedDisconnect(details));
+  channel.on('reconnected', (details: Record<string, unknown>) => recovery.handleReconnected(details));
+  channel.on('connected', (details: { generationId: number }) => recovery.handleInitialConnected({ generationId: details.generationId }));
+  await new Promise((resolve) => setImmediate(resolve)); // handoff delivers generation 1
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2
+  assert.equal(recovery.getGenerationId(), 2);
+  recovery.handleLiveTick({ sourceTimestamp: new Date(), receivedAt: new Date(), generationId: 1 }); // stale
+  assert.equal(recovery.isEvaluationReady(), false, 'a stale-generation tick must never satisfy readiness');
+});
+
+test('CASE G / higher-level ordering regression: a recovery listener attached only after gateway.start() still reaches READY normally once a genuine current-generation NIFTY tick arrives, permitting host READY -> RUNNING', async () => {
+  const { gateway, connection } = createGateway();
+  const v4Channel = gateway.registerConsumer('shadow:v4:momentum');
+  await gateway.start(); // exact combined-runtime ordering: register -> physical connect -> ...
+
+  // ... -> delay strategy recovery listener attachment (models warmup/backfill completing first) -> ...
+  await new Promise((resolve) => setImmediate(resolve));
+
+  const recovery = new MarketDataRecoveryCoordinatorService({ backfill: async () => ({ ready: true, reason: 'FRESH', missingMinutes: 0, duplicateMinutes: 0 }) });
+  // ... -> install recovery handoff (byte-identical in shape to every V2/V4/V8 runner's own wiring) -> ...
+  v4Channel.on('unexpectedDisconnect', (details: Record<string, unknown>) => recovery.handleUnexpectedDisconnect(details));
+  v4Channel.on('reconnected', (details: Record<string, unknown>) => recovery.handleReconnected(details));
+  v4Channel.on('connected', (details: { generationId: number }) => recovery.handleInitialConnected({ generationId: details.generationId }));
+  v4Channel.on('market.tick', (event: { generationId?: number; instrumentKey: string; timestamp?: string }) => {
+    if (event.generationId !== v4Channel.getGenerationId() || event.instrumentKey !== NIFTY) return; // stale-generation guard, mirrors isCurrentLiveGeneration
+    recovery.handleLiveTick({ sourceTimestamp: new Date(event.timestamp ?? Date.now()), receivedAt: new Date(), generationId: event.generationId });
+  });
+
+  // ... -> subscribe -> ...
+  await v4Channel.subscribe(NIFTY, MarketDataSubscriptionMode.FULL);
+
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(recovery.getGenerationId(), 1, 'the handoff must have already seeded the coordinator with the current generation');
+  assert.equal(recovery.isEvaluationReady(), false, 'must not be ready before any live tick has arrived');
+
+  // ... -> emit valid NIFTY current-generation event -> waitUntilReady resolves -> ...
+  const ready = recovery.waitUntilReady(5_000);
+  connection.simulateMessage(tickFeed(NIFTY, 24500));
+  await ready;
+
+  // ... -> host is permitted to transition READY -> RUNNING.
+  assert.equal(recovery.isEvaluationReady(), true, 'a genuine current-generation NIFTY tick after the handoff must still satisfy the existing recovery gate normally');
+});
+
+/**
+ * ==========================================================================================
+ * TERRA F-01 CORRECTION -- EventEmitter-contract regression suite.
+ *
+ * Terra High rejected the original hotfix on 5 concrete EventEmitter-contract grounds (probe:
+ * on->[1], addListener->[1], once->[1], prependListener->[], thisIsChannel->false):
+ *  1. the sticky replay invoked `listener({ generationId })` as a plain call, so a normal
+ *     `function` listener saw `this === undefined` instead of `this === channel`.
+ *  2/3. prependListener()/prependOnceListener() were never overridden, so a listener attached
+ *     through either silently received NO handoff at all -- Node does not route them through
+ *     on()/addListener().
+ *  4. the source comment claiming prependOnceListener() routed through on() was false.
+ *  5. a throwing replay callback would escape queueMicrotask as an unhandled exception, with no
+ *     containment matching SharedMarketDataGateway.broadcast()'s own try/catch philosophy.
+ * Terra separately asked for scrutiny of internal sticky-state safety: the original
+ * implementation tracked currentConnectedGenerationId via ordinary super.on(...) listeners on
+ * this channel's OWN public 'connected'/'unexpectedDisconnect'/'reconnectFailed' events -- fully
+ * removable by legitimate consumer-code cleanup (removeAllListeners()/removeListener()/etc),
+ * which could silently corrupt every future handoff.
+ *
+ * All five are corrected in gateway-market-data-channel.ts:
+ *  - scheduleHandoffReplay() now invokes `listener.call(this, { generationId })`.
+ *  - prependListener() is now an explicit override (verified, not assumed, that
+ *    prependOnceListener() routes through it).
+ *  - the throwing-listener invocation is wrapped in try/catch, logged via the existing
+ *    `logger.error` convention.
+ *  - sticky-state tracking moved entirely off removable public listeners into
+ *    acceptPhysicalLifecycleEvent(), callable only by SharedMarketDataGateway.broadcast().
+ * ==========================================================================================
+ */
+
+test('EVENTEMITTER CONTRACT (Terra repro): late on() delivers the current generation via the handoff, with this === channel for a normal function listener', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any listener exists
+  const captured: { observedThis?: unknown } = {};
+  const received: number[] = [];
+  channel.on('connected', function connectedListener(this: unknown, details: { generationId: number }) {
+    captured.observedThis = this;
+    received.push(details.generationId);
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [1]);
+  assert.equal(captured.observedThis, channel, 'this === channel must hold for a normal function listener delivered via the sticky replay, matching ordinary emit() semantics');
+});
+
+test('EVENTEMITTER CONTRACT: late addListener() delivers the current generation via the handoff, with this === channel', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start();
+  const captured: { observedThis?: unknown } = {};
+  const received: number[] = [];
+  channel.addListener('connected', function connectedListener(this: unknown, details: { generationId: number }) {
+    captured.observedThis = this;
+    received.push(details.generationId);
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [1]);
+  assert.equal(captured.observedThis, channel);
+});
+
+test('EVENTEMITTER CONTRACT (Terra repro): late prependListener() delivers the current generation via the handoff, with this === channel, and remains persistent across a later reconnect', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any listener exists
+  const captured: { observedThis?: unknown } = {};
+  const received: number[] = [];
+  channel.prependListener('connected', function connectedListener(this: unknown, details: { generationId: number }) {
+    captured.observedThis = this;
+    received.push(details.generationId);
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [1], 'prependListener() must receive the sticky handoff exactly like on() -- Terra found this returned [] on the rejected hotfix');
+  assert.equal(captured.observedThis, channel);
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2
+  assert.deepEqual(received, [1, 2], 'a persistent prependListener() must still receive a later reconnect normally, exactly like on()');
+});
+
+test('EVENTEMITTER CONTRACT (Terra repro): late once() delivers the current generation exactly once, with this === channel, and never fires again on a later reconnect', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any listener exists
+  const captured: { observedThis?: unknown } = {};
+  let calls = 0;
+  const received: number[] = [];
+  channel.once('connected', function connectedListener(this: unknown, details: { generationId: number }) {
+    calls += 1;
+    captured.observedThis = this;
+    received.push(details.generationId);
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(calls, 1);
+  assert.deepEqual(received, [1]);
+  assert.equal(captured.observedThis, channel, 'once() replay must preserve this === channel for a normal function listener');
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2
+  assert.equal(calls, 1, 'a once() listener consumed by the sticky replay must not fire again on a later reconnect -- normal once-removal semantics must be preserved');
+});
+
+test('EVENTEMITTER CONTRACT (Terra repro): late prependOnceListener() delivers the current generation exactly once, with this === channel, and never fires again on a later reconnect', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1, before any listener exists
+  const captured: { observedThis?: unknown } = {};
+  let calls = 0;
+  const received: number[] = [];
+  channel.prependOnceListener('connected', function connectedListener(this: unknown, details: { generationId: number }) {
+    calls += 1;
+    captured.observedThis = this;
+    received.push(details.generationId);
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(calls, 1);
+  assert.deepEqual(received, [1], 'prependOnceListener() must receive the sticky handoff -- Terra found this silently missing on the rejected hotfix');
+  assert.equal(captured.observedThis, channel);
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2
+  assert.equal(calls, 1, 'a prependOnceListener() listener consumed by the sticky replay must not fire again on a later reconnect');
+});
+
+test('currentConnectionSnapshot: a consumer registered while DISCONNECTED gets no snapshot (nothing to replay), while one registered while already CONNECTED is seeded with the current generation', async () => {
+  const { gateway } = createGateway();
+  const early = gateway.registerConsumer('early'); // registered before start() -- gateway is DISCONNECTED
+  const earlyReceived: number[] = [];
+  early.on('connected', (details: { generationId: number }) => earlyReceived.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(earlyReceived, [], 'no snapshot exists yet -- nothing to replay before the physical connect');
+
+  await gateway.start();
+  const late = gateway.registerConsumer('late'); // registered while CONNECTED
+  const lateReceived: number[] = [];
+  late.on('connected', (details: { generationId: number }) => lateReceived.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(lateReceived, [1], 'a consumer registered while already CONNECTED must be seeded with the current-generation snapshot');
+});
+
+test('THROWING REPLAY CONTAINMENT (Terra repro): a throwing sticky-replay listener does not escape as an uncaught exception, release the consumer, alter the physical connection, or affect a sibling', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  const sibling = gateway.registerConsumer('v8');
+  await gateway.start(); // generation 1, before any listener exists
+
+  let uncaught: unknown;
+  const onUncaught = (error: unknown) => { uncaught = error; };
+  process.on('uncaughtException', onUncaught);
+  try {
+    let siblingReceived = 0;
+    sibling.on('connected', () => { siblingReceived += 1; });
+    channel.on('connected', () => { throw new Error('SIMULATED_REPLAY_LISTENER_FAILURE'); });
+
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve)); // extra tick of margin
+
+    assert.equal(uncaught, undefined, 'a throwing replay listener must never escape as an unhandled exception');
+    assert.equal(channel.isActive(), true, 'a throwing replay listener must not release the consumer');
+    assert.equal(siblingReceived, 1, 'a throwing replay listener on one consumer must not affect a sibling');
+    assert.equal(gateway.getState(), 'RUNNING', 'a throwing replay listener must never alter the physical connection/gateway state');
+  } finally {
+    process.off('uncaughtException', onUncaught);
+  }
+});
+
+test('INTERNAL STICKY-STATE SAFETY (Terra repro): removeAllListeners(\'connected\') cannot corrupt authoritative sticky generation tracking for a later reconnect', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1
+  channel.on('connected', () => {}); // ordinary strategy listener
+  channel.removeAllListeners('connected'); // legitimate consumer-code cleanup
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2 -- must still be tracked correctly
+  const received: number[] = [];
+  // Attached AFTER the reconnect -- can only observe generation 2 via the sticky replay path
+  // (the live 'connected' broadcast for generation 2 already happened and is gone), so this
+  // directly proves the internal snapshot survived the removeAllListeners('connected') call.
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [2], 'removeAllListeners(\'connected\') must never corrupt the sticky handoff for a later-attached listener');
+});
+
+test('INTERNAL STICKY-STATE SAFETY (Terra repro): removeAllListeners() with no event name cannot corrupt sticky generation tracking for a later reconnect', async () => {
+  const { gateway, connection } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1
+  channel.on('connected', () => {});
+  channel.on('unexpectedDisconnect', () => {});
+  channel.removeAllListeners(); // wipes every listener on every event
+  connection.simulateUnexpectedDisconnect();
+  connection.simulateReconnected(); // generation 2 -- must still be tracked correctly
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [2], 'a blanket removeAllListeners() must never corrupt the sticky handoff for a later-attached listener');
+});
+
+test('INTERNAL STICKY-STATE SAFETY: consumer release still disables all replay even after removeAllListeners()', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1
+  channel.on('connected', () => {});
+  channel.removeAllListeners();
+  channel.disconnect();
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [], 'a released consumer must never receive a replay, regardless of any prior removeAllListeners() call');
+});
+
+test('INTERNAL STICKY-STATE SAFETY: a consumer-scoped failRecovery() must never corrupt sticky generation tracking for a later-attached listener (a synthetic consumer fault must not look like a physical disconnect)', async () => {
+  const { gateway } = createGateway();
+  const channel = gateway.registerConsumer('v4');
+  await gateway.start(); // generation 1
+  const faulted = channel.failRecovery(1, 'TEST_CONSUMER_SCOPED_FAULT');
+  assert.equal(faulted, true);
+  const received: number[] = [];
+  channel.on('connected', (details: { generationId: number }) => received.push(details.generationId));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(received, [1], 'failRecovery()\'s synthetic reconnectFailed is consumer-scoped only -- it must never null the sticky physical-generation snapshot; only a genuine physical unexpectedDisconnect/reconnectFailed broadcast from the gateway may do that');
 });

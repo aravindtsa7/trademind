@@ -8,7 +8,7 @@ import TickProcessor, { MarketDepthEvent, MarketGreeksEvent, MarketTickEvent } f
 import MarketDataHealthMonitorService, { MarketDataHealthMonitorOptions } from '../services/market-data-health-monitor.service';
 import { nifty1mSourceCompletionBoundary } from '../../historical-candles/utils/historical-session-completeness.util';
 import SharedSubscriptionRegistry from './shared-subscription-registry';
-import GatewayMarketDataChannel from './gateway-market-data-channel';
+import GatewayMarketDataChannel, { PhysicalLifecycleEvent } from './gateway-market-data-channel';
 import { InstrumentRegistry, createDefaultInstrumentRegistry, niftyInstrumentKey } from './instrument-registry';
 
 export interface SharedMarketDataGatewayOptions {
@@ -132,23 +132,23 @@ export default class SharedMarketDataGateway extends EventEmitter {
 
   /**
    * Registers a new, isolated consumer channel. Safe to call before or after start() -- a
-   * consumer registering while the transport is already CONNECTED still observes exactly one
-   * 'connected' notification (replayed on a fresh microtask so the caller can attach its own
-   * listeners first), matching the guarantee every consumer would get by registering before
-   * start().
+   * consumer registering while the transport is already CONNECTED is seeded with that current
+   * generation atomically at construction (see GatewayMarketDataChannel's own class doc for the
+   * full current-generation handoff this feeds: a 'connected' listener attached at ANY later
+   * point -- immediately, or only after the strategy's own slow startup work -- still observes
+   * the current generation exactly once, without waiting for the next reconnect).
    */
   registerConsumer(consumerId: string): GatewayMarketDataChannel {
     if (this.consumers.has(consumerId)) throw new Error(`SharedMarketDataGateway: consumer "${consumerId}" is already registered.`);
-    const channel = new GatewayMarketDataChannel(this, consumerId);
+    const channel = new GatewayMarketDataChannel(this, consumerId, this.currentConnectionSnapshot());
     this.consumers.set(consumerId, channel);
     logger.info('SHARED_MARKET_DATA_CONSUMER_REGISTERED', { consumerId, consumerCount: this.consumers.size });
-    if (this.connectionManager.getState() === ConnectionState.CONNECTED) {
-      const generationId = this.connectionManager.getGenerationId();
-      queueMicrotask(() => {
-        if (this.consumers.get(consumerId) === channel && channel.isActive()) channel.emit('connected', { generationId });
-      });
-    }
     return channel;
+  }
+
+  /** Read-only atomic snapshot of the physical connection -- the current generation if CONNECTED right now, else null. Never mutates ConnectionManager bookkeeping; feeds only GatewayMarketDataChannel's own sticky handoff state (see its class doc). */
+  private currentConnectionSnapshot(): { generationId: number } | null {
+    return this.connectionManager.getState() === ConnectionState.CONNECTED ? { generationId: this.connectionManager.getGenerationId() } : null;
   }
 
   /**
@@ -206,11 +206,18 @@ export default class SharedMarketDataGateway extends EventEmitter {
     });
   }
 
-  private broadcast(event: string, details: unknown): void {
+  /**
+   * Routes through GatewayMarketDataChannel.acceptPhysicalLifecycleEvent() (never a plain
+   * `channel.emit(event, details)`) so this remains the ONE place physical lifecycle truth
+   * reaches a channel's sticky current-generation bookkeeping -- see that method's own doc for why
+   * a plain public emit is not a safe substitute (removable listener cleanup on the channel must
+   * never be able to corrupt it).
+   */
+  private broadcast(event: PhysicalLifecycleEvent, details: unknown): void {
     for (const channel of this.consumers.values()) {
       if (!channel.isActive()) continue;
       try {
-        channel.emit(event, details);
+        channel.acceptPhysicalLifecycleEvent(event, details);
       } catch (error) {
         logger.error('Shared market-data consumer listener failed', { error, event, consumerId: channel.consumerId });
       }
