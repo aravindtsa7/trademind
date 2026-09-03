@@ -1,0 +1,1989 @@
+{
+  "storageSchemaVersion": 1,
+  "datasetId": "UNDERLYING_1M_1a7cf5e2f88a0f6b",
+  "datasetChecksum": "1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870",
+  "datasetKind": "UNDERLYING_1M",
+  "writerFormat": "PARQUET",
+  "writerLibrary": "hyparquet-writer",
+  "writerLibraryVersion": "0.16.6",
+  "compressionCodec": "SNAPPY",
+  "generatedAt": "2026-09-03T20:34:26.883Z",
+  "sessions": [
+    {
+      "tradingDate": "2022-01-03",
+      "sessionContentChecksum": "5bed2a358af312bd8cd3fe44db7168003eba99eff7fc37dce5b4846bf8419f70",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-03.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10372,
+      "physicalFileChecksum": "545c4290ebdf74ac0bfe2a6e026233d6ead392b174d9052e25910cd8153f2585"
+    },
+    {
+      "tradingDate": "2022-01-04",
+      "sessionContentChecksum": "33a7475904943e63d71683f99974dca6336f765f5634b6155336d1a9e6029224",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10419,
+      "physicalFileChecksum": "49a2f7083a1d8080a9d1a17d4b78e550378f67dd17a192d15919ccd6149fbb28"
+    },
+    {
+      "tradingDate": "2022-01-05",
+      "sessionContentChecksum": "a392e2e0cd444157232988c93088d7669ae65e592c43ff313d493ecb281f349b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-05.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10393,
+      "physicalFileChecksum": "9d31e3e069ca7671ef5ca6cc16fbffed14ed14c7cbbcc093fdc87100de75253c"
+    },
+    {
+      "tradingDate": "2022-01-06",
+      "sessionContentChecksum": "a1355dfb5d3a930991ac207e2d8eb9c4141bd56d52d8c2f6326afd6b19c0c97f",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10422,
+      "physicalFileChecksum": "e159c6a8bdea3339d8681005ad7a6b289e0d7272e5d3975a20330a071c26234f"
+    },
+    {
+      "tradingDate": "2022-01-07",
+      "sessionContentChecksum": "6af1ebbd86de1c31c159f90a30f689b9ea0515bd03cd42b952416da95931fdaa",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10522,
+      "physicalFileChecksum": "f64d8553739879e7d3f7c6af24c6008875d80a4674230e44df3c22d91e4ca70c"
+    },
+    {
+      "tradingDate": "2022-01-10",
+      "sessionContentChecksum": "dd6539c0d78a2bd9f499ea45b0b32ed9ab232d630e27e8239e9c07903a2aa9b2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10328,
+      "physicalFileChecksum": "b448d0d4318e7cae4fe9173756ece3a38ea441c0e518546f5ed50ad2815ad01b"
+    },
+    {
+      "tradingDate": "2022-01-11",
+      "sessionContentChecksum": "25e78a512d37054ad385d5bd2501e51bf8309e265bd4a076f657fa7c2acfbd98",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10456,
+      "physicalFileChecksum": "78aa0dbcef8dc6aa3fcf12f1112b3a3da25b54afd46474b2eb1aa82703921f1b"
+    },
+    {
+      "tradingDate": "2022-01-12",
+      "sessionContentChecksum": "ef94877b6bcbbf98e1adf11f29ef0b5945e3dc15ac7d500a3a22db00f7d2d4c9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10161,
+      "physicalFileChecksum": "5349515d73c9f1ac82ec2d353e2ae540c16703350e92b0461c4cadfb1e297257"
+    },
+    {
+      "tradingDate": "2022-01-13",
+      "sessionContentChecksum": "ee2eb430eb16154681707956f0abeafaf5db7e3d19ab6ed830c81187faaaba2f",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10222,
+      "physicalFileChecksum": "62661463c5ab82002949db126a40746018733f9e38f37999f685d9d5bdffe2b5"
+    },
+    {
+      "tradingDate": "2022-01-14",
+      "sessionContentChecksum": "65664bf4e21a43a11ae9fc2038f69f59dac789f60d6e5d612afc3fef8b32ac47",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10466,
+      "physicalFileChecksum": "93cf132efd00ccf5a36d1c7f72daffc3b413d93325456c06192b208f3f68b517"
+    },
+    {
+      "tradingDate": "2022-01-17",
+      "sessionContentChecksum": "1123a3784ea2cbdabbc8ed278b8b55aa37e4c7a60c7cd95904d9bc587074b6fe",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9940,
+      "physicalFileChecksum": "d4cd689793b6df41e4ef82394735c710f0d0bf42be8b3429522a049f92a250d4"
+    },
+    {
+      "tradingDate": "2022-01-18",
+      "sessionContentChecksum": "727e04cb7969a0fb032bdca9038a91ef02c0380b20f934e10964b137b5edbf3e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10576,
+      "physicalFileChecksum": "c89693db410cbaf5087738d5909839f6bb27f3f3bc23d9687d21b6d71ce00281"
+    },
+    {
+      "tradingDate": "2022-01-19",
+      "sessionContentChecksum": "7b4fd124d4aa6667e00ba4ff712a491d92c6666d92b55a9031b72d3835fdee36",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10905,
+      "physicalFileChecksum": "bdc63a37401e2eaf06159b0a4ae0b0590551844c099a8a5c9d657ac9fdfe4c19"
+    },
+    {
+      "tradingDate": "2022-01-20",
+      "sessionContentChecksum": "cb5dead1cbdcfca091947dba20e0aa56897d276139f9fe0a7f72c93aa25b94ed",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10712,
+      "physicalFileChecksum": "456d95631d23e52711cb0bafdbfd5e9a987b4154dfb99ca967e5b3ed3c01c902"
+    },
+    {
+      "tradingDate": "2022-01-21",
+      "sessionContentChecksum": "0ae0d8df74ace1afe4d559177f33e4e4e55609758ec2798c96818887cdf4103c",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10683,
+      "physicalFileChecksum": "1018119c8f0cf00526e4490e4989f5aab4b2460e2fa67d3f1589119578a32deb"
+    },
+    {
+      "tradingDate": "2022-01-24",
+      "sessionContentChecksum": "bba91f5b9958f1de0aa8a0d5cfe57e461f5ef6f954f9d29928fdbb9697981de6",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-24.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11080,
+      "physicalFileChecksum": "49e81f0abda65beb7064065d3b2cf29d68d23f0dfb45d413386279c4af509f01"
+    },
+    {
+      "tradingDate": "2022-01-25",
+      "sessionContentChecksum": "0720f0fba50cc32ce12fa3676c19bdf715596c86f27e0fe853555835be1c6f59",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11010,
+      "physicalFileChecksum": "cac27b4cf90c9e8b3e2b187a4651ef6928ebb83ed49f6a20db87ea5584ee71b3"
+    },
+    {
+      "tradingDate": "2022-01-27",
+      "sessionContentChecksum": "09ef9cc5b2ed004b2c77bb7859c5a5eff2af3f39fcde2122ee4f57a6121abb1d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11349,
+      "physicalFileChecksum": "52a48ba13f288f8f8c812ec629ffa507de4e9f35ca678192ed74bceb3ec80e16"
+    },
+    {
+      "tradingDate": "2022-01-28",
+      "sessionContentChecksum": "887be8459dcb6892d7417f8a22466ceb6842f7d6f22b601d3defd5d716861d7d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10693,
+      "physicalFileChecksum": "f7bd46e7b39090c1d5086e04e0b726941718456582146aa460a01bfb717dd4ee"
+    },
+    {
+      "tradingDate": "2022-01-31",
+      "sessionContentChecksum": "df69e8202748d6db0d1acb406c64e17b341bb156fe5616831fc8591f1c35f363",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-01-31.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10469,
+      "physicalFileChecksum": "580a20ee5c03af1c0ed59fff8b6e111bd7f58d2996e174f70077c3f0a9e90bcc"
+    },
+    {
+      "tradingDate": "2022-02-01",
+      "sessionContentChecksum": "d596ff3a727a6c6a5dbfc6d186c61fcb2efec1e778862c378a254b25d3d9e68d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10721,
+      "physicalFileChecksum": "534583c72fff383c2b75445d3a8cbf43f093cfd34d2a00758ffcf6d6be10877e"
+    },
+    {
+      "tradingDate": "2022-02-02",
+      "sessionContentChecksum": "d495b979a27ab590e899e72a694f685eddcce5df55fce9219e82447eafd26941",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10223,
+      "physicalFileChecksum": "4f11919086cac582061ce8cd1de076f77699444421fd69b8e149bd32dc1f00b8"
+    },
+    {
+      "tradingDate": "2022-02-03",
+      "sessionContentChecksum": "be3dfc0976887b8928085fa8e38875deb49dca0396b38f5a2ac9f242c97cbac9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-03.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10572,
+      "physicalFileChecksum": "3dc014413405543e3094d10513324aeecd990c78fa0c70ffd46b73eb1293ebcd"
+    },
+    {
+      "tradingDate": "2022-02-04",
+      "sessionContentChecksum": "65eaf768c7934bf1c2f1864f4e7becd9d7d19002eab112f748d2941a96d53f15",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10544,
+      "physicalFileChecksum": "44cb5de0a006df4153d2d5c9ac69b88875f8330d4bf7c77cffde1d206d390f66"
+    },
+    {
+      "tradingDate": "2022-02-07",
+      "sessionContentChecksum": "537c6f9a4b90c77016d245adafa16224b3e5b4d9c93c7c072ed8c27accfa0715",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10915,
+      "physicalFileChecksum": "a1aa3c7be1189f37f5fc5c94355c6d6655055ebeee001e59321ba2f1f281eb7d"
+    },
+    {
+      "tradingDate": "2022-02-08",
+      "sessionContentChecksum": "8c36944ce8e1f13802be083d8aa19e7685173649e26b3b22acee8e666318e1bd",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10767,
+      "physicalFileChecksum": "f99cbcf3bb8efc56bc0f3ca04a06bd47c35be7618af15e481f856281a0b8a479"
+    },
+    {
+      "tradingDate": "2022-02-09",
+      "sessionContentChecksum": "25e41851237130eb52f868cfb09a5a51ed769bc86d3c5ee53ebe9f5efb933426",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-09.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10222,
+      "physicalFileChecksum": "34ff69c8497adabc1958403fafa565e7a3e7defe1e6ea9234c4904c027c3924f"
+    },
+    {
+      "tradingDate": "2022-02-10",
+      "sessionContentChecksum": "b68b84b87c9821b9d9200a93c93dff6e72855e60a950fae0402eb7d58e92a96b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10468,
+      "physicalFileChecksum": "ca71204b1ceba50280135b96493417314862d1ca9607c8694e0cff5eb919bbb6"
+    },
+    {
+      "tradingDate": "2022-02-11",
+      "sessionContentChecksum": "fe05d2659a0b393e1e9116ab2034bccb04c1cba6a81f849709a8e6efadd9a1ac",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10480,
+      "physicalFileChecksum": "80bbf9471a2d3f0e951f58611160fa485a994c13f79c1f4bafe3e7c3866a88ae"
+    },
+    {
+      "tradingDate": "2022-02-14",
+      "sessionContentChecksum": "9f04b791364323a8d760165b0a3d0d9edbfe4d35f4eb587dd565f23de373a8c9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11186,
+      "physicalFileChecksum": "efae4c647f66e73ab1a53f3b5b7009fe19994f487c6576718b390b75c47b98a6"
+    },
+    {
+      "tradingDate": "2022-02-15",
+      "sessionContentChecksum": "acded6b095a78a2bec18c4301d83a414110ca8c42a404b7d3fa0813789e34a22",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-15.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11294,
+      "physicalFileChecksum": "61279161f1400ae31ddb0ee2c09e9d1951ae9cfec3e071ed0a5724f5065c73dd"
+    },
+    {
+      "tradingDate": "2022-02-16",
+      "sessionContentChecksum": "889270a064c370a343057d5f699dd99d685f357d2473eb51bf4a979f3c83d3dc",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10746,
+      "physicalFileChecksum": "93879f5f4eea561fd2ada7d9ede4170a9a59bc6512581e5760f48a6da5b7aa2a"
+    },
+    {
+      "tradingDate": "2022-02-17",
+      "sessionContentChecksum": "af02698db9ec38146a2a4a9063966d68681e76550e6f7df4939e9dfbb493eb19",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10640,
+      "physicalFileChecksum": "8f336614bd805ffe3eb2069d39d967197a160abf667a640ae336ffb7003581fb"
+    },
+    {
+      "tradingDate": "2022-02-18",
+      "sessionContentChecksum": "454008613b9471b551ca52113e1d44acf4ac7691e61b46f76e7df9ebffb795f0",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10469,
+      "physicalFileChecksum": "6563873bd635865e59b1bd4dd786c843179a225e1a0f0022bd1b6d8748aff8d2"
+    },
+    {
+      "tradingDate": "2022-02-21",
+      "sessionContentChecksum": "3f67df92088e622b02c79cbc9e5684642791701621003af095aab218d210d905",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10741,
+      "physicalFileChecksum": "91c996c631ccf72fd1e3613334c10922fde90b90102a8c37df93440cae8280bb"
+    },
+    {
+      "tradingDate": "2022-02-22",
+      "sessionContentChecksum": "7bf7a9419a896e844552f01fe4e46c4fa15207ec97f6bbb037c19a4b5a5c4dc7",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11051,
+      "physicalFileChecksum": "c9709aa45a99edf1c1ec4babd71b0a2b6ee811651b2ecea08112443e00ce59c5"
+    },
+    {
+      "tradingDate": "2022-02-23",
+      "sessionContentChecksum": "839d09a68980db66fbbc74fafca94057067fbe9d20c0a7803f81c145c615e005",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10448,
+      "physicalFileChecksum": "9c9d45441091a5a2f79589849483e61905c93a461ec28f5ffa24086aec3c8cd2"
+    },
+    {
+      "tradingDate": "2022-02-24",
+      "sessionContentChecksum": "e7b279408f0d3299090f9407a711a3d00d7c1f1ffeb4cce0a08eef4480904cc9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-24.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11056,
+      "physicalFileChecksum": "909e56deb8282a01cd7cdc434ed5dce6a4d290d3eb483ddcc753c7284751953d"
+    },
+    {
+      "tradingDate": "2022-02-25",
+      "sessionContentChecksum": "45dad686dc0b8d82a3266a591557947391d39b1c70f7e0dea9981f2cc4c17b19",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10614,
+      "physicalFileChecksum": "072637cd09ca86f831d5a522cd6439f61ad066a9b10e5c5094fedd00cbc446ea"
+    },
+    {
+      "tradingDate": "2022-02-28",
+      "sessionContentChecksum": "b88c3288658050755975370333abe3a5fb185e20f1622b795a74e869b9c22e4b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-02-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10867,
+      "physicalFileChecksum": "ec5796d6bbed6bc18c711a945c17bfa68806f4d571731526f2a35335f50b0303"
+    },
+    {
+      "tradingDate": "2022-03-02",
+      "sessionContentChecksum": "774e66020642dd5cc0cc29f7286253f1f0693c827e4133386bbede433f12d802",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10698,
+      "physicalFileChecksum": "aa687b81f92e2f234a319b6e686bcdd82fb554db8b4bd7676fc27afe0dc4bc99"
+    },
+    {
+      "tradingDate": "2022-03-03",
+      "sessionContentChecksum": "ce171e3a2a99bef361b6406d91a082fa491ce8deff650523ebdb71ce42dd3d59",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-03.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10655,
+      "physicalFileChecksum": "2abbeed569500318aa334615cfcd67336af17c60cd250ba15ee5c41e3000541e"
+    },
+    {
+      "tradingDate": "2022-03-04",
+      "sessionContentChecksum": "d4768f276e82688ba2c100bb99a21ba45da518f5b70b473e959ae1f9641dc33d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10991,
+      "physicalFileChecksum": "8caf5130bf5944d87b273b2f31e2c32e1bc59ce9a86af379d0611d8777e9db15"
+    },
+    {
+      "tradingDate": "2022-03-08",
+      "sessionContentChecksum": "10a281d051ab57fb59f36f6ce4cad2dad9c4ef5b9106e2a125a6db1a0fc50c23",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10994,
+      "physicalFileChecksum": "db29e36acac62c2a08d559e69c85f1e1c4cdedad07831c679f081c693f41ce17"
+    },
+    {
+      "tradingDate": "2022-03-09",
+      "sessionContentChecksum": "deec8e274284f5752d2c49309cbd5217b6c4212d476af92ced83657725256fe8",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-09.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10794,
+      "physicalFileChecksum": "fe47710887a790741a3fc4094e1c4852ee7a49fa1825ed8b537a3801cdd74692"
+    },
+    {
+      "tradingDate": "2022-03-10",
+      "sessionContentChecksum": "a6f1ad1cab5eb9b65b237623feb24b8dbf447e7accb4381b07634599270b549a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10796,
+      "physicalFileChecksum": "c7c51e0a53cf17a1b39f46c4257d1114089e57cbffa61307cfdb22bfd8f8e961"
+    },
+    {
+      "tradingDate": "2022-03-11",
+      "sessionContentChecksum": "94eeb5b48a3fc1a03cfbb0653c48b8189634ff189c507b93c9c72f557226e133",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10580,
+      "physicalFileChecksum": "b7e246dcfe19d90713e6a6669639479ed29f4355b4938d55fb5e964397c783fa"
+    },
+    {
+      "tradingDate": "2022-03-14",
+      "sessionContentChecksum": "a1ac472e497237b44836b54556666fbbfd5e9def16d84b157ebc90240b940f54",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10596,
+      "physicalFileChecksum": "a607288047145d4d31a9b795d5951faf763f8ba1b8f0e0e1dc249de5022651a7"
+    },
+    {
+      "tradingDate": "2022-03-15",
+      "sessionContentChecksum": "7dd9df7667022a74753ff4edae802098d2dba9b3173d8d4d7b436e059abde47a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-15.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10865,
+      "physicalFileChecksum": "613ea485c91e09d4720e51f38d7e2e0c7cf1e23234bb2f3c306fd83cfcbb5bd3"
+    },
+    {
+      "tradingDate": "2022-03-16",
+      "sessionContentChecksum": "f5d49e91a308973a77d551a3991c38d6ca929f61a2f29ae0c927cae091452cf3",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10235,
+      "physicalFileChecksum": "f1021b1b4b727cabce7c0d7cc0e2fbcd2afb54b9fea2374116ffb547f0f7ec3c"
+    },
+    {
+      "tradingDate": "2022-03-17",
+      "sessionContentChecksum": "dc78d896241491b2333acf808e0c5a0d0c4224c42791568817328d45c8c8211a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10333,
+      "physicalFileChecksum": "d9b25ccba0c8020ca26e5a122aeb2dbff7c82960f7f5dbb8f3ba56f4267aad9d"
+    },
+    {
+      "tradingDate": "2022-03-21",
+      "sessionContentChecksum": "2f9e736a2cedb66dfa94b175c791263feefa8574187821b514fa458d133356c6",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10626,
+      "physicalFileChecksum": "a63c5aa0b66ab4b4e2d461597fb0f166f1bd43fb5234e1c326f6763b8245d234"
+    },
+    {
+      "tradingDate": "2022-03-22",
+      "sessionContentChecksum": "34c8a5c81fc7c85d8f4004102eb1915ed3fadb250fac713aebca34149ac872c9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10696,
+      "physicalFileChecksum": "fd7fba2da0547141f27cdd342cdfeac3484f9a1dc36a2867552ac62843ecf1cc"
+    },
+    {
+      "tradingDate": "2022-03-23",
+      "sessionContentChecksum": "d6b92416c5d880b3d2b394a2e0a30132c5198a2a9a23a5045e69e02f7048e901",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10583,
+      "physicalFileChecksum": "0500f891bb80879818952338c0ef01a0d557b8aa04cb331dc7c8d9dd3530ca0d"
+    },
+    {
+      "tradingDate": "2022-03-24",
+      "sessionContentChecksum": "b1911b9e8e507d95b25bfa9b9fcfc385ad976b502149d8bf8160dc13c717486b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-24.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10515,
+      "physicalFileChecksum": "ad06f599d80d141743c54f0f831bf7c89575ebd2bb7308a9d475f250c5448275"
+    },
+    {
+      "tradingDate": "2022-03-25",
+      "sessionContentChecksum": "fdf33cb83fca1c7ae3ceb0b1b947fbe8bd615de26e7e48f5e47515e65739e7a3",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10460,
+      "physicalFileChecksum": "8c843ca30c49b029a4efddf1be0b6b001bfb5db40f2a216a45f1a3797f7a6c52"
+    },
+    {
+      "tradingDate": "2022-03-28",
+      "sessionContentChecksum": "e77aa50e126c0cc9cfa6942f838b7423df70532daf71bccfdc5419b5b2d60466",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10668,
+      "physicalFileChecksum": "74e315b9f2aadda4b09784f3d5ac2fc3c0afe49db4c241f3ba0861a470901250"
+    },
+    {
+      "tradingDate": "2022-03-29",
+      "sessionContentChecksum": "d6605a146950eac2838a342438d14132d00c2fe5c4fe602bcd831da265edaf54",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10338,
+      "physicalFileChecksum": "80742bd6e767dfeaed1422ec2874d7be607be5c985dd9bffba65cc57ad4a3164"
+    },
+    {
+      "tradingDate": "2022-03-30",
+      "sessionContentChecksum": "7b0e52df6df86a520cb0f2792f84c25430892235316f5b4c1ccfae26fd2888db",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-30.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10297,
+      "physicalFileChecksum": "8ce2791945ce20ce589de3c31738d92f2d9a0992c6f488003e533145491bf9fa"
+    },
+    {
+      "tradingDate": "2022-03-31",
+      "sessionContentChecksum": "52b02762a3c267499c931e3f0b52e8d3f9264f6d7fba4e561f2f0226a13c4dca",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-03-31.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10394,
+      "physicalFileChecksum": "f5b8f8e31cc8733f098f3da002b10a67f5601d35ae89d115922b04610caf4ed2"
+    },
+    {
+      "tradingDate": "2022-04-01",
+      "sessionContentChecksum": "32fcecccf246524be7e8b82a296aa7bda31ccbba217d20307fda8b0bb9498840",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10211,
+      "physicalFileChecksum": "b1b03c2fdbcd8bff2cb21e76123a8625da1b403c7ca24fa90ad551bc2f5b6f44"
+    },
+    {
+      "tradingDate": "2022-04-04",
+      "sessionContentChecksum": "fdd47ed8bbb5a0cc1892199b9ef1e0740b546d5972c1cfe67f858be013029445",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11081,
+      "physicalFileChecksum": "4866716d4b677982fbbd34b176614cf99751e65cbd0d6dfa8d38956309cbdee0"
+    },
+    {
+      "tradingDate": "2022-04-05",
+      "sessionContentChecksum": "0b01608a857beb7256b4c275407447424caa29786778327a6ddd6e23f67821ae",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-05.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10661,
+      "physicalFileChecksum": "2de25b9ce50049f71399406f9af0d647dda11081fa625cfe09702dd2d30f9171"
+    },
+    {
+      "tradingDate": "2022-04-06",
+      "sessionContentChecksum": "05653af038a3941dcaf9ca84dda1f7fd9ab1c92a8636a0594d15c99b11993c43",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10300,
+      "physicalFileChecksum": "50bb155ea5d1745d2829183e1c8ef55400ea55ef00261347c60eae7a6ef1f7b7"
+    },
+    {
+      "tradingDate": "2022-04-07",
+      "sessionContentChecksum": "8f6300a6c4356ad35bee3d10c6e8adc8362c77ce2ee5d10286ebe158ab6db435",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10445,
+      "physicalFileChecksum": "9ad541c4aab5ae0f2305127a3c2c2f26bbf1a9880b8a6d43c35771b7733d6515"
+    },
+    {
+      "tradingDate": "2022-04-08",
+      "sessionContentChecksum": "f797f3ba0d39b7cc5ae227014daa7e1bce214046dcebb7e13dfa583b06f12a5e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10613,
+      "physicalFileChecksum": "9f8712039d614814cd9a5ca81db25e12f59bd2a40cdea1869c7e273ed9962c70"
+    },
+    {
+      "tradingDate": "2022-04-11",
+      "sessionContentChecksum": "5234c97f458b95937f2df4f689f7c35e0d8375d71f3ae6f1ab8b0feb3c377ba1",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10452,
+      "physicalFileChecksum": "717c7b993bf829fb24a89443f04e0e13fb4cb4ce364f63b414fec935f678b379"
+    },
+    {
+      "tradingDate": "2022-04-12",
+      "sessionContentChecksum": "6f4ef6e95c8c7b4bda183dbbc268aad69439880026dd74eaa212d3107dac0add",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10479,
+      "physicalFileChecksum": "e60ab7050d9bec862eaa0c25f2542ee19ad5d7f44bf1ea4ae2e80e10e03361d8"
+    },
+    {
+      "tradingDate": "2022-04-13",
+      "sessionContentChecksum": "a7f2dfc2cd3afacc2f994b83d2e6551b1b2f460036cd4f0d8b179aada664a7e4",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10462,
+      "physicalFileChecksum": "8dafeb7bf5b5e35328a446855a3023621bd1b72c8ecb02dc36c9ca6e9bc7cd76"
+    },
+    {
+      "tradingDate": "2022-04-18",
+      "sessionContentChecksum": "f0280f6578126b8f54d0aacd3d7d10640978d685c433d922090c7c663f4c7353",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10465,
+      "physicalFileChecksum": "27a03427826190550d94849fb20d2a8e40585c98f93e7aaa07936f8f3fa8b48d"
+    },
+    {
+      "tradingDate": "2022-04-19",
+      "sessionContentChecksum": "2f0cbddb51deee76ac0d71250f3ee906bdedb3f774c7010a93fe4234e3a701d2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10622,
+      "physicalFileChecksum": "377ba13f8cef193f0289cb181f80be61c169b43b4b5b9d257f2ccdc863cffd1d"
+    },
+    {
+      "tradingDate": "2022-04-20",
+      "sessionContentChecksum": "068edc1ac2d519fe117289ce0134f04a7dd17562c2ee8ae83ba2c1e912e762c7",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10546,
+      "physicalFileChecksum": "b0c9f8ce748f3f68607c1279a87905369ad143fd839cdd271057f96178f06570"
+    },
+    {
+      "tradingDate": "2022-04-21",
+      "sessionContentChecksum": "53d9f4e3949dd19f63cf8d39789998a363bc471a0406ef9f0dc3cdb61661c8e8",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10383,
+      "physicalFileChecksum": "9961c17d26b7dd6923d18ef958b853d4e99bc31f013f08033b98bcadf695bb92"
+    },
+    {
+      "tradingDate": "2022-04-22",
+      "sessionContentChecksum": "c7ee1abd4e4ac5810c6a1fce4ca97f242512b95a7a8c57b0b015fb961a882232",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10448,
+      "physicalFileChecksum": "6a714952e34e0c3763f21385476f57c1901652a30e85433a772d8b55536dd142"
+    },
+    {
+      "tradingDate": "2022-04-25",
+      "sessionContentChecksum": "e2e11238fdfda40d2c28e6dae100e300498c6f4518735d1ca43e0d5422aa4054",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10778,
+      "physicalFileChecksum": "04f3f7cebb951a877f198dfafc2041646b69af2db55ed11405e270de97187a8d"
+    },
+    {
+      "tradingDate": "2022-04-26",
+      "sessionContentChecksum": "ef8c24cac54dfa3a5b9b556cbffe537c1f26b522ee6dc683336fc26e22d25778",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-26.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10348,
+      "physicalFileChecksum": "7626cabba793645114fdb1fd648a061e1d2d66f0aa7e1a41bcec176ca02c2ba9"
+    },
+    {
+      "tradingDate": "2022-04-27",
+      "sessionContentChecksum": "4912a10e025b395e4e733d7c4687a0c45388b323b41a0d344d6c2c8fe02740ae",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10536,
+      "physicalFileChecksum": "70bcdbe75220c250af040851f47a3090c44b616afcf1ffb8a3404907c8777638"
+    },
+    {
+      "tradingDate": "2022-04-28",
+      "sessionContentChecksum": "9c8249a348fb131126342a8361c2e2bdb4a46c5d0ae73d7d15ba09622374ebe0",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10521,
+      "physicalFileChecksum": "d2a33557e6cd4a0233dcb496ccfdd4a3acdbdf76f7cbd0df031be978b9946056"
+    },
+    {
+      "tradingDate": "2022-04-29",
+      "sessionContentChecksum": "2c8df2c465f6d930ba7ebeb743ecadf250dbb0ddb4aa4d5b137801dbdd4013e2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-04-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10638,
+      "physicalFileChecksum": "1d49c106f2b9c5e72d44c6777441f7c1c8f13a436cd3298b473358c501fc4050"
+    },
+    {
+      "tradingDate": "2022-05-02",
+      "sessionContentChecksum": "1e6be400dfab3cdc2aa4960a0dc20edaf6ee2850c921835bc0774e5f69cd7057",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10714,
+      "physicalFileChecksum": "e262afad8118b5f35f5f80a8e29efef257e771b2a8338442b5700bf7ee11ae14"
+    },
+    {
+      "tradingDate": "2022-05-04",
+      "sessionContentChecksum": "5ffabdc31ead1840b71d08229c8c9237681fb55bb2c1efb351af3cf665611cea",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11197,
+      "physicalFileChecksum": "095373f3000951e647d774ceb2ed47ecd5969eb75bd9c9904c4500886266f76a"
+    },
+    {
+      "tradingDate": "2022-05-05",
+      "sessionContentChecksum": "5cd1ce7fe39d3cc93566fe941ce68038ed9fc2cb917d7336ac2231ec68dcba9a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-05.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10830,
+      "physicalFileChecksum": "a52010a9389818b67cf4f06a594e0b63c4e0540cc634ea98e30b5c23dc0bb9d6"
+    },
+    {
+      "tradingDate": "2022-05-06",
+      "sessionContentChecksum": "929c9e1a0a92c325d26ffa6ba4519ad37af0ec70d2c42d4a4ebd54b95445a077",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10419,
+      "physicalFileChecksum": "c318f2f001020faaf8b6d5a67854e799eedc5907f0259064194b8a75874bfe03"
+    },
+    {
+      "tradingDate": "2022-05-09",
+      "sessionContentChecksum": "a9f530d8d7b75c89c4e5bd11f2173eb2a6e2cc775d39f1fa26476c49a3ebb55b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-09.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10638,
+      "physicalFileChecksum": "368457a051a542bf0f5681e33b22671d8af12d08ba4f275eeac2e622cc00c500"
+    },
+    {
+      "tradingDate": "2022-05-10",
+      "sessionContentChecksum": "71b9ae6d90a52880356a42781e08beea146f9965639c4d93d4ce6c61a3d74945",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10581,
+      "physicalFileChecksum": "c04c149feaf865598748e6bc29f1b0b0589bdf9c2720b2d3003f0275bd736625"
+    },
+    {
+      "tradingDate": "2022-05-11",
+      "sessionContentChecksum": "a8e9bd330e6f0e8544ed5b45fa357297cec1b6ed883000fa001453caed626670",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10845,
+      "physicalFileChecksum": "117de61b5cfa46eeb6b0bdcd4174b3b35f3ed9a73576e75d58bb834a4f3c224c"
+    },
+    {
+      "tradingDate": "2022-05-12",
+      "sessionContentChecksum": "b08138e3ed1cdfe4910956e8833bc52c9b3782b1d51ec5c8ac6efeebab046380",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10663,
+      "physicalFileChecksum": "828e6a02cc6c5e2ce4f41216b390ffbaf2a92d7aa8d209426e0cacccfeaf883c"
+    },
+    {
+      "tradingDate": "2022-05-13",
+      "sessionContentChecksum": "5877f71c2a2f8f82f33a35f893c7ca5c091d78a8367585b1672eec91d219b1b4",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11182,
+      "physicalFileChecksum": "9659ed682d68594971fb538b8df48a1d191d9f5da3ecfdc4ba735adababb87ed"
+    },
+    {
+      "tradingDate": "2022-05-16",
+      "sessionContentChecksum": "74b963ca25ebe0ecb009ae34a2f410357fa42d0886b9c3175e67be93a1c0340b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10704,
+      "physicalFileChecksum": "f97f848c28b5878257dfb9933ba81b2b6f5d03bb91b211af7cb2b0f0c184175c"
+    },
+    {
+      "tradingDate": "2022-05-17",
+      "sessionContentChecksum": "6de35902aff369b79a3acfb45177fbc699c2ae03dcf82f692268e1a2763dcfd9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10978,
+      "physicalFileChecksum": "f64d255ece88584745be452d5ff670798aa72247fc4496bbe3b6015df92e1392"
+    },
+    {
+      "tradingDate": "2022-05-18",
+      "sessionContentChecksum": "95828c2ace31e8f57fe039ebeabe88985fd7ee869060da16029aedf262dd591a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10398,
+      "physicalFileChecksum": "05d5b26579c76e99c2f72df5c722095bf087436ca13cdd3dcb091adf6ec9d201"
+    },
+    {
+      "tradingDate": "2022-05-19",
+      "sessionContentChecksum": "59016a744e2e48be9f615633ff385134adefcb7c6e99b36148dc2e0ebf03f773",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10471,
+      "physicalFileChecksum": "95e1c30fa923f85d7c7a5d11be280e3a70c79f600163ebc1a95ba92795f8401a"
+    },
+    {
+      "tradingDate": "2022-05-20",
+      "sessionContentChecksum": "f24b98033be06f9e49d455fdd3074afa4b64441da8aefe8ab34bb1789c270e28",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10498,
+      "physicalFileChecksum": "33b7dc3847fe63d31b3ba59f2b3b66834a6f4a5ca59ff4a55412555d9b9c3a92"
+    },
+    {
+      "tradingDate": "2022-05-23",
+      "sessionContentChecksum": "6b1cd225c1e4f5703db304ae7dcdbd6fb30b6432cacb43efecbd13be2050143a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10590,
+      "physicalFileChecksum": "35f6f94a0a6436c1423d27a1efaf2685f4a902c51ae814fc78c26d8415922c3c"
+    },
+    {
+      "tradingDate": "2022-05-24",
+      "sessionContentChecksum": "cfa03ee9c25f017421eb9b509070c84d603b24d80f2c04c41b2bd184c051118a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-24.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10563,
+      "physicalFileChecksum": "d09f7c18205edbcbb7f5ab202efd098b6c98df9f6572455e058ec3048cd2da9c"
+    },
+    {
+      "tradingDate": "2022-05-25",
+      "sessionContentChecksum": "804c3dd80a4a92329168ba2b53b786f80c5c14793057f293b50e265ed8538e42",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10426,
+      "physicalFileChecksum": "41f5c99c83d6fd49085f5b8e5ca7c509838705b28798d0f7699ca88c0f687307"
+    },
+    {
+      "tradingDate": "2022-05-26",
+      "sessionContentChecksum": "948787e9af1ab04eb76742f9d09d403b408fe52ad3f19236494b43baf775f3c1",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-26.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11102,
+      "physicalFileChecksum": "c9c0da2d47e342283f6acf9fa1f01cecbe6e99939f6a857837c816e970f81484"
+    },
+    {
+      "tradingDate": "2022-05-27",
+      "sessionContentChecksum": "0315327dad6b82bf3ea3b48f92a5f0dc63ccecfdcf7be649c23a5e0a92b1490a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10541,
+      "physicalFileChecksum": "8c774d297beb7aeceb41c10257fe26392256b0c40631eae0b665883a832ed7a0"
+    },
+    {
+      "tradingDate": "2022-05-30",
+      "sessionContentChecksum": "df429fb1f34f06c570caab8af7df2d7c180756756f0fd15c515e3f4f062fd81c",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-30.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10271,
+      "physicalFileChecksum": "79f7229f7891264311a96021d5541f18afa4fbf4d0168556a18f4302052bb419"
+    },
+    {
+      "tradingDate": "2022-05-31",
+      "sessionContentChecksum": "77c56a2b451d4b85119b0e3868b4127f0cf2eef821ce6dc4e3bbdbc016dfafaa",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-05-31.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10446,
+      "physicalFileChecksum": "ad287fcab4a938371f616a6229d754aec0e1edf051d7d7e1edafa866e173ca78"
+    },
+    {
+      "tradingDate": "2022-06-01",
+      "sessionContentChecksum": "1c66091391b5d5946bf26a53fc480aa425bca056b06fee979da225aa1f01ebf8",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10540,
+      "physicalFileChecksum": "e11f4a16d9907c859c413edb742f92c124f67279d3fd0b6a688db0eda44829aa"
+    },
+    {
+      "tradingDate": "2022-06-02",
+      "sessionContentChecksum": "c94600a92ec00894dc5927669983169de31791818c87137fb6106d1ea58545c5",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10485,
+      "physicalFileChecksum": "88c68c8001ff9767cb5fb39dcc7c03fd40017d9231792014361e45669172b1ca"
+    },
+    {
+      "tradingDate": "2022-06-03",
+      "sessionContentChecksum": "d40f96f1aaa4cbdfccfb2c9c588b9e5e4d860d7720c46d429988f5725215b8e4",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-03.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10510,
+      "physicalFileChecksum": "e9c15664998b92c0311c8cba4d0d59b98b49409b2236901fbaf0e7974185aef2"
+    },
+    {
+      "tradingDate": "2022-06-06",
+      "sessionContentChecksum": "c5457804f200795d45c47ff2a4400a788ceb9b40ecc05d71dfac678828c22690",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10480,
+      "physicalFileChecksum": "7a4f4613d76d840d6666e0d188885c32c6c397b02f63d710a80216242b69a284"
+    },
+    {
+      "tradingDate": "2022-06-07",
+      "sessionContentChecksum": "7e7b0a69ffd67e79cc46bc673ca17ad32d98ba97d2ff3629616ca6f6f0916923",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10217,
+      "physicalFileChecksum": "551714925699935ab896aedc0f60f9276bc1cb0281d53733e94aeff875250dbe"
+    },
+    {
+      "tradingDate": "2022-06-08",
+      "sessionContentChecksum": "c3a0d1281ec82b21abf2e83e89798361ea68a9e77ed4a00a80a64432bc76e56e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10577,
+      "physicalFileChecksum": "ac48609fe0504ca4e79218200480e02fb03221100bbd3b55b271e44109e455c6"
+    },
+    {
+      "tradingDate": "2022-06-09",
+      "sessionContentChecksum": "104752fdf09afbf0f1736f1eba008c3e2a9ccaf8fd464014844a60e632af56b2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-09.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10460,
+      "physicalFileChecksum": "85b8f83ee59a96ce3ab32799f13a8309db85133b97e108f5969388b42213e7f3"
+    },
+    {
+      "tradingDate": "2022-06-10",
+      "sessionContentChecksum": "3f0a3d9491b843597d787ec5630bbfedff17633341f1790713c7f5fda3db7357",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10331,
+      "physicalFileChecksum": "748be02539d1a41b72dab1bc4373935cec9ea0cfb2b156a747ef39896dbefdc4"
+    },
+    {
+      "tradingDate": "2022-06-13",
+      "sessionContentChecksum": "045921c28fc3aafe0970eb8224afa72d2ae0c2ecda13912118033f45a2ddd13f",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10363,
+      "physicalFileChecksum": "86f2db18904f7dd0e1c7a89c6e16ff7ae41b6ada3c7a2284a2682175a8ccddec"
+    },
+    {
+      "tradingDate": "2022-06-14",
+      "sessionContentChecksum": "280fbe21078ecbc4ababd20fd5949322fd481a87185b49b43050c4cc6665a88e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10559,
+      "physicalFileChecksum": "3c82cdf4bda76631e86aa57da9ef3083a44b3e6acfdc3a563a03cd56ca06c0ed"
+    },
+    {
+      "tradingDate": "2022-06-15",
+      "sessionContentChecksum": "91601d5e28da8b3e41e9789ee60d1a8a3a1d3085255bff4291eb6e09ccc015dc",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-15.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10287,
+      "physicalFileChecksum": "3c29f8fc3a4e9b3a5209845e100dff1aab4df2a8d914cc3c1145115a176909ab"
+    },
+    {
+      "tradingDate": "2022-06-16",
+      "sessionContentChecksum": "38a659362d3c689d8a1a0f42f6f49eaf413afc06564b5acad79082c3f0b6facb",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11089,
+      "physicalFileChecksum": "128987df21d6301aadee41d0b8d9054811e7b19594edb323d8afd79f63c71b50"
+    },
+    {
+      "tradingDate": "2022-06-17",
+      "sessionContentChecksum": "dbec56083a4c6b2cc03c7e2dc870346369bbd401000705bfec5307fe8ec12511",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10639,
+      "physicalFileChecksum": "81bd888211fcc767e63d1ca87f63448828595078f448b308951c97368cf808f7"
+    },
+    {
+      "tradingDate": "2022-06-20",
+      "sessionContentChecksum": "c6e5133a31aebefc9e5652c435c524fe0ef5ba1f4c1c2022eb890a0e48112843",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10585,
+      "physicalFileChecksum": "71a3673cb607e830c9ab657cc5f2bb72153c7b79f001b821388fbfc2de3281a6"
+    },
+    {
+      "tradingDate": "2022-06-21",
+      "sessionContentChecksum": "d823313c182518342eee073faa7f2ac10e65e46f6c7c86584e650e396c7f9684",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10596,
+      "physicalFileChecksum": "04bd49b0aabef0e32ed45e6b784a693356339e8e1658649695cb0e0d5b047b1d"
+    },
+    {
+      "tradingDate": "2022-06-22",
+      "sessionContentChecksum": "96e725a69fba8a2ca276f37e57346f857bd2c725c061856a4e3c4b522153e381",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10575,
+      "physicalFileChecksum": "17d8a02331ed6ac5048c6411c874cb89d26828b6163c4b73afa0acc9bf361932"
+    },
+    {
+      "tradingDate": "2022-06-23",
+      "sessionContentChecksum": "950afd58efe52ab507327d6fed254f95e5cb54b6d1ce10f91d7fd38c61da4cd2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10707,
+      "physicalFileChecksum": "a7e4046708b9e88a1ac59923c02c1cefdc57a18c07a62bc5f8af2d3972a99d4b"
+    },
+    {
+      "tradingDate": "2022-06-24",
+      "sessionContentChecksum": "261c0c4ae8ef78a5a45953baeb22c7297a0336323640ef4c9f54e092de1c310a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-24.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10387,
+      "physicalFileChecksum": "c26ab67ad38da2f909bbb2937bf4d6ba59b83fa2b74b827cf65fa1184652f7c5"
+    },
+    {
+      "tradingDate": "2022-06-27",
+      "sessionContentChecksum": "10f73ec283f07b63fcbf6e81fba5f8a2963038a91555d83b87eba8700e213a5d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10337,
+      "physicalFileChecksum": "07f3881662ec6d5089aa53fec1c1ff0034eac4e918f5cd2126f2c9c5a2467cfa"
+    },
+    {
+      "tradingDate": "2022-06-28",
+      "sessionContentChecksum": "0a28c0b61e236524cdf47c9709556e4586d639759432f3ce848a8f5fc530b281",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10382,
+      "physicalFileChecksum": "88eda4e12633e62c25792530df231c7dd7725f43579d6ce76c40fdb26bbca49f"
+    },
+    {
+      "tradingDate": "2022-06-29",
+      "sessionContentChecksum": "4edbbdcfb28d60f6a62e796fab194e535a93aeb00cae9c67997bec52f25e0fd1",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10468,
+      "physicalFileChecksum": "bad8cd73436d00ea889c56eae7f5cb52133289812d596a6ad7ca422eaf00b44e"
+    },
+    {
+      "tradingDate": "2022-06-30",
+      "sessionContentChecksum": "a8a43daaaffcef5cc1a74cac2c754fc7658133f5b7ebd36f4aa9fa4769c50281",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-06-30.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10439,
+      "physicalFileChecksum": "c6a1959018367ec4615405717c306bd29be2e671472e911d88670164da3c81db"
+    },
+    {
+      "tradingDate": "2022-07-01",
+      "sessionContentChecksum": "699eab77281ae3d79184164d7748f119bc6cfd3702b3eef4ab07b5fe27c5876b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10666,
+      "physicalFileChecksum": "6f96051458e5b4375dac3581bca0ea520d47ff6a42dd0325d9aec580f50057a7"
+    },
+    {
+      "tradingDate": "2022-07-04",
+      "sessionContentChecksum": "281f0c9b534f3f065853c5862b81afc6b377e6f535d85964c922b64cc28a98fa",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10478,
+      "physicalFileChecksum": "237c4db2ecc8020881c9b64eca94c9dea767acf33ea05a1fa83a45076caf4eae"
+    },
+    {
+      "tradingDate": "2022-07-05",
+      "sessionContentChecksum": "4266c483e5998c3755e2231efb863dafa48da96ae213f7c579088e2636e43ac1",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-05.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10822,
+      "physicalFileChecksum": "a8e934766f6258568f24f57d982061da887fcff026387356427eed9ef85994cb"
+    },
+    {
+      "tradingDate": "2022-07-06",
+      "sessionContentChecksum": "73cbe7bb8542c36b71dd7546a58da2a7924d66fcf61fd67591beb94b70544e91",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10513,
+      "physicalFileChecksum": "f161a63bd234e1e6f1649f114206d3cef5bafca9b9c069b6df5f15924008e8d0"
+    },
+    {
+      "tradingDate": "2022-07-07",
+      "sessionContentChecksum": "d8104a777974ed74f49170838845cad8768158d9e2105b39192af403845605fe",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10175,
+      "physicalFileChecksum": "6e5b28a2c38cc5df8853f6fe4aab72dbeca2e181b2f920f4734f1436b53540b4"
+    },
+    {
+      "tradingDate": "2022-07-08",
+      "sessionContentChecksum": "930ee94cf8425437e1509d9fe1fd9aafacd40ac3cbc66cf0d6eaef9113126fdc",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10089,
+      "physicalFileChecksum": "9c2530a8f1fe20ff3637e56cbb240fb9525dcacc115eb52c1cdf6c41c85feaa2"
+    },
+    {
+      "tradingDate": "2022-07-11",
+      "sessionContentChecksum": "872e81dde63338b06ebde5b2485070ad17bba1de911fa6fb36682e649d450ad0",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10209,
+      "physicalFileChecksum": "b100e0a20246d2feed59f91f1b543f0cf745f4ad2d04b822801934045c7dbc78"
+    },
+    {
+      "tradingDate": "2022-07-12",
+      "sessionContentChecksum": "6460e0177cc2508a3785955c9ddf3928a20b9220be2811cb553a4b3d4bfef18e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10292,
+      "physicalFileChecksum": "81e53c46066cdbbf440e8dd6b19abb8988942649bca2f6b5e52eb4bf4529b0ae"
+    },
+    {
+      "tradingDate": "2022-07-13",
+      "sessionContentChecksum": "c5210aadfed2243513659beb086a817220068b495fc361ba0c7ed730d1f20c4b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10534,
+      "physicalFileChecksum": "3d8ee5dddb8f17059f14f40e9f4b6162311f4aff3d61bf712f260fde00fd375e"
+    },
+    {
+      "tradingDate": "2022-07-14",
+      "sessionContentChecksum": "d66f7c80d8851eb4f3695e7c14d906c8119fed8d20e83339e2766c87dd970771",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10840,
+      "physicalFileChecksum": "aca867fbc0b8d3dafd6a6dc83c8f4cbcc39b6cc79a2e6f6a675d2fe53fb29568"
+    },
+    {
+      "tradingDate": "2022-07-15",
+      "sessionContentChecksum": "e0cc847d832078f62f003d39ef8491cecc94b38c25480a7a24988f62f6e89b10",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-15.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10536,
+      "physicalFileChecksum": "361af7ee2e313b570b094620dac0fcaecefd1698cfb52a0f0d391ded59464564"
+    },
+    {
+      "tradingDate": "2022-07-18",
+      "sessionContentChecksum": "dd73109544d87483a9116016ca81286fa3df97b131de3672bfa8e5ed769c0adb",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10075,
+      "physicalFileChecksum": "7247c1d5ec88527c07afcc578aaae8a8322c6d94840384fce385b964ca5ddfe9"
+    },
+    {
+      "tradingDate": "2022-07-19",
+      "sessionContentChecksum": "2ed4cb926d334d9a1422efab93eac83847a616a8e6589c9a3bffe0ad296da31d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10326,
+      "physicalFileChecksum": "c84f8beb9a0309a22c8f193199d2f283f0a9054c0cd877212ade875f2af64d99"
+    },
+    {
+      "tradingDate": "2022-07-20",
+      "sessionContentChecksum": "f58f7f30e98942e60fe42f1ad09d41d04396d885eddfbde13af0679956af0527",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10101,
+      "physicalFileChecksum": "c9bd4b9e5acb131ae265de269916270cc959ff8108d5158755c30f3278ed7dbf"
+    },
+    {
+      "tradingDate": "2022-07-21",
+      "sessionContentChecksum": "de43f4b80b6a31c14cf4d6f6b84836ea32bdd800ba5d8bbd3c392b7a90aeaa58",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10211,
+      "physicalFileChecksum": "7cef1a38bb4ebb9f6749331d6cc12d5e7ded9a32d13de73e8200a53f07839665"
+    },
+    {
+      "tradingDate": "2022-07-22",
+      "sessionContentChecksum": "af8e0afa2bfbce4bfaa1ff1c6e911ad976aeca4d91af61120eac6966dee2134b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10392,
+      "physicalFileChecksum": "17cc8fbe7bf85ebdffff1a47b3be8c9651d1bdf5a05f28cd950726fbc1271039"
+    },
+    {
+      "tradingDate": "2022-07-25",
+      "sessionContentChecksum": "3bc06cebfcfceff05866ce67c6e55268106d28d219855f4651281c73a7fc77dc",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10390,
+      "physicalFileChecksum": "40ba7648003401fa8e291e16976eeca4564861210fe73dac8f4dd258f02a6d73"
+    },
+    {
+      "tradingDate": "2022-07-26",
+      "sessionContentChecksum": "74c20ef626acf7cb664f0279bb8b6412dc12a361e7b91a09919a0d330a6a1f43",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-26.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10252,
+      "physicalFileChecksum": "7bad24064deaf773b8915098149893835a4ff4a42b1683eab7a02b5058ce1044"
+    },
+    {
+      "tradingDate": "2022-07-27",
+      "sessionContentChecksum": "d5727ab83462e1ac5a1a3e2421337a7dc78705e66a40f76235f062116bbfeedd",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10372,
+      "physicalFileChecksum": "41aa4c1800abe0df6219e66b761bc179b04dd5599031734eaaf58af7c84706e7"
+    },
+    {
+      "tradingDate": "2022-07-28",
+      "sessionContentChecksum": "7ea301b526ec2a045f37f01a012429e57eb8172e0e14952ccc97b84d747d7242",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10410,
+      "physicalFileChecksum": "fc091a88bfc74678423fab7d1b3c248b1bdb93f12b6e0374a70c0b960c7432be"
+    },
+    {
+      "tradingDate": "2022-07-29",
+      "sessionContentChecksum": "4cf187d6c272f4b9cb3c94b4be2c894922b3a97d23c97575363801685ac12902",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-07-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10296,
+      "physicalFileChecksum": "877221c7861c8c13ae3458d6ec9798affd8e059b55156d9fa419765b1fc1a506"
+    },
+    {
+      "tradingDate": "2022-08-01",
+      "sessionContentChecksum": "b560b3f685d7eddb33d883bb4d51ff8ed74eaaeaf748532e91ff54ba9e726f49",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10392,
+      "physicalFileChecksum": "d7bbba56e71a590b8c578e6c9b8b9376415cf95edb742ac711b607e06265a9f6"
+    },
+    {
+      "tradingDate": "2022-08-02",
+      "sessionContentChecksum": "006785ce0c0d8bd0113666a30ad2c55c9214ece68137005430625a2f19c9acd5",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10548,
+      "physicalFileChecksum": "5739ba66f04ee0a2f583a8bf1c1cea97dc8f11d05427889a66f82c7b76b78ea9"
+    },
+    {
+      "tradingDate": "2022-08-03",
+      "sessionContentChecksum": "3534bdbf89979da845b606dbb1984ab06fae6699bcb6c6f10f5a660fcbcc496c",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-03.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10574,
+      "physicalFileChecksum": "aaa0131ef2e7f9cc31db060b0f49ae4fc7954a9de948288c94e85df83c28b6f6"
+    },
+    {
+      "tradingDate": "2022-08-04",
+      "sessionContentChecksum": "b3b3c81edfda2d0808b1a2c9b9b24b9484bd41c5de0afba188e3e346e3f1b967",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10717,
+      "physicalFileChecksum": "57fcc306ee4a4111720265e2eb3c343f86b8f69ce62d454e4d88bbfee091d968"
+    },
+    {
+      "tradingDate": "2022-08-05",
+      "sessionContentChecksum": "53a270cb725c31c854e9bf7e03623e7238e8fde4ca3f7cd7884978714d33bca7",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-05.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10373,
+      "physicalFileChecksum": "5fd36dd5a1eec59f497761a296b6cdaf6fcdddb80fed7f6ca5571d23806b3f68"
+    },
+    {
+      "tradingDate": "2022-08-08",
+      "sessionContentChecksum": "911487cd1baee2773820271eb02c9eafeb7970d32647403daabf2a55954991ff",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10347,
+      "physicalFileChecksum": "02099cd474b94829bfefe5e633674d1f7938ed2628fb1c1efef8b4cc240c44a9"
+    },
+    {
+      "tradingDate": "2022-08-10",
+      "sessionContentChecksum": "7ee20b2840f1f4a7611c60e22effda0b2de77ccb1e0e033ea33f7d16301e39a9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10244,
+      "physicalFileChecksum": "22f707d371768ac24d449d1e5c6df7b4f2613335b711246b61ed6ce6789508e3"
+    },
+    {
+      "tradingDate": "2022-08-11",
+      "sessionContentChecksum": "2544b1c94df9cbf571d0daac9d4e5d85faa360890e64f2ebc8e63530d2bdddd9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9935,
+      "physicalFileChecksum": "e00a1f9ff6b440d0d7f945d24dc42cbca6ff70bcf6ebd2a370951db283fb527e"
+    },
+    {
+      "tradingDate": "2022-08-12",
+      "sessionContentChecksum": "a537066dda329564dff2044fa3f7bb1d473747f720310a87e3fd412f921e4e6b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10172,
+      "physicalFileChecksum": "a8467f34a42a29f5d91d0d11a1e471970bd56f7d72123faf7ef230299ecef98f"
+    },
+    {
+      "tradingDate": "2022-08-16",
+      "sessionContentChecksum": "3537538abf0a5067ff24113a0be55e6ada5080f42c587cb7b431aa7aa1dbe8d3",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10055,
+      "physicalFileChecksum": "6462dc2ff6c69e6cb405875d01d6f77b83986e79a0c8841ec7df171e3a858741"
+    },
+    {
+      "tradingDate": "2022-08-17",
+      "sessionContentChecksum": "cddb3ed24f79d425cee1ce818ad6393f839dc1e4f1270c1e294c51e74696d0eb",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10065,
+      "physicalFileChecksum": "bb6356585ce47192915d875896278552738f82cfcce21a71ae7c8f0da04866ee"
+    },
+    {
+      "tradingDate": "2022-08-18",
+      "sessionContentChecksum": "57adb194a1e7a44ea86a7b5fff26b034656c97c455ac5bea5056db5dfde126ef",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10345,
+      "physicalFileChecksum": "4959eb3449e645f7c4832621bebbdb287a9174ab2011132d04736b1187c2ab35"
+    },
+    {
+      "tradingDate": "2022-08-19",
+      "sessionContentChecksum": "33100e79bc69afc42a5596fb412b76c73c2794626448ab2244f93a419a2db979",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10636,
+      "physicalFileChecksum": "621b994707a7bb16308bf0efa178aacb1cf9de9cb4bb8fa3bdb002ac616cdb54"
+    },
+    {
+      "tradingDate": "2022-08-22",
+      "sessionContentChecksum": "fbc800b44a24aa734279945ce33c0de5602d257d64a4106a7c14e72298a62d1d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10418,
+      "physicalFileChecksum": "76ccee3d787106b3d8f6a530ec2abe9f35b26712f958bded5313f04a36435a7c"
+    },
+    {
+      "tradingDate": "2022-08-23",
+      "sessionContentChecksum": "5bc09cb7a4a290eeb5b1198be2e808446a427205955f85df579d9dbef062f4f4",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10676,
+      "physicalFileChecksum": "21863872d2d97e8739b412824fa78d377e8cc64d76ec36bf39855878bcedf07f"
+    },
+    {
+      "tradingDate": "2022-08-24",
+      "sessionContentChecksum": "8358c7be27a1e6b5e0df2be59d7c76fdc5f1694dbbaf50e25601204260005a5e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-24.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10432,
+      "physicalFileChecksum": "8d8552b20c4dd6112d2f13ae384e587f53244c2f45b8e76c58ca640862fda73e"
+    },
+    {
+      "tradingDate": "2022-08-25",
+      "sessionContentChecksum": "2652d87baaa6ed9e2202dc30b0c0dbc7998328d794387da725cb370902d6c416",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10333,
+      "physicalFileChecksum": "93174187cb6b348f1060ef21102161dc5b4739fbeefc0bb4b4f4b47867a31800"
+    },
+    {
+      "tradingDate": "2022-08-26",
+      "sessionContentChecksum": "f819682e34e6fb2656a06390b59fb03cad8098c68ab60615c8050b128eb1aa0e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-26.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10339,
+      "physicalFileChecksum": "0d46a50005c7468f1ddb4076b1c92b64ab787b82b7ca40e8d1d21c951348cfef"
+    },
+    {
+      "tradingDate": "2022-08-29",
+      "sessionContentChecksum": "a97c8509703dd1aae76b105a8fa1f2cfa7827de76c7e56ff3fa3b22e6cb37a00",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10376,
+      "physicalFileChecksum": "6323968fa340ef2b53358e35bcc54ffca7a800f486524094795eb95e39641d28"
+    },
+    {
+      "tradingDate": "2022-08-30",
+      "sessionContentChecksum": "e144bf6f6b76bf1fc7e4e59142b69a713f43a9625e017dee82302ac684fc4e94",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-08-30.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10580,
+      "physicalFileChecksum": "6998d79c589ea0827a16a954dd990c3551e49f8fb1cd751044ae3517987db657"
+    },
+    {
+      "tradingDate": "2022-09-01",
+      "sessionContentChecksum": "37cd2e7913f689c548edd6451056ccb77a63f3696d9584908eb704b849c4e62b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10649,
+      "physicalFileChecksum": "cbff1dee9256e47757a0a29334ba337c1ad16cf41198677a608735edd2f0f580"
+    },
+    {
+      "tradingDate": "2022-09-02",
+      "sessionContentChecksum": "c48fc005dce17670bf2ecd8ca66fcbb44b72072640dc72a133cfa2561fc2533c",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10565,
+      "physicalFileChecksum": "e9697feb77068e36447cd2551a6ba21cead9334bfe8192ca1cfb263a375b828d"
+    },
+    {
+      "tradingDate": "2022-09-05",
+      "sessionContentChecksum": "001766343d50d4967db614179d9baeeea0ab04189928e789758cdaee82285032",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-05.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10159,
+      "physicalFileChecksum": "e119ed1e6fd486b5507824a5379a5e38564e738e3d323f35b32148a15653f8da"
+    },
+    {
+      "tradingDate": "2022-09-06",
+      "sessionContentChecksum": "f26cee76e218108dc0bdbf90195e4fdd929334150073f0161dff0360989c601b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10411,
+      "physicalFileChecksum": "d08cc2c9ad7428f610ec99840b6f6d38df26bd01a3ef0bf31e117154b978a0f2"
+    },
+    {
+      "tradingDate": "2022-09-07",
+      "sessionContentChecksum": "b63c9121f614e68fb4c7e44732b4d3d907ac59ebd87c0ead6e53d4c87a163ada",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10210,
+      "physicalFileChecksum": "b3126a6fa10b404341634377183d64cd16007022a4119079773f824609e85cec"
+    },
+    {
+      "tradingDate": "2022-09-08",
+      "sessionContentChecksum": "e47a71bd5ff66a00473453101acfbc2a11142d643b4a2764a50d9162054c9fa2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10163,
+      "physicalFileChecksum": "b0ba1ba8d3b9e857be62f3f7f6bfd1638a381c52cfc2a37eff933cae79a1881e"
+    },
+    {
+      "tradingDate": "2022-09-09",
+      "sessionContentChecksum": "29fe913a201d6028fc2368bc9404a86bb5a70e4a55020f6701f38b5f287b8c92",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-09.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10363,
+      "physicalFileChecksum": "c64e16aaca92fadedb896c300acc2da898aedbc4043dfdb99bf68d20ae769887"
+    },
+    {
+      "tradingDate": "2022-09-12",
+      "sessionContentChecksum": "57803d9b61e0c9c6b4abde16766a37ef92cb68ca41a869dc7ca8c3fc7270bf75",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9931,
+      "physicalFileChecksum": "d667d84b2758e7e115b5c03d7bbab1c634a61a558cb404a9ddb1a8f9253b54c8"
+    },
+    {
+      "tradingDate": "2022-09-13",
+      "sessionContentChecksum": "a7ac8dc0a61c2ea5d0479e0634e713a6cff7aa9d9f6b7d43da89d05ac4501406",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9867,
+      "physicalFileChecksum": "96e63badd034b6b1ca896de233e3bac0bf2eef4ca61889a66c30487a75aaa269"
+    },
+    {
+      "tradingDate": "2022-09-14",
+      "sessionContentChecksum": "26a176fef78a936964bced859156fe0809b4488292c06bc877baf04822d7398c",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10920,
+      "physicalFileChecksum": "2cdfc73e3d1b208bf636bc3aac6ff12aef8b420df73864624540005a0332c598"
+    },
+    {
+      "tradingDate": "2022-09-15",
+      "sessionContentChecksum": "d76fb05a50beda3b65248ca308c695a276372fc14a212d219889c89f29df2089",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-15.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10703,
+      "physicalFileChecksum": "1dc6ea7f65e287e6b139e27be52e6de9b732af3e416104944bef1cb9a73a9295"
+    },
+    {
+      "tradingDate": "2022-09-16",
+      "sessionContentChecksum": "f4689684c68de37e43ea4bda9e305539d8675581e9634a6ff2ad85156a688e90",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10618,
+      "physicalFileChecksum": "cf7f617c0d86cccf43328819b1608e85adb953be5e1113b5b8fc512e11cc64e2"
+    },
+    {
+      "tradingDate": "2022-09-19",
+      "sessionContentChecksum": "cd3ba03556c79ba9aa8e9b280e7877b210340517fbb4c7b745c6e4dc8e92fe12",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10410,
+      "physicalFileChecksum": "a4b103de551cc2129bfb35b02e5e4b8577b0e0d9ccd449ae129ee169628a7901"
+    },
+    {
+      "tradingDate": "2022-09-20",
+      "sessionContentChecksum": "21c1e6525fb04427a6345f94f6824b6169b41383ab340d242e1979de7e7015c2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10370,
+      "physicalFileChecksum": "65c5d47fc2af0baf45f622823e31997005db80b46a99098bc21694063174823a"
+    },
+    {
+      "tradingDate": "2022-09-21",
+      "sessionContentChecksum": "1b7c562146920cd918f58da00f55d5a5b61b2feba9576d961d9e6654c21437ef",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10508,
+      "physicalFileChecksum": "084ad21bd3118d04cea82b3a63417c454834c0932dd80188e3607b6a7e408b2f"
+    },
+    {
+      "tradingDate": "2022-09-22",
+      "sessionContentChecksum": "a305f0e5ae70c66777efc44ecc3cf88b8b7b7b9f74dda56c956165fdbe5d3ab9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10644,
+      "physicalFileChecksum": "a0ff3c82956cb257733fb8de225a363666aedd015a88bed25a10d3112ffcf28b"
+    },
+    {
+      "tradingDate": "2022-09-23",
+      "sessionContentChecksum": "5ccbb450cd99e134e71b0023b9b78413930ec88f258f9e447869e6fdebd09aa8",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10715,
+      "physicalFileChecksum": "7ec2fd2d7e3d2016239c40b764ec335837e1280eff16464d2b105bde892db538"
+    },
+    {
+      "tradingDate": "2022-09-26",
+      "sessionContentChecksum": "cf9712ce6944bc8784c4433585abeac70f72821eebc286952fcdc71d061cec97",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-26.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10901,
+      "physicalFileChecksum": "54f4607856f43ff0ac20ce33698a3b3047f15ffc61d7118e389b5e712431daa5"
+    },
+    {
+      "tradingDate": "2022-09-27",
+      "sessionContentChecksum": "a9a291298245c04d1e6d77921e23bffdfb0cddf6607dfc05c04f85b75efc170f",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10930,
+      "physicalFileChecksum": "4df40c00126019f8240054b9a9f1f315dd1d8bcfeee485c8208cca2b015daa42"
+    },
+    {
+      "tradingDate": "2022-09-28",
+      "sessionContentChecksum": "97c3d5a11fcaccdac72872b7a398fcaa649da97964b620eb64eee40838265f3d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10841,
+      "physicalFileChecksum": "9eca57168aa5ee6e35cbb59e037c5310485082a7ce9eebbb1e424489157154bd"
+    },
+    {
+      "tradingDate": "2022-09-29",
+      "sessionContentChecksum": "3012d53e37bd3752d374a419c897a39e100de0f86e4dcf89f3c3a733bd6d71f2",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10872,
+      "physicalFileChecksum": "dd1638897cfb4d3d48d1e8282b38cd52ffa50a99a53c972891ea7a52e75f896a"
+    },
+    {
+      "tradingDate": "2022-09-30",
+      "sessionContentChecksum": "26e0a2dc2159e7da8b886d1c427d1ab0523a4dcc2564134d787113d76ced95f3",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-09-30.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11097,
+      "physicalFileChecksum": "608068f6bdbefbc79e9cfd2da2624e9ff4001551c2c502bc423fbdfe83829bf3"
+    },
+    {
+      "tradingDate": "2022-10-03",
+      "sessionContentChecksum": "7034cf5cb44a4ae80b2a92c2ae529610099b9c3a8710f70f5949c589534e6be7",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-03.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 11013,
+      "physicalFileChecksum": "621816cfd5fc061a3749fefe17e507a4df37c76c0e0d47d0a80f96023f527329"
+    },
+    {
+      "tradingDate": "2022-10-04",
+      "sessionContentChecksum": "0372ece7615a5735792b1be3b762f7380d820d016c354d3ebe409f63d6683432",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10327,
+      "physicalFileChecksum": "1ba75f817289c9a8ae23e150664dbe2b44249f8cbdb7b0bd2e782f093d654b34"
+    },
+    {
+      "tradingDate": "2022-10-06",
+      "sessionContentChecksum": "4cbac4394845bbdee03eb0ea2ac724d2af26da13dea6c7517d91e7a1170d4493",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10267,
+      "physicalFileChecksum": "f5089a669a8e78629e0ec037a9b999ba096ee4e2d760ac2b9f9ef504fc28f093"
+    },
+    {
+      "tradingDate": "2022-10-07",
+      "sessionContentChecksum": "eaba2d7143a484926520ae6cbe164f88f9c346945d9564b66bb138924025ed1a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10411,
+      "physicalFileChecksum": "ace3d2cc566a1a457218ed559e954777f1dbcf8e5096a3a58da061451f18cd96"
+    },
+    {
+      "tradingDate": "2022-10-10",
+      "sessionContentChecksum": "8be9b501a07034102111072c8a808ce858b1a4dd4dcb7922afc15d9dc57abc5f",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10674,
+      "physicalFileChecksum": "e8e8da49818700ba8e254b54f0fd26bef5a06f8d99bba399f70fc364e6872c34"
+    },
+    {
+      "tradingDate": "2022-10-11",
+      "sessionContentChecksum": "84d5abfe75706bad4a68aaf73bbedf3d6709ce7a53c5b3b88464acc9d7a7a866",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10723,
+      "physicalFileChecksum": "c72037185dc8f324daa0d82b107ff46bf204cd3bae8acb17b420a8f12799a690"
+    },
+    {
+      "tradingDate": "2022-10-12",
+      "sessionContentChecksum": "9a415aab62788ac1a2dfb0627adfaf65270708966e0da8ce0f105ecb60b83b21",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10855,
+      "physicalFileChecksum": "971de08e129023c3367e8d1f237568507fd42a9b86030ba4d21e70523c84baa4"
+    },
+    {
+      "tradingDate": "2022-10-13",
+      "sessionContentChecksum": "47dba154fe108239af5ef42b6da66b7dafa5e3a5bac981ca69699ac291221533",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10661,
+      "physicalFileChecksum": "8195e571e17b1ca6d29578d288446fa75ddf2e1f4e6433233a266a1e0fd663a1"
+    },
+    {
+      "tradingDate": "2022-10-14",
+      "sessionContentChecksum": "ec55b07faf7c181b9e7a676caf05d9ad020db713987b48cf461c02b9ee5c0353",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10412,
+      "physicalFileChecksum": "d2842f5367b1853987e28609da6313082264c13f2ed2b848a072488146614a02"
+    },
+    {
+      "tradingDate": "2022-10-17",
+      "sessionContentChecksum": "75516427d2abbf683a895c9c98c5c999a47588725e5b78f13ab541152b71b913",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10512,
+      "physicalFileChecksum": "72edce58d9341a633fd0261261590b212b9e6652f9279442a28bbdc63d4dcdf2"
+    },
+    {
+      "tradingDate": "2022-10-18",
+      "sessionContentChecksum": "b492032ea133a6888a34371f4f8131e586ee9dc6211d39bd25ab46d13f754ef8",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10120,
+      "physicalFileChecksum": "22c9113ca22405df5b780a588984ec5fb7506d1febc84c1619b242c374847533"
+    },
+    {
+      "tradingDate": "2022-10-19",
+      "sessionContentChecksum": "f186241ef7bae13b8005a3dbd0dc751b6bfd1ddb181997d7b83bf330dfd64e97",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10398,
+      "physicalFileChecksum": "7a451bcb76efd92fa7435e51b9f5389cf3b35083d887652c4ce7889d5557f8bc"
+    },
+    {
+      "tradingDate": "2022-10-20",
+      "sessionContentChecksum": "ef9876de983284f4721ce04064fb32d178fb59a4bb2791f4c099e7d802a8382d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10306,
+      "physicalFileChecksum": "534be9d8144cdd6f450651f7e531d293596a1f746bafef50af03bec97a0a4662"
+    },
+    {
+      "tradingDate": "2022-10-21",
+      "sessionContentChecksum": "a061fab34e23b3626d20e775b2fc5d9b74f121a7a505e81179d5215f80403ae9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10243,
+      "physicalFileChecksum": "6356d7dcbf2562339675c4d3f8d11c237da10fca1b1d1a373ab5eb09466ccab2"
+    },
+    {
+      "tradingDate": "2022-10-24",
+      "sessionContentChecksum": "2f2a683b5ba8dc5a9d03ba3573aa1ff5bd44e254e64a10c4c7644111167350ee",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-24.parquet",
+      "canonicalRowCount": 60,
+      "fileSizeBytes": 2572,
+      "physicalFileChecksum": "2d201ee9a8577ef73ab175b1ab44a45eb93e1e03a7baf5697b0c0bcad103f19a"
+    },
+    {
+      "tradingDate": "2022-10-25",
+      "sessionContentChecksum": "ec2db8675c16a746445f3d96c5e3f4df9725558c235d1383701076754c183e29",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10315,
+      "physicalFileChecksum": "01206a895651e4ecf83758c6d227f3f1f117aa5bc757d7135ab32b8495c0f3ae"
+    },
+    {
+      "tradingDate": "2022-10-27",
+      "sessionContentChecksum": "1d8a904fc2e1ea296a02ad43eb32febc684365219433a54d5be8613ae9b1a78e",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10287,
+      "physicalFileChecksum": "33688a077b6d4748dcead7fd2421da0c1f5b2dea4e907cb8487878d9229884cd"
+    },
+    {
+      "tradingDate": "2022-10-28",
+      "sessionContentChecksum": "52cb5f4b4a88c70d729d132f6e8fca788cac252f84dbfe88dd92d8082e33db0a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10359,
+      "physicalFileChecksum": "8e01f544b6c9c56baac80d931e0c47280a44097f3159d6f14d026e058cbef9be"
+    },
+    {
+      "tradingDate": "2022-10-31",
+      "sessionContentChecksum": "05fcc644533fe82da4325e359c28cb9056483440f8e5d7b10b2157a5ab8fb415",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-10-31.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10052,
+      "physicalFileChecksum": "43a8440bc27aa6ef70934f9b22f4ba0752c281b79c127a5deacd2fd054724463"
+    },
+    {
+      "tradingDate": "2022-11-01",
+      "sessionContentChecksum": "db616bea3d096f7f9585a14f9a759a56590809807b68a240766e780e680e196b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10241,
+      "physicalFileChecksum": "75a359bb992a1e36ac733211f9e45c6eb874f611f0b87a60d00bb9719f5d925a"
+    },
+    {
+      "tradingDate": "2022-11-02",
+      "sessionContentChecksum": "dd68c9c50ee455616286df5eebffd9168a4b4de366739c92cb1e74ea52239c27",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10174,
+      "physicalFileChecksum": "73490abca9d008c2f14643580cca73cefee9e07595734b17ec48fa98b1c762c5"
+    },
+    {
+      "tradingDate": "2022-11-03",
+      "sessionContentChecksum": "8349c1968bac7f5653e308f49aa457f3643e5e390411644a587ccc37b74f324b",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-03.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10292,
+      "physicalFileChecksum": "91d450d414f50f9adc0d0bb9b5a844aaa14f27da6f1d5d7a8d3773253775a779"
+    },
+    {
+      "tradingDate": "2022-11-04",
+      "sessionContentChecksum": "9baaf47a915b94f22821233660760d7d11fb301d5b65d837e9fe47ee726086e6",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-04.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10158,
+      "physicalFileChecksum": "fa8cb6b13f6fa736eb2b6c78907ec2c43450610da63141b87a6cc2bdbde8465c"
+    },
+    {
+      "tradingDate": "2022-11-07",
+      "sessionContentChecksum": "4d2ecbf11b9658669e378759ff01cf759572e842463080ec97e1a32699755949",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10421,
+      "physicalFileChecksum": "c792a141fe2f5750d3e9da02842872c89e972c82a9bc81fe6659711ae274db4f"
+    },
+    {
+      "tradingDate": "2022-11-09",
+      "sessionContentChecksum": "6ca79bed885153d3236c3ac527b5202e703f24e7373e641ea61ccdd69a1b8221",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-09.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10233,
+      "physicalFileChecksum": "097b314b133b6732b99b81ef1453c21b4e4f1b2d726047f230bc1790aa9679d8"
+    },
+    {
+      "tradingDate": "2022-11-10",
+      "sessionContentChecksum": "bb2fe56b7086adc6a80d792b4b6ac5c2f22f7a19db9f4a64a42c28d2b9cc67af",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-10.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10306,
+      "physicalFileChecksum": "2cb8d033965fa9d18550a3be7d880d246a6745ce72cb8d7330d50b34bb7004c9"
+    },
+    {
+      "tradingDate": "2022-11-11",
+      "sessionContentChecksum": "df871fd8917adc61c6b30618b6d50145cf88cae000ab3340e8c752ba7e8953e9",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-11.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10194,
+      "physicalFileChecksum": "7ff54e39f59adb949f798a41dbb71189c0485a52a7c6e2c06c56ae5f65e133ae"
+    },
+    {
+      "tradingDate": "2022-11-14",
+      "sessionContentChecksum": "66dc6fd1ba2190b62651281b6d711a5f6aa77717b219cbf6f1e56f438e0eb142",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10118,
+      "physicalFileChecksum": "ba5ddd2b5d30df1380af38b2221cda8d41c1ffccbfb5919a0b201307b9a3dbe7"
+    },
+    {
+      "tradingDate": "2022-11-15",
+      "sessionContentChecksum": "fc6595debe32d8e8d27046f1f01563b42e47ac66601c5161440be91415c28e3d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-15.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10170,
+      "physicalFileChecksum": "82438656a52c9429a44143ff9b4032e17f0f111df8445caa24d89bd6756e991f"
+    },
+    {
+      "tradingDate": "2022-11-16",
+      "sessionContentChecksum": "62ded0ccda70fe3c5101ebebebba9c69b65a02da9890e6326e49e8985d1a8362",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10226,
+      "physicalFileChecksum": "8d44ae4760b227d05e64f542363a7ad64f66d20782e8446d647e46ec4ff6e211"
+    },
+    {
+      "tradingDate": "2022-11-17",
+      "sessionContentChecksum": "db23667f208106560d647cf6816149c6c96099d15c8a4833f13c2fe461c871dd",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-17.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9997,
+      "physicalFileChecksum": "4b54d60354ccc57fcef49f522bd6fd344fd9d1392bcf7d6603150c994d786234"
+    },
+    {
+      "tradingDate": "2022-11-18",
+      "sessionContentChecksum": "657b523f1112957971b4cf18ae460a70556a8cd103e6107563fbd6f6d26f6b2d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-18.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10361,
+      "physicalFileChecksum": "515792424388a5a173a88b0b38d84365439ea3ef9f9204c5ad8bbdbadfb448b6"
+    },
+    {
+      "tradingDate": "2022-11-21",
+      "sessionContentChecksum": "2bc6f9ce4f94bd28df61e61a3685abf6c2678afa4f520621c6754f646f7f773a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9985,
+      "physicalFileChecksum": "50fd2e4bb69f83268118eb0f49a8101004e87828cecd4df41cae32b9c6841c8d"
+    },
+    {
+      "tradingDate": "2022-11-22",
+      "sessionContentChecksum": "f837fda7baf5cd2eeb6cbbb1f20a9245cde2166703f1bb6b1d9227d7ed8bf028",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9742,
+      "physicalFileChecksum": "5c26b2940dcad36ef4c22926a00402283a3974c0521998e3f5b1968b3cdd348a"
+    },
+    {
+      "tradingDate": "2022-11-23",
+      "sessionContentChecksum": "02665688a3fae127d9c5ebb82643a8013b691504ead97629f84d2b930efa9cc0",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9799,
+      "physicalFileChecksum": "2758d4de9835079a93c9c15599e357640176375805ac3a9a4a8cb1647bae9ccd"
+    },
+    {
+      "tradingDate": "2022-11-24",
+      "sessionContentChecksum": "13501fd3a48e3e23373dd8d647ddad40cb442e35b8d3da8c8d6bd292c78c1be0",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-24.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10098,
+      "physicalFileChecksum": "8cefef192ba0b3aba3fb7aa1481cdcff3b5bb1e13dd434eb55bead9da78adfd7"
+    },
+    {
+      "tradingDate": "2022-11-25",
+      "sessionContentChecksum": "1ce87e3cd758627c633a7ea7eb38be59f140cdbbeebdede0d7217ded1dfd4568",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-25.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10110,
+      "physicalFileChecksum": "b739b765c007c5f4aa239d6a8bb5ada25234fead001ba23a2ef96c64c1e4a316"
+    },
+    {
+      "tradingDate": "2022-11-28",
+      "sessionContentChecksum": "5fc0293daff0875320b5d32540b5a00d5a239c66f8268e0bb17e5bb39f870474",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10157,
+      "physicalFileChecksum": "5b516f9f709f108819e7a92ee4e2cf1f1a9e2075d65ff9860d6affe0ff51f6f6"
+    },
+    {
+      "tradingDate": "2022-11-29",
+      "sessionContentChecksum": "c2c9a0cedb3fdefb8e67d788fa658a5aa70926b40fe58e0cd90283afc5cc4067",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10091,
+      "physicalFileChecksum": "b579aa1cbe8e0465ef03ba1ed61e9a09ff5d69d5248aa9a267f47f32cfe419dc"
+    },
+    {
+      "tradingDate": "2022-11-30",
+      "sessionContentChecksum": "808f9db1beed154d5624af457de34b67de05df14235dd9d33c3614627f2bdb7d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-11-30.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10154,
+      "physicalFileChecksum": "e6eec90b362325935443db6e41e1faf80f303c5f02044225ce9b1ba5c4657dbc"
+    },
+    {
+      "tradingDate": "2022-12-01",
+      "sessionContentChecksum": "e0ea04cf61c6a90623480c89da8cb0e86ef36f5e68b67304fc64df9b9a5e0092",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-01.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10060,
+      "physicalFileChecksum": "3be6a48013f33afef5892a977c5a930b96a8d32a3d8405c72b87010f5ac2d3cc"
+    },
+    {
+      "tradingDate": "2022-12-02",
+      "sessionContentChecksum": "dcdabbe29536ca283cef7b441dd75cca5a1c58c9c52828a097fa2834d16e81b8",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-02.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10167,
+      "physicalFileChecksum": "cce857149c2e51628a008410414130415ab80b668f4ba72179ec1550afebccd4"
+    },
+    {
+      "tradingDate": "2022-12-05",
+      "sessionContentChecksum": "67ae8b4bc5a5c8815bfb3f4efcfe95437bd1e1c9aa30a311cd0061655119c9b0",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-05.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10359,
+      "physicalFileChecksum": "5982685f50e85b0dc7dae71c30ba0cfafb0ade6c476bd68e7a00c9c85adc0e50"
+    },
+    {
+      "tradingDate": "2022-12-06",
+      "sessionContentChecksum": "273cec64f80c543d3bfa514b11a674323dd6f23498f1d8f7191038c01aa32059",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-06.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10035,
+      "physicalFileChecksum": "1bcf7f8feec7991ca50b0d3595aa28eb5fa6eae710cf4ae95f1d1a5dbba6ba24"
+    },
+    {
+      "tradingDate": "2022-12-07",
+      "sessionContentChecksum": "4a4ebcfbc073dfb77030ff670011843272dc673171d168925f6b16561f977623",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-07.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10213,
+      "physicalFileChecksum": "4a49274c979ac10ddf7afebf55ee45383eb5dba649f595d639d1c1a085ba260f"
+    },
+    {
+      "tradingDate": "2022-12-08",
+      "sessionContentChecksum": "c9d09c1653e6e3fffa4b0ed0d1b8559d560696ab094867fd76e564a8962a2d14",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-08.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10065,
+      "physicalFileChecksum": "9fcd8094956786039d77333e1147353803c43558ef7ab1b85c94894964c1d9a3"
+    },
+    {
+      "tradingDate": "2022-12-09",
+      "sessionContentChecksum": "c8eb5e1c825b65476ab40ac21d0be9fd903d88dd02e98ffa4de81acc2636c043",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-09.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10516,
+      "physicalFileChecksum": "ebf07c1bf9f2c28c0bf02cb7f17283eb577f84d6b632e0af2852ee75f42374dd"
+    },
+    {
+      "tradingDate": "2022-12-12",
+      "sessionContentChecksum": "c9230af0a2ccbd421583bf69b8982b32eb9887176fc5feccfa4a207f87d96986",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-12.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10327,
+      "physicalFileChecksum": "55cb7dc9c7c28bee4bd9988160b6fe04b8f397501fc600e854bd40d0c9cd8ae1"
+    },
+    {
+      "tradingDate": "2022-12-13",
+      "sessionContentChecksum": "e056236d76337407e6cd5309651d51017a5cae3076c9226713f38184cdc2f70d",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-13.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10091,
+      "physicalFileChecksum": "e3156f16519b69876277d63381b25eecf14a616a00ff846e5eb2d859dc003ee8"
+    },
+    {
+      "tradingDate": "2022-12-14",
+      "sessionContentChecksum": "a1a1eba88ec7fa6b54d0d4dbc48b5de28796aa26efdcce93a6a39f1994c9c02a",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-14.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 9887,
+      "physicalFileChecksum": "9f1828332f259b3c30dc595901cb34a760a4bbd5351058873ad5fd2a904f62f3"
+    },
+    {
+      "tradingDate": "2022-12-15",
+      "sessionContentChecksum": "272435f1f5e58400b34028c45d34cc8d9d7218414f78b47bced2e05a7524a73c",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-15.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10400,
+      "physicalFileChecksum": "df595293df3e1e8b36215ae2573c56e0cbde24c011ff974a6550f095e963be96"
+    },
+    {
+      "tradingDate": "2022-12-16",
+      "sessionContentChecksum": "08e1470edb90df60f6dd980345c09b97320ff46154d497abc07be4b7d999dc87",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-16.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10621,
+      "physicalFileChecksum": "034b5d02e50545ecccde258f99ee778c4882c08dc3619d7a3cf519b1e115a912"
+    },
+    {
+      "tradingDate": "2022-12-19",
+      "sessionContentChecksum": "7beb426840db22acf433cf44360db7ad736f8bbac69e5d376f95e0b933d52943",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-19.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10394,
+      "physicalFileChecksum": "45351f25d8ca93a500fc0268fb4a26be01a90bad9bf8ffb6d40d09b265bd1b1a"
+    },
+    {
+      "tradingDate": "2022-12-20",
+      "sessionContentChecksum": "7e72441f007bdd2d34dd69b78c4d8770cb88b448c1400007b2ef6015a761bf53",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-20.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10458,
+      "physicalFileChecksum": "070b77714efd2c3c08c91e84fba0b6755b49cccd283fed0019b2fafd2d07f471"
+    },
+    {
+      "tradingDate": "2022-12-21",
+      "sessionContentChecksum": "317388ef7e8b06a8b11500e2bc02e3db53b872e19e6639662add30507b951339",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-21.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10604,
+      "physicalFileChecksum": "fae22a9faa619cc9715b34aa6d37a014696d22fcaf5b263174026342983566ad"
+    },
+    {
+      "tradingDate": "2022-12-22",
+      "sessionContentChecksum": "04fa9202cf8670f1767ab57eb438e9bfa92ee82f0dc37ad966457461e39620f8",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-22.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10604,
+      "physicalFileChecksum": "73f0e5640a20298e46d3fb8b35997c65643044618fbfe918652850965d4d2fa7"
+    },
+    {
+      "tradingDate": "2022-12-23",
+      "sessionContentChecksum": "20c1cd9fcf75d2e8fff57aa7284d709b9fc6fc063cd6dceb2aedc9033037574f",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-23.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10901,
+      "physicalFileChecksum": "fe1575e98ced8dd4804be0ab9de90c30922777b291854a246b434ac1d60f69c3"
+    },
+    {
+      "tradingDate": "2022-12-26",
+      "sessionContentChecksum": "4907de536833a45531529bb708f9124665a78cc212aa0b19c4017b52a713da78",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-26.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10697,
+      "physicalFileChecksum": "fae6b0c661d61acb9dc6e40810121cb7ac017a886184744dc7263f730faacca3"
+    },
+    {
+      "tradingDate": "2022-12-27",
+      "sessionContentChecksum": "7ae634d851d878851480b59df7d7b1c203defcccc91b15395c9c02d389699548",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-27.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10677,
+      "physicalFileChecksum": "4c8656ed7f8f736db4d3e5d5de4e127597ad70f6f0f7b3e148674f4c55f18d63"
+    },
+    {
+      "tradingDate": "2022-12-28",
+      "sessionContentChecksum": "6c4818fa454faa1317c6e405297d170e9f13dda71bf4f271572f887b077fe781",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-28.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10195,
+      "physicalFileChecksum": "4e94fe10ae1de95e2ea3b48ce5055ccef73b91399825c330ce3f66635124576b"
+    },
+    {
+      "tradingDate": "2022-12-29",
+      "sessionContentChecksum": "54af3fe3710649a8426ea46dc7fccb1a5f4f87d49191500888738d26fb5cc4a1",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-29.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10400,
+      "physicalFileChecksum": "af246ebc819664a2b757eb1b3c9afc9848d66b1124b0d3e7d1e266fbfeae03e7"
+    },
+    {
+      "tradingDate": "2022-12-30",
+      "sessionContentChecksum": "5fdb33341819586857699c0880a969cd3dfe46b33dd4477c7bd50199930f3fcb",
+      "relativePath": "UNDERLYING_1M/1a7cf5e2f88a0f6bee8b687f92c80c291a8a7bcb15184b986639f431a76e5870/sessions/2022-12-30.parquet",
+      "canonicalRowCount": 375,
+      "fileSizeBytes": 10379,
+      "physicalFileChecksum": "afe754a17eaae703d165c495bb2845738bde4b696f2da32b2a653e31939d4a94"
+    }
+  ]
+}

@@ -18,3 +18,4 @@ artifacts/v10-nifty-banknifty-lead-lag/
 artifacts/v11-nifty-iv-skew/
 artifacts/v12-order-flow/
 artifacts/nse-raw-source-archive/
+artifacts/research-lake/parquet/**/sessions/*.parquet
