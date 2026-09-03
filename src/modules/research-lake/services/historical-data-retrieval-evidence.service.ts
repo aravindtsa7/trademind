@@ -59,6 +59,52 @@ export interface NonPersistableSessionInput {
   readonly sourceRowsSemanticChecksum: string | null;
 }
 
+/** B-M7.1: input for `findTerminalIncompleteSessionEvidence` -- see that method's doc. */
+export interface QualifyTerminalIncompleteEvidenceInput {
+  readonly expectedProviderId: HistoricalProviderId;
+  readonly instrumentKey: string;
+  readonly timeframe: string;
+  readonly tradingDate: string;
+}
+
+/** B-M7.1: the exact durable facts `findTerminalIncompleteSessionEvidence` proves before returning -- a caller qualifies its own date-specific locked facts (e.g. 375/372 for 2022-03-07) on top of this. */
+export interface QualifiedIncompleteSessionEvidence {
+  readonly retrievalId: string;
+  readonly sessionId: string;
+  readonly providerId: HistoricalProviderId;
+  readonly instrumentKey: string;
+  readonly timeframe: string;
+  readonly tradingDate: string;
+  readonly calendarDisposition: string;
+  readonly expectedMinuteCount: number;
+  readonly providerRowCountForDate: number;
+  readonly acceptedRowCount: number;
+  readonly excludedRowCount: number;
+  readonly sourceOrderAnomalyCount: number;
+  readonly healthStatus: DatasetHealthStatus;
+  readonly persistenceOutcome: HistoricalCandleSessionPersistenceOutcome;
+  readonly sourceRowsSemanticChecksum: string;
+  readonly evidenceSemanticChecksum: string;
+}
+
+/** B-M7.1 task section 3: "no ambiguity exists ... selection must be deterministic and fail closed" -- thrown instead of silently picking one row. */
+export class QualifiedIncompleteEvidenceAmbiguousError extends Error {
+  constructor(instrumentKey: string, timeframe: string, tradingDate: string, readonly matchCount: number) {
+    super(
+      `HistoricalDataRetrievalEvidenceService.findTerminalIncompleteSessionEvidence: ${matchCount} terminal INCOMPLETE evidence rows matched ${instrumentKey}/${timeframe}/${tradingDate} for the expected provider -- ambiguous, refusing to pick one.`
+    );
+    this.name = 'QualifiedIncompleteEvidenceAmbiguousError';
+  }
+}
+
+/** B-M7.1: the one matched row exists but fails a required structural invariant (see `findTerminalIncompleteSessionEvidence`'s doc for the exact checks). */
+export class QualifiedIncompleteEvidenceInvariantError extends Error {
+  constructor(message: string) {
+    super(`HistoricalDataRetrievalEvidenceService.findTerminalIncompleteSessionEvidence: ${message}`);
+    this.name = 'QualifiedIncompleteEvidenceInvariantError';
+  }
+}
+
 const AVAILABLE_PERSISTENCE_OUTCOMES: ReadonlySet<string> = new Set([
   HistoricalCandleSessionPersistenceOutcome.ACCEPTED_NEW,
   HistoricalCandleSessionPersistenceOutcome.ACCEPTED_IDEMPOTENT,
@@ -331,6 +377,93 @@ export default class HistoricalDataRetrievalEvidenceService {
       evidenceSemanticChecksum: row.evidenceSemanticChecksum,
       provenanceComposition,
       compositeRepair,
+    };
+  }
+
+  /**
+   * B-M7.1 task section 3: READ-ONLY qualification lookup for the single
+   * deterministic terminal INCOMPLETE `HistoricalDataRetrievalSession`
+   * evidence row for one session identity, if one genuinely exists. Never
+   * mutates or rewrites anything -- this is a pure read, exactly like
+   * `findLatestAvailableSessionEvidence`, just aimed at the INCOMPLETE
+   * persistence outcome instead of the ACCEPTED ones.
+   *
+   * Mirrors `findLatestAvailableSessionEvidence`'s FIX-1 discipline: BOTH
+   * the session's own `persistenceOutcome` (`INCOMPLETE`) AND the parent
+   * retrieval's successful terminal `status` (`PROCESSED`/
+   * `COMPLETED_WITH_ISSUES`, never `STARTED`/`FETCHED`/`FAILED`) are
+   * required IN the query itself -- an INCOMPLETE session evidence row
+   * whose parent retrieval never reached a successful terminal state is not
+   * yet trustworthy durable evidence of anything. `expectedProviderId`
+   * additionally narrows to the exact primary provider a caller expects
+   * (task section 3: "provider is the expected primary historical
+   * provider"), never any provider's INCOMPLETE evidence.
+   *
+   * FAILS CLOSED, never guesses/defaults/silently picks one, on:
+   *  - no matching row at all -> returns `null` (a caller decides whether
+   *    that itself is a qualification failure);
+   *  - MORE THAN ONE row matches this exact identity + outcome + provider +
+   *    terminal-status filter -> `QualifiedIncompleteEvidenceAmbiguousError`
+   *    (task section 3: "no ambiguity exists ... selection must be
+   *    deterministic and fail closed" -- deliberately `findMany`, never
+   *    `findFirst`, so ambiguity can never be silently resolved by picking
+   *    whichever row the query planner happened to return first);
+   *  - the matched row's `healthStatus` is not `DatasetHealthStatus.INCOMPLETE`
+   *    -> `QualifiedIncompleteEvidenceInvariantError` (a session can be
+   *    `persistenceOutcome === INCOMPLETE` while, in principle, structurally
+   *    `INVALID`/`PROVIDER_UNAVAILABLE` at the health layer -- see
+   *    `HistoricalCandleSessionPersistenceOutcome` -- never silently treated
+   *    as a clean missing-minutes gap);
+   *  - `sourceRowsSemanticChecksum` is `null` -> `QualifiedIncompleteEvidenceInvariantError`
+   *    (a caller can never qualify a controlled re-observation against an
+   *    evidence row with no checksum to compare against).
+   */
+  async findTerminalIncompleteSessionEvidence(input: QualifyTerminalIncompleteEvidenceInput): Promise<QualifiedIncompleteSessionEvidence | null> {
+    const rows = await this.prisma.historicalDataRetrievalSession.findMany({
+      where: {
+        instrumentKey: input.instrumentKey,
+        timeframe: input.timeframe,
+        tradingDate: input.tradingDate,
+        persistenceOutcome: HistoricalCandleSessionPersistenceOutcome.INCOMPLETE,
+        retrieval: { providerId: input.expectedProviderId, status: { in: [...SUCCESSFUL_TERMINAL_RETRIEVAL_STATUSES] } },
+      },
+      include: { retrieval: true },
+    });
+
+    if (rows.length === 0) return null;
+    if (rows.length > 1) {
+      throw new QualifiedIncompleteEvidenceAmbiguousError(input.instrumentKey, input.timeframe, input.tradingDate, rows.length);
+    }
+
+    const row = rows[0];
+    if (row.healthStatus !== DatasetHealthStatus.INCOMPLETE) {
+      throw new QualifiedIncompleteEvidenceInvariantError(
+        `Terminal INCOMPLETE-persistence evidence for ${input.instrumentKey}/${input.timeframe}/${input.tradingDate} has healthStatus='${row.healthStatus}', not '${DatasetHealthStatus.INCOMPLETE}'.`
+      );
+    }
+    if (!row.sourceRowsSemanticChecksum) {
+      throw new QualifiedIncompleteEvidenceInvariantError(
+        `Terminal INCOMPLETE-persistence evidence for ${input.instrumentKey}/${input.timeframe}/${input.tradingDate} has no sourceRowsSemanticChecksum -- cannot qualify a re-observation against it.`
+      );
+    }
+
+    return {
+      retrievalId: row.retrievalId,
+      sessionId: row.id,
+      providerId: row.retrieval.providerId as HistoricalProviderId,
+      instrumentKey: row.instrumentKey,
+      timeframe: row.timeframe,
+      tradingDate: row.tradingDate,
+      calendarDisposition: row.calendarDisposition,
+      expectedMinuteCount: row.expectedMinuteCount,
+      providerRowCountForDate: row.providerRowCountForDate,
+      acceptedRowCount: row.acceptedRowCount,
+      excludedRowCount: row.excludedRowCount,
+      sourceOrderAnomalyCount: row.sourceOrderAnomalyCount,
+      healthStatus: row.healthStatus as DatasetHealthStatus,
+      persistenceOutcome: row.persistenceOutcome as HistoricalCandleSessionPersistenceOutcome,
+      sourceRowsSemanticChecksum: row.sourceRowsSemanticChecksum,
+      evidenceSemanticChecksum: row.evidenceSemanticChecksum,
     };
   }
 }

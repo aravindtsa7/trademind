@@ -37,3 +37,7 @@ export * from './raw-source-executable-pilot-manifest';
 export * from './raw-source-archive-lock';
 export * from './raw-source-receipt-index';
 export * from './raw-source-zip-envelope.util';
+export * from './observed-incomplete-session-snapshot.types';
+export * from './nifty-index-gap-imputation-authorization';
+export * from './nifty-index-linear-boundary-interpolation';
+export * from './derived-imputed-research-session.types';
