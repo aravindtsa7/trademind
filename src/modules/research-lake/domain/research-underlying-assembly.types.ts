@@ -233,54 +233,89 @@ function sessionCountsEqual(left: ResearchUnderlyingDatasetAssemblySessionCounts
 }
 
 /**
- * HIGH-05 CORRECTION: reading a stored assembly now independently
- * re-verifies it rather than trusting the parsed JSON's own fields --
- * `sessionCounts` is deliberately NOT part of `assemblyContentChecksum`
- * (see `ResearchUnderlyingDatasetAssemblyContentPayload`'s own doc), so a
- * generic content-addressed checksum match alone can NEVER prove
- * `sessionCounts` still agrees with `sessions`. Every check below fails
- * closed -- a mismatch throws `ResearchUnderlyingAssemblyIntegrityError`,
- * never a silent normalize/overwrite:
+ * B-M7.3-HIGH-01 CORRECTION: extracted from `readResearchUnderlyingDatasetAssembly`
+ * (HIGH-05's original combined checksum/duplicate/sessionCounts checks below)
+ * so a SECOND boundary -- the B-M7.3 verified read boundary
+ * (`ResearchUnderlyingResampledSessionReaderService`), which receives a
+ * caller-supplied, ALREADY-IN-MEMORY assembly object rather than a
+ * content-addressed file path -- can prove that exact same self-consistency
+ * without duplicating a competing checksum/integrity algorithm (task:
+ * "Do NOT invent a new checksum algorithm... reuse the EXISTING B-M7.2
+ * checksum/integrity semantics"). Deliberately does NOT check the object's
+ * self-declared `assemblyContentChecksum` against any externally REQUESTED
+ * checksum (e.g. a content-addressed file path) -- that is a caller-specific
+ * binding concern, not a fact about the object's own internal consistency;
+ * `readResearchUnderlyingDatasetAssembly` below adds that one extra check
+ * itself. Returns the list of violations (empty = fully self-consistent) --
+ * never throws itself, so callers can combine it with their own additional
+ * checks before deciding exactly how/with what error shape to fail closed.
+ *
+ * Proves, in order:
  *  1. `schemaVersion`/`assemblySemanticsVersion` are the currently-supported
- *     values this reader understands.
+ *     values this codebase understands.
  *  2. The IDENTITY MATERIAL (`schemaVersion`, `assemblySemanticsVersion`,
  *     `identity`, `canonicalManifest`, `sessions`) re-hashes to EXACTLY the
- *     requested content-addressed `assemblyContentChecksum`, and the
- *     artifact's own self-declared `assemblyContentChecksum` field agrees.
+ *     object's OWN self-declared `assemblyContentChecksum` -- i.e. the
+ *     object was not semantically tampered while its `assemblyContentChecksum`
+ *     field was left pointing at the ORIGINAL, pre-tamper value (task:
+ *     "Do NOT merely compare assemblyContentChecksum and assume that makes
+ *     an arbitrary caller-supplied object trusted").
  *  3. `sessions` contains no duplicate `tradingDate` (mirrors
  *     `assertNoDuplicateTradingDateSelections`, defensively re-applied here
- *     too since this is a boundary reading arbitrary on-disk JSON).
+ *     too since this may be reading arbitrary on-disk JSON or an arbitrary
+ *     caller-supplied in-memory object).
  *  4. `sessionCounts` recomputed fresh from `sessions` via
- *     `deriveResearchUnderlyingAssemblySessionCounts` matches the STORED
- *     `sessionCounts` field-for-field -- catching exactly the tamper case
- *     `assemblyContentChecksum` alone cannot (`sessions` genuinely unchanged,
+ *     `deriveResearchUnderlyingAssemblySessionCounts` matches the object's
+ *     own `sessionCounts` field-for-field -- catching exactly the tamper
+ *     case a checksum re-hash alone cannot (`sessions` genuinely unchanged,
  *     `sessionCounts` silently edited).
  */
-export function readResearchUnderlyingDatasetAssembly(root: string, assemblyContentChecksum: string): ResearchUnderlyingDatasetAssemblyV1 {
-  const parsed = readContentAddressedJson<ResearchUnderlyingDatasetAssemblyV1>(root, RESEARCH_UNDERLYING_ASSEMBLY_STORAGE_SUBDIR, assemblyContentChecksum);
+export function collectResearchUnderlyingAssemblySelfConsistencyViolations(assembly: ResearchUnderlyingDatasetAssemblyV1): string[] {
   const violations: string[] = [];
 
-  if (parsed.schemaVersion !== RESEARCH_UNDERLYING_ASSEMBLY_SCHEMA_VERSION) {
-    violations.push(`schemaVersion ${parsed.schemaVersion} is not the supported ${RESEARCH_UNDERLYING_ASSEMBLY_SCHEMA_VERSION}`);
+  if (assembly.schemaVersion !== RESEARCH_UNDERLYING_ASSEMBLY_SCHEMA_VERSION) {
+    violations.push(`schemaVersion ${assembly.schemaVersion} is not the supported ${RESEARCH_UNDERLYING_ASSEMBLY_SCHEMA_VERSION}`);
   }
-  if (parsed.assemblySemanticsVersion !== RESEARCH_UNDERLYING_ASSEMBLY_SEMANTICS_VERSION) {
-    violations.push(`assemblySemanticsVersion ${parsed.assemblySemanticsVersion} is not the supported ${RESEARCH_UNDERLYING_ASSEMBLY_SEMANTICS_VERSION}`);
+  if (assembly.assemblySemanticsVersion !== RESEARCH_UNDERLYING_ASSEMBLY_SEMANTICS_VERSION) {
+    violations.push(`assemblySemanticsVersion ${assembly.assemblySemanticsVersion} is not the supported ${RESEARCH_UNDERLYING_ASSEMBLY_SEMANTICS_VERSION}`);
   }
 
-  const recomputedChecksum = computeResearchUnderlyingAssemblyChecksum(stripAssemblyChecksum(parsed));
-  if (recomputedChecksum !== assemblyContentChecksum || parsed.assemblyContentChecksum !== assemblyContentChecksum) {
-    violations.push(`recomputed assemblyContentChecksum '${recomputedChecksum}' (self-declared '${parsed.assemblyContentChecksum}') does not match the requested content-addressed checksum '${assemblyContentChecksum}'`);
+  const recomputedChecksum = computeResearchUnderlyingAssemblyChecksum(stripAssemblyChecksum(assembly));
+  if (recomputedChecksum !== assembly.assemblyContentChecksum) {
+    violations.push(`recomputed assemblyContentChecksum '${recomputedChecksum}' does not match the object's own self-declared assemblyContentChecksum '${assembly.assemblyContentChecksum}'`);
   }
 
   try {
-    assertNoDuplicateTradingDateSelections(parsed.sessions);
+    assertNoDuplicateTradingDateSelections(assembly.sessions);
   } catch (error) {
     violations.push(error instanceof Error ? error.message : String(error));
   }
 
-  const recomputedCounts = deriveResearchUnderlyingAssemblySessionCounts(parsed.sessions);
-  if (!sessionCountsEqual(recomputedCounts, parsed.sessionCounts)) {
-    violations.push(`stored sessionCounts ${JSON.stringify(parsed.sessionCounts)} does not match recomputed counts ${JSON.stringify(recomputedCounts)}`);
+  const recomputedCounts = deriveResearchUnderlyingAssemblySessionCounts(assembly.sessions);
+  if (!sessionCountsEqual(recomputedCounts, assembly.sessionCounts)) {
+    violations.push(`stored sessionCounts ${JSON.stringify(assembly.sessionCounts)} does not match recomputed counts ${JSON.stringify(recomputedCounts)}`);
+  }
+
+  return violations;
+}
+
+/**
+ * HIGH-05 CORRECTION: reading a stored assembly now independently
+ * re-verifies it rather than trusting the parsed JSON's own fields, via
+ * `collectResearchUnderlyingAssemblySelfConsistencyViolations` above, PLUS
+ * one additional file-path-specific check: the object's self-declared
+ * `assemblyContentChecksum` must also match the REQUESTED content-addressed
+ * `assemblyContentChecksum` (the value that selected which file was even
+ * read). Every check fails closed -- a mismatch throws
+ * `ResearchUnderlyingAssemblyIntegrityError`, never a silent
+ * normalize/overwrite.
+ */
+export function readResearchUnderlyingDatasetAssembly(root: string, assemblyContentChecksum: string): ResearchUnderlyingDatasetAssemblyV1 {
+  const parsed = readContentAddressedJson<ResearchUnderlyingDatasetAssemblyV1>(root, RESEARCH_UNDERLYING_ASSEMBLY_STORAGE_SUBDIR, assemblyContentChecksum);
+  const violations = collectResearchUnderlyingAssemblySelfConsistencyViolations(parsed);
+
+  if (parsed.assemblyContentChecksum !== assemblyContentChecksum) {
+    violations.push(`self-declared assemblyContentChecksum '${parsed.assemblyContentChecksum}' does not match the requested content-addressed checksum '${assemblyContentChecksum}'`);
   }
 
   if (violations.length > 0) {
