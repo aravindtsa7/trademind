@@ -147,7 +147,8 @@ export default class GrowwHistoricalClient {
     endTime: string;
     candleInterval: string;
   }): Promise<readonly GrowwValidatedCandleRow[]> {
-    return this.requestCandles(params, 'historical candles');
+    // FNO/option volume remains STRICTLY required -- never nullable. Unchanged by B-M11.
+    return this.requestCandles(params, 'historical candles', false);
   }
 
   /**
@@ -161,6 +162,16 @@ export default class GrowwHistoricalClient {
    * "do not duplicate transport infrastructure unnecessarily"). Same
    * single-request-per-call, never-reordered contract as
    * `fetchOptionCandles` -- see that method's own doc for both.
+   *
+   * B-M11 CORRECTION: unlike `fetchOptionCandles`, this method allows a
+   * row's `volume` to be `null` -- a real, live-confirmed Groww CASH
+   * response shape for the NIFTY underlying index (2025-03-25T10:42:00 IST,
+   * `[...,null,null]`), alongside the already-known numeric-zero case
+   * (2024-12-12). This client does NOT normalize that `null` to `0n` -- it
+   * is preserved exactly as `GrowwValidatedCandleRow.volume: bigint | null`;
+   * normalization to the canonical `bigint` representation is
+   * `GrowwUnderlyingHistoricalDataProviderService`'s job alone (see its own
+   * doc), never this shared transport-validation layer's.
    */
   async fetchUnderlyingCandles(params: {
     exchange: string;
@@ -170,7 +181,7 @@ export default class GrowwHistoricalClient {
     endTime: string;
     candleInterval: string;
   }): Promise<readonly GrowwValidatedCandleRow[]> {
-    return this.requestCandles(params, 'historical underlying candles');
+    return this.requestCandles(params, 'historical underlying candles', true);
   }
 
   /**
@@ -181,10 +192,18 @@ export default class GrowwHistoricalClient {
    * establish elsewhere in this file (`validateSuccessEnvelope`/`classifyAndRethrow`
    * both prepend their own `'Groww '` prefix) -- extracting this common body
    * changes no observable string `fetchOptionCandles` already produced.
+   *
+   * `allowNullVolume` (B-M11) is the ONE narrow difference between the two
+   * candle families: `false` for `fetchOptionCandles` (volume strictly
+   * required, unchanged), `true` for `fetchUnderlyingCandles` (a live-confirmed
+   * null-volume CASH row must not fail the whole response closed). Every
+   * other validation rule (OHLC finiteness, OI nullability/non-negativity,
+   * timestamp parsing, row shape) is identical for both families.
    */
   private async requestCandles(
     params: { exchange: string; segment: string; growwSymbol: string; startTime: string; endTime: string; candleInterval: string },
-    operation: string
+    operation: string,
+    allowNullVolume: boolean
   ): Promise<readonly GrowwValidatedCandleRow[]> {
     const startedAt = Date.now();
     const context = { exchange: params.exchange, segment: params.segment, growwSymbol: params.growwSymbol, startTime: params.startTime, endTime: params.endTime, candleInterval: params.candleInterval };
@@ -202,7 +221,7 @@ export default class GrowwHistoricalClient {
         headers: this.headers(),
       });
       const payload = this.validateSuccessEnvelope(response.data, operation);
-      const candles = this.extractCandleRows(payload, params.growwSymbol);
+      const candles = this.extractCandleRows(payload, params.growwSymbol, allowNullVolume);
       logger.info(`Groww ${operation} received`, { ...context, count: candles.length, durationMs: Date.now() - startedAt });
       return candles;
     } catch (error) {
@@ -311,15 +330,15 @@ export default class GrowwHistoricalClient {
    * dropping or coercing just that row, since a provider that got one row
    * wrong cannot be trusted to have gotten the others right either.
    */
-  private extractCandleRows(payload: unknown, growwSymbol: string): GrowwValidatedCandleRow[] {
+  private extractCandleRows(payload: unknown, growwSymbol: string, allowNullVolume: boolean): GrowwValidatedCandleRow[] {
     const candles = (payload as Partial<GrowwCandlePayload>).candles;
     if (!Array.isArray(candles)) {
       throw new GrowwSchemaValidationError("Groww historical candles 'payload.candles' was not an array.");
     }
-    return candles.map((row, index) => this.parseCandleRow(row, index, growwSymbol));
+    return candles.map((row, index) => this.parseCandleRow(row, index, growwSymbol, allowNullVolume));
   }
 
-  private parseCandleRow(row: GrowwCandleRow, index: number, growwSymbol: string): GrowwValidatedCandleRow {
+  private parseCandleRow(row: GrowwCandleRow, index: number, growwSymbol: string, allowNullVolume: boolean): GrowwValidatedCandleRow {
     const fail = (detail: string): never => {
       throw new GrowwSchemaValidationError(`Groww historical candles for '${growwSymbol}': payload.candles[${index}] ${detail}`);
     };
@@ -334,10 +353,18 @@ export default class GrowwHistoricalClient {
     const high = this.parseFiniteNumber(row[2], fail, 'high');
     const low = this.parseFiniteNumber(row[3], fail, 'low');
     const close = this.parseFiniteNumber(row[4], fail, 'close');
-    const volume = this.parseNonNegativeIntegerBigInt(row[5], fail, 'volume', false);
-    const openInterest = this.parseNonNegativeIntegerBigInt(row[6], fail, 'openInterest', true);
+    // B-M11 CORRECTION: `allowNullVolume` is `false` for `fetchOptionCandles` (volume strictly
+    // required, unchanged: neither `null` nor a missing/`undefined` element is ever accepted).
+    // For `fetchUnderlyingCandles` it maps to `ACCEPT_EXPLICIT_NULL_ONLY` -- ONLY the live-proven
+    // shape (an EXPLICIT `null` at index 5, e.g. `[...,null,null]`) is accepted as null; a sparse/
+    // missing (`undefined`) element at index 5 is NOT proven and still fails closed, exactly like a
+    // malformed/fractional/negative value would. The row-length requirement above is unaffected --
+    // a 7-element row with `row[5] === undefined` still passes the length check and reaches here,
+    // where it is rejected on its own separate ground.
+    const volume = this.parseNonNegativeIntegerBigInt(row[5], fail, 'volume', allowNullVolume ? 'ACCEPT_EXPLICIT_NULL_ONLY' : 'REJECT_MISSING_OR_NULL');
+    const openInterest = this.parseNonNegativeIntegerBigInt(row[6], fail, 'openInterest', 'ACCEPT_NULL_OR_UNDEFINED');
 
-    return { candleTime, open, high, low, close, volume: volume as bigint, openInterest };
+    return { candleTime, open, high, low, close, volume, openInterest };
   }
 
   private parseFiniteNumber(raw: unknown, fail: (detail: string) => never, field: string): number {
@@ -348,17 +375,41 @@ export default class GrowwHistoricalClient {
   }
 
   /**
-   * `volume` is never nullable (`allowNull=false`); `openInterest` may
-   * legitimately be `null` or entirely absent -- both mean "provider did
-   * not supply OI", collapsed to `null` (task section 9: never fabricated,
-   * never treated as zero). `0` is always a valid, distinct value from
-   * `null` for both fields. Rejects `NaN`/`Infinity`, negative values, and
-   * non-integers (a fractional lot count/OI is malformed provider data,
-   * never silently rounded/truncated).
+   * Shared non-negative-integer-or-null parser for both `volume` and
+   * `openInterest`, governed by an explicit `missingValuePolicy` (B-M11
+   * CORRECTION: replaces a single `allowNull` boolean, which wrongly
+   * collapsed `null` and missing/`undefined` into one case -- Terra's
+   * rejected-gate finding). Three policies, each used for a specific,
+   * live-evidence-backed reason:
+   *
+   *  - `'REJECT_MISSING_OR_NULL'` -- `fetchOptionCandles` volume: STRICTLY
+   *    required, unchanged. Neither `null` nor `undefined` is ever accepted.
+   *  - `'ACCEPT_EXPLICIT_NULL_ONLY'` -- `fetchUnderlyingCandles` volume: ONLY
+   *    an EXPLICIT `null` is accepted (the live-proven 2025-03-25 CASH shape,
+   *    `[...,null,null]`). A missing/`undefined` element at the SAME index
+   *    is a DIFFERENT, unproven shape and still fails closed -- "explicit
+   *    null" and "sparse/missing" are never conflated.
+   *  - `'ACCEPT_NULL_OR_UNDEFINED'` -- `openInterest` (both candle
+   *    families, unchanged from before this correction): `null` and a
+   *    missing 7th element both mean "provider did not supply OI",
+   *    collapsed to `null` (task section 9: never fabricated, never
+   *    treated as zero).
+   *
+   * `0` is always a valid, distinct value from `null` for both fields.
+   * Rejects `NaN`/`Infinity`, negative values, and non-integers (a
+   * fractional lot count/volume/OI is malformed provider data, never
+   * silently rounded/truncated) REGARDLESS of policy -- only a value this
+   * specific policy names as acceptable is ever treated as `null`.
    */
-  private parseNonNegativeIntegerBigInt(raw: unknown, fail: (detail: string) => never, field: string, allowNull: boolean): bigint | null {
+  private parseNonNegativeIntegerBigInt(
+    raw: unknown,
+    fail: (detail: string) => never,
+    field: string,
+    missingValuePolicy: 'REJECT_MISSING_OR_NULL' | 'ACCEPT_EXPLICIT_NULL_ONLY' | 'ACCEPT_NULL_OR_UNDEFINED'
+  ): bigint | null {
     if (raw === null || raw === undefined) {
-      if (allowNull) return null;
+      const isAccepted = missingValuePolicy === 'ACCEPT_NULL_OR_UNDEFINED' || (missingValuePolicy === 'ACCEPT_EXPLICIT_NULL_ONLY' && raw === null);
+      if (isAccepted) return null;
       return fail(`has a missing/null '${field}' value, which is not permitted for '${field}'.`);
     }
     if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw)) {

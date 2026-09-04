@@ -64,6 +64,45 @@ test('maps validated candle rows into HistoricalSourceCandleRow exactly, assigni
   assert.equal(result[1].openInterest, null);
 });
 
+// ---- B-M11: NIFTY_INDEX null-volume normalization (this adapter is the ONE place this happens) ----
+
+test('B-M11 (C): a null Groww volume is normalized to canonical 0n', async () => {
+  const rows: GrowwValidatedCandleRow[] = [{ candleTime: new Date('2025-03-25T05:12:00.000Z'), open: 23715.15, high: 23737.75, low: 23712.45, close: 23736.3, volume: null, openInterest: null }];
+  const { client } = fakeClient(rows);
+  const provider = new GrowwUnderlyingHistoricalDataProviderService(client);
+  const result = await provider.fetchCompletedUnderlyingRange(BASE_REQUEST);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].volume, 0n);
+  assert.equal(result[0].open, 23715.15);
+  assert.equal(result[0].high, 23737.75);
+  assert.equal(result[0].low, 23712.45);
+  assert.equal(result[0].close, 23736.3);
+  assert.equal(result[0].openInterest, null);
+});
+
+test('B-M11 (C): a numeric Groww volume is preserved exactly, never touched by the null-volume normalization', async () => {
+  const rows: GrowwValidatedCandleRow[] = [{ candleTime: new Date('2024-12-12T04:12:00.000Z'), open: 24657.4, high: 24659.6, low: 24651.4, close: 24651.4, volume: 4321n, openInterest: null }];
+  const { client } = fakeClient(rows);
+  const provider = new GrowwUnderlyingHistoricalDataProviderService(client);
+  const result = await provider.fetchCompletedUnderlyingRange(BASE_REQUEST);
+  assert.equal(result[0].volume, 4321n);
+});
+
+test('B-M11 (C): a mixed session (some rows null volume, some numeric) normalizes only the null ones, in place, preserving order', async () => {
+  const rows: GrowwValidatedCandleRow[] = [
+    { candleTime: new Date('2025-03-25T04:00:00.000Z'), open: 1, high: 2, low: 0.5, close: 1.5, volume: 10n, openInterest: null },
+    { candleTime: new Date('2025-03-25T05:12:00.000Z'), open: 2, high: 3, low: 1.5, close: 2.5, volume: null, openInterest: null },
+    { candleTime: new Date('2025-03-25T06:00:00.000Z'), open: 3, high: 4, low: 2.5, close: 3.5, volume: 0n, openInterest: null },
+  ];
+  const { client } = fakeClient(rows);
+  const provider = new GrowwUnderlyingHistoricalDataProviderService(client);
+  const result = await provider.fetchCompletedUnderlyingRange(BASE_REQUEST);
+  assert.equal(result.length, 3);
+  assert.equal(result[0].volume, 10n);
+  assert.equal(result[1].volume, 0n); // normalized from null
+  assert.equal(result[2].volume, 0n); // was already numeric 0
+});
+
 test('rejects a NIFTY_OPTION request -- this adapter is underlying-index-only', async () => {
   const { client, calls } = fakeClient([]);
   const provider = new GrowwUnderlyingHistoricalDataProviderService(client);

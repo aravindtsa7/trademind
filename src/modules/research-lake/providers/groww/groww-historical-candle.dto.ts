@@ -59,11 +59,32 @@ export interface GrowwCandlePayload {
 
 /**
  * One candle row after this client's strict validation: real finite
- * numbers, an explicit `Asia/Kolkata`-parsed `Date`, `volume` as a
- * non-negative `bigint`, and `openInterest` preserved EXACTLY as the
- * provider supplied it (`null` when absent/null, a non-negative `bigint`
- * when numeric -- never fabricated, never forward-filled, never derived
- * from volume; task section 9).
+ * numbers, an explicit `Asia/Kolkata`-parsed `Date`, and `openInterest`
+ * preserved EXACTLY as the provider supplied it (`null` when absent/null, a
+ * non-negative `bigint` when numeric -- never fabricated, never
+ * forward-filled, never derived from volume; task section 9).
+ *
+ * `volume` is a non-negative `bigint` OR `null` -- this is the TRUTHFUL
+ * intermediate transport shape needed to support BOTH candle families
+ * through the same validated row type, never a weakening of either:
+ *
+ *  - FNO/option candles (`fetchOptionCandles`): `volume` is REQUIRED, exactly
+ *    as before this correction -- a missing/null value still fails closed
+ *    with `GrowwSchemaValidationError`. Never `null` in practice for this
+ *    family; the `| null` in the type exists only because this interface is
+ *    shared, never because option volume may legitimately be absent.
+ *  - CASH/underlying candles (`fetchUnderlyingCandles`, B-M11): `volume` MAY
+ *    legitimately be an EXPLICIT `null` -- live-confirmed on a real Groww
+ *    NSE-NIFTY CASH response (2025-03-25T10:42:00 IST, `[...,null,null]`),
+ *    alongside the already-known numeric-zero case (2024-12-12). A row whose
+ *    volume (index 5) element is instead MISSING/`undefined` (a sparse row)
+ *    is a DIFFERENT, unproven shape and still fails closed -- only the
+ *    live-proven explicit-`null` case ever produces `volume: null` here
+ *    (Terra-rejected-gate correction: explicit `null` and missing/`undefined`
+ *    are never conflated). `GrowwHistoricalClient` itself never normalizes
+ *    this `null` to `0n` -- that provider-to-canonical semantic decision
+ *    belongs ONLY to `GrowwUnderlyingHistoricalDataProviderService` (see its
+ *    own doc), never to this shared transport-validation layer.
  */
 export interface GrowwValidatedCandleRow {
   readonly candleTime: Date;
@@ -71,7 +92,7 @@ export interface GrowwValidatedCandleRow {
   readonly high: number;
   readonly low: number;
   readonly close: number;
-  readonly volume: bigint;
+  readonly volume: bigint | null;
   readonly openInterest: bigint | null;
 }
 

@@ -291,6 +291,32 @@ test('negative volume is rejected, never coerced', async () => {
   await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
 });
 
+// ---- B-M11 (A): fetchOptionCandles retains strict volume requirement, unchanged ----
+
+test('B-M11 (A): a null volume on an OPTION candle still throws GrowwSchemaValidationError -- the null-volume correction is underlying-only', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, null, null]]));
+  await assert.rejects(
+    client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    (error: unknown) => {
+      assert.ok(error instanceof GrowwSchemaValidationError);
+      assert.match(error.message, /missing\/null 'volume'/);
+      return true;
+    }
+  );
+});
+
+test('B-M11 (A): a missing (undefined) volume element on an OPTION candle still throws GrowwSchemaValidationError', async () => {
+  const rowWithUndefinedVolume: unknown[] = ['2022-01-03 09:15:00', 100, 101, 100, 100.5, undefined, null];
+  const { client } = createClient(() => successCandles([rowWithUndefinedVolume]));
+  await assert.rejects(client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' }), GrowwSchemaValidationError);
+});
+
+test('B-M11 (A): numeric OPTION volume behaves exactly as before the correction', async () => {
+  const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 12345, null]]));
+  const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].volume, 12345n);
+});
+
 test('(G) numeric OI is preserved exactly as a bigint', async () => {
   const { client } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, 123456]]));
   const rows = await client.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'X', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
@@ -406,8 +432,95 @@ test('LIVE-VERIFIED: fetchUnderlyingCandles maps the real 2024-12-12 09:42 IST m
   assert.equal(rows[0].high, 24659.6);
   assert.equal(rows[0].low, 24651.4);
   assert.equal(rows[0].close, 24651.4);
-  assert.equal(rows[0].volume, 0n); // NIFTY index volume is always integer 0, distinct from null
+  assert.equal(rows[0].volume, 0n); // this particular row's numeric Groww volume was 0 -- see B-M11 tests below for the separate null-volume case
   assert.equal(rows[0].openInterest, null);
+});
+
+// ---- B-M11 (B): fetchUnderlyingCandles allows a null volume, matching the live-confirmed 2025-03-25 shape ----
+
+test('B-M11 (B): LIVE-PROVEN: a null-volume CASH row (2025-03-25T10:42:00 IST controlled probe) is accepted, never rejected', async () => {
+  const { client } = createClient(() => successCandles([['2025-03-25T10:42:00', 23715.15, 23737.75, 23712.45, 23736.3, null, null]]));
+  const rows = await client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: '2025-03-25 09:15:00', endTime: '2025-03-25 15:30:00', candleInterval: '1minute' });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].candleTime.toISOString(), '2025-03-25T05:12:00.000Z'); // 10:42 IST == 05:12 UTC
+  assert.equal(rows[0].open, 23715.15);
+  assert.equal(rows[0].high, 23737.75);
+  assert.equal(rows[0].low, 23712.45);
+  assert.equal(rows[0].close, 23736.3);
+  assert.equal(rows[0].volume, null); // preserved exactly as null -- this client never normalizes it
+  assert.equal(rows[0].openInterest, null);
+});
+
+// Terra-rejected-gate correction: explicit `null` and missing/`undefined` are NOT the same shape.
+// Only explicit `null` (the live-proven 2025-03-25 case) is proven; a sparse/missing volume element
+// is an UNPROVEN shape and must still fail closed, exactly like a malformed value would.
+test('B-M11 (B) CORRECTION: a 7-element row with a missing/undefined volume element on an UNDERLYING candle is REJECTED, never silently accepted as null', async () => {
+  const rowWithUndefinedVolume: unknown[] = ['2025-03-25T10:42:00', 100, 101, 100, 100.5, undefined, null];
+  assert.equal(rowWithUndefinedVolume.length, 7, 'the row-length requirement is unaffected -- this is a sparse 7-element row, not a 6-element row');
+  const { client } = createClient(() => successCandles([rowWithUndefinedVolume]));
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    (error: unknown) => {
+      assert.ok(error instanceof GrowwSchemaValidationError);
+      assert.match(error.message, /missing\/null 'volume'/);
+      return true;
+    }
+  );
+});
+
+test('B-M11 (B): numeric volume of exactly 0 on an UNDERLYING candle is accepted and distinct from null', async () => {
+  const { client } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, 0, null]]));
+  const rows = await client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].volume, 0n);
+  assert.notEqual(rows[0].volume, null);
+});
+
+test('B-M11 (B): a positive-integer volume on an UNDERLYING candle is accepted and preserved exactly', async () => {
+  const { client } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, 4321, null]]));
+  const rows = await client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(rows[0].volume, 4321n);
+});
+
+test('B-M11 (B): negative volume on an UNDERLYING candle is still rejected, never coerced', async () => {
+  const { client } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, -1, null]]));
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('B-M11 (B): fractional volume on an UNDERLYING candle is still rejected, never truncated', async () => {
+  const { client } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, 5.5, null]]));
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('B-M11 (B): malformed (non-finite) volume on an UNDERLYING candle is still rejected, never coerced', async () => {
+  const { client } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, Number.NaN, null]]));
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+
+  const { client: stringClient } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, 'not-a-number', null]]));
+  await assert.rejects(
+    stringClient.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('B-M11 (B): OI handling on an UNDERLYING candle is unchanged -- null preserved, numeric preserved, negative/fractional still rejected', async () => {
+  const { client: nullOiClient } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, null, null]]));
+  const nullOiRows = await nullOiClient.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.equal(nullOiRows[0].openInterest, null);
+
+  const { client: negativeOiClient } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5, null, -5]]));
+  await assert.rejects(
+    negativeOiClient.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
 });
 
 test('fetchUnderlyingCandles: a 376-row response (09:15..15:30 inclusive boundary) round-trips all 376 rows unfiltered -- boundary exclusion is the projector\'s job, not the client\'s', async () => {

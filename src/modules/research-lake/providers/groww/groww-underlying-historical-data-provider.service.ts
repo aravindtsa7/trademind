@@ -146,6 +146,27 @@ export default class GrowwUnderlyingHistoricalDataProviderService implements His
     );
   }
 
+  /**
+   * B-M11 PROVIDER-TO-CANONICAL SEMANTIC NORMALIZATION (NIFTY_INDEX
+   * underlying ONLY -- this is the ONE place in the whole system allowed to
+   * perform it): Groww's NSE-NIFTY CASH candles have been live-confirmed to
+   * report `volume` as either a numeric non-negative integer (2024-12-12,
+   * value `0`) OR an explicit `null` (2025-03-25T10:42:00 IST,
+   * `[...,null,null]`) -- both are genuine, non-error provider responses for
+   * this non-traded index, never a malformed row. `GrowwHistoricalClient`
+   * itself preserves this truthfully as `bigint | null` and does NOT decide
+   * what it means downstream (see that client's own doc); THIS method is
+   * where the decision is made, explicitly and only for `NIFTY_INDEX`:
+   * Groww `null` volume -> canonical `0n`, because `HistoricalSourceCandleRow`/
+   * `CanonicalHistoricalCandle` require a `bigint` and the established
+   * canonical index representation already uses numeric `0` volume (the
+   * 2024-12-12 precedent) for this always-non-traded instrument. A numeric
+   * Groww volume is preserved EXACTLY, never touched. This normalization is
+   * NEVER applied to OHLC, NEVER applied to open interest (see the check
+   * below), and NEVER reused by `GrowwOptionHistoricalDataProviderService`
+   * (FNO/option volume remains strictly required and is never null by the
+   * time it reaches that adapter).
+   */
   private toSourceRow(candle: GrowwValidatedCandleRow, sourceIndex: number): HistoricalSourceCandleRow {
     if (candle.openInterest !== null) {
       // Live-verified contract: a NIFTY_INDEX candle carries no open
@@ -165,7 +186,9 @@ export default class GrowwUnderlyingHistoricalDataProviderService implements His
       high: candle.high,
       low: candle.low,
       close: candle.close,
-      volume: candle.volume,
+      // B-M11: Groww `null` volume -> canonical `0n`, NIFTY_INDEX-only normalization -- see this
+      // method's own doc above. A numeric Groww volume passes through unchanged.
+      volume: candle.volume === null ? 0n : candle.volume,
       openInterest: null,
     };
   }

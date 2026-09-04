@@ -108,6 +108,13 @@ export default class GrowwOptionHistoricalDataProviderService implements Histori
   }
 
   private toSourceRow(candle: GrowwValidatedCandleRow, sourceIndex: number): HistoricalSourceCandleRow {
+    if (candle.volume === null) {
+      // Defense in depth, never expected to trigger: `GrowwHistoricalClient.fetchOptionCandles`
+      // itself already rejects a null/missing volume with `GrowwSchemaValidationError` before this
+      // adapter ever sees a row (B-M11 left FNO/option volume strictly required, unchanged). This
+      // adapter never silently substitutes a value for a null it should never receive.
+      throw new Error(`GrowwOptionHistoricalDataProviderService: expected a non-null volume for an option candle at ${candle.candleTime.toISOString()}, but received null.`);
+    }
     return {
       sourceIndex,
       candleTime: candle.candleTime,

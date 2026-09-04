@@ -71,6 +71,49 @@ test('1: a full 376-row Groww session narrows to exactly the one authorized cand
   assert.equal(result[0].openInterest, null);
 });
 
+// ---- B-M11 (D): a null-volume target candidate normalizes cleanly through the real underlying adapter ----
+
+test('B-M11 (D): a null-volume target candidate (2025-03-25T05:12:00.000Z, 10:42 IST) normalizes to volume=0n/OI=null with OHLC preserved exactly; wrapper still exposes exactly one candidate', async () => {
+  const TRADING_DATE_2025 = '2025-03-25';
+  const TARGET_UTC_STRING = '2025-03-25T05:12:00.000Z'; // 10:42 IST -- the live-confirmed B-M11 null-volume timestamp
+  const TARGET_UTC = new Date(TARGET_UTC_STRING);
+
+  const baseRows = fullDayRows(TRADING_DATE_2025);
+  const targetIndex = baseRows.findIndex((row) => row.candleTime.getTime() === TARGET_UTC.getTime());
+  assert.ok(targetIndex >= 0, 'fixture must include the target minute');
+  const expectedContent = contentFor(targetIndex); // the ORIGINAL OHLC before the volume field is nulled out below
+
+  // Only the target row's volume is set to `null` (the live-confirmed Groww shape) -- every other
+  // row, including the 15:30 boundary row, keeps its ordinary numeric-zero volume unchanged.
+  const rowsWithNullVolumeAtTarget: GrowwValidatedCandleRow[] = baseRows.map((row, index) => (index === targetIndex ? { ...row, volume: null } : row));
+
+  const wrapper = newWrapper(rowsWithNullVolumeAtTarget, TARGET_UTC);
+  const result = await wrapper.fetchCompletedUnderlyingRange({ ...BASE_REQUEST, fromTradingDate: TRADING_DATE_2025, toTradingDate: TRADING_DATE_2025 });
+
+  assert.equal(result.length, 1, 'exactly one target candidate exposed, never the full session');
+  assert.equal(result[0].candleTime.toISOString(), TARGET_UTC_STRING);
+  assert.equal(result[0].sourceIndex, 0);
+  assert.equal(result[0].open, expectedContent.open);
+  assert.equal(result[0].high, expectedContent.high);
+  assert.equal(result[0].low, expectedContent.low);
+  assert.equal(result[0].close, expectedContent.close);
+  assert.equal(result[0].volume, 0n, 'the real GrowwUnderlyingHistoricalDataProviderService normalized the null Groww volume to canonical 0n');
+  assert.equal(result[0].openInterest, null);
+
+  // The 15:30 IST boundary row (10:00 UTC) is present in the underlying fixture but was never the
+  // authorized target -- it must never be the exposed candidate.
+  assert.notEqual(result[0].candleTime.toISOString(), '2025-03-25T10:00:00.000Z');
+
+  // The 15:30 boundary itself still cannot be authorized as a repair target at all -- the wrapper's
+  // own pre-check rejects it before any provider call, exactly as it does for the 2024-12-12 topology
+  // (see test 7 below), regardless of this session also containing a null-volume row elsewhere.
+  const boundaryWrapper = newWrapper(rowsWithNullVolumeAtTarget, new Date('2025-03-25T10:00:00.000Z'));
+  await assert.rejects(
+    boundaryWrapper.fetchCompletedUnderlyingRange({ ...BASE_REQUEST, fromTradingDate: TRADING_DATE_2025, toTradingDate: TRADING_DATE_2025 }),
+    GrowwGapRepairExpectedMissingMinuteError
+  );
+});
+
 test('providerId remains GROWW and getCapability delegates verbatim to the wrapped adapter', () => {
   const delegate = new GrowwUnderlyingHistoricalDataProviderService(fakeGrowwClient([]));
   const wrapper = new GrowwUnderlyingGapRepairProviderService(delegate, EXPECTED_MISSING_MINUTE_UTC);

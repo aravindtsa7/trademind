@@ -50,7 +50,11 @@
     "research:nifty-2024:assemble": "tsx src/tests/research-nifty-2024-research-assembly.ts",
     "research:nifty-2024:resample": "tsx src/tests/research-nifty-2024-resample.ts",
     "research:nifty-2024:materialize-storage": "tsx src/tests/research-nifty-2024-materialize-storage.ts",
-    "research:nifty-2024:certify": "tsx src/tests/research-nifty-2024-certify.ts"
+    "research:nifty-2024:certify": "tsx src/tests/research-nifty-2024-certify.ts",
+    "research:nifty-2025:assemble": "tsx src/tests/research-nifty-2025-research-assembly.ts",
+    "research:nifty-2025:resample": "tsx src/tests/research-nifty-2025-resample.ts",
+    "research:nifty-2025:materialize-storage": "tsx src/tests/research-nifty-2025-materialize-storage.ts",
+    "research:nifty-2025:certify": "tsx src/tests/research-nifty-2025-certify.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.13.1",
