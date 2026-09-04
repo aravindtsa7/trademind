@@ -50,7 +50,9 @@ export class GrowwSchemaValidationError extends Error {
 /**
  * Narrowly-scoped HTTP client for Groww's CURRENT Backtesting historical
  * APIs (`/v1/historical/expiries`, `/v1/historical/contracts`,
- * `/v1/historical/candles` -- task B-F4) -- never the deprecated
+ * `/v1/historical/candles` -- task B-F4, extended by B-M10 to also cover
+ * CASH/underlying-index candles on the SAME `/v1/historical/candles`
+ * endpoint via `fetchUnderlyingCandles`) -- never the deprecated
  * `/v1/historical/candle/range`. Does not use the Groww SDK: a
  * small typed axios client is sufficient for these two read-only GET
  * endpoints and avoids an unnecessary dependency, matching the existing
@@ -145,10 +147,49 @@ export default class GrowwHistoricalClient {
     endTime: string;
     candleInterval: string;
   }): Promise<readonly GrowwValidatedCandleRow[]> {
+    return this.requestCandles(params, 'historical candles');
+  }
+
+  /**
+   * B-M10: fetches and strictly validates one page of 1-minute CASH
+   * (underlying/index) candles for a single Groww-native underlying symbol
+   * (e.g. `NSE-NIFTY`) -- the same documented/live-verified
+   * `/v1/historical/candles` endpoint `fetchOptionCandles` already uses,
+   * distinguished only by `segment`/`groww_symbol`, never a different
+   * endpoint. Shares this client's existing request/validation/error
+   * pipeline via `requestCandles` rather than duplicating it (task section
+   * "do not duplicate transport infrastructure unnecessarily"). Same
+   * single-request-per-call, never-reordered contract as
+   * `fetchOptionCandles` -- see that method's own doc for both.
+   */
+  async fetchUnderlyingCandles(params: {
+    exchange: string;
+    segment: string;
+    growwSymbol: string;
+    startTime: string;
+    endTime: string;
+    candleInterval: string;
+  }): Promise<readonly GrowwValidatedCandleRow[]> {
+    return this.requestCandles(params, 'historical underlying candles');
+  }
+
+  /**
+   * Shared request/validate/error-classify pipeline for `/v1/historical/candles`,
+   * used by both `fetchOptionCandles` and `fetchUnderlyingCandles`. `operation`
+   * (e.g. `'historical candles'` / `'historical underlying candles'`) feeds the
+   * SAME log/error-message conventions `fetchExpiries`/`fetchContracts` already
+   * establish elsewhere in this file (`validateSuccessEnvelope`/`classifyAndRethrow`
+   * both prepend their own `'Groww '` prefix) -- extracting this common body
+   * changes no observable string `fetchOptionCandles` already produced.
+   */
+  private async requestCandles(
+    params: { exchange: string; segment: string; growwSymbol: string; startTime: string; endTime: string; candleInterval: string },
+    operation: string
+  ): Promise<readonly GrowwValidatedCandleRow[]> {
     const startedAt = Date.now();
     const context = { exchange: params.exchange, segment: params.segment, growwSymbol: params.growwSymbol, startTime: params.startTime, endTime: params.endTime, candleInterval: params.candleInterval };
     try {
-      logger.info('Requesting Groww historical candles', context);
+      logger.info(`Requesting Groww ${operation}`, context);
       const response = await this.axios.get<GrowwApiEnvelope>('/v1/historical/candles', {
         params: {
           exchange: params.exchange,
@@ -160,12 +201,12 @@ export default class GrowwHistoricalClient {
         },
         headers: this.headers(),
       });
-      const payload = this.validateSuccessEnvelope(response.data, 'historical candles');
+      const payload = this.validateSuccessEnvelope(response.data, operation);
       const candles = this.extractCandleRows(payload, params.growwSymbol);
-      logger.info('Groww historical candles received', { ...context, count: candles.length, durationMs: Date.now() - startedAt });
+      logger.info(`Groww ${operation} received`, { ...context, count: candles.length, durationMs: Date.now() - startedAt });
       return candles;
     } catch (error) {
-      throw this.classifyAndRethrow(error, 'Groww historical candles', { ...context, durationMs: Date.now() - startedAt });
+      throw this.classifyAndRethrow(error, `Groww ${operation}`, { ...context, durationMs: Date.now() - startedAt });
     }
   }
 

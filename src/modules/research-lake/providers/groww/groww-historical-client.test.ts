@@ -379,6 +379,104 @@ test('SECURITY: the token never appears in a successful result or in any thrown 
   assert.ok(!message.includes(SECRET_TOKEN));
 });
 
+// ---- B-M10: fetchUnderlyingCandles -----------------------------------------
+
+test('fetchUnderlyingCandles calls the correct endpoint/query with CASH segment and the NSE-NIFTY groww_symbol', async () => {
+  const { client, axios } = createClient(() => successCandles([]));
+  await client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: '2024-12-12 09:15:00', endTime: '2024-12-12 15:30:00', candleInterval: '1minute' });
+  assert.equal(axios.calls[0].url, '/v1/historical/candles');
+  assert.deepEqual(axios.calls[0].config.params, {
+    exchange: 'NSE',
+    segment: 'CASH',
+    groww_symbol: 'NSE-NIFTY',
+    start_time: '2024-12-12 09:15:00',
+    end_time: '2024-12-12 15:30:00',
+    candle_interval: '1minute',
+  });
+  assert.equal(axios.calls[0].config.headers?.Authorization, `Bearer ${SECRET_TOKEN}`);
+  assert.equal(axios.calls[0].config.headers?.['X-API-VERSION'], '1.0');
+});
+
+test('LIVE-VERIFIED: fetchUnderlyingCandles maps the real 2024-12-12 09:42 IST missing-minute row exactly (B-M10 controlled probe)', async () => {
+  const { client } = createClient(() => successCandles([['2024-12-12T09:42:00', 24657.4, 24659.6, 24651.4, 24651.4, 0, null]]));
+  const rows = await client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: '2024-12-12 09:15:00', endTime: '2024-12-12 15:30:00', candleInterval: '1minute' });
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].candleTime.toISOString(), '2024-12-12T04:12:00.000Z'); // 09:42 IST == 04:12 UTC
+  assert.equal(rows[0].open, 24657.4);
+  assert.equal(rows[0].high, 24659.6);
+  assert.equal(rows[0].low, 24651.4);
+  assert.equal(rows[0].close, 24651.4);
+  assert.equal(rows[0].volume, 0n); // NIFTY index volume is always integer 0, distinct from null
+  assert.equal(rows[0].openInterest, null);
+});
+
+test('fetchUnderlyingCandles: a 376-row response (09:15..15:30 inclusive boundary) round-trips all 376 rows unfiltered -- boundary exclusion is the projector\'s job, not the client\'s', async () => {
+  const rows376 = Array.from({ length: 376 }, (_, i) => {
+    const minute = 555 + i; // 555 == 09:15 in minutes-of-day
+    const hh = String(Math.floor(minute / 60)).padStart(2, '0');
+    const mm = String(minute % 60).padStart(2, '0');
+    return [`2024-12-12T${hh}:${mm}:00`, 100, 101, 99, 100.5, 0, null];
+  });
+  const { client } = createClient(() => successCandles(rows376));
+  const rows = await client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: '2024-12-12 09:15:00', endTime: '2024-12-12 15:30:00', candleInterval: '1minute' });
+  assert.equal(rows.length, 376);
+  assert.equal(rows[rows.length - 1].candleTime.toISOString(), '2024-12-12T10:00:00.000Z'); // 15:30 IST == 10:00 UTC boundary row, still present
+});
+
+test('fetchUnderlyingCandles: malformed envelope (payload.candles missing) is rejected', async () => {
+  const { client } = createClient(() => success({ closing_price: 0 }));
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('fetchUnderlyingCandles: malformed candle row (wrong element count) is rejected', async () => {
+  const { client } = createClient(() => successCandles([['2024-12-12T09:15:00', 100, 101, 100, 100.5]]));
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwSchemaValidationError
+  );
+});
+
+test('fetchUnderlyingCandles: a 401 propagates as a typed GrowwAuthenticationError, and network/auth failures propagate safely with no token leakage', async () => {
+  const { client } = createClient(() => axiosFailure(401, { status: 'FAILURE', error: { code: '401', message: 'unauthorized' } }));
+  let message = '';
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    (error: unknown) => {
+      assert.ok(error instanceof GrowwAuthenticationError);
+      assert.equal(error.httpStatus, 401);
+      message = error.message;
+      return true;
+    }
+  );
+  assert.ok(!message.includes(SECRET_TOKEN));
+});
+
+test('fetchUnderlyingCandles: a well-formed FAILURE envelope raises a typed GrowwApiFailureError', async () => {
+  const { client } = createClient(() => Promise.resolve({ data: { status: 'FAILURE', error: { code: 'BAD_REQUEST', message: 'invalid request' } } }));
+  await assert.rejects(
+    client.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' }),
+    GrowwApiFailureError
+  );
+});
+
+test('SECURITY: fetchUnderlyingCandles never leaks the token in a successful result or a thrown error', async () => {
+  const { client: okClient } = createClient(() => successCandles([['2024-12-12T09:42:00', 24657.4, 24659.6, 24651.4, 24651.4, 0, null]]));
+  const rows = await okClient.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  assert.ok(!JSON.stringify(rows, (_key, value) => (typeof value === 'bigint' ? value.toString() : value)).includes(SECRET_TOKEN));
+
+  const { client: failClient } = createClient(() => axiosFailure(401, {}));
+  let message = '';
+  try {
+    await failClient.fetchUnderlyingCandles({ exchange: 'NSE', segment: 'CASH', growwSymbol: 'NSE-NIFTY', startTime: 'a', endTime: 'b', candleInterval: '1minute' });
+  } catch (error) {
+    message = error instanceof Error ? error.message : String(error);
+  }
+  assert.ok(!message.includes(SECRET_TOKEN));
+});
+
 test('SECURITY: the token never appears in a successful candle result or in any thrown error message/serialization', async () => {
   const { client: okClient } = createClient(() => successCandles([['2022-01-03 09:15:00', 100, 101, 100, 100.5, 10, null]]));
   const rows = await okClient.fetchOptionCandles({ exchange: 'NSE', segment: 'FNO', growwSymbol: 'NSE-NIFTY-06Jan22-17200-PE', startTime: 'a', endTime: 'b', candleInterval: '1minute' });

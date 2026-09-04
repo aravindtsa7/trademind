@@ -1,0 +1,5772 @@
+{
+  "schemaVersion": 1,
+  "assemblySemanticsVersion": 1,
+  "identity": {
+    "instrumentKey": "NSE_INDEX|Nifty 50",
+    "timeframe": "1minute",
+    "year": 2024
+  },
+  "canonicalManifest": {
+    "datasetKind": "UNDERLYING_1M",
+    "datasetId": "UNDERLYING_1M_278990bd5b6eee27",
+    "datasetChecksum": "278990bd5b6eee27e536f83fb1edb3532d0330fb8d75f9b89747e9c752444279",
+    "manifestSchemaVersion": 5,
+    "canonicalizationVersion": 1,
+    "healthSemanticsVersion": 1
+  },
+  "sessions": [
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "689b03954a8bf26930afd48492eb0541f62e4f1856ad86273c86f622ca9724a9",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9247172e91d0f6885239dfd4ed7f8fc7aa9edcff3a3d3e8d0aeeac12bf18fd86",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1976237b94714412c985db17956956f1418fcf4ccf9bdba331e8c5a9aeedf948",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b63314d0b03f1d6b3028767c9998763461d21dfbcde240c5484e3c3ec2c93f58",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f9375558b2c7132b50383c9689784af5a5c2a756d35c554ecb196403899d6bbe",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "8c2bd8a8852719bb520502bc2613a2747127a87859aab942fa4167cc0387e6d6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "8bbb3f0c1416bed3b7e664e841686bfe28c0325eb69236444a7a3baaa9d74b5a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "cfc38f5c076f0e2e1eaf728404d1cfb2386b6e6e57b531f6355bac8aee82db1d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9b66d8af6cae38ea9882eea9a03ace36d7ef69550b13055433530a13c38b577c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "18dfcb15b73544db7fb5e92b168bbb67f79af7f6ce3893cccd1aeb09e5cd671d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-15",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-15"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "dd4cd7c3c1115539055e74bf1059e909ba5910969c0f4afc3aad474bf5b82282",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "a3da85b90156b6e8e277ca56ba97642b893eab2b2d98bc6a41110b2153e6c0bb",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-17",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-17"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9573e805d007020346d04c57560aa7ef026515c368a14a49694388cece474b16",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "809d959a76513bb8e70859b52799a24f7a63e56e35e4cd637e448aaa85e3e41f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "e1a3342eb7fe01e6aa36fc1945dbdda12c74faae90bb50bd60b19f941a5c1062",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-20",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-20"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "25d264e44c993cc94ab8ffd5c944339b1e441ba76cbe8fc99bd3261524e6b1b1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "42f480ad2dec85d75e2ada483bd50e1feb0fca5c2b1cbe90ebd6e90356f91152",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b63ea1f4920a5cd174cd8721df1eb45d429e3e34ff3a91db84a10e62dd3dabe0",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-25",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-25"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f964b00ecbfe270706f34f208e894c426772298c4957bfd0e0cd3b4b0d921093",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5e1ee32a52f87f5e66c3a582c423d394f8f63492aed029472e0b831457b6035f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "134ed95ba334fea4aa80ff901cae1399400195992e04e68b1cd0770cea7eefb8",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-01-31",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-01-31"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "a2cb879176e10e4825c52783278bf8301ea4b18309208d50b5bf6ab3a457013b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "cd70f6e3070d5c051bbd37162d0895f80b5b30e6edbd3bfdfc03e77dbea3df5b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6af0fb926c5e722dfcd98bb509b8cd81a1681dd4614332b2c5b59e813e2bd338",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c016d901a21be92db8344d1a1ff5f6532af6888365f08c86408bc75a19ac1015",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "909035d60f6d93ea2b55639b0e2d80309612e1407530a0a4a98163ab836d6b2d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-07",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-07"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "bfe4116ce86afd83500e6cf6e8065de64efb55d1cf1e6139039481c2b2f35dc7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3bf168c35c20de5b62b78dc90bd0f6ef02db68eaee725030e38673051237049c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7d7373976361a94b9881b6f6ff8ed56102d44dabc4029dd3a77fa37a0e34cd94",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "100228fb7be796f68d5433fedb4ccd484c982100c67fedb815e7d16c773b0402",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0a207c60e2ba52ab7ede1fe72189edf108112adfbe19e5db0684713d85d16d5b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-14",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-14"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4c3af6e512802df970ae99b2d39087890b2272500bafd1ba2bbfc7200a9ead7f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-15",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-15"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c9f4399e9bec16a515ad4f5c5f903431755e9a0b2f25ec0eb5cf26fbcdcc6e1f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "246081be6fdf46e17b76e3505a21e79f26031ebf197c322dd320684f1bdfe7cc",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "df098b1229350ebccd92b3d01a2d059ed8bdba697e4061404960300eaff70e30",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-20",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-20"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "eab7c33327c368673f80afce8b2c881fe8826fe5fd2cf0899260c95dee61a62d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-21",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-21"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "cce4c8188800ef19033a0548c65da0253943fb3cdba8ebbbf0d1042877884eb4",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0f59cd7778e10f0e56ae976265bb2e1d4fd929035bed460fa58d4fac81673f1a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f4997891e71497bcde81a837a1e08a1748927fe477c9ed1c2202da92b68f59f6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "cc86ec37f322099915ac8bc1594d76d1cfe43f55da26244c12ebe42fe3b99ce1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "50b7fda23f052b47813ddbb1d8a1ef55c65b3a788decc3814b5107cc55c88682",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-28",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-28"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f3019fc46e99388ef388a150f4018a8a08fcd776dc0985bce4d591cc0b6cc9e5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-02-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-02-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1459a7130ae01e46f39e3e83d756e9b726b1ff187f88cc157d9c241394af1be9",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "533b15422f04ef98603662301a382531d34b9e58861a419267c9bc81af66aa87",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 600
+        },
+        {
+          "windowIndex": 1,
+          "openMinuteIst": 690,
+          "closeMinuteIst": 750
+        }
+      ],
+      "canonicalContentChecksum": "6059fbd1b906e237e33ef0a1169cf768f6905b8e35af6bfa3bfbd37f1c2b4bd6",
+      "canonicalRowCount": 105
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "14201efb10c9bc8a6f3e19d413782c9481dd6e6c8ddf9b708286efc6ed4c2ad2",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "bcd1fbd5d4f1ed3c5312ceb02ab14c24d320a30ffa66637ae692bddd440c0cce",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7f8dc985807015c59b686cb918806d4e638a0d9a464c498cb017022cf6944350",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-07",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-07"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c053569bc55fb26e4ae66f9dd08d38b518e131d4ade6a93259b8325ceec1c44e",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "211f1139231ad12e91cdc1950bb68eca99c47b03a06b4d108c68572825db7ac0",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "79ffd2df9e2bb690ffd20fd3ac68a7ac24ff3a87c0715c74bc5b2054a7652ecb",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7ff2ac5a8676806ffd2a69d4f810e281c2e5e231a340a4452d677217407ca4fc",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-14",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-14"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "48bf764a18a994d3986f872dc86d7fe26e77c963875f68b24f487d8389134e3b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-15",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-15"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7314f6aeb4df6d17afb5cc753c5d4f4f6a8a3daf9911408d97358155a5283f7c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9f0a26f882a9248bb88fba4437dd0391196b9aeb485082ebffd3666abbde95ef",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "ac2796210c89ada5ddf482d5d3d33e77a6a519acd35ff30372fcc1edbfe294fe",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-20",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-20"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b04760c09229f1544e3279520e3c8fd67aeb6c255c66cbbcf894109d062eecfc",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-21",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-21"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d6fdefddb5552927dc0c159d869f8fcca746abff6557959809694ba0f1a7e2f4",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6574975f90bf54fabebb534e1ce7f3a9341cc060ca8d51573cffa9be861fb4bc",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6d5920bbfeac9439b58d0b645b049ff0fc977d1c961ca274a0df0023860d6a90",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1d6588cdc564e055848fefbdacf419bf5fffd4b04dfa6af542dd8e688f7351c4",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-03-28",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-03-28"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "462482f665f77287e7f8fd03533a98be37533d08782164f064fe0db7e3a4c06b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6f3eabe204bd3738153c3da90c959b59fb27dc112853dd20da4709592bb2b505",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "da37d4cb8204e37e0b3ad3ac66c3d9377275af8394fafd3ecaa03980e5b37943",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "43d708dfdf976b263460e3b9d713976d85248139cc9b2b9802dafedb6115309a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1460f182ecf55ab957128ae2530f93efa9718b697d84796a0b2e8b5133d642f2",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f4db94443409c00b5ba50f38591264ef2975fa9184754d9572e34888080c15e5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4ad208b2e3e3b92e04695096f602c24585dc8995c84083850b0fcb228b4be201",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0ad807d251aa766962343f1ba16aff4fd441f93e1268dbda545690b23137c116",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "838d46f025a9e7de753b080a04ca9946b6e5fde41c8ef09fc4deb62b6b192672",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5e37e0ad73979f650e279f5f6c656101456c91ea1b352dac2c39896d5c87b909",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-15",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-15"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d06d5192c3f3c049d3eacda620462fb072f471521d906231b453094d1da94ba8",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "2545bd35c3c9528fee9c3a1ad1d706620b59310f4b35fc2134f027fabc3fcc5f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "76136f23282ea5574d8cb879635968e45c712aef88e3a98cba66bb5883aa10ff",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d983e9e8fa96a4085a792a3d914dd725f5f774b9bf3c520be95ecd1bbb38afd1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d3a3bb907c8e69e842977775000be589c027e683549455ae373d12c971286764",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0fecd56cc4d7aec0447484dc24109e13075585de7c11520a28ad4c86cafb9736",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d3be4cf9389b57fc31ea2e79547e5cfb2882074bfa8488386b9be83016b2b425",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-25",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-25"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9aa5618effb2dee3acc242a239052cb20e3a27f295c72b34514d044864de1c35",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "e774a6a640271e09ed9d012f840b189b3f5a54f354e91a515d9591e057bef9a6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "659345870b35627a42dc3cb18c8190e517aef960663e2b640551286ec062e6eb",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-04-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-04-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5485d0e51e04581c2defb28b7f72a768f6b1f790da21f849c342d8f5891606f9",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "57bb2516d5370e802a0012ed6291501fd4581e9ce556956a96588f0418e0367e",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b2d1befdf9eb6e931176f1b35afd9c160cbf1e3bdc2aa5136b3ee9c8588054b5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1495c04d883dd1a8913cfafff7562b4cc9760c253287a805b2e4858d702f540a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-07",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-07"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "737f718778b120ce2635e4fe9a2d0541d98b3ad32da0249aff8eda9ebfd02b29",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "88758c05d58345dd92cf1e7f62d83946289662b14fd0714dba3ba900b007104f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d592dedeab97db40b30fbc21bbac6be05cffff416a9fb7ef06ffb02bd307761a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "ccb5025a509b5a3f58d2c2021539b9682d92bc13808ccd274ffb64a4e081000f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3ad2df35ee3ea44b6eb5af3eee123d02a62930d682132b489aff29b3f82e99c1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-14",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-14"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "90d2b147551a6ddfa12b7dccc47796dc0bc78f1edf3320a35535f71a6b545da6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-15",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-15"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5eff02bfd9732a6cac6693347265a6a548319ec40573604070a367942bf1c91a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f9df06e307c4832826752c2877c6ca34440ae28928f29af70b71df0260becb44",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-17",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-17"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "e16256eacde474902f217444dba1379652cb643548bf53ff3f119609ccec3f12",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 600
+        },
+        {
+          "windowIndex": 1,
+          "openMinuteIst": 690,
+          "closeMinuteIst": 750
+        }
+      ],
+      "canonicalContentChecksum": "feef040c085d2255991274ea159efae50e86e1fd7df3925bc2b3fe8fdb9e4fd8",
+      "canonicalRowCount": 105
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-21",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-21"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "86ef1fda1c7cd4d774ffcbc7483f9539fac0b7ca5cde1021ae3150e796c83686",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b29076513aa17f2fdb15f708fbe819c904f69b20ef549ed39c683ec5046aed2d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "dbba7ea32d5c3a797233c11ae742bf80ad983141fbb9cd3be04e636d67764e3c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "84a33a23c21b4713d8e1bdfb974e9f2cac576c949ee2e5b564551f743a067de5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "199b7d755fda9aef48669b222ef1dddf9c4affd958a2878699e3dddecc5838c2",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-28",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-28"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "46ced7b426630c5a5273d5c0a64b49f04e3215b0e9697a04a66483efefe38319",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "be69e5cee58416595df71ea9b6bb44d82b0306170e55f288ebd6ad1f6a6c64bb",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0dc50d7ddf43120ed6811552a05de1658ea1cd508a9cfe8b1a79fab30b0fd89d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-05-31",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-05-31"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "cfd2da2fe9e479503b521f64335c80f05999427a267cb3c2924430fbd8c077f4",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "39470f6ae4fcc6e279b253c61bd0a7f26830a131e6f3ae48b39de851bdce65ca",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "26c761ce558d227e63b9498a0cb254fd7c77a75f86446dedc1f859b80178bac1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c38eb08a1428224a930cb5ce90e4fe5dee6af249fc6c77a57531d16bd0e6c614",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f9f055c539dd5c12738ec4cdd0bc874b470a423bbf4831ca835d5ee931b9cb4d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-07",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-07"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "88d5365e30549e542bd898d239eaa46512b57b4b6db7ff75ac356376864978a7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1c7e4c08388778f7259263aa64016a53a3e199ec0fd945a07e5735f98dc26ba9",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3523e9f50f65b9b57841c01d8be86ad9047decf68fc6bff0822e16d6558ca194",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "2c89b219607eae283ab060d3c46541e26da000108e13ffa041ac8ee8749fb24e",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "05e00dc40929f873d8f71c8822e6b655eabddc5e6decdd1296dea27005b0e684",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-14",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-14"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "e0bd0793174451874807624ba41db55e0937a4281df33a73b4b918d0b71e29df",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "771c326ebd370dc771a7e1112a90f528759210299a1d75dc1103c0d979ab8e0e",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3d0cb420d37d3d446ed7fc5072ef6b14ef99ad090717f70ada1b2135b283e8d6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-20",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-20"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7aadc6454649c21476bd59485aebd34c930834259833b775eeb4a5311d507484",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-21",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-21"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "60d0e9458339834acb1611d69b91a29d889791809f3ca9c0b14e87732da833e3",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5f729d44c27f65e8a9d601fa15eed7e3aaf0c48deba57948e1bb8f311789b381",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-25",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-25"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3e3ac1d3fefe4cba007e6ccfd4fa5f172428bd951e30ef70287bdc480271a1f6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "01db0e7dfc5166edf1a2aff6ac6fb60a77156bc7a8811ed4b5a4b4adfbc30bdb",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b4b8ba223f4b3d82203539266d9258f15558224fae58b353e17f531f04dbe231",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-06-28",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-06-28"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "655e203ad9d4161ecc560c31e2f284ddb19945389882f2aad440f5aeeecaec8b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7ebd339437cfa2a9880dedbf4f5e6e79e4caa1341671c523c650e89a868d2bb5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d2e721d33ebc7909b8081033d2b5652ac84fade5e23990a57fa7100e8f2ae344",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "139c8e374f3fd91d1442cf2eeb6430c1110d1f164fecdecd5f760fe015abdb4d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "98b55fbc815e547274854dcc3fe96faaea6d2cb2e9282a9bd06ec735b908095d",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "ca55462a2a645c5921e99528097c8b1eddd5637d4d57b885a730aaa63e6f0f7e",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "712d7f2a4189bba21f7160bd7339a9e99ec507492a02c06f92c516ec8af35da9",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "38783fbd7494eef487c7a41acbc064fba893ee14a5d7d6c17501aab4b98c0e2a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "a94081ca5babe2821f1b9f7d966a004810e11928fb32b11ea3e066cb6166fbe2",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "55549f0e2a02902b0389c08900ca2e81c9953140f4c9d03ffd6e2f24c9deb46c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "715ae9a7e1013b415b196d801bf949df01d16be48732a629dab32e83834a2b22",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-15",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-15"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "8e7b702b051941204a92d00e9c9fc82ae0acda2c25943dade9fd9721aaff964a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "929bf41b92446267d496ccb957b648501eff88820d0faa8b00286c86bd5beb82",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c07b6ee0fec3fbcc49df9c202cd32b24c3cbc34eb6245c21b271e745434c5ba1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b10fbc02ce46d2e2913f66743040b81104da6836414fb816abec35d6c929d591",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "246c7ca5681dec9d39a7914aacd26002c3bfd1a5ffc1845520a818d43410af71",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "ea5d200b76659fd8037a3e68ba8f30cb18b727f41d34fe8ea98abc75cf1afc41",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "22f7e55040346fa76c94f89326efe81829b2cd3241705b288d25f9d7ef4a28cc",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-25",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-25"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "273770415f814497a12a8d68d94df22ef88f672f024e260cc8d73630e98f217c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4b0c1197e18a8e809e35ab4af4d2847de2885b5767c186ee8fd1cd06610e57aa",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "fe5391fd55e98cb60287c90a79dde62a1cf4f3c56a13a4b1d2b407db6dea09cb",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7ec7380ab87a2241065a80157515d2cbf17a78dbcf6199275a00baab880e4259",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-07-31",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-07-31"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0ee4ad3467a48a0d4db7a3a789013defd1502daead116c3f31b42253084d65e5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0a7b0ba9f92566acd02c6d43e28b26003c766a2cf5531889af04f3211e6a2503",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6a7c78fe6b843db34ceedde658fe4bd0c448d138de0659295289f10549dd8330",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4c526b3bce9a9bc997594b48cc8ce1da27704482c02b316ab095e1608936722e",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "98e76cfff0c5e000b480a0e49119a9927827e34700ba78e7ab745d0e3f6fd09a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-07",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-07"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0d2929b7b6bb8179de05b4268d274a0e4500bc18822ff3e3887f0c47bef5d372",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "765942068d491ad8cc30b1f020fa98fdf88dacbbb44035bcfabd09ba5a5ec561",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "ebe843463d3d9b19d0da725ac3b668a15a2902e025af6b7e073ac9a0ac2dcb3b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3a7e1c6d441e555d0e5c608f778348e71825f7ad7eedd89037891b9f9cfc528b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "75b825aabf19315d92d07c0e46cbae0f103cce7ed2d031b86078f221b2a853f2",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-14",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-14"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5e4991d99ad17406776281346d7c6a91fbb5a4424cb3a39012d2446d8c091fc5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "53f1e20be5db16bb3a536ecb0ecd512f8ca55c6949977fad97b9f74481dfc903",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d0760faba08614b9ef14b38622ac0e3a2c86ff392c5c4d457a1627eef2acc0b7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-20",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-20"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "86b87c7eec1a703fc96730f8e576c0cc467f56e9f70edc4e13297c068451453c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-21",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-21"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1ba23d276d73f13598923027a0e1fd78de7d28632a73c0e97a979e7c258b0617",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "ab679c1c2a90d5f185fcd522b285fc81f3211e43eb2b435e0e6315a093fd5eff",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c57ba6aeab05de83400697384d4089fe0c12c25dd95384a461bf64e529cd3507",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "86686545f9781fe039c1418a85babfc25ce186c63bb7137965ad426ba1857ea9",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d3f34d347dbbf89f3e9165f77d70debb0a0719ccd5c5756480cc12baa8f80314",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-28",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-28"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "43c9e5079ed49148bd0587b708fcaf804b8e9c3f3b0e001eb1219ade920cdd77",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1d1d9cc7603604d9ea7dc2bdab44aa66d7a0c85390b2d02f08e16199a2ce9030",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-08-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-08-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "859bad3b740ab3720f343ab1c7908e2742405be926373e8a38b51b80994cadae",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5b3b8d853a96fa137c1986dc48d5a54055a9ea319247691b5d993ed3555761c3",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c1b594f45f6d0ddb8a8315db60c3a28be22ff7523c973dc4cc7c153866ce6d4b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c1446fa712334462a051441bb5e0b721db50296c53633c861e622575330282bc",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "bd110d9bcc0d8905c181c63a21b309dedb819700e625a9edd250728fd8612e47",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "2cc22cd7eaf7d0e308aadf3e4bc60551a01fa5657e40db44d089e6342e854d56",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9c36adfb04d653a7661c09a1c3881d4ae134945eec45e1e3c662a0d85d28c0f7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9d35a518a3ad506f72371ae08f6cd988cc9601b2dec96bfc79135b849552e8dd",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4714cb97e9e31c960c3fbc7e4b1aa6830b041f3904c6363209d772d82c9ad920",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "da27d88fff44d2fa2c6aa81e4414973014bf1cbbe3f4700b41d30a5edcf7ccb0",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "492b8abc0ffcf3bbe09ac0b8042b9f1d52098805b04a93319322cd872f56942a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "514809889c3710cf569ecbbb465b2e4971e9897e51d987bf3d96a3f639359a70",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-17",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-17"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "180232234fa357288a04c8b953dfc7073738ac90d7fb8a14b3b3f7a1aabe9b96",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c3a04e38573b80c4b73c77573b3416615f97e960d92025c74658c07397ae95c4",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d09ef90f77ad8c8bd28e0b7553872d2a1610485d0371278024aeb65d0e44be9c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-20",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-20"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4c19a6b24c7fbca3bef21a525c66144202cf81ddb15c510bad5db5684dbd4f63",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "70cba4cc90b25c296e4409648bc6e537c1b333b5d38f6cb23615b15a57f33387",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "ff60564f217d281cea7f007022800cdbe42a8b2d5379bdeccbbb13bae49a0573",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-25",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-25"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "735829226bf142c2ad57c8ee084799a581a22836b4f9f5be3679fafdfbcaec5c",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0febd8143fcf57667eecc945355d11a301c2301379ba20dd7ce3d776b4c004f3",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6e60613d35e6988c4e07013c6f7de3e059e430c5df93934eeb2cdd0437d12b76",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-09-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-09-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3e0c093aaf6c4c083408ece06e63ac3813983b8aa012bdb841196ef4b9840a8f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "a6ef45215cae8c796d801fb1c2ed5e75b02876f0b2c6a225a3f824ae46c0279a",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "cf372188e722055d0b5ad9ae64d232d8fbe4506a29b10237f12325ac160d9192",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9df6a3586a6cdfe7f50fdec32e61d2943a0999afb066ed4a1a8a000608598318",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-07",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-07"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "2ff6c26ef9168a0027911ef8d9c71467f5ca11a44884bfde2536cc388bb4896b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f1aa9be420328af33cab95c68d832cfb0e66bdb7ee52c72a8f26a9fd5d2e03c1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b3062fec819b9d0782bf4520aeea3a1c9c2c140ba148f7e6c437e764c2803dc8",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b6a49394069053510de585ed82fb4e7775d40585f15fcbf6c6f0194891f87c85",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9b83a828e7f1be0ca1358776f60a94eea0dee418488a08910850845b0f702bd6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-14",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-14"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3b2ada580158436624258b08f9d6358080b6dd02c64f291f350b3cdb6a22c421",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-15",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-15"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "825936bd263e6916b7d92e16878668a1f942ab72098ee514acf6865d76b854c7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "a6056335fc6f13681789dcef9ee9207315edddabde58b89b048c7d4e8edf02d7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-17",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-17"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b598436c0f852514900842e2601c8371394351136c711639dc89fb27b67f344b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4972c73fdd4d89e986cc512e398a0a2a298ee1cfbf49495ce6bcbd9bbcf0ceb4",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-21",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-21"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0cb5c917c6b42484f1c8b43359560d49ac3694639f04bd85b5be88662c651d55",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3b0e364f7bdfe868248d480d2a86bd1563eceddc3f67bdc7986036c81cea50e9",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3c5d58b8086742dd8f9f5e2bcd5f845b8a2fb1575e70f7ac1c4a5ffb99c98691",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6b4f25d2012180752afa1ddbd7858d1671a23fe270d7df1cc571c0c4df6b53e2",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-25",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-25"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "be556e677a37d0ecfd1615a4e020432789cf92e61b49ae49f62db19fae3ae329",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-28",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-28"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "0fb3af7de90e3c6f20b33508846141ec7511972b94a11cf5bf15941e4a829254",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "89bd62d1afefa2bb81aef8109848494eb660ea9a6835a90edaeddd44e7fc1b67",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c418103c0c615e094c1e2814b3c17907a266d8a83139eb29a68772c2acd76041",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-10-31",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-10-31"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9aaaa441d7c06a40a317ccb1170d833d69ab3fc21b8a65b1f862505ab97bc3ed",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-01",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-01"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 1080,
+          "closeMinuteIst": 1140
+        }
+      ],
+      "canonicalContentChecksum": "eb8c28c512005d92147480a292e5c6c44a80653c40bc65f2ca748c6cd6142360",
+      "canonicalRowCount": 60
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "c054aaf9a4c2aa5e67cfcdaaccc086c44d8bc94540773910025e2b72d1c8fcb6",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "69e61d0eeb7effee0eb564ca4a7bab0db1588533838e7cdb5388e6cfacb06996",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "29cc77b1957c12303e6f3fff68f4539070387e00d5b84088b8d9e3165953e9b7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-07",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-07"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "a6510b34857178b71d474e5aabc3918ca4c2fa3a987289ecdc33963d4fc85260",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-08",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-08"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "080e23944250dea44df62184b21c8b2f3f183983c67400cbf5aea80e89ab8bc1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "fd048b5b965e20c94a75714971e125d81ff7ebe1c02ef108687ebd5c0215fe12",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "1acc26dfff1de068b3bf34f997f2969c2c64b47aa76dbff1b8d9b7dd633d412e",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "2ea820a923767dd6a2e12093f62356857ccacf0b7620172f3f4ceda850253664",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-14",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-14"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5d787d977c94cfda852991ae0d33c3cc5b2a6868fc75b0f2a61bbd7480a7ab60",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7a2082b3a0c2f20c9d96ffacae33b6b2125eca620901e2dcb7afb7115165a0f5",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4deea9ae3157ed41779351d98757071afc1a7f1f88ce7daf01fe201b226a9d0f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-21",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-21"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "441132cce62b70c1f1fe3c9b689349928d542ca362f1c66c4ffc1218f70b30ca",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-22",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-22"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "e6af12493f6938a751ab0d3af3280bca8459eaab7ba8fe4983c586f0fe2c8460",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-25",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-25"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "063007ab11499edc63c7e86e1543c2d9d926cc89a30234d1f835e352d3871b03",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "5ae4c212f0e934abd52738e20b17f00b10adbd88fd250df903dfd8c82320166f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "7b34cd59d0db98909bb56abcb2594f2eb226603867e1966b8577da9df86f76e7",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-28",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-28"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "03af2ef6cff884796b0a1e4e66a0bb5e69d9513ee64d84bfb003b67b25365610",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-11-29",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-11-29"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "077f1bbbbccf88659912170aa46cfb075a26515c7d6b2513988174b93fe6d93b",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-02",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-02"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "88593b4153ec98b5eb017f88f29b2966b9dfa28a17ec6a2bf1d511da2d690b12",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-03",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-03"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "3d91dc3a1b3518708ee7af03504608075e430b75e13c1ab9c09b7339bd023343",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-04",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-04"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d4bd205f03b25f1cb7e938024cc7bf73cbab4f90af7b2982d2bd560e31808e3f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-05",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-05"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "aaeb6f38fe663fa4994227a0eaa3cede396eecf07c667a8eb937f3ad21c99434",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-06",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-06"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "b4c7158511482a916b0edeb80170c2612e945ef24d92b72b37265c467b967e60",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-09",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-09"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "94fe1fcab6a0d17748c1b2832a4e4ffbdaaf15bf6020a160cc874320991658a1",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-10",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-10"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "f15b4297dc96d3c1a90621683f9a969e5a625b008487aa10eb9e206e19c11468",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-11",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-11"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "321a7c8fd6ff25e75946a2dbf749ae61c3c3b473519fb26429d6aec23fe19abd",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 2,
+      "tradingDate": "2024-12-12",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-12"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "d86938255159f1496a8f1507abee3d08a70a4bf467286d33ce062eb6a540631c",
+      "canonicalRowCount": 375,
+      "repairProvenance": {
+        "kind": "FULLY_PROVENANCED",
+        "primaryProvider": "UPSTOX",
+        "repairProvider": "GROWW",
+        "repairedMinuteCount": 1,
+        "repairPolicyVersion": 1
+      }
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-13",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-13"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "225bb3959bcf77904a3664130b8dfb222261fce5de872430007ad7840daab4ce",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-16",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-16"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "983e6602e5fea061f64e76f74c7dabc5ab9068013cc93d4cb79b8c6c0900cceb",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-17",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-17"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "42e09738abb0e6d65cb54b3befbd4e2185cf2599235d405d312368332c00ebea",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-18",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-18"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "eb0642a4135e3a350db08f6f472235cb1b04b342806b88a7f226bc85bfafcfd0",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-19",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-19"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "e1a2d45c65c660e7d8944156cda7829de03eebab6ec636df7f1935a47218a798",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-20",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-20"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "9e2e34f90b543bd0987d44631149d5f93059afa8446357e4b56b92e3074d1c38",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-23",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-23"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "4b07d4dc97cb82ba2addf8e76dbe3fd91ef5480197f09e86979cee3f202bf022",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-24",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-24"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "17785caec19bdbd41fe9096977a0c59d923907a6273ea4c22b43644c0a69500f",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-26",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-26"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "6245a472b74c16f8c035b9bbbad45eb38cb721adf38279ab6da0a16759a15541",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-27",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-27"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "8f6ceb350d72521a7bf940f11c27b2509292b90c741178d5e6b51b0d2a1285be",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-30",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-30"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "db6299b1aa67a245dcf378250fd9422ea4320c9391e3fb550077972d3821cb86",
+      "canonicalRowCount": 375
+    },
+    {
+      "precedenceTier": 1,
+      "tradingDate": "2024-12-31",
+      "persistedCanonicalHealthStatus": "HEALTHY",
+      "identity": {
+        "datasetKind": "UNDERLYING_1M",
+        "provider": "UPSTOX",
+        "instrumentKey": "NSE_INDEX|Nifty 50",
+        "timeframe": "1minute",
+        "tradingDate": "2024-12-31"
+      },
+      "canonicalizationVersion": 1,
+      "healthSemanticsVersion": 1,
+      "calendarSessionWindows": [
+        {
+          "windowIndex": 0,
+          "openMinuteIst": 555,
+          "closeMinuteIst": 930
+        }
+      ],
+      "canonicalContentChecksum": "74f87f6fa6476ce168ddd46a99639975c97a3d8414cfcae84836c9f99def8d81",
+      "canonicalRowCount": 375
+    }
+  ],
+  "sessionCounts": {
+    "expectedSessions": 249,
+    "researchReadySessions": 249,
+    "realCanonicalSessions": 248,
+    "compositeRepairedSessions": 1,
+    "authorizedDerivedSessions": 0,
+    "unavailableSessions": 0
+  },
+  "assemblyContentChecksum": "37773c297a72bd7791b45c28272bd83e95fbeede8d9156526a4f157f4b408f32"
+}
