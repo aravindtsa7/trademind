@@ -14,10 +14,12 @@ import {
   March7NoLookaheadProof,
   March7NoLookaheadProofEntry,
   RESEARCH_UNDERLYING_YEAR_CERTIFICATION_SCHEMA_VERSION,
+  RESEARCH_UNDERLYING_YEAR_CERTIFICATION_STORAGE_ROOT,
   ResearchUnderlyingYearCertificationIntegrityError,
   ResearchUnderlyingYearCertificationV1,
   buildResearchUnderlyingYearCertification,
   computeResearchUnderlyingYearCertificationChecksum,
+  deriveResearchUnderlyingYearCertificationSummary,
   readResearchUnderlyingYearCertification,
   researchUnderlyingYearCertificationRelativePath,
   storeResearchUnderlyingYearCertification,
@@ -95,6 +97,26 @@ function baseInput(overrides: Partial<BuildResearchUnderlyingYearCertificationIn
     resamplingManifestChecksum: '3'.repeat(64),
     sessions,
     march7Proof: MARCH7_PROOF,
+    ...overrides,
+  };
+}
+
+/** B-M9: a clean-canonical-year (e.g. 2023) fixture -- ZERO authorized-derived sessions, all three derived-specific fields explicitly null. */
+function cleanYearBaseInput(overrides: Partial<BuildResearchUnderlyingYearCertificationInput> = {}): BuildResearchUnderlyingYearCertificationInput {
+  const sessions = overrides.sessions ?? [sessionRecord('2023-01-02'), sessionRecord('2023-01-03')];
+  return {
+    schemaVersion: RESEARCH_UNDERLYING_YEAR_CERTIFICATION_SCHEMA_VERSION,
+    certificationSemanticsVersion: 1,
+    identity: { instrumentKey: 'NSE_INDEX|Nifty 50', sourceTimeframe: '1minute', year: 2023 },
+    calendar: { expectedSessionCount: 2 },
+    canonicalManifest: { datasetId: 'UNDERLYING_1M_xyz', datasetChecksum: '2'.repeat(64), manifestSchemaVersion: 5, canonicalizationVersion: 1, healthSemanticsVersion: 1 },
+    physicalStorage: physicalStorageRef({ sessions: [{ tradingDate: '2023-01-02', sessionContentChecksum: 'c'.repeat(64), canonicalRowCount: 375, physicalFileChecksum: 'p'.repeat(64) }] }),
+    derivedSnapshotChecksum: null,
+    derivedSessionChecksum: null,
+    sourceAssemblyChecksum: '7'.repeat(64),
+    resamplingManifestChecksum: '4'.repeat(64),
+    sessions,
+    march7Proof: null,
     ...overrides,
   };
 }
@@ -319,7 +341,9 @@ test('B-M8-HIGH-02 construction: a missing expected entry fails closed', () => {
 
 /** Simulates a hand-authored/corrupted stored artifact that never went through `buildResearchUnderlyingYearCertification`'s construction-boundary guard: recomputes `certificationContentChecksum` over the TAMPERED payload so the resulting file is fully self-consistent (its own checksum matches its own content) -- proving the read-time semantic validator, not merely a checksum mismatch, is what rejects it. */
 function selfConsistentTamperedCertification(base: ResearchUnderlyingYearCertificationV1, march7ProofOverrides: Partial<March7NoLookaheadProof>): ResearchUnderlyingYearCertificationV1 {
-  const tamperedProof: March7NoLookaheadProof = { ...base.march7Proof, ...march7ProofOverrides };
+  const baseProof = base.march7Proof;
+  if (baseProof === null) throw new Error('selfConsistentTamperedCertification: base.march7Proof is null -- this helper only tampers an existing non-null proof');
+  const tamperedProof: March7NoLookaheadProof = { ...baseProof, ...march7ProofOverrides };
   const payload = {
     schemaVersion: base.schemaVersion,
     certificationSemanticsVersion: base.certificationSemanticsVersion,
@@ -348,8 +372,9 @@ test('B-M8-HIGH-02 read boundary: a SELF-CONSISTENT forged artifact with the CRI
   const root = tempRoot();
   try {
     const certification = buildResearchUnderlyingYearCertification(baseInput());
+    const march7Proof = certification.march7Proof as March7NoLookaheadProof;
     const forged = selfConsistentTamperedCertification(certification, {
-      entries: certification.march7Proof.entries.map((entry) => (entry.target === ResampleTargetTimeframe.THREE_MINUTE && entry.bucketStartIst === '10:24' ? { ...entry, expectedAvailableAtIst: '10:26' } : entry)),
+      entries: march7Proof.entries.map((entry) => (entry.target === ResampleTargetTimeframe.THREE_MINUTE && entry.bucketStartIst === '10:24' ? { ...entry, expectedAvailableAtIst: '10:26' } : entry)),
     });
     writeForgedCertification(root, forged);
     assert.throws(() => readResearchUnderlyingYearCertification(root, forged.certificationContentChecksum), ResearchUnderlyingYearCertificationIntegrityError);
@@ -362,8 +387,9 @@ test('B-M8-HIGH-02 read boundary: a SELF-CONSISTENT forged artifact with verifie
   const root = tempRoot();
   try {
     const certification = buildResearchUnderlyingYearCertification(baseInput());
+    const march7Proof = certification.march7Proof as March7NoLookaheadProof;
     const forged = selfConsistentTamperedCertification(certification, {
-      entries: certification.march7Proof.entries.map((entry, i) => (i === 0 ? { ...entry, verified: false } : entry)),
+      entries: march7Proof.entries.map((entry, i) => (i === 0 ? { ...entry, verified: false } : entry)),
     });
     writeForgedCertification(root, forged);
     assert.throws(() => readResearchUnderlyingYearCertification(root, forged.certificationContentChecksum), ResearchUnderlyingYearCertificationIntegrityError);
@@ -376,7 +402,7 @@ test('B-M8-HIGH-02 read boundary: a SELF-CONSISTENT forged artifact with a dupli
   const root = tempRoot();
   try {
     const certification = buildResearchUnderlyingYearCertification(baseInput());
-    const entries = certification.march7Proof.entries;
+    const entries = (certification.march7Proof as March7NoLookaheadProof).entries;
     const forged = selfConsistentTamperedCertification(certification, { entries: [entries[0], entries[0], entries[2], entries[3], entries[4]] });
     writeForgedCertification(root, forged);
     assert.throws(() => readResearchUnderlyingYearCertification(root, forged.certificationContentChecksum), ResearchUnderlyingYearCertificationIntegrityError);
@@ -475,4 +501,193 @@ test('a duplicate session date injected after storage (raw file tamper) fails cl
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+// ============================================================================
+// B-M9: clean-canonical-year (zero authorized-derived sessions) generalization
+// ============================================================================
+
+test('B-M9: a clean 0-derived candidate is accepted at construction, all three derived-specific fields explicit null', () => {
+  const certification = buildResearchUnderlyingYearCertification(cleanYearBaseInput());
+  assert.equal(certification.derivedSnapshotChecksum, null);
+  assert.equal(certification.derivedSessionChecksum, null);
+  assert.equal(certification.march7Proof, null);
+  assert.equal(certification.summary.authorizedDerivedSessions, 0);
+});
+
+test('B-M9: clean candidate serializes explicit null (not omitted) for all three derived-specific fields', () => {
+  const certification = buildResearchUnderlyingYearCertification(cleanYearBaseInput());
+  const roundTripped = JSON.parse(JSON.stringify(certification));
+  assert.ok('derivedSnapshotChecksum' in roundTripped);
+  assert.ok('derivedSessionChecksum' in roundTripped);
+  assert.ok('march7Proof' in roundTripped);
+  assert.equal(roundTripped.derivedSnapshotChecksum, null);
+  assert.equal(roundTripped.derivedSessionChecksum, null);
+  assert.equal(roundTripped.march7Proof, null);
+});
+
+test('B-M9: clean candidate checksum is deterministic across identical rebuilds', () => {
+  const a = buildResearchUnderlyingYearCertification(cleanYearBaseInput());
+  const b = buildResearchUnderlyingYearCertification(cleanYearBaseInput());
+  assert.equal(a.certificationContentChecksum, b.certificationContentChecksum);
+});
+
+test('B-M9: existing 1-derived March7 topology still requires and accepts all three non-null fields, exhaustive validator still runs', () => {
+  const certification = buildResearchUnderlyingYearCertification(baseInput());
+  assert.notEqual(certification.derivedSnapshotChecksum, null);
+  assert.notEqual(certification.derivedSessionChecksum, null);
+  assert.notEqual(certification.march7Proof, null);
+  assert.equal(certification.summary.authorizedDerivedSessions, 1);
+});
+
+// ---- B-M9 construction-boundary: mixed/incoherent null combinations fail closed ----
+
+test('B-M9 construction: 0 derived + non-null derivedSnapshotChecksum (session/proof null) fails closed', () => {
+  assert.throws(() => buildResearchUnderlyingYearCertification(cleanYearBaseInput({ derivedSnapshotChecksum: 'a'.repeat(64) })), /authorizedDerivedSessions=0/);
+});
+
+test('B-M9 construction: 0 derived + non-null derivedSessionChecksum (snapshot/proof null) fails closed', () => {
+  assert.throws(() => buildResearchUnderlyingYearCertification(cleanYearBaseInput({ derivedSessionChecksum: 'b'.repeat(64) })), /authorizedDerivedSessions=0/);
+});
+
+test('B-M9 construction: 0 derived + non-null march7Proof (snapshot/session null) fails closed -- proof present with 0 derived is rejected', () => {
+  assert.throws(() => buildResearchUnderlyingYearCertification(cleanYearBaseInput({ march7Proof: MARCH7_PROOF })), /authorizedDerivedSessions=0/);
+});
+
+test('B-M9 construction: 1 derived + null derivedSnapshotChecksum (session/proof non-null) fails closed', () => {
+  assert.throws(() => buildResearchUnderlyingYearCertification(baseInput({ derivedSnapshotChecksum: null })), /authorizedDerivedSessions=1/);
+});
+
+test('B-M9 construction: 1 derived + null derivedSessionChecksum (snapshot/proof non-null) fails closed', () => {
+  assert.throws(() => buildResearchUnderlyingYearCertification(baseInput({ derivedSessionChecksum: null })), /authorizedDerivedSessions=1/);
+});
+
+test('B-M9 construction: 1 derived + null march7Proof (snapshot/session non-null) fails closed -- null proof with derived topology is rejected', () => {
+  assert.throws(() => buildResearchUnderlyingYearCertification(baseInput({ march7Proof: null })), /authorizedDerivedSessions=1/);
+});
+
+test('B-M9 construction: 2 authorized-derived sessions is not representable by the existing March7 proof model and fails closed', () => {
+  const twoTier3Sessions = [
+    sessionRecord('2022-01-03'),
+    sessionRecord('2022-03-07', ResearchSessionSourcePrecedenceTier.AUTHORIZED_DERIVED_IMPUTED_SESSION),
+    sessionRecord('2022-09-15', ResearchSessionSourcePrecedenceTier.AUTHORIZED_DERIVED_IMPUTED_SESSION),
+  ];
+  assert.throws(() => buildResearchUnderlyingYearCertification(baseInput({ sessions: twoTier3Sessions })), /not representable by the existing trusted March-7 proof model/);
+});
+
+// ---- B-M9 read-boundary: self-consistent (recomputed checksum) forged variants fail closed ----
+
+/** Forges a certification's checksummed payload (sessions and/or the three derived-specific fields), recomputing BOTH `certificationContentChecksum` AND `summary` from the forged content so the artifact is FULLY self-consistent -- isolating the derived-topology coherence check as the ONLY thing that can reject it (never an incidental summary/checksum mismatch). */
+function selfConsistentForgedCertification(base: ResearchUnderlyingYearCertificationV1, overrides: Partial<Pick<ResearchUnderlyingYearCertificationV1, 'sessions' | 'derivedSnapshotChecksum' | 'derivedSessionChecksum' | 'march7Proof'>>): ResearchUnderlyingYearCertificationV1 {
+  const payload = {
+    schemaVersion: base.schemaVersion,
+    certificationSemanticsVersion: base.certificationSemanticsVersion,
+    identity: base.identity,
+    calendar: base.calendar,
+    canonicalManifest: base.canonicalManifest,
+    physicalStorage: base.physicalStorage,
+    derivedSnapshotChecksum: base.derivedSnapshotChecksum,
+    derivedSessionChecksum: base.derivedSessionChecksum,
+    sourceAssemblyChecksum: base.sourceAssemblyChecksum,
+    resamplingManifestChecksum: base.resamplingManifestChecksum,
+    sessions: base.sessions,
+    march7Proof: base.march7Proof,
+    ...overrides,
+  };
+  const certificationContentChecksum = computeResearchUnderlyingYearCertificationChecksum(payload);
+  const summary = deriveResearchUnderlyingYearCertificationSummary(payload.sessions, payload.calendar.expectedSessionCount);
+  return { ...payload, summary, certificationContentChecksum };
+}
+
+test('B-M9 read boundary: a self-consistent forged artifact claiming authorizedDerivedSessions=0 while RETAINING non-null derived proof/checksum fails closed', () => {
+  const root = tempRoot();
+  try {
+    const validMarch7Cert = buildResearchUnderlyingYearCertification(baseInput());
+    const allTier1Sessions = [sessionRecord('2022-01-03'), sessionRecord('2022-01-04')];
+    const forged = selfConsistentForgedCertification(validMarch7Cert, { sessions: allTier1Sessions });
+    const absolutePath = join(root, researchUnderlyingYearCertificationRelativePath(forged.certificationContentChecksum));
+    mkdirSync(join(absolutePath, '..'), { recursive: true });
+    writeFileSync(absolutePath, JSON.stringify(forged, null, 2));
+    assert.throws(() => readResearchUnderlyingYearCertification(root, forged.certificationContentChecksum), ResearchUnderlyingYearCertificationIntegrityError);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('B-M9 read boundary: a self-consistent forged artifact claiming derived sessions > 0 while all proof/checksum fields stay null fails closed', () => {
+  const root = tempRoot();
+  try {
+    const validCleanCert = buildResearchUnderlyingYearCertification(cleanYearBaseInput());
+    const oneTier3Session = [sessionRecord('2023-01-02'), sessionRecord('2023-01-03', ResearchSessionSourcePrecedenceTier.AUTHORIZED_DERIVED_IMPUTED_SESSION)];
+    const forged = selfConsistentForgedCertification(validCleanCert, { sessions: oneTier3Session });
+    const absolutePath = join(root, researchUnderlyingYearCertificationRelativePath(forged.certificationContentChecksum));
+    mkdirSync(join(absolutePath, '..'), { recursive: true });
+    writeFileSync(absolutePath, JSON.stringify(forged, null, 2));
+    assert.throws(() => readResearchUnderlyingYearCertification(root, forged.certificationContentChecksum), ResearchUnderlyingYearCertificationIntegrityError);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('B-M9 read boundary: a self-consistent forged artifact with a PARTIAL null combination (1 derived session, derivedSnapshotChecksum forced null) fails closed', () => {
+  const root = tempRoot();
+  try {
+    const validMarch7Cert = buildResearchUnderlyingYearCertification(baseInput());
+    const forged = selfConsistentForgedCertification(validMarch7Cert, { derivedSnapshotChecksum: null });
+    const absolutePath = join(root, researchUnderlyingYearCertificationRelativePath(forged.certificationContentChecksum));
+    mkdirSync(join(absolutePath, '..'), { recursive: true });
+    writeFileSync(absolutePath, JSON.stringify(forged, null, 2));
+    assert.throws(() => readResearchUnderlyingYearCertification(root, forged.certificationContentChecksum), ResearchUnderlyingYearCertificationIntegrityError);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('B-M9 read boundary: a self-consistent forged artifact with a PARTIAL null combination (1 derived session, march7Proof forced null, checksums retained) fails closed', () => {
+  const root = tempRoot();
+  try {
+    const validMarch7Cert = buildResearchUnderlyingYearCertification(baseInput());
+    const forged = selfConsistentForgedCertification(validMarch7Cert, { march7Proof: null });
+    const absolutePath = join(root, researchUnderlyingYearCertificationRelativePath(forged.certificationContentChecksum));
+    mkdirSync(join(absolutePath, '..'), { recursive: true });
+    writeFileSync(absolutePath, JSON.stringify(forged, null, 2));
+    assert.throws(() => readResearchUnderlyingYearCertification(root, forged.certificationContentChecksum), ResearchUnderlyingYearCertificationIntegrityError);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// ---- B-M9: 2022 committed artifact byte/checksum regression (read-only, real committed file) ----
+
+const REAL_COMMITTED_2022_CERTIFICATION_CHECKSUM = '48a4c1734368eaeb4580133b3bd8e87649f8f13130c67843eb6d5ca3f83acd71';
+
+test('B-M9: the real committed 2022 certification artifact is still accepted by the reader (read-only, no production CLI run)', () => {
+  const readBack = readResearchUnderlyingYearCertification(RESEARCH_UNDERLYING_YEAR_CERTIFICATION_STORAGE_ROOT, REAL_COMMITTED_2022_CERTIFICATION_CHECKSUM);
+  assert.equal(readBack.certificationContentChecksum, REAL_COMMITTED_2022_CERTIFICATION_CHECKSUM);
+  assert.equal(readBack.identity.year, 2022);
+  assert.equal(readBack.summary.expectedSessions, 248);
+  assert.equal(readBack.summary.realCanonicalSessions, 247);
+  assert.equal(readBack.summary.authorizedDerivedSessions, 1);
+  assert.notEqual(readBack.derivedSnapshotChecksum, null);
+  assert.notEqual(readBack.derivedSessionChecksum, null);
+  assert.notEqual(readBack.march7Proof, null);
+});
+
+test('B-M9: rebuilding the real committed 2022 certification content (read back, then re-run through the SAME builder) reproduces EXACTLY the locked checksum', () => {
+  const readBack = readResearchUnderlyingYearCertification(RESEARCH_UNDERLYING_YEAR_CERTIFICATION_STORAGE_ROOT, REAL_COMMITTED_2022_CERTIFICATION_CHECKSUM);
+  const rebuilt = buildResearchUnderlyingYearCertification({
+    schemaVersion: readBack.schemaVersion,
+    certificationSemanticsVersion: readBack.certificationSemanticsVersion,
+    identity: readBack.identity,
+    calendar: readBack.calendar,
+    canonicalManifest: readBack.canonicalManifest,
+    physicalStorage: readBack.physicalStorage,
+    derivedSnapshotChecksum: readBack.derivedSnapshotChecksum,
+    derivedSessionChecksum: readBack.derivedSessionChecksum,
+    sourceAssemblyChecksum: readBack.sourceAssemblyChecksum,
+    resamplingManifestChecksum: readBack.resamplingManifestChecksum,
+    sessions: readBack.sessions,
+    march7Proof: readBack.march7Proof,
+  });
+  assert.equal(rebuilt.certificationContentChecksum, REAL_COMMITTED_2022_CERTIFICATION_CHECKSUM);
 });

@@ -241,7 +241,8 @@ test('H. wrong 2m aggregate totals -> FAILED, no persist', async () => {
 
 test('I. wrong March-7 imputed minutes -> FAILED, no persist', async () => {
   const base = fullyValidResult();
-  const service = new FakeCertificationService({ ...base, certification: { ...base.certification, march7Proof: { ...base.certification.march7Proof, imputedMinutesIst: ['10:21', '10:22', '10:23'] } } });
+  const baseProof = base.certification.march7Proof as March7NoLookaheadProof;
+  const service = new FakeCertificationService({ ...base, certification: { ...base.certification, march7Proof: { ...baseProof, imputedMinutesIst: ['10:21', '10:22', '10:23'] } } });
   const { success, errorLines } = await run(service);
   assert.equal(success, false);
   assert.ok(errorLines.join('\n').includes('code=WRONG_MARCH7_IMPUTED_MINUTES'));
@@ -249,8 +250,9 @@ test('I. wrong March-7 imputed minutes -> FAILED, no persist', async () => {
 
 test('J. the 3m 10:24-10:26 proof reporting 10:26 instead of the required 10:27 fails closed', async () => {
   const base = fullyValidResult();
-  const tamperedEntries = base.certification.march7Proof.entries.map((entry) => (entry.target === ResampleTargetTimeframe.THREE_MINUTE && entry.bucketStartIst === '10:24' ? { ...entry, expectedAvailableAtIst: '10:26' } : entry));
-  const service = new FakeCertificationService({ ...base, certification: { ...base.certification, march7Proof: { ...base.certification.march7Proof, entries: tamperedEntries } } });
+  const baseProof = base.certification.march7Proof as March7NoLookaheadProof;
+  const tamperedEntries = baseProof.entries.map((entry) => (entry.target === ResampleTargetTimeframe.THREE_MINUTE && entry.bucketStartIst === '10:24' ? { ...entry, expectedAvailableAtIst: '10:26' } : entry));
+  const service = new FakeCertificationService({ ...base, certification: { ...base.certification, march7Proof: { ...baseProof, entries: tamperedEntries } } });
   const { success, errorLines } = await run(service);
   assert.equal(success, false);
   assert.ok(errorLines.join('\n').includes('code=MARCH7_NO_LOOKAHEAD_PROOF_FAILED'));
@@ -258,11 +260,20 @@ test('J. the 3m 10:24-10:26 proof reporting 10:26 instead of the required 10:27 
 
 test('K. a march7Proof entry marked verified=false fails closed', async () => {
   const base = fullyValidResult();
-  const tamperedEntries = base.certification.march7Proof.entries.map((entry, i) => (i === 0 ? { ...entry, verified: false } : entry));
-  const service = new FakeCertificationService({ ...base, certification: { ...base.certification, march7Proof: { ...base.certification.march7Proof, entries: tamperedEntries } } });
+  const baseProof = base.certification.march7Proof as March7NoLookaheadProof;
+  const tamperedEntries = baseProof.entries.map((entry, i) => (i === 0 ? { ...entry, verified: false } : entry));
+  const service = new FakeCertificationService({ ...base, certification: { ...base.certification, march7Proof: { ...baseProof, entries: tamperedEntries } } });
   const { success, errorLines } = await run(service);
   assert.equal(success, false);
   assert.ok(errorLines.join('\n').includes('code=MARCH7_NO_LOOKAHEAD_PROOF_FAILED'));
+});
+
+test('N. a null march7Proof (an unexpectedly clean-year-shaped result) fails closed for the locked 2022 topology', async () => {
+  const base = fullyValidResult();
+  const service = new FakeCertificationService({ ...base, certification: { ...base.certification, march7Proof: null, derivedSnapshotChecksum: null, derivedSessionChecksum: null } });
+  const { success, errorLines } = await run(service);
+  assert.equal(success, false);
+  assert.ok(errorLines.join('\n').includes('code=MISSING_MARCH7_PROOF'));
 });
 
 // ---- exceptions ----

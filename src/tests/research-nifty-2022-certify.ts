@@ -114,7 +114,12 @@ function validateLockedPostconditions(result: CertifyYearResult): PostconditionF
     }
   }
 
+  // The locked 2022 topology always has exactly one authorized-derived (March-7) session -- march7Proof must
+  // never be null here (B-M9 clean-year support only applies to a 0-derived year like 2023).
   const march7Proof = certification.march7Proof;
+  if (march7Proof === null) {
+    return { code: 'MISSING_MARCH7_PROOF', message: 'expected a non-null march7Proof for the locked 2022 (1 authorized-derived session) topology, got null' };
+  }
   if (march7Proof.tradingDate !== MARCH_7_DATE) {
     return { code: 'WRONG_MARCH7_DATE', message: `expected march7Proof.tradingDate '${MARCH_7_DATE}', got '${march7Proof.tradingDate}'` };
   }
@@ -185,7 +190,7 @@ export async function runNifty2022Certify(options: RunCertifyOptions): Promise<b
       `verifiedSessions=${result.certification.summary.verifiedSessions}`,
       `realCanonicalSessions=${result.certification.summary.realCanonicalSessions}`,
       `authorizedDerivedSessions=${result.certification.summary.authorizedDerivedSessions}`,
-      `march7NoLookaheadProofsVerified=${result.certification.march7Proof.entries.every((e) => e.verified)}`,
+      `march7NoLookaheadProofsVerified=${result.certification.march7Proof !== null && result.certification.march7Proof.entries.every((e) => e.verified)}`,
       `certificationContentChecksum=${result.certification.certificationContentChecksum}`,
       `certificationArtifact=${stored.relativePath} (wasNewlyWritten=${stored.wasNewlyWritten})`,
     ].join('\n')

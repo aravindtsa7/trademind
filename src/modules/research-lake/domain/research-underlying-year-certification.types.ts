@@ -175,13 +175,23 @@ export interface ResearchUnderlyingYearCertificationV1 {
   readonly calendar: CertificationCalendarReference;
   readonly canonicalManifest: CertificationCanonicalManifestReference;
   readonly physicalStorage: CertificationPhysicalStorageReference;
-  readonly derivedSnapshotChecksum: string;
-  readonly derivedSessionChecksum: string;
+  /**
+   * B-M9: `null` for a CLEAN canonical year (zero authorized-derived
+   * sessions, e.g. 2023) -- EXPLICIT `null`, never `undefined`/omitted,
+   * since `canonicalManifestJson` throws on `undefined` and deterministic
+   * identity requires an unambiguous "no derived date" representation.
+   * Non-null only for the existing trusted 2022 March-7 topology (exactly
+   * one authorized-derived session). See `assertCoherentDerivedTopology`.
+   */
+  readonly derivedSnapshotChecksum: string | null;
+  /** See `derivedSnapshotChecksum` -- same null/non-null coherence rule. */
+  readonly derivedSessionChecksum: string | null;
   readonly sourceAssemblyChecksum: string;
   readonly resamplingManifestChecksum: string;
   /** Ascending by `tradingDate` -- deterministic, never DB/filesystem/input-array enumeration order. */
   readonly sessions: readonly CertifiedSessionRecord[];
-  readonly march7Proof: March7NoLookaheadProof;
+  /** B-M9: `null` for a CLEAN canonical year (zero authorized-derived sessions). Non-null only for the existing trusted March-7 topology -- see `derivedSnapshotChecksum`. */
+  readonly march7Proof: March7NoLookaheadProof | null;
   readonly summary: CertificationSummary;
   readonly certificationContentChecksum: string;
 }
@@ -309,19 +319,21 @@ export interface BuildResearchUnderlyingYearCertificationInput {
   readonly calendar: CertificationCalendarReference;
   readonly canonicalManifest: CertificationCanonicalManifestReference;
   readonly physicalStorage: CertificationPhysicalStorageReference;
-  readonly derivedSnapshotChecksum: string;
-  readonly derivedSessionChecksum: string;
+  readonly derivedSnapshotChecksum: string | null;
+  readonly derivedSessionChecksum: string | null;
   readonly sourceAssemblyChecksum: string;
   readonly resamplingManifestChecksum: string;
   readonly sessions: readonly CertifiedSessionRecord[];
-  readonly march7Proof: March7NoLookaheadProof;
+  readonly march7Proof: March7NoLookaheadProof | null;
 }
 
 export function buildResearchUnderlyingYearCertification(input: BuildResearchUnderlyingYearCertificationInput): ResearchUnderlyingYearCertificationV1 {
   assertNoDuplicateCertifiedSessionDates(input.sessions);
   for (const session of input.sessions) assertExactTargetSet(session.tradingDate, session.targets);
   assertNoDuplicateStorageSessionEntries(input.physicalStorage.sessions);
-  assertValidMarch7Proof(input.march7Proof);
+
+  const authorizedDerivedSessions = input.sessions.filter((session) => session.sourcePrecedenceTier === ResearchSessionSourcePrecedenceTier.AUTHORIZED_DERIVED_IMPUTED_SESSION).length;
+  assertCoherentDerivedTopology(authorizedDerivedSessions, input.derivedSnapshotChecksum, input.derivedSessionChecksum, input.march7Proof);
 
   const sessions = sortCertifiedSessions(input.sessions);
   const payload: ResearchUnderlyingYearCertificationContentPayload = {
@@ -457,11 +469,53 @@ function validateMarch7Proof(proof: March7NoLookaheadProof): string[] {
   return [];
 }
 
-/** Construction-boundary guard (B-M8-HIGH-02 fix, task: "protect BOTH buildResearchUnderlyingYearCertification... BEFORE a semantically false candidate can be treated as valid, AND readResearchUnderlyingYearCertification... AFTER loading"). Throws immediately -- a semantically false March-7 proof can never even be assembled into a certification candidate, let alone checksummed and persisted. */
-export function assertValidMarch7Proof(proof: March7NoLookaheadProof): void {
-  const violations = validateMarch7Proof(proof);
+/**
+ * B-M9: the ONE coherence rule binding `authorizedDerivedSessions` (counted
+ * from the certification's own session records, never separately supplied)
+ * to the three derived-specific fields. Two topologies are supported:
+ *
+ *  - CLEAN (authorizedDerivedSessions === 0, e.g. 2023): all three fields
+ *    MUST be explicit `null`. Any non-null value here is a smuggled derived
+ *    claim with no corresponding session evidence.
+ *  - EXISTING MARCH-7 (authorizedDerivedSessions === 1, e.g. 2022): all
+ *    three fields MUST be non-null, and `march7Proof` must pass the
+ *    existing, unmodified, exhaustive `validateMarch7Proof` check (B-M8-
+ *    HIGH-02) -- this is the ONLY derived-proof shape B-M9 understands.
+ *
+ * Any other `authorizedDerivedSessions` count (2+) is explicitly NOT
+ * representable by the existing trusted March-7 proof model and fails
+ * closed with a message naming the gap, rather than silently accepting or
+ * guessing at a generalized multi-derived-date proof shape (task: "fail
+ * closed and say that a future generalized derived-proof model is
+ * required").
+ */
+function validateDerivedTopologyCoherence(authorizedDerivedSessions: number, derivedSnapshotChecksum: string | null, derivedSessionChecksum: string | null, march7Proof: March7NoLookaheadProof | null): string[] {
+  if (authorizedDerivedSessions === 0) {
+    if (derivedSnapshotChecksum !== null || derivedSessionChecksum !== null || march7Proof !== null) {
+      return [
+        `authorizedDerivedSessions=0 (a clean canonical year) requires derivedSnapshotChecksum/derivedSessionChecksum/march7Proof to all be explicit null, got derivedSnapshotChecksum=${JSON.stringify(derivedSnapshotChecksum)} derivedSessionChecksum=${JSON.stringify(derivedSessionChecksum)} march7Proof=${march7Proof === null ? 'null' : 'non-null'}`,
+      ];
+    }
+    return [];
+  }
+  if (authorizedDerivedSessions === 1) {
+    if (derivedSnapshotChecksum === null || derivedSessionChecksum === null || march7Proof === null) {
+      return [
+        `authorizedDerivedSessions=1 (the existing trusted March-7 topology) requires derivedSnapshotChecksum/derivedSessionChecksum/march7Proof to all be non-null, got derivedSnapshotChecksum=${JSON.stringify(derivedSnapshotChecksum)} derivedSessionChecksum=${JSON.stringify(derivedSessionChecksum)} march7Proof=${march7Proof === null ? 'null' : 'non-null'}`,
+      ];
+    }
+    return validateMarch7Proof(march7Proof);
+  }
+  return [
+    `authorizedDerivedSessions=${authorizedDerivedSessions} is not representable by the existing trusted March-7 proof model -- B-M9 supports only 0 (a clean canonical year) or exactly 1 (the existing March-7 topology) authorized-derived session per certification; a future generalized derived-proof model is required before a year with multiple authorized-derived dates can be certified.`,
+  ];
+}
+
+/** Construction-boundary guard (B-M8-HIGH-02 fix, extended for B-M9 clean-year support; task: "protect BOTH buildResearchUnderlyingYearCertification... BEFORE a semantically false candidate can be treated as valid, AND readResearchUnderlyingYearCertification... AFTER loading"). Throws immediately -- neither a semantically false March-7 proof nor an incoherent null/non-null derived-field combination can ever be assembled into a certification candidate, let alone checksummed and persisted. */
+export function assertCoherentDerivedTopology(authorizedDerivedSessions: number, derivedSnapshotChecksum: string | null, derivedSessionChecksum: string | null, march7Proof: March7NoLookaheadProof | null): void {
+  const violations = validateDerivedTopologyCoherence(authorizedDerivedSessions, derivedSnapshotChecksum, derivedSessionChecksum, march7Proof);
   if (violations.length > 0) {
-    throw new Error(`B-M8B year certification: march7Proof failed semantic validation at construction time: ${violations.join('; ')}. Refusing to build a certification candidate around a semantically false no-lookahead proof.`);
+    throw new Error(`B-M8B year certification: derived-topology coherence failed at construction time: ${violations.join('; ')}. Refusing to build a certification candidate around an incoherent or semantically false derived-session claim.`);
   }
 }
 
@@ -509,7 +563,7 @@ export function readResearchUnderlyingYearCertification(root: string, certificat
     violations.push(`stored summary ${JSON.stringify(parsed.summary)} does not match recomputed summary ${JSON.stringify(recomputedSummary)}`);
   }
 
-  violations.push(...validateMarch7Proof(parsed.march7Proof));
+  violations.push(...validateDerivedTopologyCoherence(recomputedSummary.authorizedDerivedSessions, parsed.derivedSnapshotChecksum, parsed.derivedSessionChecksum, parsed.march7Proof));
 
   if (violations.length > 0) {
     throw new ResearchUnderlyingYearCertificationIntegrityError(certificationContentChecksum, violations);

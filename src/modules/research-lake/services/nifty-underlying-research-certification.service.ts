@@ -226,12 +226,27 @@ export default class NiftyUnderlyingResearchCertificationService {
       }
     }
 
-    // ---- 8. exact no-lookahead evidence for the authorized-derived date(s). ----
-    const march7Proof = this.buildDerivedDateNoLookaheadProof(tier3RowsByDate, candlesByDate);
-
-    const tier3Selection = resampleableSelections.find((selection) => selection.precedenceTier === ResearchSessionSourcePrecedenceTier.AUTHORIZED_DERIVED_IMPUTED_SESSION);
-    if (!tier3Selection || tier3Selection.precedenceTier !== ResearchSessionSourcePrecedenceTier.AUTHORIZED_DERIVED_IMPUTED_SESSION) {
-      throw new CertificationSourceBindingError('expected exactly one authorized-derived (tier 3) B-M7.2 selection to bind B-M7.1 identity into the certification');
+    // ---- 8. exact no-lookahead evidence for the authorized-derived date(s), if any (B-M9: a clean
+    // canonical year like 2023 has ZERO authorized-derived sessions -- that is a fully valid topology,
+    // never an error). B-M9 only understands 0 derived sessions or exactly 1 (the existing trusted
+    // March-7 topology); any other count is not representable and fails closed.
+    const tier3Selections = resampleableSelections.filter((selection) => selection.precedenceTier === ResearchSessionSourcePrecedenceTier.AUTHORIZED_DERIVED_IMPUTED_SESSION);
+    let derivedSnapshotChecksum: string | null;
+    let derivedSessionChecksum: string | null;
+    let march7Proof: March7NoLookaheadProof | null;
+    if (tier3Selections.length === 0) {
+      derivedSnapshotChecksum = null;
+      derivedSessionChecksum = null;
+      march7Proof = null;
+    } else if (tier3Selections.length === 1) {
+      const tier3Selection = tier3Selections[0];
+      march7Proof = this.buildDerivedDateNoLookaheadProof(tier3RowsByDate, candlesByDate);
+      derivedSnapshotChecksum = tier3Selection.sourceSnapshotChecksum;
+      derivedSessionChecksum = tier3Selection.derivedContentChecksum;
+    } else {
+      throw new CertificationSourceBindingError(
+        `found ${tier3Selections.length} authorized-derived (tier 3) B-M7.2 selections -- B-M9 supports only 0 (a clean canonical year) or exactly 1 (the existing trusted March-7 topology); a future generalized derived-proof model is required before a year with multiple authorized-derived dates can be certified`
+      );
     }
 
     // ---- 9. build certification candidate IN MEMORY (never persisted here). ----
@@ -258,8 +273,8 @@ export default class NiftyUnderlyingResearchCertificationService {
         compressionCodec: descriptor.compressionCodec,
         sessions: descriptor.sessions.map((entry) => ({ tradingDate: entry.tradingDate, sessionContentChecksum: entry.sessionContentChecksum, canonicalRowCount: entry.canonicalRowCount, physicalFileChecksum: entry.physicalFileChecksum })),
       },
-      derivedSnapshotChecksum: tier3Selection.sourceSnapshotChecksum,
-      derivedSessionChecksum: tier3Selection.derivedContentChecksum,
+      derivedSnapshotChecksum,
+      derivedSessionChecksum,
       sourceAssemblyChecksum: request.sourceAssemblyChecksum,
       resamplingManifestChecksum: request.resamplingManifestChecksum,
       sessions,

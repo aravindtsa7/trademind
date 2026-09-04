@@ -388,6 +388,81 @@ function buildService(fixture: Fixture, overrides: { parquetVerifyService?: Parq
 }
 
 // ============================================================================
+// B-M9: clean-canonical-year (zero authorized-derived sessions) topology
+// ============================================================================
+
+const CLEAN_DATE_A = TIER1_DATE;
+const CLEAN_DATE_B = '2022-01-04';
+
+/** A topology with ZERO authorized-derived (tier 3) sessions -- exactly the shape of a clean canonical year like 2023, built with the SAME real production machinery (real resampler, real canonical-manifest/assembly/resampling-manifest builders) as `buildFixture()`, just without any tier-3 date. */
+function buildCleanFixture(): Fixture {
+  const sessionA = healthySession(CLEAN_DATE_A);
+  const sessionB = healthySession(CLEAN_DATE_B);
+  const canonicalManifest = buildCanonicalManifest([sessionA, sessionB]);
+
+  const selA = tier1Selection(CLEAN_DATE_A, sessionA);
+  const selB = tier1Selection(CLEAN_DATE_B, sessionB);
+
+  const assembly = buildResearchUnderlyingDatasetAssembly({
+    schemaVersion: RESEARCH_UNDERLYING_ASSEMBLY_SCHEMA_VERSION,
+    assemblySemanticsVersion: RESEARCH_UNDERLYING_ASSEMBLY_SEMANTICS_VERSION,
+    identity: { instrumentKey: INSTRUMENT_KEY, timeframe: TIMEFRAME, year: YEAR },
+    canonicalManifest: { datasetKind: canonicalManifest.datasetKind, datasetId: canonicalManifest.datasetId, datasetChecksum: canonicalManifest.datasetChecksum, manifestSchemaVersion: canonicalManifest.manifestSchemaVersion, canonicalizationVersion: canonicalManifest.canonicalizationVersion, healthSemanticsVersion: canonicalManifest.healthSemanticsVersion },
+    sessions: [selA, selB],
+  });
+
+  const rowsByDate: Record<string, ResolvedResearchSessionRow[]> = { [CLEAN_DATE_A]: fullRealCanonicalSession(CLEAN_DATE_A), [CLEAN_DATE_B]: fullRealCanonicalSession(CLEAN_DATE_B) };
+
+  const sessionEntries: ResearchUnderlyingResamplingManifestSessionEntry[] = [
+    { tradingDate: CLEAN_DATE_A, sel: selA },
+    { tradingDate: CLEAN_DATE_B, sel: selB },
+  ].map(({ tradingDate, sel }) => ({
+    tradingDate,
+    targets: {
+      [ResampleTargetTimeframe.TWO_MINUTE]: resamplingDescriptorFor(assembly.assemblyContentChecksum, sel, sel.canonicalContentChecksum, ResampleTargetTimeframe.TWO_MINUTE, rowsByDate[tradingDate]),
+      [ResampleTargetTimeframe.THREE_MINUTE]: resamplingDescriptorFor(assembly.assemblyContentChecksum, sel, sel.canonicalContentChecksum, ResampleTargetTimeframe.THREE_MINUTE, rowsByDate[tradingDate]),
+      [ResampleTargetTimeframe.FIVE_MINUTE]: resamplingDescriptorFor(assembly.assemblyContentChecksum, sel, sel.canonicalContentChecksum, ResampleTargetTimeframe.FIVE_MINUTE, rowsByDate[tradingDate]),
+    },
+  }));
+
+  const resamplingManifest = buildResearchUnderlyingResamplingManifest({
+    schemaVersion: RESEARCH_UNDERLYING_RESAMPLING_MANIFEST_SCHEMA_VERSION,
+    resamplingSemanticsVersion: RESEARCH_UNDERLYING_RESAMPLING_SEMANTICS_VERSION,
+    sourceAssemblyChecksum: assembly.assemblyContentChecksum,
+    identity: { instrumentKey: INSTRUMENT_KEY, sourceTimeframe: TIMEFRAME, year: YEAR },
+    targetTimeframes: RESEARCH_UNDERLYING_RESAMPLING_TARGET_TIMEFRAMES,
+    sourceSessionCounts: { expectedSessions: 2, unavailableSessions: 0 },
+    sessions: sessionEntries,
+  });
+
+  const canonicalManifestRoot = tempRoot('cert-clean-canonical-manifest-');
+  const parquetOutputRoot = tempRoot('cert-clean-parquet-');
+  const assemblyRoot = tempRoot('cert-clean-assembly-');
+  const resamplingManifestRoot = tempRoot('cert-clean-resampling-');
+
+  storeCanonicalDatasetManifestArtifact(canonicalManifestRoot, canonicalManifest);
+  writeParquetDescriptor(parquetOutputRoot, canonicalManifest, [CLEAN_DATE_A, CLEAN_DATE_B]);
+  storeResearchUnderlyingDatasetAssembly(assemblyRoot, assembly);
+  storeResearchUnderlyingResamplingManifest(resamplingManifestRoot, resamplingManifest);
+
+  return { canonicalManifest, canonicalManifestRoot, parquetOutputRoot, assembly, assemblyRoot, resamplingManifestChecksum: resamplingManifest.manifestContentChecksum, resamplingManifestRoot, rowsByDate };
+}
+
+function buildCleanService(fixture: Fixture, overrides: { parquetVerifyService?: ParquetVerifier } = {}): NiftyUnderlyingResearchCertificationService {
+  const rowsResolver = new FakeSessionRowsResolver(fixture.rowsByDate);
+  return new NiftyUnderlyingResearchCertificationService({
+    sessionRowsResolver: rowsResolver,
+    resampledSessionReader: new ResearchUnderlyingResampledSessionReaderService({ sessionRowsResolver: rowsResolver }),
+    calendarSessionsResolver: new FakeCalendarResolver([CLEAN_DATE_A, CLEAN_DATE_B], { [CLEAN_DATE_A]: [REGULAR_WINDOW], [CLEAN_DATE_B]: [REGULAR_WINDOW] }),
+    parquetVerifyService: overrides.parquetVerifyService ?? new FakeParquetVerifier(verifiedResult(fixture.canonicalManifest, [CLEAN_DATE_A, CLEAN_DATE_B])),
+    canonicalManifestArtifactRoot: fixture.canonicalManifestRoot,
+    parquetOutputRoot: fixture.parquetOutputRoot,
+    sourceAssemblyRoot: fixture.assemblyRoot,
+    resamplingManifestRoot: fixture.resamplingManifestRoot,
+  });
+}
+
+// ============================================================================
 // happy path
 // ============================================================================
 
@@ -403,6 +478,7 @@ test('happy path: certifies 2/2 sessions, exact March-7 no-lookahead proof, cohe
     assert.equal(result.certification.summary.authorizedDerivedSessions, 1);
 
     const march7 = result.certification.march7Proof;
+    assert.ok(march7 !== null, 'expected a non-null march7Proof for a 1-authorized-derived-session topology');
     assert.equal(march7.tradingDate, TIER3_DATE);
     assert.deepEqual(march7.imputedMinutesIst, ['10:22', '10:23', '10:24']);
     assert.equal(march7.leftRealAnchorIst, '10:21');
@@ -693,4 +769,124 @@ test('B-M8-HIGH-01 integration: altering one physical session physicalFileChecks
     sessions: [{ tradingDate: TIER1_DATE, sessionContentChecksum: 'c'.repeat(64), relativePath: `sessions/${TIER1_DATE}.parquet`, canonicalRowCount: 375, fileSizeBytes: 1000, physicalFileChecksum: 'F'.repeat(64) }],
   });
   assert.notEqual(baseline, tampered);
+});
+
+// ============================================================================
+// B-M9: clean-canonical-year (zero authorized-derived sessions) certification
+// ============================================================================
+
+test('B-M9 service: a clean canonical year (0 tier3) certifies without throwing, outputs explicit null derived fields', async () => {
+  const fixture = buildCleanFixture();
+  try {
+    const service = buildCleanService(fixture);
+    const result = await service.certifyYear({ year: YEAR, expectedCanonicalDatasetChecksum: fixture.canonicalManifest.datasetChecksum, sourceAssemblyChecksum: fixture.assembly.assemblyContentChecksum, resamplingManifestChecksum: fixture.resamplingManifestChecksum });
+
+    assert.equal(result.certification.sessions.length, 2);
+    assert.equal(result.certification.summary.verifiedSessions, 2);
+    assert.equal(result.certification.summary.realCanonicalSessions, 2);
+    assert.equal(result.certification.summary.authorizedDerivedSessions, 0);
+    assert.equal(result.certification.derivedSnapshotChecksum, null);
+    assert.equal(result.certification.derivedSessionChecksum, null);
+    assert.equal(result.certification.march7Proof, null);
+    assert.ok(result.certification.sessions.every((s) => s.targets.every((t) => t.noLookaheadVerified)));
+  } finally {
+    cleanupFixture(fixture);
+  }
+});
+
+test('B-M9 service: physical canonical storage verification is still REQUIRED for a clean canonical year -- missing descriptor fails closed', async () => {
+  const fixture = buildCleanFixture();
+  try {
+    const emptyParquetRoot = tempRoot('cert-clean-no-parquet-');
+    try {
+      const service = buildCleanService({ ...fixture, parquetOutputRoot: emptyParquetRoot });
+      await assert.rejects(
+        () => service.certifyYear({ year: YEAR, expectedCanonicalDatasetChecksum: fixture.canonicalManifest.datasetChecksum, sourceAssemblyChecksum: fixture.assembly.assemblyContentChecksum, resamplingManifestChecksum: fixture.resamplingManifestChecksum }),
+        CertificationCanonicalStorageUnverifiedError
+      );
+    } finally {
+      rmSync(emptyParquetRoot, { recursive: true, force: true });
+    }
+  } finally {
+    cleanupFixture(fixture);
+  }
+});
+
+test('B-M9 service: two authorized-derived (tier3) selections in one year is not representable by the existing March-7 proof model and fails closed', async () => {
+  const dateA = TIER1_DATE;
+  const dateB = '2022-09-15';
+  const sessionA = providerUnavailableSession(dateA);
+  const sessionB = providerUnavailableSession(dateB);
+  const canonicalManifest = buildCanonicalManifest([sessionA, sessionB]);
+  const selA = tier3Selection(dateA);
+  const selB = tier3Selection(dateB);
+
+  const assemblyRoot = tempRoot('cert-two-tier3-assembly-');
+  const canonicalManifestRoot = tempRoot('cert-two-tier3-canonical-manifest-');
+  const parquetOutputRoot = tempRoot('cert-two-tier3-parquet-');
+  const resamplingManifestRoot = tempRoot('cert-two-tier3-resampling-');
+  try {
+    const assembly = buildResearchUnderlyingDatasetAssembly({
+      schemaVersion: RESEARCH_UNDERLYING_ASSEMBLY_SCHEMA_VERSION,
+      assemblySemanticsVersion: RESEARCH_UNDERLYING_ASSEMBLY_SEMANTICS_VERSION,
+      identity: { instrumentKey: INSTRUMENT_KEY, timeframe: TIMEFRAME, year: YEAR },
+      canonicalManifest: {
+        datasetKind: canonicalManifest.datasetKind,
+        datasetId: canonicalManifest.datasetId,
+        datasetChecksum: canonicalManifest.datasetChecksum,
+        manifestSchemaVersion: canonicalManifest.manifestSchemaVersion,
+        canonicalizationVersion: canonicalManifest.canonicalizationVersion,
+        healthSemanticsVersion: canonicalManifest.healthSemanticsVersion,
+      },
+      sessions: [selA, selB],
+    });
+    storeCanonicalDatasetManifestArtifact(canonicalManifestRoot, canonicalManifest);
+    writeParquetDescriptor(parquetOutputRoot, canonicalManifest, []);
+    storeResearchUnderlyingDatasetAssembly(assemblyRoot, assembly);
+
+    const rowsByDate: Record<string, ResolvedResearchSessionRow[]> = { [dateA]: march7ShapedSession(dateA), [dateB]: march7ShapedSession(dateB) };
+    const sessionEntries: ResearchUnderlyingResamplingManifestSessionEntry[] = [
+      { tradingDate: dateA, sel: selA },
+      { tradingDate: dateB, sel: selB },
+    ].map(({ tradingDate, sel }) => ({
+      tradingDate,
+      targets: {
+        [ResampleTargetTimeframe.TWO_MINUTE]: resamplingDescriptorFor(assembly.assemblyContentChecksum, sel, sel.derivedContentChecksum, ResampleTargetTimeframe.TWO_MINUTE, rowsByDate[tradingDate]),
+        [ResampleTargetTimeframe.THREE_MINUTE]: resamplingDescriptorFor(assembly.assemblyContentChecksum, sel, sel.derivedContentChecksum, ResampleTargetTimeframe.THREE_MINUTE, rowsByDate[tradingDate]),
+        [ResampleTargetTimeframe.FIVE_MINUTE]: resamplingDescriptorFor(assembly.assemblyContentChecksum, sel, sel.derivedContentChecksum, ResampleTargetTimeframe.FIVE_MINUTE, rowsByDate[tradingDate]),
+      },
+    }));
+    const resamplingManifest = buildResearchUnderlyingResamplingManifest({
+      schemaVersion: RESEARCH_UNDERLYING_RESAMPLING_MANIFEST_SCHEMA_VERSION,
+      resamplingSemanticsVersion: RESEARCH_UNDERLYING_RESAMPLING_SEMANTICS_VERSION,
+      sourceAssemblyChecksum: assembly.assemblyContentChecksum,
+      identity: { instrumentKey: INSTRUMENT_KEY, sourceTimeframe: TIMEFRAME, year: YEAR },
+      targetTimeframes: RESEARCH_UNDERLYING_RESAMPLING_TARGET_TIMEFRAMES,
+      sourceSessionCounts: { expectedSessions: 2, unavailableSessions: 0 },
+      sessions: sessionEntries,
+    });
+    storeResearchUnderlyingResamplingManifest(resamplingManifestRoot, resamplingManifest);
+
+    const rowsResolver = new FakeSessionRowsResolver(rowsByDate);
+    const service = new NiftyUnderlyingResearchCertificationService({
+      sessionRowsResolver: rowsResolver,
+      resampledSessionReader: new ResearchUnderlyingResampledSessionReaderService({ sessionRowsResolver: rowsResolver }),
+      calendarSessionsResolver: new FakeCalendarResolver([dateA, dateB], { [dateA]: [REGULAR_WINDOW], [dateB]: [REGULAR_WINDOW] }),
+      parquetVerifyService: new FakeParquetVerifier(verifiedResult(canonicalManifest, [])),
+      canonicalManifestArtifactRoot: canonicalManifestRoot,
+      parquetOutputRoot: parquetOutputRoot,
+      sourceAssemblyRoot: assemblyRoot,
+      resamplingManifestRoot: resamplingManifestRoot,
+    });
+
+    await assert.rejects(
+      () => service.certifyYear({ year: YEAR, expectedCanonicalDatasetChecksum: canonicalManifest.datasetChecksum, sourceAssemblyChecksum: assembly.assemblyContentChecksum, resamplingManifestChecksum: resamplingManifest.manifestContentChecksum }),
+      /found 2 authorized-derived.*generalized derived-proof model is required/
+    );
+  } finally {
+    rmSync(assemblyRoot, { recursive: true, force: true });
+    rmSync(canonicalManifestRoot, { recursive: true, force: true });
+    rmSync(parquetOutputRoot, { recursive: true, force: true });
+    rmSync(resamplingManifestRoot, { recursive: true, force: true });
+  }
 });
